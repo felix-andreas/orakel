@@ -1,0 +1,22 @@
+[package]
+name = "orakel-dashboard"
+version = "0.1.0"
+edition = "2021"
+description = "orakel dashboard — server-rendered Cloudflare Worker (v1 skeleton, build-time data snapshot)"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+worker = "0.8"
+toml = "1"
+pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
+
+# NOTE: no `strip = true` here — stripping removes the wasm `target_features`
+# custom section, which makes wasm-bindgen disable its externref pass and fail
+# with "externref table required for catch wrappers".
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1

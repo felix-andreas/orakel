@@ -30,6 +30,34 @@ ops/decisions.md with a reason.
   sessions) — always inside the working window, always recorded in `ops/state.toml`.
 - Secrets expected in the environment (all optional until provisioned; agents degrade
   gracefully and note gaps in `roles/felix/inbox/`):
-  `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`
-  (default `orakel-data`), `CLOUDFLARE_API_TOKEN`, `GITHUB_TOKEN` (read-only, for the
-  dashboard).
+  `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET=orakel`,
+  `CLOUDFLARE_API_TOKEN`, `GITHUB_TOKEN` (read-only, for the dashboard).
+
+## Recommended permission allowlist (Felix-only change)
+
+Agents cannot edit `.claude/settings.json` themselves (the permission classifier
+hard-blocks it — by design). For friction-free autonomous runs, Felix should extend the
+`permissions.allow` array to:
+
+```json
+[
+  "mcp__Claude_Code_Remote__create_trigger",
+  "mcp__Claude_Code_Remote__update_trigger",
+  "mcp__Claude_Code_Remote__delete_trigger",
+  "mcp__Claude_Code_Remote__list_triggers",
+  "mcp__Claude_Code_Remote__fire_trigger",
+  "mcp__Claude_Code_Remote__send_later",
+  "mcp__Cloudflare_Developer_Platform__r2_buckets_list",
+  "mcp__Cloudflare_Developer_Platform__r2_bucket_get",
+  "mcp__Cloudflare_Developer_Platform__workers_list",
+  "mcp__Cloudflare_Developer_Platform__workers_get_worker",
+  "mcp__Cloudflare_Developer_Platform__search_cloudflare_documentation",
+  "Bash(git *)",
+  "Bash(cargo *)",
+  "Bash(rustup *)",
+  "Bash(npx wrangler *)"
+]
+```
+
+(Deliberately excluded: bucket/database create+delete and KV/D1 writes — those should
+stay prompt-worthy or CEO-requested via inbox.)

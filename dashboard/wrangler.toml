@@ -1,0 +1,16 @@
+# orakel dashboard — Rust Cloudflare Worker (workers-rs).
+# Deploy: CLOUDFLARE_API_TOKEN=... npx wrangler deploy   (see README.md)
+name = "orakel-dashboard"
+main = "build/worker/shim.mjs"
+compatibility_date = "2026-07-01"
+
+# worker-build downloads pinned wasm-bindgen/esbuild/wasm-opt binaries on first
+# run. In proxy-restricted agent sessions the GitHub-release downloads
+# (wasm-bindgen, wasm-opt) are blocked: install wasm-bindgen-cli from crates.io
+# and export WASM_BINDGEN_BIN=wasm-bindgen (see README.md); the fallback below
+# skips wasm-opt when its download fails. esbuild comes from npm and works.
+[build]
+command = "worker-build --release || worker-build --release --no-opt"
+
+[observability]
+enabled = true
