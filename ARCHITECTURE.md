@@ -110,6 +110,13 @@ poly committed 70 MB of data snapshots into git; orakel does not.
   referenced.
 - Reproducibility is unchanged from poly: agents snapshot what they pull; the manifest is
   the freeze.
+- **Bucket layout** (`orakel`): `blobs/<sha256>` — research freezes, immutable, git-
+  manifested; `snapshots/books/<YYYY-MM-DD>/<HH>.json.gz` — hourly price/book snapshots
+  written by the snapshot Worker ([`workers/snapshot/`](workers/snapshot/)), immutable,
+  **not** individually manifested (keys are deterministic from time — git documents the
+  scheme, not each object); `config/watchlist.json` — the mutable list of markets to
+  snapshot, mirrored by the CEO from the union of active `applications/` whenever it
+  changes.
 
 ## 7. Dashboard
 
