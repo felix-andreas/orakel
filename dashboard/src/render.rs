@@ -109,11 +109,38 @@ pub fn card(title: &str, desc: &str, content_html: &str) -> String {
     )
 }
 
-pub fn section(title: &str, inner_html: &str) -> String {
+/// CSS-only tab component (shadcn Tabs look): hidden radio inputs drive which
+/// label pill is active and which panel shows, via nth-of-type pair rules in
+/// style.css. No JS, no page reload; radios stay keyboard-accessible (arrow
+/// keys switch tabs). `id` must be unique per page. The first pane is the
+/// default tab. Pane HTML must be already-safe. style.css pairs up to 6 tabs —
+/// extend its selector lists before passing more.
+pub fn tabs(id: &str, panes: &[(&str, String)]) -> String {
+    debug_assert!(panes.len() <= 6, "style.css tab pair rules cover 6 tabs");
+    let mut inputs = String::new();
+    let mut labels = String::new();
+    let mut panels = String::new();
+    for (i, (label, pane_html)) in panes.iter().enumerate() {
+        let input_id = format!("tab-{}-{}", id, i);
+        inputs.push_str(&format!(
+            "<input class=\"tab-input\" type=\"radio\" name=\"tab-{}\" id=\"{}\"{}>",
+            esc(id),
+            esc(&input_id),
+            if i == 0 { " checked" } else { "" },
+        ));
+        labels.push_str(&format!(
+            "<label for=\"{}\">{}</label>",
+            esc(&input_id),
+            esc(label)
+        ));
+        panels.push_str(&format!(
+            "<section class=\"tab-panel\">{}</section>",
+            pane_html
+        ));
+    }
     format!(
-        "<section class=\"section\"><h2 class=\"section-title\">{}</h2>{}</section>",
-        esc(title),
-        inner_html
+        "<div class=\"tabs\">{}<div class=\"tab-list\">{}</div>{}</div>",
+        inputs, labels, panels
     )
 }
 

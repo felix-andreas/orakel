@@ -3,7 +3,15 @@
 The human window into the firm (ARCHITECTURE.md §7): a Rust Cloudflare Worker
 ([workers-rs](https://github.com/cloudflare/workers-rs)) that server-renders the repo's
 state as HTML. No JS, no external assets — one hand-written CSS file, plain `<a>`
-navigation.
+navigation. In-page tabs (Operations, Predictions) are CSS-only: hidden radio inputs +
+labels wired by `nth-of-type` pair rules in `style.css` (`tabs` helper in `render.rs`),
+so switching tabs needs no JS and no page reload.
+
+Styling is hand-written CSS at shadcn/ui (v4, zinc) fidelity. Tailwind was considered
+and deliberately skipped: the build is pure Rust/`worker-build` (no npm build step to
+add or break in proxy-restricted sessions), and utility classes inside Rust `format!`
+strings are harder to maintain than one tokenized stylesheet. If the UI ever outgrows
+this, revisit — the requirement is shadcn-quality UI, not a particular toolchain.
 
 ## v1 skeleton: data is embedded at BUILD TIME
 
@@ -119,8 +127,8 @@ dashboard/
 ├── build.rs            # BUILD_TIMESTAMP + optional-file staging (scores.csv)
 └── src/
     ├── lib.rs          # router + pages + embedded data (include_str!)
-    ├── render.rs       # esc/layout/card/table/markdown helpers (format!-based)
-    └── style.css       # shadcn-inspired tokens (zinc palette, dark mode)
+    ├── render.rs       # esc/layout/card/tabs/table/markdown helpers (format!-based)
+    └── style.css       # shadcn v4 tokens (zinc, dark mode), CSS-only tab component
 ```
 
 Rendering is plain `format!` string building (CODING.md: procedural, no template engine).
