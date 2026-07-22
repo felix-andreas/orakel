@@ -43,3 +43,10 @@ active = ["ceo", "market-researcher"]
 r2 = "missing"                # R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET
 cloudflare_api_token = "missing"
 github_token = "missing"
+
+[cloudflare]
+# Cloudflare Developer Platform MCP is connected in agent sessions (bucket/D1/KV/Workers
+# admin + docs search; NOT object upload or Worker deploy — those need the secrets above).
+mcp = "connected"
+r2_bucket = "orakel-data"     # created 2026-07-22 via MCP, location ENAM
+# NOTE: bucket "hollywood" in the same account belongs to another project — never touch.
