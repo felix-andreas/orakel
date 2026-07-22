@@ -1,0 +1,27 @@
+# orakel snapshot worker — hourly Polymarket price/book snapshots to R2 (workers-rs).
+# Deploy: CLOUDFLARE_API_TOKEN=... npx wrangler deploy   (see README.md)
+name = "orakel-snapshot"
+main = "build/worker/shim.mjs"
+compatibility_date = "2026-07-01"
+
+# worker-build downloads pinned wasm-bindgen/esbuild/wasm-opt binaries on first
+# run. In proxy-restricted agent sessions the GitHub-release downloads
+# (wasm-bindgen, wasm-opt) are blocked: install wasm-bindgen-cli from crates.io
+# (version must match wasm-bindgen in Cargo.lock) and export
+# WASM_BINDGEN_BIN=wasm-bindgen; the fallback below skips wasm-opt when its
+# download fails. esbuild comes from npm and works. Same setup as dashboard/.
+[build]
+command = "worker-build --release || worker-build --release --no-opt"
+
+# :07 each hour — off the top of the hour to dodge the API load spike other
+# hourly jobs cause at :00. The snapshot key uses the scheduled hour, so the
+# stored hour is unambiguous.
+[triggers]
+crons = ["7 * * * *"]
+
+[[r2_buckets]]
+binding = "ORAKEL"
+bucket_name = "orakel"
+
+[observability]
+enabled = true

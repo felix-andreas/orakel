@@ -1,0 +1,24 @@
+[package]
+name = "orakel-snapshot"
+version = "0.1.0"
+edition = "2021"
+description = "orakel snapshot worker — hourly Polymarket price/book snapshots into R2"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+worker = "0.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# rust_backend (miniz_oxide) = pure Rust, compiles for wasm32-unknown-unknown.
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+
+# NOTE: no `strip = true` here — stripping removes the wasm `target_features`
+# custom section, which makes wasm-bindgen disable its externref pass and fail
+# with "externref table required for catch wrappers" (same as dashboard/).
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
