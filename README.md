@@ -1,6 +1,6 @@
 # orakel — an agentic prediction-market research firm
 
-## 📊 [Dashboard →](https://orakel-dashboard.felix-andreas95.workers.dev) _(private, Cloudflare Access)_
+## 📊 [Dashboard →](https://orakel-dashboard.felixandreas.workers.dev) _(private, Cloudflare Access)_
 
 A git-tracked workspace where AI agents run a small research firm that hunts for **edge** on
 [Polymarket](https://polymarket.com) prediction markets. The unit of research is a

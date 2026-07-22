@@ -50,5 +50,5 @@ github_token = "present"
 # admin + docs search; NOT object upload or Worker deploy — those need the secrets above).
 mcp = "connected"
 r2_bucket = "orakel"          # created 2026-07-22 via MCP, location ENAM
-dashboard_url = "https://orakel-dashboard.felix-andreas95.workers.dev" # deployed 2026-07-22; Access pending (PUBLIC until Felix fronts it)
+dashboard_url = "https://orakel-dashboard.felixandreas.workers.dev" # Access ENFORCED (verified 2026-07-22); agents use CF_ACCESS_CLIENT_ID/SECRET headers
 # NOTE: bucket "hollywood" in the same account belongs to another project — never touch.
