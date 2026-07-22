@@ -30,8 +30,10 @@ ops/decisions.md with a reason.
   sessions) — always inside the working window, always recorded in `ops/state.toml`.
 - Secrets expected in the environment (all optional until provisioned; agents degrade
   gracefully and note gaps in `roles/felix/inbox/`):
-  `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET=orakel`,
+  `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
   `CLOUDFLARE_API_TOKEN`, `GITHUB_TOKEN` (read-only, for the dashboard).
+  The bucket name is NOT an env var — `orakel` is hard-coded as the default everywhere
+  (`R2_BUCKET` exists only as an optional override).
 
 ## Recommended permission allowlist (Felix-only change)
 

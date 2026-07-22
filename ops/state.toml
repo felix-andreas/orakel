@@ -40,7 +40,7 @@ active = ["ceo", "market-researcher"]
 
 [secrets]
 # Presence only — never values. Update when Felix provisions them.
-r2 = "missing"                # R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET=orakel
+r2 = "missing"                # R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY (bucket "orakel" is hard-coded)
 cloudflare_api_token = "missing"
 github_token = "missing"
 
