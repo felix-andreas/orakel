@@ -6,6 +6,11 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 
 - Firm founded 2026-07-22. Nothing has run yet. First real run: verify toolchain, check
   secrets (`ops/state.toml [secrets]`), spawn market researcher, fill first slot.
+- 2026-07-22 scheduling verified live: a one-shot fresh-session trigger and a send_later
+  self-bind both fired on time (~15-30s late, fine). Scheduling works from agent sessions.
+- Pending Felix: approval to commit `.claude/settings.json` permission allowlist (an agent
+  cannot write its own permission rules — classifier blocks it, human must approve once).
+- Scaffold committed locally, NOT yet pushed — Felix still discussing design points.
 
 ## Medium-term (bootstrap phase)
 
@@ -20,3 +25,10 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 - Inherited from poly (scored evidence): consensus/combination beats individual signals;
   model choice matters (record exact model ids); escalate-on-flag works; agents can die
   silently mid-run — always audit folders before assuming loss.
+- Scheduling facts (verified 2026-07-22): agents can create/update/delete/fire Routines
+  programmatically; a Routine's MODEL can only be set by Felix in the claude.ai UI
+  (`model_update_disabled` via API); agent-created triggers spawn sessions WITHOUT MCP
+  connector tools (GitHub MCP etc.) — connector-needing triggers must be created by Felix
+  from the UI; sub-hourly schedules are not supported (min hourly / one-shots).
+- Permission prompts: pre-allow needed tools in `.claude/settings.json` (committed) so
+  autonomous runs never block on a human; only a human-approved write can change it.

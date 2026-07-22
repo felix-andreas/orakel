@@ -19,9 +19,13 @@ roles/<role>/
 - **Short-term**: this run's state — overwritten freely, pruned every run.
 - **Medium-term**: valid for the current phase/strategy life.
 - **Long-term**: durable principles. Candidates for the wiki.
+- **Format: bullet points.** Anything longer than a few lines becomes its own file in
+  `memory/`, linked from the bullet — `MEMORY.md` stays a scannable index, not an essay.
 - **Budget: keep `MEMORY.md` under ~150 lines.** poly's CEO memory became an unreadable
-  scroll of daily logs; details belong in worklogs, run manifests, and the wiki, not in
-  memory. Prune every run — superseded bullets die.
+  scroll of daily logs; details belong in worklogs, run manifests, linked notes, and the
+  wiki, not in memory. Prune every run — superseded bullets die.
+- **Memory lives in the repo, always.** Session storage is ephemeral; a memory that isn't
+  committed and pushed doesn't exist.
 
 ## Inbox message format
 
