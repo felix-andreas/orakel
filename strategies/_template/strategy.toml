@@ -1,0 +1,12 @@
+family = ""
+variant = ""
+status = "trial"
+created = ""
+supersedes = ""
+labels = []
+
+[trial]
+slot = 0
+started = ""
+review_due = ""
+success_guideline = "≥15 scored predictions across ≥3 markets, Brier < market baseline"

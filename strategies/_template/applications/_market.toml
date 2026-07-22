@@ -1,0 +1,7 @@
+# Copy to <market_slug>.toml
+market_slug = ""
+condition_id = ""
+added = ""
+active = true
+
+[params]

@@ -1,0 +1,45 @@
+# Canonical current operating state of orakel.
+# CONSTITUTION.md §1: a structural change not reflected here didn't happen.
+# Every change here needs a dated entry in ops/decisions.md with a reason.
+
+[firm]
+phase = "bootstrap" # bootstrap | operating
+updated = "2026-07-22"
+
+[cadence]
+# All triggers must fire inside the working window (CONSTITUTION.md §3),
+# times in Europe/Berlin: weekdays 02:00-15:00, weekends 02:00-08:00.
+ceo_trigger = "daily, set by Felix (see TRIGGER.md)"
+additional_triggers = [] # CEO-created triggers get listed here
+
+[models]
+# Standing default from CONSTITUTION.md §4 — tune here, log the change.
+market_researcher = "fable, effort high/xhigh"
+initial_research = "fable, effort high/xhigh"
+recurring_research = "opus"
+execution = "opus"
+
+[research]
+slots_total = 5
+slots_active = 0
+# One [[research.slot]] block per active slot:
+# [[research.slot]]
+# id = 1
+# variant = "<family>/<variant>"
+# trial_started = "YYYY-MM-DD"
+# trial_review_due = "YYYY-MM-DD"  # >= trial_started + 10 days
+
+[strategies]
+live = []    # promoted variants, e.g. ["barrier-touch/gbm"]
+trial = []   # variants currently in slots
+retired = [] # discarded variants (folders stay)
+
+[roles]
+active = ["ceo", "market-researcher"]
+# researcher/executor are instantiated per slot / per live variant
+
+[secrets]
+# Presence only — never values. Update when Felix provisions them.
+r2 = "missing"                # R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET
+cloudflare_api_token = "missing"
+github_token = "missing"
