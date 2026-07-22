@@ -51,7 +51,9 @@ additional triggers the CEO creates must respect this window and be listed in
 
 ## 6. Standing rules
 
-- **Commit + push after every logical step.** Work that isn't pushed doesn't exist.
+- **Commit + push after every logical step, always directly on `main`.** Work that isn't
+  pushed doesn't exist; branches are forbidden — R2 has no branches, so side-branch state
+  desyncs from the data store and other agents.
 - **R2 before git:** upload data and only then commit the manifest that references it
   (see [`ARCHITECTURE.md`](ARCHITECTURE.md) §6). Referenced R2 keys are immutable.
 - **Single writer** for canonical CSVs (`predictions/`): appends happen in the CEO's

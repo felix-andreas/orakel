@@ -11,6 +11,10 @@ anything:
 3. **Leave a trace.** Update your memory and worklog before finishing. Commit + push after
    every logical step. Predictions go through the CEO's orchestration, never appended
    concurrently.
+4. **Always work directly on `main`.** No feature branches, no PRs. The repo is the firm's
+   shared state: an unpushed branch is invisible to every other agent, and R2 has no
+   branches — data referenced from a side branch drifts out of sync and gets lost. Pull
+   `main` before you start, push to `main` when you commit.
 
 Key conventions:
 
