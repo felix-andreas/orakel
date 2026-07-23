@@ -1,0 +1,12 @@
+family = "temp-truncation"
+variant = "runningmax"
+status = "trial"
+created = "2026-07-23"
+supersedes = ""
+labels = ["class:structural-lag", "data:weather", "cadence:intraday", "family-type:negrisk-buckets"]
+
+[trial]
+slot = 1
+started = "2026-07-23"
+review_due = "2026-08-02"
+success_guideline = "≥15 scored predictions across ≥3 city-families, paired Brier beating market; backtest gates from the idea's falsification sketch must pass first"

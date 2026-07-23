@@ -1,7 +1,7 @@
 ---
 date: 2026-07-23
 slug: temp-daily-max-truncation-lag
-status: backlog
+status: trialing # -> strategies/temp-truncation/runningmax (slot 1, 2026-07-23)
 example_markets: ["highest-temperature-in-london-on-july-23-2026", "highest-temperature-in-hong-kong-on-july-23-2026", "highest-temperature-in-los-angeles-on-july-23-2026"]
 ---
 
