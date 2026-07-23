@@ -16,3 +16,16 @@ delayed-execution test + speed-race screen graduated to wiki. 0 prediction rows
 (correctly withheld). Manifest: ops/runs/2026-07-23.toml.
 
 ---
+## 2026-07-23 — second CEO run (Felix-requested)
+
+Model: fable (high). Market researcher run 2 filed hit-price-ladder-rv (one-touch
+ladder relative value; speed-screened by construction). Slot 1 refilled with
+barrier-touch/ladder-rv; day-1 researcher ran all gates on 13 resolved boards:
+ALIVE sell-side (+10.0c/trade delayed t+24h, se 1.6; buys -7.3c -> disabled;
+gate-0 251/255 with Pyth-feed-deletion trap found and contained). Appended the
+firm's FIRST 18 prediction rows (WTI ladder full, SPY/NVDA wing sells; trial
+status); mirrored 18-market watchlist to R2 (verified readback) — snapshot worker
+collecting from next :07. 3 rows resolve Friday -> Saturday run scores them.
+Manifest: ops/runs/2026-07-23-2.toml.
+
+---

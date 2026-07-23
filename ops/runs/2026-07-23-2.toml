@@ -1,0 +1,41 @@
+date = "2026-07-23"
+trigger = "manual (Felix: 'start another run now')"
+model = "fable (session), subagents: fable (high)"
+
+[spend]
+# Subagent output tokens: market researcher ~112k, trial researcher ~232k + orchestration.
+total_tokens = 400000
+
+[[step]]
+role = "ceo"
+status = "ok"
+note = "health checks green (dashboard 302/200, snapshot worker 200)"
+
+[[step]]
+role = "market-researcher"
+status = "ok"
+note = "run 2: idea filed hit-price-ladder-rv (speed-screened by construction); dead-leg-sweep candidate formally dropped"
+
+[[step]]
+role = "ceo"
+status = "ok"
+note = "slot 1 refilled: barrier-touch/ladder-rv enters trial"
+
+[[step]]
+role = "researcher"
+slot = 1
+variant = "barrier-touch/ladder-rv"
+status = "ok"
+predictions = 18
+note = "day-1 gates ALIVE (sell-only, RV-primary): gate-0 251/255; delayed t+24h sells +10.0c/trade se 1.6; buys disabled; WTI+SPY+NVDA applications active, BTC parked"
+
+[[step]]
+role = "ceo"
+status = "ok"
+note = "18 rows appended to predictions.csv (run_id 2026-07-23/run2, status trial); watchlist (18 markets) mirrored to R2 config/watchlist.json and verified — snapshot worker starts collecting at the next :07"
+
+[health]
+all_slots_ran = true
+csv_appended_rows = 18
+pushed = true
+notes = "FIRST PREDICTIONS LOGGED. 3 rows resolve Fri 2026-07-24 20:00Z (SPY x2, NVDA) — next daily run on Sat must score them. WTI board resolves Jul 31 21:00Z. Researcher flagged: archive WTIU6 candles daily (Pyth deletes expired contract feeds)."

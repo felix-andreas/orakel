@@ -4,16 +4,20 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 
 ## Short-term (current run / immediate)
 
-- **First CEO run 2026-07-23 DONE** (manifest: ops/runs/2026-07-23.toml). All infra
-  live+verified (dashboard behind Access, snapshot worker, r2data, scoring). First
-  trial temp-truncation/runningmax was an honest day-1 kill (speed race, bot-owned) —
-  2 lessons graduated to wiki. Slot 1 free, backlog EMPTY.
-- **Next run (auto 01:07 UTC 2026-07-24):** market researcher must produce a new idea
-  (its memory lists candidates: negRisk dead-leg sweeping, barrier families, esports
-  weeklies — apply the new speed-race screen BEFORE filing!). Fill slot 1 from it.
-  Consider ramping to 2 slots if the day runs clean.
-- Watchlist/config in R2 not yet mirrored — no active applications exist. Mirror when
-  the first live applications appear.
+- **Runs 1+2 of 2026-07-23 DONE** (manifests: ops/runs/2026-07-23{,-2}.toml). Run 1:
+  runningmax honest day-1 kill (speed race) → 2 wiki lessons. Run 2: barrier-touch/
+  ladder-rv in slot 1, day-1 gates ALIVE (sell-only wings, delayed-exec verified;
+  buys disabled) → **first 18 prediction rows in CSV** (run_id 2026-07-23/run2), 
+  watchlist (18 mkts) mirrored to R2 + verified.
+- **Next run (auto 01:07 UTC 2026-07-24) checklist:** (1) ladder-rv day-2 (Opus now —
+  recurring research per routing): daily candle archive incl. WTIU6 (Pyth DELETES
+  expired contract feeds!), vol refresh, live re-run, new rows; (2) Fri 20:00Z:
+  SPY x2 + NVDA rows resolve → SATURDAY run scores them (resolutions.csv → scoring/
+  → first track record!); (3) market researcher daily idea; (4) consider slot 2 if
+  the day runs clean (backlog: esports weeklies unfiled).
+- Trades flagged by ladder-rv (paper): sell WTI ↑$110 @9.3c (tier A), ↑$105 @16.6c
+  (tier B) — execution layer not built yet; note for backtest engine design: for
+  sells, t+24h fills IMPROVED results (+7.7→+10.0c) — daily cadence suffices.
 
 ## Medium-term (bootstrap phase)
 
