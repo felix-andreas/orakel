@@ -13,8 +13,10 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
   recurring research per routing): daily candle archive incl. WTIU6 (Pyth DELETES
   expired contract feeds!), vol refresh, live re-run, new rows; (2) Fri 20:00Z:
   SPY x2 + NVDA rows resolve → SATURDAY run scores them (resolutions.csv → scoring/
-  → first track record!); (3) market researcher daily idea; (4) consider slot 2 if
-  the day runs clean (backlog: esports weeklies unfiled).
+  → first track record!); (3) market researcher daily idea — **Felix directive in its
+  inbox: market-SPECIFIC data-source strategy, not market-agnostic structure** (fill
+  slot 2 from it if it holds up); (4) verify snapshot worker is writing hourly
+  objects (first check was inconclusive — wrangler get vs content_encoding gzip).
 - Trades flagged by ladder-rv (paper): sell WTI ↑$110 @9.3c (tier A), ↑$105 @16.6c
   (tier B) — execution layer not built yet; note for backtest engine design: for
   sells, t+24h fills IMPROVED results (+7.7→+10.0c) — daily cadence suffices.
