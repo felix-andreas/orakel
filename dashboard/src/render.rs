@@ -34,9 +34,10 @@ pub struct NavItem {
     pub label: &'static str,
 }
 
-pub const NAV: [NavItem; 5] = [
+pub const NAV: [NavItem; 6] = [
     NavItem { href: "/", label: "Operations" },
     NavItem { href: "/predictions", label: "Predictions" },
+    NavItem { href: "/snapshots", label: "Snapshots" },
     NavItem { href: "/inboxes", label: "Inboxes" },
     NavItem { href: "/wiki", label: "Wiki" },
     NavItem { href: "/dev", label: "Development" },
@@ -226,7 +227,10 @@ pub fn parse_csv(src: &str) -> Vec<Vec<String>> {
         .collect()
 }
 
-/// Render parsed CSV rows (first row = header) as a table.
+/// Render parsed CSV rows (first row = header) as a table. Long opaque ids
+/// (hex condition ids, decimal token ids — >28 chars, no '-') are abbreviated
+/// with the full value in a hover title, so real prediction rows stay
+/// readable; slugs and timestamps (which contain '-') are never touched.
 pub fn csv_table(rows: &[Vec<String>]) -> String {
     if rows.is_empty() {
         return String::new();
@@ -239,7 +243,23 @@ pub fn csv_table(rows: &[Vec<String>]) -> String {
     for row in &rows[1..] {
         out.push_str("<tr>");
         for cell in row {
-            out.push_str(&format!("<td>{}</td>", esc(cell)));
+            let is_opaque_id =
+                cell.chars().count() > 28 && cell.chars().all(|c| c.is_ascii_alphanumeric());
+            if is_opaque_id {
+                let head: String = cell.chars().take(8).collect();
+                let tail: String = {
+                    let n = cell.chars().count();
+                    cell.chars().skip(n - 4).collect()
+                };
+                out.push_str(&format!(
+                    "<td title=\"{}\"><span class=\"mono\">{}…{}</span></td>",
+                    esc(cell),
+                    esc(&head),
+                    esc(&tail)
+                ));
+            } else {
+                out.push_str(&format!("<td>{}</td>", esc(cell)));
+            }
         }
         out.push_str("</tr>");
     }

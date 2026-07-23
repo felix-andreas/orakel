@@ -624,6 +624,106 @@ table.data tbody tr:hover {
   background: color-mix(in srgb, var(--muted) 55%, transparent);
 }
 
+/* long-note tables (run steps): let cells wrap instead of nowrap-scrolling */
+.wrap-cells {
+  margin-top: 0.6rem;
+}
+
+.wrap-cells table.data td {
+  white-space: normal;
+  min-width: 7rem;
+}
+
+.wrap-cells table.data td:last-child {
+  min-width: 16rem;
+}
+
+/* ---------- collapsible frontmattered documents (inbox messages, ideas) --- */
+
+details.msg {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+}
+
+details.msg + details.msg {
+  margin-top: 0.6rem;
+}
+
+details.msg summary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 500;
+}
+
+details.msg summary::-webkit-details-marker {
+  display: none;
+}
+
+details.msg summary::before {
+  content: "\25B8"; /* ▸ */
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+}
+
+details.msg[open] summary::before {
+  content: "\25BE"; /* ▾ */
+}
+
+details.msg .msg-meta {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 400;
+  margin-left: auto;
+}
+
+details.msg .msg-body {
+  padding: 0.5rem 0.9rem 1rem;
+  border-top: 1px solid var(--border);
+}
+
+details.msg .msg-body .prose {
+  margin-top: 0.6rem;
+}
+
+/* ---------- form controls (shadcn input look) ---------- */
+
+select {
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+  padding: 0.4rem 0.6rem;
+  max-width: 100%;
+}
+
+.chart-controls {
+  margin-bottom: 0.75rem;
+}
+
+/* ---------- flat link lists (wiki pages) ---------- */
+
+.link-list {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.link-list li {
+  margin: 0.3rem 0;
+}
+
+.link-list a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* ---------- empty states & notes ---------- */
 /* Uniform 1px borders, uniform radius on all corners — never a single-side
    accent bar or asymmetric rounding (matches shadcn "muted" boxes). */

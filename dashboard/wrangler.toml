@@ -12,5 +12,17 @@ compatibility_date = "2026-07-01"
 [build]
 command = "worker-build --release || worker-build --release --no-opt"
 
+# Snapshots page reads hourly book snapshots + config/watchlist.json from the
+# same bucket the snapshot worker writes to.
+[[r2_buckets]]
+binding = "ORAKEL"
+bucket_name = "orakel"
+
+# Secrets (set via `npx wrangler secret put`, never in this file):
+#   GITHUB_TOKEN — fine-grained PAT, read-only contents access to
+#                  felix-andreas/orakel; enables live repo reads. Without it
+#                  the dashboard falls back to the build-time embedded snapshot
+#                  (pages show a "stale" notice).
+
 [observability]
 enabled = true

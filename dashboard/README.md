@@ -19,22 +19,35 @@ shadcn-quality UI, not a particular toolchain. Layout philosophy: mostly flat co
 under section headings with generous whitespace; cards only where boxed grouping earns
 its border (see `section`/`subsection` vs `card` in `render.rs`).
 
-## v1 skeleton: data is embedded at BUILD TIME
+## v2: LIVE data, embedded fallback
 
-**Caveat:** this version does not fetch anything at runtime. Repo files are baked into the
-wasm binary via `include_str!` — every deploy is a snapshot of the repo at build time, and
-the dashboard goes stale until the next deploy. That is deliberate for the skeleton: the
-CEO deploys after each run anyway, so the snapshot tracks the daily cadence.
+Primary data path is live at request time:
 
-Embedded files (paths are relative to `src/lib.rs`, so `../../ops/...` — specific known
-files only, never globs):
+- **GitHub API** (`src/live.rs`): file bodies via the Contents API
+  (`Accept: application/vnd.github.raw+json`), all directory listings (runs, inboxes,
+  wiki, ideas) derived from ONE recursive Trees API call. Responses cached ~60s in the
+  Workers Cache API keyed on the API URL (404s cached too), so a click-around costs a
+  handful of GitHub requests. Requires the `GITHUB_TOKEN` Worker secret (fine-grained
+  PAT, read-only contents on felix-andreas/orakel). **Without the secret, or when a
+  fetch fails, pages fall back to the build-time embedded snapshot below and show a
+  "stale" badge notice** — the dashboard never errors out over GitHub.
+- **R2 binding `ORAKEL`** (`src/snapshots.rs`): the Snapshots page reads the snapshot
+  worker's hourly `snapshots/books/<YYYY-MM-DD>/<HH>.json.gz` objects. Binding gets can
+  return the stored gzipped bytes verbatim (the `content_encoding=gzip` metadata is
+  HTTP-layer only), so bytes are sniffed for the 0x1f,0x8b magic and gunzipped when
+  present (flate2 rust_backend). Per-market midpoint series are served from
+  `/snapshots/data/<date>/<slug>.json` (Cache API, 5 min).
+
+Embedded fallback files (paths are relative to `src/lib.rs`, so `../../ops/...` —
+specific known files only, never globs):
 
 | Page | Source files |
 |------|-------------|
 | `/` Operations | `ops/state.toml` (parsed with `toml`), `ops/decisions.md`, `ops/runs/README.md` |
 | `/predictions` | `predictions/predictions.csv`, `predictions/resolutions.csv`, `predictions/scores.csv` (optional, see below) |
-| `/inboxes` | `roles/{ceo,felix,market-researcher}/inbox/README.md` |
-| `/wiki` | `wiki/index.md` |
+| `/inboxes` | `roles/{ceo,felix,market-researcher}/inbox/README.md` (live: every `roles/*/inbox/*.md` message, frontmatter `status` as badge) |
+| `/wiki` | `wiki/index.md` (live: + page listing; `/wiki?page=<path>` renders any wiki page) |
+| `/snapshots` | no embedded fallback — R2 only (empty state when unavailable) |
 | `/dev` | none — playground page; charts fetch `/dev/data/*.json` |
 | `/dev/data/line.json`, `/dev/data/bar.json` | generated in `src/lib.rs` — deterministic example series (fixed-seed LCG, fixed start timestamp; never `Date::now`) |
 | `/style.css` | `src/style.css` |
@@ -49,17 +62,12 @@ messages are **not** embedded (that would be a glob); the pages render a note in
 The build timestamp in the footer is a compile-time constant emitted by `build.rs`
 (`BUILD_TIMESTAMP`) — never `Date::now()` at runtime.
 
-### Planned v2: live data
+### Still planned (v3+)
 
-Replace the embedded snapshot with runtime reads, keeping the same pages:
-
-- **GitHub API** (server-side `fetch` + Workers cache) for markdown/TOML/CSV — needs
-  `GITHUB_TOKEN` as a Worker secret; enables run manifests, inbox messages, and full wiki
-  browsing without redeploys.
-- **R2 binding** (native, no credentials in code) on bucket `orakel` for big data:
-  dataset snapshots, backtest outputs.
-- Live Polymarket prices server-side; htmx partial swaps + ECharts for track-record
-  charts.
+- Live Polymarket prices server-side (beyond the hourly R2 snapshots).
+- Track-record charts on /predictions once scores.csv exists (framework ready:
+  `charts.js`).
+- R2-backed backtest browsing (dataset manifests → tables/charts).
 
 ## Build
 
@@ -107,6 +115,13 @@ CLOUDFLARE_API_TOKEN=... npx wrangler deploy
 
 - The token needs the *Edit Cloudflare Workers* permission template. It is **not** in the
   repo; presence is tracked in `ops/state.toml` `[secrets]`.
+- **Live repo reads need the `GITHUB_TOKEN` Worker secret** (fine-grained PAT, read-only
+  *Contents* on felix-andreas/orakel):
+  `npx wrangler secret put GITHUB_TOKEN`. Until it is set, pages serve the embedded
+  build-time snapshot with a "stale" notice. NB: agent sessions cannot verify a PAT —
+  the session proxy answers `api.github.com` with its own 403 ("GitHub access is not
+  enabled for this session"), so test the token from the deployed Worker or locally
+  outside a session.
 - `wrangler.toml` runs `worker-build` as the build command, so `npx wrangler deploy` is
   the whole pipeline (wrangler is fetched by npx, no `package.json` needed).
 - First deploy prints the `*.workers.dev` URL.

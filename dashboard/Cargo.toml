@@ -12,6 +12,10 @@ crate-type = ["cdylib"]
 worker = "0.8"
 toml = "1"
 pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
+serde_json = "1"
+# rust_backend (miniz_oxide) = pure Rust, compiles for wasm32-unknown-unknown.
+# Used to gunzip R2 snapshot objects (same dep/features as workers/snapshot).
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 
 # NOTE: no `strip = true` here — stripping removes the wasm `target_features`
 # custom section, which makes wasm-bindgen disable its externref pass and fail
