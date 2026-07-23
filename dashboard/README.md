@@ -2,13 +2,24 @@
 
 The human window into the firm (ARCHITECTURE.md §7): a Rust Cloudflare Worker
 ([workers-rs](https://github.com/cloudflare/workers-rs)) that server-renders the repo's
-state as HTML. No external assets, and the core pages are JS-free: plain `<a>`
-navigation, CSS-only tabs (hidden radio inputs + labels wired by `nth-of-type` pair
-rules; `tabs` helper in `render.rs`) and a CSS-only burger menu on mobile (checkbox
-hack). The `/dev` page is the one exception: it loads `/charts.js`, our hand-rolled
+state as HTML. No external assets. Navigation is plain `<a>` **sub-pages** grouped in a
+sidebar (`NAV` + `sidebar_nav` in `render.rs`): what used to be in-page tabs are now
+their own routes (`/`, `/decisions`, `/runs`, `/ideas`; `/predictions`, `/resolutions`,
+`/scores`; `/dev`, `/dev/endpoints`). Groups with several pages fold/unfold as native
+`<details>` disclosures; a tiny inline localStorage helper (`NAV_PERSIST_JS`) remembers
+which groups the viewer collapsed (the group holding the current page always stays open,
+and folding works without JS). A CSS-only burger menu handles mobile (checkbox hack). The
+chart pages are the other scripted exception: they load `/charts.js`, our hand-rolled
 dependency-free SVG chart framework (`Chart.line` / `Chart.bar`, brush-zoom, tooltips,
 ResizeObserver responsiveness, colors read from the CSS tokens at render time). It is
 served by the Worker like `style.css` — still no external assets, no build step.
+
+Pages: **Operations** (State `/`, Decisions, Runs, Ideas), **Strategies** (family →
+variant catalogue `/strategies` + per-variant detail `/strategies/<family>/<variant>`),
+**Predictions** (Log, Resolutions, Scores), **Snapshots**, **Inboxes**, **Wiki**,
+**Development** (Charts, Endpoints). Market slugs render as links to
+`polymarket.com/event/<slug>` wherever they appear (the `market_slug`/`market` columns in
+`csv_table`, and each variant's applications).
 
 Styling is hand-written CSS at shadcn/ui (v4, zinc) fidelity, responsive down to phone
 widths. Tailwind was considered and deliberately skipped: the build is pure
@@ -43,12 +54,16 @@ specific known files only, never globs):
 
 | Page | Source files |
 |------|-------------|
-| `/` Operations | `ops/state.toml` (parsed with `toml`), `ops/decisions.md`, `ops/runs/README.md` |
-| `/predictions` | `predictions/predictions.csv`, `predictions/resolutions.csv`, `predictions/scores.csv` (optional, see below) |
+| `/` State | `ops/state.toml` (parsed with `toml`) |
+| `/decisions` | `ops/decisions.md` |
+| `/runs` | `ops/runs/README.md` (live: run manifests listed from the tree) |
+| `/ideas` | none — tree-API only (ideas listed live; note on fallback) |
+| `/strategies`, `/strategies/<family>/<variant>` | none — tree-API only (variant catalogue + detail derived live; note on fallback) |
+| `/predictions`, `/resolutions`, `/scores` | `predictions/predictions.csv`, `predictions/resolutions.csv`, `predictions/scores.csv` (optional, see below) |
 | `/inboxes` | `roles/{ceo,felix,market-researcher}/inbox/README.md` (live: every `roles/*/inbox/*.md` message, frontmatter `status` as badge) |
 | `/wiki` | `wiki/index.md` (live: + page listing; `/wiki?page=<path>` renders any wiki page) |
 | `/snapshots` | no embedded fallback — R2 only (empty state when unavailable) |
-| `/dev` | none — playground page; charts fetch `/dev/data/*.json` |
+| `/dev`, `/dev/endpoints` | none — playground page; charts fetch `/dev/data/*.json` |
 | `/dev/data/line.json`, `/dev/data/bar.json` | generated in `src/lib.rs` — deterministic example series (fixed-seed LCG, fixed start timestamp; never `Date::now`) |
 | `/style.css` | `src/style.css` |
 | `/charts.js` | `src/charts.js` |
@@ -152,8 +167,8 @@ dashboard/
 ├── build.rs            # BUILD_TIMESTAMP + optional-file staging (scores.csv)
 └── src/
     ├── lib.rs          # router + pages + embedded data + /dev example data
-    ├── render.rs       # esc/layout/section/card/tabs/table/markdown helpers (format!-based)
-    ├── style.css       # shadcn v4 tokens (zinc, dark mode), tabs + burger, chart tokens
+    ├── render.rs       # esc/layout/sidebar_nav/section/card/breadcrumb/table/markdown helpers (format!-based)
+    ├── style.css       # shadcn v4 tokens (zinc, dark mode), nav groups + burger, chart tokens
     ├── charts.js       # dependency-free SVG chart framework (Chart.line/Chart.bar)
     └── favicon.svg     # sea-shell icon, light/dark aware
 ```

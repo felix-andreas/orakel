@@ -6,17 +6,19 @@
 //! FALLBACK: no GITHUB_TOKEN secret or a failed fetch → pages render the
 //! embedded data with a "stale" notice, never an error page.
 //!
-//! No external assets; core pages are JS-free (plain <a> navigation,
-//! CSS-only tabs and burger menu). /dev and /snapshots load /charts.js, our
-//! hand-rolled dependency-free chart framework.
+//! No external assets. Navigation is plain <a> sub-pages in a grouped sidebar;
+//! the only scripting is a tiny localStorage helper that remembers which nav
+//! groups are folded (native <details> folds without it) and a CSS-only burger
+//! menu on mobile. /dev and /snapshots load /charts.js, our hand-rolled
+//! dependency-free chart framework.
 
 mod live;
 mod render;
 mod snapshots;
 
 use render::{
-    badge, badge_row, card, chip_row, csv_table, empty_state, esc, file_ref, kv, layout, markdown,
-    note, parse_csv, section, subsection, tabs,
+    badge, badge_row, breadcrumb, card, chip_row, csv_table, empty_state, esc, ext_link, file_ref,
+    kv, layout, markdown, market_url, note, parse_csv, section, subsection,
 };
 use serde_json::Value;
 use worker::{event, Context, Env, Headers, Request, Response, Result, Router};
@@ -61,10 +63,33 @@ fn static_response(body: &str, content_type: &str) -> Result<Response> {
 async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     Router::new()
         .get_async("/", |_, ctx| async move {
-            Response::from_html(page_operations(&ctx.env).await)
+            Response::from_html(page_ops_state(&ctx.env).await)
+        })
+        .get_async("/decisions", |_, ctx| async move {
+            Response::from_html(page_ops_decisions(&ctx.env).await)
+        })
+        .get_async("/runs", |_, ctx| async move {
+            Response::from_html(page_ops_runs(&ctx.env).await)
+        })
+        .get_async("/ideas", |_, ctx| async move {
+            Response::from_html(page_ops_ideas(&ctx.env).await)
+        })
+        .get_async("/strategies", |_, ctx| async move {
+            Response::from_html(page_strategies(&ctx.env).await)
+        })
+        .get_async("/strategies/:family/:variant", |_, ctx| async move {
+            let family = ctx.param("family").cloned().unwrap_or_default();
+            let variant = ctx.param("variant").cloned().unwrap_or_default();
+            Response::from_html(page_strategy_detail(&ctx.env, &family, &variant).await)
         })
         .get_async("/predictions", |_, ctx| async move {
             Response::from_html(page_predictions(&ctx.env).await)
+        })
+        .get_async("/resolutions", |_, ctx| async move {
+            Response::from_html(page_resolutions(&ctx.env).await)
+        })
+        .get_async("/scores", |_, ctx| async move {
+            Response::from_html(page_scores(&ctx.env).await)
         })
         .get_async("/snapshots", |_, ctx| async move {
             Response::from_html(page_snapshots(&ctx.env).await)
@@ -90,6 +115,9 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             Response::from_html(page_wiki(&ctx.env, page).await)
         })
         .get("/dev", |_, _| Response::from_html(page_dev()))
+        .get("/dev/endpoints", |_, _| {
+            Response::from_html(page_dev_endpoints())
+        })
         .get("/dev/data/line.json", |_, _| {
             static_response(&dev_line_json(), "application/json; charset=utf-8")
         })
@@ -123,15 +151,11 @@ fn stale_notice() -> String {
 // Pages
 // ---------------------------------------------------------------------------
 
-async fn page_operations(env: &Env) -> String {
+async fn page_ops_state(env: &Env) -> String {
     let state = live::repo_text(env, "ops/state.toml", STATE_TOML).await;
-    let decisions = live::repo_text(env, "ops/decisions.md", DECISIONS_MD).await;
-    let runs_readme = live::repo_text(env, "ops/runs/README.md", RUNS_README_MD).await;
-    let tree = live::repo_tree(env).await;
-    let mut all_live = state.live && decisions.live && runs_readme.live && tree.is_some();
 
-    // State tab — parse whichever text we have (live or embedded). NB: parse
-    // as toml::Table, a document (toml::Value::from_str rejects documents).
+    // Parse whichever text we have (live or embedded). NB: parse as
+    // toml::Table, a document (toml::Value::from_str rejects documents).
     let state_html = match state.text.parse::<toml::Table>() {
         Ok(t) => state_sections(&t),
         Err(e) => empty_state(
@@ -140,13 +164,38 @@ async fn page_operations(env: &Env) -> String {
         ),
     };
 
-    let decisions_html = file_ref(
+    let notice = if state.live { String::new() } else { stale_notice() };
+    layout(
+        "/",
+        "State",
+        "The canonical current operating state of the firm — ops/state.toml.",
+        &format!("{notice}{state_html}"),
+        BUILD_TIMESTAMP,
+    )
+}
+
+async fn page_ops_decisions(env: &Env) -> String {
+    let decisions = live::repo_text(env, "ops/decisions.md", DECISIONS_MD).await;
+    let body = file_ref(
         "ops/decisions.md",
         "Append-only. Every structural change: what, why, who. Newest first.",
     ) + &format!("<div class=\"prose\">{}</div>", markdown(&decisions.text));
+    let notice = if decisions.live { String::new() } else { stale_notice() };
+    layout(
+        "/decisions",
+        "Decisions",
+        "The append-only decision log — every structural change to the firm.",
+        &format!("{notice}{body}"),
+        BUILD_TIMESTAMP,
+    )
+}
 
-    // Runs tab — manifests listed live from the tree, newest first.
-    let mut runs_html = String::new();
+async fn page_ops_runs(env: &Env) -> String {
+    let runs_readme = live::repo_text(env, "ops/runs/README.md", RUNS_README_MD).await;
+    let tree = live::repo_tree(env).await;
+    let mut all_live = runs_readme.live && tree.is_some();
+
+    let mut body = String::new();
     match &tree {
         Some(paths) => {
             let mut manifests: Vec<&String> = paths
@@ -165,7 +214,7 @@ async fn page_operations(env: &Env) -> String {
             });
             manifests.reverse();
             if manifests.is_empty() {
-                runs_html.push_str(&empty_state(
+                body.push_str(&empty_state(
                     "No run manifests yet",
                     "<div>ops/runs/ contains no <span class=\"mono\">&lt;YYYY-MM-DD&gt;.toml</span> manifests. The CEO writes one per orchestrated run.</div>",
                 ));
@@ -174,24 +223,37 @@ async fn page_operations(env: &Env) -> String {
                 let m = live::repo_text(env, path, "").await;
                 all_live &= m.live;
                 let stem = path.trim_start_matches("ops/runs/").trim_end_matches(".toml");
-                runs_html.push_str(&section(stem, &run_manifest_html(&m.text)));
+                body.push_str(&section(stem, &run_manifest_html(&m.text)));
             }
         }
         None => {
-            runs_html.push_str(&empty_state(
+            body.push_str(&empty_state(
                 "Run listing unavailable",
                 "<div>Live listing of <span class=\"mono\">ops/runs/</span> needs the GitHub tree API; manifests are not embedded at build time.</div>",
             ));
         }
     }
-    runs_html.push_str(&file_ref("ops/runs/README.md", "Manifest format reference."));
-    runs_html.push_str(&format!(
+    body.push_str(&file_ref("ops/runs/README.md", "Manifest format reference."));
+    body.push_str(&format!(
         "<div class=\"prose\">{}</div>",
         markdown(&runs_readme.text)
     ));
 
-    // Ideas tab — the market researcher's backlog, newest first.
-    let mut ideas_html = String::new();
+    let notice = if all_live { String::new() } else { stale_notice() };
+    layout(
+        "/runs",
+        "Runs",
+        "Orchestrated-run manifests — one per CEO run, newest first.",
+        &format!("{notice}{body}"),
+        BUILD_TIMESTAMP,
+    )
+}
+
+async fn page_ops_ideas(env: &Env) -> String {
+    let tree = live::repo_tree(env).await;
+    let mut all_live = tree.is_some();
+
+    let mut body = String::new();
     match &tree {
         Some(paths) => {
             let mut files: Vec<&String> = paths
@@ -206,7 +268,7 @@ async fn page_operations(env: &Env) -> String {
             files.sort();
             files.reverse();
             if files.is_empty() {
-                ideas_html.push_str(
+                body.push_str(
                     "<p class=\"muted-line\">No ideas filed yet — the market researcher writes one per run.</p>",
                 );
             }
@@ -214,32 +276,22 @@ async fn page_operations(env: &Env) -> String {
                 let f = live::repo_text(env, path, "").await;
                 all_live &= f.live;
                 let name = path.trim_start_matches("ideas/");
-                ideas_html.push_str(&message_html(name, &f.text));
+                body.push_str(&message_html(name, &f.text));
             }
         }
         None => {
-            ideas_html.push_str(&empty_state(
+            body.push_str(&empty_state(
                 "Ideas listing unavailable",
                 "<div>Live listing of <span class=\"mono\">ideas/</span> needs the GitHub tree API; idea files are not embedded at build time.</div>",
             ));
         }
     }
 
-    let body = tabs(
-        "ops",
-        &[
-            ("State", state_html),
-            ("Decisions", decisions_html),
-            ("Runs", runs_html),
-            ("Ideas", ideas_html),
-        ],
-    );
     let notice = if all_live { String::new() } else { stale_notice() };
-
     layout(
-        "/",
-        "Operations",
-        "Current operating state (ops/state.toml), decision log, run manifests, and the ideas backlog.",
+        "/ideas",
+        "Ideas",
+        "The market researcher's backlog — one strategy idea per run, newest first.",
         &format!("{notice}{body}"),
         BUILD_TIMESTAMP,
     )
@@ -247,14 +299,9 @@ async fn page_operations(env: &Env) -> String {
 
 async fn page_predictions(env: &Env) -> String {
     let predictions = live::repo_text(env, "predictions/predictions.csv", PREDICTIONS_CSV).await;
-    let resolutions = live::repo_text(env, "predictions/resolutions.csv", RESOLUTIONS_CSV).await;
-    // scores.csv may not exist yet in the repo — a live 404 renders the empty
-    // state, the embedded placeholder does the same on fallback.
-    let scores = live::repo_text(env, "predictions/scores.csv", SCORES_CSV).await;
-    let all_live = predictions.live && resolutions.live && scores.live;
 
     let rows = parse_csv(&predictions.text);
-    let predictions_html = if rows.len() <= 1 {
+    let body = if rows.len() <= 1 {
         let header = rows.first().cloned().unwrap_or_default();
         empty_state(
             "No predictions yet",
@@ -266,15 +313,27 @@ async fn page_predictions(env: &Env) -> String {
     } else {
         let n = rows.len() - 1;
         format!(
-            "<p class=\"page-desc\" style=\"margin:0\">{} prediction{}</p>{}",
+            "<p class=\"muted-line\">{} prediction{} · market slugs link to Polymarket.</p>{}",
             n,
             if n == 1 { "" } else { "s" },
             csv_table(&rows)
         )
     };
 
+    let notice = if predictions.live { String::new() } else { stale_notice() };
+    layout(
+        "/predictions",
+        "Prediction log",
+        "The canonical append-only prediction log — predictions/predictions.csv.",
+        &format!("{notice}{body}"),
+        BUILD_TIMESTAMP,
+    )
+}
+
+async fn page_resolutions(env: &Env) -> String {
+    let resolutions = live::repo_text(env, "predictions/resolutions.csv", RESOLUTIONS_CSV).await;
     let res_rows = parse_csv(&resolutions.text);
-    let resolutions_html = if res_rows.len() <= 1 {
+    let body = if res_rows.len() <= 1 {
         let header = res_rows.first().cloned().unwrap_or_default();
         empty_state(
             "No resolutions yet",
@@ -286,9 +345,22 @@ async fn page_predictions(env: &Env) -> String {
     } else {
         csv_table(&res_rows)
     };
+    let notice = if resolutions.live { String::new() } else { stale_notice() };
+    layout(
+        "/resolutions",
+        "Resolutions",
+        "Market resolutions — appended by the CEO when a market settles.",
+        &format!("{notice}{body}"),
+        BUILD_TIMESTAMP,
+    )
+}
 
+async fn page_scores(env: &Env) -> String {
+    // scores.csv may not exist yet in the repo — a live 404 renders the empty
+    // state, the embedded placeholder does the same on fallback.
+    let scores = live::repo_text(env, "predictions/scores.csv", SCORES_CSV).await;
     let score_rows = parse_csv(&scores.text);
-    let scores_html = if score_rows.len() <= 1 {
+    let body = if score_rows.len() <= 1 {
         empty_state(
             "No scores yet",
             "<div>predictions/scores.csv has not been generated — <span class=\"mono\">scoring/</span> runs once the first predictions resolve.</div>",
@@ -296,21 +368,11 @@ async fn page_predictions(env: &Env) -> String {
     } else {
         csv_table(&score_rows)
     };
-
-    let body = tabs(
-        "predictions",
-        &[
-            ("Predictions", predictions_html),
-            ("Resolutions", resolutions_html),
-            ("Scores", scores_html),
-        ],
-    );
-    let notice = if all_live { String::new() } else { stale_notice() };
-
+    let notice = if scores.live { String::new() } else { stale_notice() };
     layout(
-        "/predictions",
-        "Predictions",
-        "The canonical append-only prediction log, resolutions, and scoring aggregates.",
+        "/scores",
+        "Scores",
+        "Scoring aggregates — Brier and calibration by application, variant, and family.",
         &format!("{notice}{body}"),
         BUILD_TIMESTAMP,
     )
@@ -588,6 +650,507 @@ async fn page_wiki(env: &Env, page: Option<String>) -> String {
         "/wiki",
         "Wiki",
         "Index of the firm's knowledge base.",
+        &format!("{notice}{body}"),
+        BUILD_TIMESTAMP,
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Strategies — family → variant catalogue (list) and variant detail
+// ---------------------------------------------------------------------------
+
+const GH_REPO: &str = "felix-andreas/orakel";
+
+fn gh_blob(path: &str) -> String {
+    format!("https://github.com/{GH_REPO}/blob/main/{path}")
+}
+
+fn gh_tree(path: &str) -> String {
+    format!("https://github.com/{GH_REPO}/tree/main/{path}")
+}
+
+/// A single path segment is safe to interpolate into a repo path / URL when it
+/// is a plain slug (no traversal, no slashes). Guards the :family/:variant route.
+fn safe_segment(s: &str) -> bool {
+    !s.is_empty()
+        && s.len() <= 100
+        && !s.contains("..")
+        && s.chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.'))
+}
+
+/// First real paragraph of a markdown doc (skips a leading `# heading` and
+/// blank lines), collapsed to one line. Used for family blurbs.
+fn first_paragraph(md: &str) -> String {
+    let mut para: Vec<&str> = Vec::new();
+    for line in md.lines() {
+        let t = line.trim();
+        if para.is_empty() && (t.is_empty() || t.starts_with('#')) {
+            continue;
+        }
+        if t.is_empty() {
+            break;
+        }
+        para.push(t);
+    }
+    para.join(" ")
+}
+
+struct VariantRow {
+    family: String,
+    variant: String,
+    status: String,
+    created: String,
+    labels: Vec<String>,
+    apps: usize,
+}
+
+/// Count a variant's live/parked applications from the tree (application tomls
+/// under applications/, excluding the `_market.toml` template).
+fn count_apps(paths: &[String], family: &str, variant: &str) -> usize {
+    let prefix = format!("strategies/{family}/{variant}/applications/");
+    paths
+        .iter()
+        .filter(|p| {
+            p.starts_with(&prefix)
+                && p.ends_with(".toml")
+                && !p.ends_with("/_market.toml")
+                && p[prefix.len()..].matches('/').count() == 0
+        })
+        .count()
+}
+
+async fn page_strategies(env: &Env) -> String {
+    let tree = live::repo_tree(env).await;
+    let Some(paths) = tree else {
+        let body = stale_notice()
+            + &empty_state(
+                "Strategy listing unavailable",
+                "<div>Live listing of <span class=\"mono\">strategies/</span> needs the GitHub tree API; strategy files are not embedded at build time.</div>",
+            );
+        return layout(
+            "/strategies",
+            "Strategies",
+            "The firm's strategy catalogue — families and their variants.",
+            &body,
+            BUILD_TIMESTAMP,
+        );
+    };
+
+    // Discover variants: strategies/<family>/<variant>/strategy.toml (skip the
+    // _template scaffold).
+    let mut variants: Vec<(String, String)> = Vec::new();
+    for p in &paths {
+        let Some(rest) = p.strip_prefix("strategies/") else {
+            continue;
+        };
+        let parts: Vec<&str> = rest.split('/').collect();
+        if parts.len() == 3 && parts[2] == "strategy.toml" && parts[0] != "_template" {
+            variants.push((parts[0].to_string(), parts[1].to_string()));
+        }
+    }
+    variants.sort();
+
+    let mut all_live = true;
+    let mut rows: Vec<VariantRow> = Vec::new();
+    for (family, variant) in &variants {
+        let f = live::repo_text(
+            env,
+            &format!("strategies/{family}/{variant}/strategy.toml"),
+            "",
+        )
+        .await;
+        all_live &= f.live;
+        let t = f.text.parse::<toml::Table>().unwrap_or_default();
+        rows.push(VariantRow {
+            family: family.clone(),
+            variant: variant.clone(),
+            status: t
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("?")
+                .to_string(),
+            created: t
+                .get("created")
+                .and_then(|v| v.as_str())
+                .unwrap_or("?")
+                .to_string(),
+            labels: t
+                .get("labels")
+                .and_then(|v| v.as_array())
+                .map(|a| {
+                    a.iter()
+                        .filter_map(|x| x.as_str().map(str::to_string))
+                        .collect()
+                })
+                .unwrap_or_default(),
+            apps: count_apps(&paths, family, variant),
+        });
+    }
+
+    // Headline stats: families, variants, and status breakdown.
+    let families: Vec<String> = {
+        let mut fs: Vec<String> = rows.iter().map(|r| r.family.clone()).collect();
+        fs.sort();
+        fs.dedup();
+        fs
+    };
+    let count = |st: &str| rows.iter().filter(|r| r.status == st).count();
+    let stats = format!(
+        "<div class=\"stats\">{}{}{}{}</div>",
+        stat("families", &families.len().to_string()),
+        stat("variants", &rows.len().to_string()),
+        stat("live", &format!("{}", count("live"))),
+        stat(
+            "in trial",
+            &format!("{}<small> / {} retired</small>", count("trial"), count("retired")),
+        ),
+    );
+
+    let mut body = stats;
+    if rows.is_empty() {
+        body.push_str(&empty_state(
+            "No strategies yet",
+            "<div>No variants under <span class=\"mono\">strategies/</span>. The CEO fills research slots from the ideas backlog.</div>",
+        ));
+    }
+
+    for family in &families {
+        let fam_md = live::repo_text(env, &format!("strategies/{family}/FAMILY.md"), "").await;
+        all_live &= fam_md.live;
+        let blurb = first_paragraph(&fam_md.text);
+        let blurb_html = if blurb.is_empty() {
+            String::new()
+        } else {
+            format!("<p class=\"strat-family-blurb\">{}</p>", esc(&blurb))
+        };
+        let header = format!(
+            "<div class=\"strat-family-head\"><h2 class=\"section-title\">{}</h2>{}</div>{}",
+            esc(family),
+            ext_link(&gh_blob(&format!("strategies/{family}/FAMILY.md")), "FAMILY.md"),
+            blurb_html,
+        );
+
+        let mut cards = String::new();
+        for r in rows.iter().filter(|r| &r.family == family) {
+            cards.push_str(&strategy_card(r));
+        }
+
+        body.push_str(&format!(
+            "<section class=\"section strat-family\">{header}<div class=\"strat-grid\">{cards}</div></section>"
+        ));
+    }
+
+    body.push_str(&note(
+        "Variants live under <span class=\"mono\">strategies/&lt;family&gt;/&lt;variant&gt;/</span>; the catalogue is derived live from the repo tree.",
+    ));
+
+    let notice = if all_live { String::new() } else { stale_notice() };
+    layout(
+        "/strategies",
+        "Strategies",
+        "The firm's strategy catalogue — families and their variants.",
+        &format!("{notice}{body}"),
+        BUILD_TIMESTAMP,
+    )
+}
+
+/// One variant as a clickable card linking to its detail page.
+fn strategy_card(r: &VariantRow) -> String {
+    let tone = match r.status.as_str() {
+        "live" => "ok",
+        "trial" => "warn",
+        "retired" => "bad",
+        _ => "",
+    };
+    let labels = if r.labels.is_empty() {
+        String::new()
+    } else {
+        format!(
+            "<div class=\"strat-labels\">{}</div>",
+            r.labels
+                .iter()
+                .map(|l| format!("<span class=\"chip\">{}</span>", esc(l)))
+                .collect::<String>()
+        )
+    };
+    format!(
+        "<a class=\"strat-card\" href=\"/strategies/{fam}/{var}\"><div class=\"strat-card-head\"><span class=\"strat-card-title\">{var_esc}</span>{badge}</div><div class=\"strat-card-meta\">created {created} · {apps} application{plural}</div>{labels}</a>",
+        fam = esc(&r.family),
+        var = esc(&r.variant),
+        var_esc = esc(&r.variant),
+        badge = badge(&r.status, tone),
+        created = esc(&r.created),
+        apps = r.apps,
+        plural = if r.apps == 1 { "" } else { "s" },
+        labels = labels,
+    )
+}
+
+async fn page_strategy_detail(env: &Env, family: &str, variant: &str) -> String {
+    let crumbs = breadcrumb(&[
+        ("/strategies", "Strategies"),
+        ("", family),
+        ("", variant),
+    ]);
+
+    if !safe_segment(family) || !safe_segment(variant) {
+        return layout(
+            "/strategies",
+            "Strategy",
+            "",
+            &(crumbs + &empty_state("Bad strategy path", "")),
+            BUILD_TIMESTAMP,
+        );
+    }
+
+    let prefix = format!("strategies/{family}/{variant}");
+    let toml_f = live::repo_text(env, &format!("{prefix}/strategy.toml"), "").await;
+
+    if !toml_f.live && toml_f.text.is_empty() {
+        return layout(
+            "/strategies",
+            "Strategy",
+            "",
+            &format!(
+                "{}{}{}",
+                stale_notice(),
+                crumbs,
+                empty_state(
+                    "Live fetch unavailable",
+                    "<div>Individual strategy files are not embedded at build time.</div>",
+                )
+            ),
+            BUILD_TIMESTAMP,
+        );
+    }
+    if toml_f.text.is_empty() {
+        return layout(
+            "/strategies",
+            "Strategy",
+            "",
+            &(crumbs + &empty_state("Strategy not found", &format!("<div class=\"mono\">{}</div>", esc(&prefix)))),
+            BUILD_TIMESTAMP,
+        );
+    }
+
+    let meta = toml_f.text.parse::<toml::Table>().unwrap_or_default();
+    let status = meta.get("status").and_then(|v| v.as_str()).unwrap_or("?");
+    let created = meta.get("created").and_then(|v| v.as_str()).unwrap_or("?");
+    let supersedes = meta
+        .get("supersedes")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let labels: Vec<String> = meta
+        .get("labels")
+        .and_then(|v| v.as_array())
+        .map(|a| {
+            a.iter()
+                .filter_map(|x| x.as_str().map(str::to_string))
+                .collect()
+        })
+        .unwrap_or_default();
+    let status_tone = match status {
+        "live" => "ok",
+        "trial" => "warn",
+        "retired" => "bad",
+        _ => "",
+    };
+
+    // Stat strip: status, created, and trial/slot context when present.
+    let mut stat_cells = format!(
+        "{}{}",
+        stat("status", &badge(status, status_tone)),
+        stat("created", &format!("<span class=\"mono\">{}</span>", esc(created))),
+    );
+    if let Some(trial) = meta.get("trial").and_then(|v| v.as_table()) {
+        if let Some(slot) = trial.get("slot").and_then(|v| v.as_integer()) {
+            if slot > 0 {
+                stat_cells.push_str(&stat("slot", &slot.to_string()));
+            }
+        }
+        if let Some(due) = trial.get("review_due").and_then(|v| v.as_str()) {
+            stat_cells.push_str(&stat(
+                "review due",
+                &format!("<span class=\"mono\">{}</span>", esc(due)),
+            ));
+        }
+    }
+    let stats = format!("<div class=\"stats\">{stat_cells}</div>");
+
+    let mut body = format!("{crumbs}{stats}");
+
+    if !labels.is_empty() {
+        body.push_str(&format!(
+            "<div class=\"badge-row strat-detail-labels\">{}</div>",
+            labels
+                .iter()
+                .map(|l| format!("<span class=\"chip\">{}</span>", esc(l)))
+                .collect::<String>()
+        ));
+    }
+    if !supersedes.is_empty() {
+        body.push_str(&note(&format!(
+            "Supersedes <span class=\"mono\">{}</span>.",
+            esc(supersedes)
+        )));
+    }
+
+    // Retirement note, if any.
+    if let Some(ret) = meta.get("retirement").and_then(|v| v.as_table()) {
+        let date = ret.get("date").and_then(|v| v.as_str()).unwrap_or("?");
+        let reason = ret.get("reason").and_then(|v| v.as_str()).unwrap_or("");
+        body.push_str(&section(
+            "Retirement",
+            &format!(
+                "{}<p>{}</p>",
+                kv("date", &format!("<span class=\"mono\">{}</span>", esc(date))),
+                esc(reason)
+            ),
+        ));
+    }
+
+    // Overview — STRATEGY.md rendered.
+    let strat_md = live::repo_text(env, &format!("{prefix}/STRATEGY.md"), "").await;
+    let mut all_live = toml_f.live && strat_md.live;
+    if !strat_md.text.is_empty() {
+        body.push_str(&section(
+            "Overview",
+            &format!(
+                "{}<div class=\"prose\">{}</div>",
+                file_ref(&format!("{prefix}/STRATEGY.md"), ""),
+                markdown(&strat_md.text)
+            ),
+        ));
+    }
+
+    // Applications and results need the tree.
+    let tree = live::repo_tree(env).await;
+    match &tree {
+        Some(paths) => {
+            // Applications
+            let app_prefix = format!("{prefix}/applications/");
+            let mut app_paths: Vec<&String> = paths
+                .iter()
+                .filter(|p| {
+                    p.starts_with(&app_prefix)
+                        && p.ends_with(".toml")
+                        && !p.ends_with("/_market.toml")
+                        && p[app_prefix.len()..].matches('/').count() == 0
+                })
+                .collect();
+            app_paths.sort();
+            let mut app_rows = String::new();
+            for p in &app_paths {
+                let af = live::repo_text(env, p, "").await;
+                all_live &= af.live;
+                let at = af.text.parse::<toml::Table>().unwrap_or_default();
+                let slug = at.get("market_slug").and_then(|v| v.as_str()).unwrap_or("");
+                let active = at.get("active").and_then(|v| v.as_bool());
+                let added = at.get("added").and_then(|v| v.as_str()).unwrap_or("—");
+                let note_txt = at
+                    .get("note")
+                    .and_then(|v| v.as_str())
+                    .or_else(|| {
+                        at.get("params")
+                            .and_then(|p| p.get("note"))
+                            .and_then(|v| v.as_str())
+                    })
+                    .unwrap_or("");
+                let market_cell = if slug.is_empty() {
+                    "<span class=\"muted-line\">—</span>".to_string()
+                } else {
+                    ext_link(&market_url(slug), slug)
+                };
+                let active_cell = match active {
+                    Some(true) => badge("active", "ok"),
+                    Some(false) => badge("parked", "warn"),
+                    None => badge("—", ""),
+                };
+                app_rows.push_str(&format!(
+                    "<tr><td class=\"cell-market\">{}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
+                    market_cell,
+                    active_cell,
+                    esc(added),
+                    esc(note_txt),
+                ));
+            }
+            let apps_html = if app_paths.is_empty() {
+                "<p class=\"muted-line\">No applications yet — a variant with no markets is legal.</p>".to_string()
+            } else {
+                format!(
+                    "<div class=\"table-wrap wrap-cells\"><table class=\"data\"><thead><tr><th>market</th><th>status</th><th>added</th><th>note</th></tr></thead><tbody>{}</tbody></table></div>",
+                    app_rows
+                )
+            };
+            body.push_str(&section("Applications", &apps_html));
+
+            // Results — rendered write-ups (backtests, post-mortems).
+            let res_prefix = format!("{prefix}/results/");
+            let mut res_paths: Vec<&String> = paths
+                .iter()
+                .filter(|p| p.starts_with(&res_prefix) && p.ends_with(".md"))
+                .collect();
+            res_paths.sort();
+            res_paths.reverse();
+            if !res_paths.is_empty() {
+                let mut res_html = String::new();
+                for p in &res_paths {
+                    let rf = live::repo_text(env, p, "").await;
+                    all_live &= rf.live;
+                    let name = p.rsplit('/').next().unwrap_or(p);
+                    res_html.push_str(&format!(
+                        "<details class=\"msg\"><summary><span class=\"msg-title\">{}</span><span class=\"msg-meta\">{}</span></summary><div class=\"msg-body\"><div class=\"prose\">{}</div></div></details>",
+                        esc(name),
+                        ext_link(&gh_blob(p), "GitHub"),
+                        markdown(&rf.text),
+                    ));
+                }
+                body.push_str(&section("Results", &res_html));
+            }
+        }
+        None => {
+            all_live = false;
+            body.push_str(&section(
+                "Applications & results",
+                &empty_state(
+                    "Listing unavailable",
+                    "<div>Live listing of the variant directory needs the GitHub tree API.</div>",
+                ),
+            ));
+        }
+    }
+
+    // Files — jump straight to the source on GitHub.
+    let mut file_links = format!(
+        "<li>{}</li>",
+        ext_link(&gh_tree(&prefix), "variant directory")
+    );
+    for (label, rel) in [
+        ("STRATEGY.md", "STRATEGY.md"),
+        ("strategy.toml", "strategy.toml"),
+        ("memory/MEMORY.md", "memory/MEMORY.md"),
+        ("memory/WORKLOG.md", "memory/WORKLOG.md"),
+    ] {
+        let full = format!("{prefix}/{rel}");
+        if tree
+            .as_ref()
+            .map(|paths| paths.iter().any(|p| p == &full))
+            .unwrap_or(false)
+        {
+            file_links.push_str(&format!("<li>{}</li>", ext_link(&gh_blob(&full), label)));
+        }
+    }
+    body.push_str(&section(
+        "Files",
+        &format!("<ul class=\"link-list\">{file_links}</ul>"),
+    ));
+
+    let notice = if all_live { String::new() } else { stale_notice() };
+    layout(
+        "/strategies",
+        &format!("{family}/{variant}"),
+        "",
         &format!("{notice}{body}"),
         BUILD_TIMESTAMP,
     )
@@ -900,7 +1463,7 @@ fn run_manifest_html(src: &str) -> String {
 // ---------------------------------------------------------------------------
 
 fn page_dev() -> String {
-    let charts_html = file_ref(
+    let body = file_ref(
         "dashboard/src/charts.js",
         "Hand-rolled, dependency-free SVG charts, themed by the shadcn tokens (dark mode for free). The /snapshots page renders real R2 series with the same framework.",
     ) + &section(
@@ -930,7 +1493,17 @@ fn page_dev() -> String {
 })();
 </script>"#;
 
-    let endpoints_html = file_ref(
+    layout(
+        "/dev",
+        "Charts",
+        "Pre-production playground — the SVG chart framework before it graduates to real pages.",
+        &body,
+        BUILD_TIMESTAMP,
+    )
+}
+
+fn page_dev_endpoints() -> String {
+    let body = file_ref(
         "dashboard/src/lib.rs",
         "JSON endpoints — deterministic example data plus the live R2 series endpoint.",
     ) + &kv(
@@ -947,15 +1520,10 @@ fn page_dev() -> String {
         "<span class=\"mono\">{label, points:[{t, v}]}</span> — midpoint series from R2, cached 5 min · used by /snapshots",
     );
 
-    let body = tabs(
-        "dev",
-        &[("Charts", charts_html), ("Endpoints", endpoints_html)],
-    );
-
     layout(
-        "/dev",
-        "Development",
-        "Pre-production playground — new dashboard features live here before graduating to the real pages.",
+        "/dev/endpoints",
+        "Endpoints",
+        "The dashboard's JSON endpoints and the charts API surface.",
         &body,
         BUILD_TIMESTAMP,
     )
