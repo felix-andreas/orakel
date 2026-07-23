@@ -1,0 +1,18 @@
+# Board-level application (see wti-monthly-2026-07.toml comment).
+market_slug = "what-price-will-bitcoin-hit-in-july-2026"
+condition_id = ""
+added = "2026-07-23"
+active = false               # PARKED: deep crypto books beat the model on Brier
+                             # (market 0.0236 vs RV 0.0309, IV 0.0260, n=1540) and every
+                             # live leg sits inside the RV/IV straddle -> no signal.
+                             # Kept as calibration reference; re-activate only if a leg
+                             # exits the straddle by > spread+2c on the sell side.
+
+[params]
+asset = "btc"
+tier = "monthly"
+resolution_feed = "Binance BTC/USDT 1-min candles (NOT Pyth)"
+binance_symbol = "BTCUSDT"
+window_end = 2026-08-01T04:00:00Z    # 11:59 PM ET Jul 31
+iv_source = "Deribit DVOL (38.5% on 2026-07-23; RV14d 30.7%)"
+note = "original legs resolve from listing despite calendar-month title (gate-0 finding); re-added legs (L60k Jul 6, L62.5k Jul 14, L65k Jul 20) are re-touch claims"

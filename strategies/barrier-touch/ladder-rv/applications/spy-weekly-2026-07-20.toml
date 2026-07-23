@@ -1,0 +1,32 @@
+# Board-level application (see wti-monthly-2026-07.toml comment). Resolves 2026-07-24.
+market_slug = "will-spy-hit-week-of-july-20-2026"
+condition_id = ""
+added = "2026-07-23"
+active = true                # sell-edge legs only; market beats model on full equity ladders
+
+[params]
+asset = "spy"
+tier = "weekly"
+resolution_feed = "Pyth Equity.US.SPY/USD, RTH 13:30-20:00Z only"
+pyth_symbol = "Equity.US.SPY/USD"
+window_end = 2026-07-24T20:00:00Z
+iv_source = "VIX (CBOE daily close)" # 16.6% on 2026-07-22; RV14d 11.2%
+note = "predict only wing legs where q_rv and q_iv agree ~0 vs 3c+ mids; books are $3-20 tob -> predictions yes, trades no. LOW-side monotonicity inversion (715/720/725) still live 2026-07-23 — mispricing detector, not a ticket."
+
+[[legs]]
+leg = "L715"
+market_slug = "will-spy-dip-to-715-by-july-20-2026"
+condition_id = "0x904bfca24eb49543982b40f5e1e109f7189eedae7f451654a8d85731807dd8cc"
+barrier = 715.0
+direction = "low"
+window_start = 1784505600    # Mon 2026-07-20 00:00Z (RTH filter applies)
+signal = "predict 0.000 vs mid 0.038 (needs -4.4% in 1.2 RTH days, ~10 sigma)"
+
+[[legs]]
+leg = "L720"
+market_slug = "will-spy-dip-to-720-by-july-20-2026"
+condition_id = "0x934f882cd498b01bb174f878d91eb6d80f68718f899157a3d9093bb21359d3e3"
+barrier = 720.0
+direction = "low"
+window_start = 1784505600
+signal = "predict 0.000 vs mid 0.032"

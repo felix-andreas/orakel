@@ -1,0 +1,46 @@
+# Board-level application: legs are independent binaries (negRisk=false) sharing one
+# resolution feed; per-leg ids in [[legs]]. Fundable-zone sell signals flagged.
+market_slug = "what-price-will-wti-hit-in-july-2026"
+condition_id = ""            # board = Gamma event; per-leg condition_ids below
+added = "2026-07-23"
+active = true
+
+[params]
+asset = "wti"
+tier = "monthly"
+resolution_feed = "Pyth active-month CL futures"
+pyth_symbol = "Commodities.WTIU6/USD" # active month through window end (U6 LTD 2026-08-20)
+proxy_symbol = "Commodities.USOILSPOT" # backfill only; basis p95 ~$0.4-0.65
+session = "22:00Z prior day -> 21:00Z, business days (EDT)"
+window_end = 2026-07-31T21:00:00Z     # last session close; Gamma endDate Aug 1 03:59Z
+iv_source = "OVX (CBOE daily close)"  # 65.3% on 2026-07-22; RV14d 52.0%
+note = "model beats market Brier on WTI (0.048 vs 0.058) -> full-ladder predictions"
+
+# Tradeable sell signals @ 2026-07-23 09:52Z (spot U6 90.00). TRUE window starts differ
+# per leg ("after market creation"); re-added legs are re-touch claims.
+[[legs]]
+leg = "H110"
+market_slug = "will-wti-reach-110-in-july-2026-829"
+condition_id = "0x335f5ef09fa8a90a55afb75b2ccc93854a38de9af172b4c19d8269daba90376a"
+barrier = 110.0
+direction = "high"
+window_start = 1782856800    # 2026-06-30 22:00Z (board open predates July sessions)
+signal = "SELL tier A (q_rv 0.016 / q_iv 0.055 vs mid 0.093, book 0.087/0.099)"
+
+[[legs]]
+leg = "H105"
+market_slug = "will-wti-reach-105-in-july-2026"
+condition_id = "0x5062a23690144ef266851c95571c63af1f8b06b14607fe859b9d3bc7ed9d2813"
+barrier = 105.0
+direction = "high"
+window_start = 1782856800
+signal = "SELL tier B (q_rv 0.065 vs mid 0.166; q_iv 0.141 marginal, book 0.160/0.171)"
+
+[[legs]]
+leg = "L80-retouch"
+market_slug = "will-wti-dip-to-80-in-july-2026"
+condition_id = "0x6b382feeb97121c8bd5fe0fe0ab8272b955e741ac7117ee691a2460896f43ee7"
+barrier = 80.0
+direction = "low"
+window_start = 1784565016    # 2026-07-20 16:30Z — RE-TOUCH leg, board title lies
+signal = "watch only: q_rv 0.158 / q_iv 0.261 straddle mid 0.235 — models disagree"
