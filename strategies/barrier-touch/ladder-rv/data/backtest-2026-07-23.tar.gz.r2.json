@@ -1,0 +1,11 @@
+{
+  "key": "blobs/10cf473a6882de53629c3dc0a1dc708b366b9d27dec77f2f9a1291b7bc8ad43f",
+  "sha256": "10cf473a6882de53629c3dc0a1dc708b366b9d27dec77f2f9a1291b7bc8ad43f",
+  "bytes": 21384936,
+  "content_type": "application/gzip",
+  "original_name": "backtest-2026-07-23.tar.gz",
+  "source_url": "gamma/clob/data-api.polymarket.com + benchmarks.pyth.network + data-api.binance.vision + cdn.cboe.com + deribit.com",
+  "note": "ladder-rv day-1 backtest freeze: 17 Hit Price boards (319 legs), 1-min candles (BTCUSDT,ETHUSDT,USOILSPOT,SPY,NVDA,WTIU6), CLOB f60 all legs + f10 weeklies, tape wti-may/spy-w13/btc-june, OVX/VIX/DVOL, gate outputs in out/",
+  "fetched_at": "2026-07-23T09:57:36Z",
+  "bucket": "orakel"
+}
