@@ -24,13 +24,17 @@ execution = "opus, xhigh ok"
 
 [research]
 slots_total = 5
-slots_active = 0
-# Slot 1 freed 2026-07-23 (runningmax killed day 1); refill from ideas/ backlog
-# on the next run — backlog is currently empty, market researcher feeds it daily.
+slots_active = 1
+
+[[research.slot]]
+id = 1
+variant = "barrier-touch/ladder-rv"
+trial_started = "2026-07-23"
+trial_review_due = "2026-08-02"
 
 [strategies]
 live = []    # promoted variants, e.g. ["barrier-touch/gbm"]
-trial = []
+trial = ["barrier-touch/ladder-rv"]
 retired = ["temp-truncation/runningmax"] # folders stay; post-mortems in results/
 
 [roles]

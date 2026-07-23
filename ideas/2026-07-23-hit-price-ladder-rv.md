@@ -1,7 +1,7 @@
 ---
 date: 2026-07-23
 slug: hit-price-ladder-rv
-status: backlog # second idea of 2026-07-23 (extra cycle requested by Felix)
+status: trialing # -> strategies/barrier-touch/ladder-rv (slot 1, 2026-07-23 run 2) # second idea of 2026-07-23 (extra cycle requested by Felix)
 example_markets: ["what-price-will-wti-hit-in-july-2026", "will-spy-hit-week-of-july-20-2026", "will-nvda-hit-week-of-july-20-2026"]
 ---
 

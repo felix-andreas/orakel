@@ -1,0 +1,12 @@
+family = "barrier-touch"
+variant = "ladder-rv"
+status = "trial"
+created = "2026-07-23"
+supersedes = ""
+labels = ["class:relative-value", "class:first-passage", "data:pyth", "data:options-iv", "family-type:ladders", "horizon:1-9d"]
+
+[trial]
+slot = 1
+started = "2026-07-23"
+review_due = "2026-08-02"
+success_guideline = "≥15 scored predictions across ≥3 boards/assets, paired Brier beating market; gates from the idea's falsification sketch pass first, incl. t+24h delayed-execution sim"
