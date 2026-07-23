@@ -716,6 +716,10 @@ fn cmd_analyze(data: &Path) -> Result<()> {
         "city,date,hour,bucket,side,p_mkt,p_model,won,pnl_gross,pnl_net".to_string(),
     ];
     let mut trade_pnl: BTreeMap<i64, Vec<f64>> = BTreeMap::new(); // hour -> net pnl per trade
+    // Robustness sim: model frozen at h:00 obs, but trades executed against the
+    // de-vigged mid 15 minutes LATER (book has had time to reprice on the same obs).
+    let mut trades2_rows = trades_rows.clone();
+    let mut trade2_pnl: BTreeMap<i64, Vec<f64>> = BTreeMap::new();
     let mut n_no_series = 0;
 
     for ((cslug, date), legs) in &fams {
@@ -802,11 +806,44 @@ fn cmd_analyze(data: &Path) -> Result<()> {
                     trade_pnl.entry(h).or_default().push(n);
                 }
             }
+            // sim2: same model (obs cutoff h:00), execution vs mid at h:15
+            let t2 = t + 900;
+            if series[widx].as_ref().and_then(|s| price_at(s, t2, 5400)).is_some() {
+                let mkt2_raw: Vec<f64> = series
+                    .iter()
+                    .map(|s| s.as_ref().and_then(|s| price_at(s, t2, 5400)).unwrap_or(0.005))
+                    .collect();
+                let mkt2 = devig(&mkt2_raw);
+                for (i, l) in legs.iter().enumerate() {
+                    let (pm_i, pq_i) = (mkt2[i], model[i]);
+                    let edge = pq_i - pm_i;
+                    let won = l.winner as u8 as f64;
+                    let cost = 0.015;
+                    if edge > 0.03 && pm_i >= 0.02 && pm_i <= 0.95 {
+                        let n = won - (pm_i + cost);
+                        trades2_rows.push(format!(
+                            "{cslug},{date},{h},{},BUY,{pm_i:.3},{pq_i:.3},{won},{:.3},{n:.3}",
+                            l.title,
+                            won - pm_i
+                        ));
+                        trade2_pnl.entry(h).or_default().push(n);
+                    } else if edge < -0.03 && pm_i >= 0.03 && pm_i <= 0.95 {
+                        let n = (pm_i - cost) - won;
+                        trades2_rows.push(format!(
+                            "{cslug},{date},{h},{},SELL,{pm_i:.3},{pq_i:.3},{won},{:.3},{n:.3}",
+                            l.title,
+                            pm_i - won
+                        ));
+                        trade2_pnl.entry(h).or_default().push(n);
+                    }
+                }
+            }
         }
     }
     fs::write(out_dir.join("gate1_families.csv"), g1_rows.join("\n") + "\n")?;
     fs::write(out_dir.join("gate3_checkpoints.csv"), g3_rows.join("\n") + "\n")?;
     fs::write(out_dir.join("gate3_trades.csv"), trades_rows.join("\n") + "\n")?;
+    fs::write(out_dir.join("gate3_trades_delayed.csv"), trades2_rows.join("\n") + "\n")?;
 
     let mean = |v: &[f64]| v.iter().sum::<f64>() / v.len().max(1) as f64;
     println!("\n== Gate 1: window-open calibration ({} families, {n_no_series} skipped w/o winner series) ==", herfs.len());
@@ -833,12 +870,15 @@ fn cmd_analyze(data: &Path) -> Result<()> {
             let lq = mean(&v.iter().map(|x| x.1).collect::<Vec<_>>());
             let wins = v.iter().filter(|(m, q)| q < m).count();
             let pnl = trade_pnl.get(&h).cloned().unwrap_or_default();
+            let pnl2 = trade2_pnl.get(&h).cloned().unwrap_or_default();
             println!(
-                "  {h:02}h local: n={:3}  LL market {lm:.4}  LL model {lq:.4}  (model better: {wins}/{})  trades={} avg_net_pnl={:+.4}",
+                "  {h:02}h local: n={:3}  LL market {lm:.4}  LL model {lq:.4}  (model better: {wins}/{})  trades={} avg_net_pnl={:+.4} | delayed-exec trades={} avg_net_pnl={:+.4}",
                 v.len(),
                 v.len(),
                 pnl.len(),
-                mean(&pnl)
+                mean(&pnl),
+                pnl2.len(),
+                mean(&pnl2)
             );
         }
     }

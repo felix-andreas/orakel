@@ -1,0 +1,10 @@
+{
+  "key": "blobs/fa4904d6bf0ff65b6977b337a9a4d9dcc45d431b8a6b1e11ceb2015a40856929",
+  "sha256": "fa4904d6bf0ff65b6977b337a9a4d9dcc45d431b8a6b1e11ceb2015a40856929",
+  "bytes": 13852508,
+  "content_type": "application/gzip",
+  "original_name": "backtest-2026-07-23.tar.gz",
+  "note": "runningmax day-1 backtest freeze: 347 resolved city-day families Jun1-Jul20 (7 cities), Gamma events + CLOB fid10 all legs + fid1 60-family subset + trades tape 8 families + IEM ASOS obs May1-Jul23 + HKO daily max + analysis out/ + live London snapshot 2026-07-23",
+  "fetched_at": "2026-07-23T08:36:46Z",
+  "bucket": "orakel"
+}
