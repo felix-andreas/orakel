@@ -29,32 +29,156 @@ pub fn markdown(src: &str) -> String {
     out
 }
 
-pub struct NavItem {
+/// A single navigable page (a sidebar leaf / former tab).
+pub struct NavLeaf {
     pub href: &'static str,
     pub label: &'static str,
 }
 
-pub const NAV: [NavItem; 6] = [
-    NavItem { href: "/", label: "Operations" },
-    NavItem { href: "/predictions", label: "Predictions" },
-    NavItem { href: "/snapshots", label: "Snapshots" },
-    NavItem { href: "/inboxes", label: "Inboxes" },
-    NavItem { href: "/wiki", label: "Wiki" },
-    NavItem { href: "/dev", label: "Development" },
+/// A sidebar group. A group with one leaf renders as a plain top-level link
+/// (label → that leaf); a group with several leaves renders as a foldable
+/// `<details>` disclosure whose open/closed state persists to localStorage
+/// (see the script in `layout`). `id` is the localStorage key suffix.
+pub struct NavGroup {
+    pub id: &'static str,
+    pub label: &'static str,
+    pub leaves: &'static [NavLeaf],
+}
+
+pub const NAV: [NavGroup; 7] = [
+    NavGroup {
+        id: "operations",
+        label: "Operations",
+        leaves: &[
+            NavLeaf { href: "/", label: "State" },
+            NavLeaf { href: "/decisions", label: "Decisions" },
+            NavLeaf { href: "/runs", label: "Runs" },
+            NavLeaf { href: "/ideas", label: "Ideas" },
+        ],
+    },
+    NavGroup {
+        id: "strategies",
+        label: "Strategies",
+        leaves: &[NavLeaf { href: "/strategies", label: "Strategies" }],
+    },
+    NavGroup {
+        id: "predictions",
+        label: "Predictions",
+        leaves: &[
+            NavLeaf { href: "/predictions", label: "Log" },
+            NavLeaf { href: "/resolutions", label: "Resolutions" },
+            NavLeaf { href: "/scores", label: "Scores" },
+        ],
+    },
+    NavGroup {
+        id: "snapshots",
+        label: "Snapshots",
+        leaves: &[NavLeaf { href: "/snapshots", label: "Snapshots" }],
+    },
+    NavGroup {
+        id: "inboxes",
+        label: "Inboxes",
+        leaves: &[NavLeaf { href: "/inboxes", label: "Inboxes" }],
+    },
+    NavGroup {
+        id: "wiki",
+        label: "Wiki",
+        leaves: &[NavLeaf { href: "/wiki", label: "Wiki" }],
+    },
+    NavGroup {
+        id: "development",
+        label: "Development",
+        leaves: &[
+            NavLeaf { href: "/dev", label: "Charts" },
+            NavLeaf { href: "/dev/endpoints", label: "Endpoints" },
+        ],
+    },
 ];
 
-/// Shared page shell: sidebar nav (burger dropdown on mobile via the
-/// checkbox hack — no JS), header, content, footer.
-/// `active` is the href of the current page; `body` is already-safe HTML.
-pub fn layout(active: &str, title: &str, desc: &str, body: &str, build_ts: &str) -> String {
-    let mut nav = String::new();
-    for item in NAV.iter() {
-        let current = if item.href == active { " aria-current=\"page\"" } else { "" };
-        nav.push_str(&format!(
-            "<a href=\"{}\"{}>{}</a>",
-            item.href, current, item.label
+const CHEVRON_SVG: &str = "<svg class=\"nav-chevron\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m9 6 6 6-6 6\"/></svg>";
+
+/// Render the grouped sidebar navigation. Single-leaf groups become plain
+/// links; multi-leaf groups become foldable `<details>` (the group holding the
+/// active page is rendered `open`). Persistence is layered on in JS by
+/// `layout`; without JS the native disclosure still folds.
+fn sidebar_nav(active: &str) -> String {
+    let mut out = String::new();
+    for g in NAV.iter() {
+        if g.leaves.len() == 1 {
+            let leaf = &g.leaves[0];
+            let current = if leaf.href == active {
+                " aria-current=\"page\""
+            } else {
+                ""
+            };
+            out.push_str(&format!(
+                "<a class=\"nav-link nav-solo\" href=\"{}\"{}>{}</a>",
+                leaf.href,
+                current,
+                esc(g.label)
+            ));
+            continue;
+        }
+        let has_active = g.leaves.iter().any(|l| l.href == active);
+        let mut sub = String::new();
+        for leaf in g.leaves {
+            let current = if leaf.href == active {
+                " aria-current=\"page\""
+            } else {
+                ""
+            };
+            sub.push_str(&format!(
+                "<a class=\"nav-link nav-sub\" href=\"{}\"{}>{}</a>",
+                leaf.href,
+                current,
+                esc(leaf.label)
+            ));
+        }
+        out.push_str(&format!(
+            "<details class=\"nav-group\" data-nav=\"{}\"{}><summary class=\"nav-group-head\"><span>{}</span>{}</summary><div class=\"nav-sublist\">{}</div></details>",
+            esc(g.id),
+            if has_active { " open" } else { "" },
+            esc(g.label),
+            CHEVRON_SVG,
+            sub
         ));
     }
+    out
+}
+
+/// Persists each nav group's open/closed state to localStorage. Progressive
+/// enhancement only: native `<details>` folds without it. The group holding
+/// the active page always renders open and ignores a stored "collapsed".
+const NAV_PERSIST_JS: &str = r#"<script>
+(function () {
+  try {
+    document.querySelectorAll(".nav-group").forEach(function (d) {
+      var key = "orakel.nav." + d.getAttribute("data-nav");
+      var active = !!d.querySelector('[aria-current="page"]');
+      if (!active) {
+        var stored = localStorage.getItem(key);
+        if (stored === "0") d.open = false;
+        else if (stored === "1") d.open = true;
+      }
+      d.addEventListener("toggle", function () {
+        try { localStorage.setItem(key, d.open ? "1" : "0"); } catch (e) {}
+      });
+    });
+  } catch (e) {}
+})();
+</script>"#;
+
+/// Shared page shell: grouped sidebar nav (foldable groups persisted to
+/// localStorage; burger dropdown on mobile via the checkbox hack), header,
+/// content, footer. `active` is the href of the current page; `body` is
+/// already-safe HTML.
+pub fn layout(active: &str, title: &str, desc: &str, body: &str, build_ts: &str) -> String {
+    let nav = sidebar_nav(active);
+    let desc_html = if desc.is_empty() {
+        String::new()
+    } else {
+        format!("<p class=\"page-desc\">{}</p>", esc(desc))
+    };
     format!(
         r#"<!doctype html>
 <html lang="en">
@@ -75,30 +199,50 @@ pub fn layout(active: &str, title: &str, desc: &str, body: &str, build_ts: &str)
       <label class="burger" for="nav-toggle" aria-label="Toggle navigation"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></label>
     </div>
     <nav class="nav">{nav}</nav>
-    <div class="sidebar-foot">build-time snapshot</div>
+    <div class="sidebar-foot">agentic prediction-market research firm</div>
   </aside>
   <div class="main">
     <main class="content">
       <header class="page-header">
         <h1 class="page-title">{title}</h1>
-        <p class="page-desc">{desc}</p>
+        {desc_html}
       </header>
       {body}
     </main>
     <footer class="footer">
       <span>orakel — agentic prediction-market research firm</span>
-      <span>built {build_ts} · data embedded at build time</span>
+      <span>built {build_ts} · server-rendered from repo state</span>
     </footer>
   </div>
 </div>
+{NAV_PERSIST_JS}
 </body>
 </html>"#,
         title = esc(title),
-        desc = esc(desc),
+        desc_html = desc_html,
         nav = nav,
         body = body,
         build_ts = esc(build_ts),
+        NAV_PERSIST_JS = NAV_PERSIST_JS,
     )
+}
+
+/// Breadcrumb trail for detail pages. `crumbs` are (href, label) pairs; the
+/// last is rendered as the current (unlinked) location.
+pub fn breadcrumb(crumbs: &[(&str, &str)]) -> String {
+    let mut out = String::from("<nav class=\"crumbs\" aria-label=\"Breadcrumb\">");
+    for (i, (href, label)) in crumbs.iter().enumerate() {
+        if i > 0 {
+            out.push_str("<span class=\"crumb-sep\" aria-hidden=\"true\">/</span>");
+        }
+        if i + 1 == crumbs.len() || href.is_empty() {
+            out.push_str(&format!("<span class=\"crumb-current\">{}</span>", esc(label)));
+        } else {
+            out.push_str(&format!("<a href=\"{}\">{}</a>", esc(href), esc(label)));
+        }
+    }
+    out.push_str("</nav>");
+    out
 }
 
 /// Flat content section: heading + already-safe inner HTML. The shadcn-like
@@ -146,38 +290,19 @@ pub fn card(title: &str, desc: &str, content_html: &str) -> String {
     )
 }
 
-/// CSS-only tab component (shadcn Tabs look): hidden radio inputs drive which
-/// label pill is active and which panel shows, via nth-of-type pair rules in
-/// style.css. No JS, no page reload; radios stay keyboard-accessible (arrow
-/// keys switch tabs). `id` must be unique per page. The first pane is the
-/// default tab. Pane HTML must be already-safe. style.css pairs up to 6 tabs —
-/// extend its selector lists before passing more.
-pub fn tabs(id: &str, panes: &[(&str, String)]) -> String {
-    debug_assert!(panes.len() <= 6, "style.css tab pair rules cover 6 tabs");
-    let mut inputs = String::new();
-    let mut labels = String::new();
-    let mut panels = String::new();
-    for (i, (label, pane_html)) in panes.iter().enumerate() {
-        let input_id = format!("tab-{}-{}", id, i);
-        inputs.push_str(&format!(
-            "<input class=\"tab-input\" type=\"radio\" name=\"tab-{}\" id=\"{}\"{}>",
-            esc(id),
-            esc(&input_id),
-            if i == 0 { " checked" } else { "" },
-        ));
-        labels.push_str(&format!(
-            "<label for=\"{}\">{}</label>",
-            esc(&input_id),
-            esc(label)
-        ));
-        panels.push_str(&format!(
-            "<section class=\"tab-panel\">{}</section>",
-            pane_html
-        ));
-    }
+/// Polymarket permalink for a market/event slug. Our `market_slug` values are
+/// the gamma-API event slugs (see the variants' discover code), so the public
+/// URL is `/event/<slug>`.
+pub fn market_url(slug: &str) -> String {
+    format!("https://polymarket.com/event/{}", slug)
+}
+
+/// External link opening in a new tab, with the outbound arrow affordance.
+pub fn ext_link(href: &str, text: &str) -> String {
     format!(
-        "<div class=\"tabs\">{}<div class=\"tab-list\">{}</div>{}</div>",
-        inputs, labels, panels
+        "<a class=\"ext\" href=\"{}\" target=\"_blank\" rel=\"noopener noreferrer\">{}<span class=\"ext-mark\" aria-hidden=\"true\">↗</span></a>",
+        esc(href),
+        esc(text)
     )
 }
 
@@ -227,7 +352,8 @@ pub fn parse_csv(src: &str) -> Vec<Vec<String>> {
         .collect()
 }
 
-/// Render parsed CSV rows (first row = header) as a table. Long opaque ids
+/// Render parsed CSV rows (first row = header) as a table. Cells in a column
+/// headed `market_slug` or `market` become Polymarket links. Long opaque ids
 /// (hex condition ids, decimal token ids — >28 chars, no '-') are abbreviated
 /// with the full value in a hover title, so real prediction rows stay
 /// readable; slugs and timestamps (which contain '-') are never touched.
@@ -235,14 +361,32 @@ pub fn csv_table(rows: &[Vec<String>]) -> String {
     if rows.is_empty() {
         return String::new();
     }
+    let header = &rows[0];
+    // Column indices whose values are market slugs → linkify to Polymarket.
+    let is_market_col: Vec<bool> = header
+        .iter()
+        .map(|h| matches!(h.as_str(), "market_slug" | "market"))
+        .collect();
     let mut out = String::from("<div class=\"table-wrap\"><table class=\"data\"><thead><tr>");
-    for h in &rows[0] {
+    for h in header {
         out.push_str(&format!("<th>{}</th>", esc(h)));
     }
     out.push_str("</tr></thead><tbody>");
     for row in &rows[1..] {
         out.push_str("<tr>");
-        for cell in row {
+        for (i, cell) in row.iter().enumerate() {
+            let is_market = is_market_col.get(i).copied().unwrap_or(false)
+                && !cell.is_empty()
+                && cell != "—"
+                && cell != "?";
+            if is_market {
+                out.push_str(&format!(
+                    "<td class=\"cell-market\"><a href=\"{}\" target=\"_blank\" rel=\"noopener noreferrer\">{}<span class=\"ext-mark\" aria-hidden=\"true\">↗</span></a></td>",
+                    esc(&market_url(cell)),
+                    esc(cell)
+                ));
+                continue;
+            }
             let is_opaque_id =
                 cell.chars().count() > 28 && cell.chars().all(|c| c.is_ascii_alphanumeric());
             if is_opaque_id {

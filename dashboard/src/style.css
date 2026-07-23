@@ -40,10 +40,6 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  /* active tab pill (shadcn TabsTrigger): white card in light, faint
-     elevated pill with a hairline border in dark */
-  --tab-active-bg: var(--background);
-  --tab-active-border: transparent;
   /* chart series colors (shadcn --chart-1..5, zinc theme); charts.js reads
      these at render time — never hardcode series colors elsewhere */
   --chart-1: #e76e50;
@@ -82,8 +78,6 @@
     --bad-bg: rgba(239, 68, 68, 0.12);
     --bad-border: rgba(239, 68, 68, 0.3);
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
-    --tab-active-bg: rgba(255, 255, 255, 0.07);
-    --tab-active-border: rgba(255, 255, 255, 0.12);
     --chart-1: #2662d9;
     --chart-2: #2eb88a;
     --chart-3: #e88c30;
@@ -192,26 +186,90 @@ a {
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
-.nav a {
+.nav-link {
   display: block;
-  padding: 0.45rem 0.75rem;
+  padding: 0.4rem 0.75rem;
   border-radius: var(--radius-md);
   color: var(--muted-foreground);
   text-decoration: none;
   font-weight: 500;
 }
 
-.nav a:hover {
+.nav-link:hover {
   background: var(--accent);
   color: var(--accent-foreground);
 }
 
-.nav a[aria-current="page"] {
+.nav-link[aria-current="page"] {
   background: var(--accent);
   color: var(--foreground);
+  font-weight: 600;
+}
+
+/* ---------- foldable nav groups (former tabs → sub-pages) ---------- */
+/* Native <details> disclosure; open/closed persists to localStorage (see the
+   NAV_PERSIST_JS in render.rs). Works without JS. */
+
+.nav-group {
+  margin: 1px 0;
+}
+
+.nav-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-md);
+  color: var(--muted-foreground);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.nav-group-head::-webkit-details-marker {
+  display: none;
+}
+
+.nav-group-head:hover {
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+.nav-chevron {
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+  transition: transform 0.15s ease;
+}
+
+.nav-group[open] > .nav-group-head .nav-chevron {
+  transform: rotate(90deg);
+}
+
+/* group holding the active page: keep its label emphasized */
+.nav-group:has([aria-current="page"]) > .nav-group-head {
+  color: var(--foreground);
+}
+
+.nav-sublist {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 1px 0 0.4rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--border);
+  margin-left: 0.9rem;
+}
+
+.nav-sub {
+  padding: 0.32rem 0.7rem;
+  font-weight: 500;
+  font-size: 0.84rem;
 }
 
 .sidebar-foot {
@@ -301,99 +359,36 @@ a {
   }
 }
 
-/* ---------- tabs (CSS-only: hidden radios drive labels + panels) ---------- */
-/* Markup (render.rs `tabs`): .tabs > [radios…] + .tab-list > [labels…] +
-   [.tab-panel…]. The nth radio, nth label, and nth panel belong together;
-   the pair rules below wire them. Radios stay focusable (arrow keys switch
-   tabs); no JS, no page reload. */
+/* ---------- breadcrumbs (detail pages) ---------- */
 
-.tabs > .tab-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.tab-list {
-  display: inline-flex;
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 3px;
-  padding: 3px;
-  background: var(--muted);
-  border-radius: var(--radius-lg);
-  color: var(--muted-foreground);
-  max-width: 100%;
-  overflow-x: auto;
-}
-
-.tab-list label {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.3rem 0.9rem;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
+  gap: 0.4rem;
   font-size: 0.82rem;
+  color: var(--muted-foreground);
+  margin-bottom: 1.25rem;
+}
+
+.crumbs a {
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+
+.crumbs a:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.crumb-sep {
+  color: var(--border);
+}
+
+.crumb-current {
+  color: var(--foreground);
   font-weight: 500;
-  line-height: 1.4;
-  white-space: nowrap;
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.tab-list label:hover {
-  color: var(--foreground);
-}
-
-.tabs > .tab-panel {
-  display: none;
-  padding-top: 1.25rem;
-}
-
-/* default rhythm inside a panel; later, more specific rules (.section,
-   .note) may override — :first-child reset wins on specificity */
-.tab-panel > * + * {
-  margin-top: 1.25rem;
-}
-
-.tab-panel > :first-child {
-  margin-top: 0;
-}
-
-/* checked radio N activates label pill N … */
-.tab-input:nth-of-type(1):checked ~ .tab-list label:nth-of-type(1),
-.tab-input:nth-of-type(2):checked ~ .tab-list label:nth-of-type(2),
-.tab-input:nth-of-type(3):checked ~ .tab-list label:nth-of-type(3),
-.tab-input:nth-of-type(4):checked ~ .tab-list label:nth-of-type(4),
-.tab-input:nth-of-type(5):checked ~ .tab-list label:nth-of-type(5),
-.tab-input:nth-of-type(6):checked ~ .tab-list label:nth-of-type(6) {
-  background: var(--tab-active-bg);
-  border-color: var(--tab-active-border);
-  color: var(--foreground);
-  box-shadow: var(--shadow-sm);
-}
-
-/* … keyboard focus ring on the active pill … */
-.tab-input:nth-of-type(1):focus-visible ~ .tab-list label:nth-of-type(1),
-.tab-input:nth-of-type(2):focus-visible ~ .tab-list label:nth-of-type(2),
-.tab-input:nth-of-type(3):focus-visible ~ .tab-list label:nth-of-type(3),
-.tab-input:nth-of-type(4):focus-visible ~ .tab-list label:nth-of-type(4),
-.tab-input:nth-of-type(5):focus-visible ~ .tab-list label:nth-of-type(5),
-.tab-input:nth-of-type(6):focus-visible ~ .tab-list label:nth-of-type(6) {
-  outline: 2px solid var(--ring);
-  outline-offset: 1px;
-}
-
-/* … and reveals panel N. */
-.tab-input:nth-of-type(1):checked ~ .tab-panel:nth-of-type(1),
-.tab-input:nth-of-type(2):checked ~ .tab-panel:nth-of-type(2),
-.tab-input:nth-of-type(3):checked ~ .tab-panel:nth-of-type(3),
-.tab-input:nth-of-type(4):checked ~ .tab-panel:nth-of-type(4),
-.tab-input:nth-of-type(5):checked ~ .tab-panel:nth-of-type(5),
-.tab-input:nth-of-type(6):checked ~ .tab-panel:nth-of-type(6) {
-  display: block;
 }
 
 /* ---------- flat sections (the shadcn-like default: headings + whitespace,
@@ -412,10 +407,9 @@ a {
 
 .subsection-title {
   margin: 0 0 0.4rem;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: -0.005em;
   color: var(--muted-foreground);
 }
 
@@ -435,10 +429,9 @@ a {
 }
 
 .stat-label {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: -0.005em;
   color: var(--muted-foreground);
   margin-bottom: 0.25rem;
 }
@@ -722,6 +715,112 @@ select {
 .link-list a {
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/* ---------- external links (open in a new tab, outbound arrow) ---------- */
+
+a.ext {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  white-space: nowrap;
+}
+
+a.ext:hover {
+  text-decoration-color: currentColor;
+}
+
+.ext-mark {
+  display: inline-block;
+  margin-left: 0.15em;
+  font-size: 0.85em;
+  color: var(--muted-foreground);
+}
+
+td.cell-market a {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+/* ---------- strategies (family sections + variant cards) ---------- */
+
+.strat-family + .strat-family {
+  margin-top: 2.5rem;
+}
+
+.strat-family-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.strat-family-head .section-title {
+  margin: 0;
+}
+
+.strat-family-blurb {
+  margin: 0.4rem 0 0;
+  color: var(--muted-foreground);
+  max-width: 52rem;
+}
+
+.strat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+a.strat-card {
+  display: block;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  padding: 1rem 1.1rem;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+}
+
+a.strat-card:hover {
+  border-color: var(--ring);
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.strat-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.strat-card-title {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.strat-card-meta {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+
+.strat-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.7rem;
+}
+
+.strat-detail-labels {
+  margin-top: 0.25rem;
 }
 
 /* ---------- empty states & notes ---------- */
