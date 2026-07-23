@@ -34,14 +34,16 @@ pub struct NavItem {
     pub label: &'static str,
 }
 
-pub const NAV: [NavItem; 4] = [
+pub const NAV: [NavItem; 5] = [
     NavItem { href: "/", label: "Operations" },
     NavItem { href: "/predictions", label: "Predictions" },
     NavItem { href: "/inboxes", label: "Inboxes" },
     NavItem { href: "/wiki", label: "Wiki" },
+    NavItem { href: "/dev", label: "Development" },
 ];
 
-/// Shared page shell: sidebar nav, header, content, footer.
+/// Shared page shell: sidebar nav (burger dropdown on mobile via the
+/// checkbox hack — no JS), header, content, footer.
 /// `active` is the href of the current page; `body` is already-safe HTML.
 pub fn layout(active: &str, title: &str, desc: &str, body: &str, build_ts: &str) -> String {
     let mut nav = String::new();
@@ -60,13 +62,17 @@ pub fn layout(active: &str, title: &str, desc: &str, body: &str, build_ts: &str)
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>{title} — orakel</title>
-<link rel="icon" href="data:,">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <div class="shell">
+  <input type="checkbox" id="nav-toggle" class="nav-toggle">
   <aside class="sidebar">
-    <a class="wordmark" href="/">orakel<span> / dashboard</span></a>
+    <div class="sidebar-top">
+      <a class="wordmark" href="/">orakel<span> / dashboard</span></a>
+      <label class="burger" for="nav-toggle" aria-label="Toggle navigation"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></label>
+    </div>
     <nav class="nav">{nav}</nav>
     <div class="sidebar-foot">build-time snapshot</div>
   </aside>
@@ -91,6 +97,36 @@ pub fn layout(active: &str, title: &str, desc: &str, body: &str, build_ts: &str)
         nav = nav,
         body = body,
         build_ts = esc(build_ts),
+    )
+}
+
+/// Flat content section: heading + already-safe inner HTML. The shadcn-like
+/// default — prefer this (headings + whitespace) over cards; a card is for
+/// the rare case where boxed grouping genuinely earns its border.
+pub fn section(title: &str, inner_html: &str) -> String {
+    format!(
+        "<section class=\"section\"><h2 class=\"section-title\">{}</h2>{}</section>",
+        esc(title),
+        inner_html
+    )
+}
+
+/// Small flat sub-grouping inside a section/tab: muted uppercase label +
+/// content. Used e.g. for the Operations State groups (no boxes).
+pub fn subsection(title: &str, inner_html: &str) -> String {
+    format!(
+        "<section class=\"subsection\"><h3 class=\"subsection-title\">{}</h3>{}</section>",
+        esc(title),
+        inner_html
+    )
+}
+
+/// Muted one-line reference to the repo file a block renders (flat, no box).
+pub fn file_ref(path: &str, desc: &str) -> String {
+    format!(
+        "<p class=\"file-ref\"><span class=\"mono\">{}</span> · {}</p>",
+        esc(path),
+        esc(desc)
     )
 }
 

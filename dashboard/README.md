@@ -2,16 +2,22 @@
 
 The human window into the firm (ARCHITECTURE.md §7): a Rust Cloudflare Worker
 ([workers-rs](https://github.com/cloudflare/workers-rs)) that server-renders the repo's
-state as HTML. No JS, no external assets — one hand-written CSS file, plain `<a>`
-navigation. In-page tabs (Operations, Predictions) are CSS-only: hidden radio inputs +
-labels wired by `nth-of-type` pair rules in `style.css` (`tabs` helper in `render.rs`),
-so switching tabs needs no JS and no page reload.
+state as HTML. No external assets, and the core pages are JS-free: plain `<a>`
+navigation, CSS-only tabs (hidden radio inputs + labels wired by `nth-of-type` pair
+rules; `tabs` helper in `render.rs`) and a CSS-only burger menu on mobile (checkbox
+hack). The `/dev` page is the one exception: it loads `/charts.js`, our hand-rolled
+dependency-free SVG chart framework (`Chart.line` / `Chart.bar`, brush-zoom, tooltips,
+ResizeObserver responsiveness, colors read from the CSS tokens at render time). It is
+served by the Worker like `style.css` — still no external assets, no build step.
 
-Styling is hand-written CSS at shadcn/ui (v4, zinc) fidelity. Tailwind was considered
-and deliberately skipped: the build is pure Rust/`worker-build` (no npm build step to
-add or break in proxy-restricted sessions), and utility classes inside Rust `format!`
-strings are harder to maintain than one tokenized stylesheet. If the UI ever outgrows
-this, revisit — the requirement is shadcn-quality UI, not a particular toolchain.
+Styling is hand-written CSS at shadcn/ui (v4, zinc) fidelity, responsive down to phone
+widths. Tailwind was considered and deliberately skipped: the build is pure
+Rust/`worker-build` (no npm build step to add or break in proxy-restricted sessions),
+and utility classes inside Rust `format!` strings are harder to maintain than one
+tokenized stylesheet. If the UI ever outgrows this, revisit — the requirement is
+shadcn-quality UI, not a particular toolchain. Layout philosophy: mostly flat content
+under section headings with generous whitespace; cards only where boxed grouping earns
+its border (see `section`/`subsection` vs `card` in `render.rs`).
 
 ## v1 skeleton: data is embedded at BUILD TIME
 
@@ -29,7 +35,11 @@ files only, never globs):
 | `/predictions` | `predictions/predictions.csv`, `predictions/resolutions.csv`, `predictions/scores.csv` (optional, see below) |
 | `/inboxes` | `roles/{ceo,felix,market-researcher}/inbox/README.md` |
 | `/wiki` | `wiki/index.md` |
+| `/dev` | none — playground page; charts fetch `/dev/data/*.json` |
+| `/dev/data/line.json`, `/dev/data/bar.json` | generated in `src/lib.rs` — deterministic example series (fixed-seed LCG, fixed start timestamp; never `Date::now`) |
 | `/style.css` | `src/style.css` |
+| `/charts.js` | `src/charts.js` |
+| `/favicon.svg` | `src/favicon.svg` (sea shell, scheme-aware stroke via embedded `@media`) |
 
 `predictions/scores.csv` does not exist until `scoring/` first runs, so `build.rs` stages
 it into `OUT_DIR` (empty placeholder when missing) — the crate builds either way and picks
@@ -126,9 +136,11 @@ dashboard/
 ├── wrangler.toml       # name=orakel-dashboard, build via worker-build
 ├── build.rs            # BUILD_TIMESTAMP + optional-file staging (scores.csv)
 └── src/
-    ├── lib.rs          # router + pages + embedded data (include_str!)
-    ├── render.rs       # esc/layout/card/tabs/table/markdown helpers (format!-based)
-    └── style.css       # shadcn v4 tokens (zinc, dark mode), CSS-only tab component
+    ├── lib.rs          # router + pages + embedded data + /dev example data
+    ├── render.rs       # esc/layout/section/card/tabs/table/markdown helpers (format!-based)
+    ├── style.css       # shadcn v4 tokens (zinc, dark mode), tabs + burger, chart tokens
+    ├── charts.js       # dependency-free SVG chart framework (Chart.line/Chart.bar)
+    └── favicon.svg     # sea-shell icon, light/dark aware
 ```
 
 Rendering is plain `format!` string building (CODING.md: procedural, no template engine).

@@ -44,6 +44,13 @@
      elevated pill with a hairline border in dark */
   --tab-active-bg: var(--background);
   --tab-active-border: transparent;
+  /* chart series colors (shadcn --chart-1..5, zinc theme); charts.js reads
+     these at render time — never hardcode series colors elsewhere */
+  --chart-1: #e76e50;
+  --chart-2: #2a9d90;
+  --chart-3: #274754;
+  --chart-4: #e8c468;
+  --chart-5: #f4a462;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono",
@@ -77,6 +84,11 @@
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
     --tab-active-bg: rgba(255, 255, 255, 0.07);
     --tab-active-border: rgba(255, 255, 255, 0.12);
+    --chart-1: #2662d9;
+    --chart-2: #2eb88a;
+    --chart-3: #e88c30;
+    --chart-4: #af57db;
+    --chart-5: #e23670;
   }
 }
 
@@ -124,6 +136,43 @@ a {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+.sidebar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* burger menu (mobile only) — driven by the #nav-toggle checkbox, no JS */
+.nav-toggle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.burger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-md);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.burger:hover {
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+.nav-toggle:focus-visible ~ .sidebar .burger {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
 }
 
 .wordmark {
@@ -213,28 +262,42 @@ a {
   justify-content: space-between;
 }
 
+/* Mobile: sidebar collapses to a sticky top bar; nav opens as a dropdown
+   under it when the burger's checkbox is checked (navigating reloads the
+   page, which resets the checkbox — the menu closes itself). */
 @media (max-width: 768px) {
   .shell {
     grid-template-columns: 1fr;
   }
   .sidebar {
-    position: static;
+    position: sticky;
+    top: 0;
+    z-index: 30;
     height: auto;
+    gap: 0;
     border-right: none;
     border-bottom: 1px solid var(--border);
-    flex-direction: row;
-    align-items: center;
-    padding: 0.75rem 1rem;
+    background: var(--background);
+    padding: 0.5rem 0.75rem;
+  }
+  .burger {
+    display: inline-flex;
   }
   .nav {
-    flex-direction: row;
-    flex-wrap: wrap;
+    display: none;
+    padding: 0.5rem 0 0.25rem;
+  }
+  .nav-toggle:checked ~ .sidebar .nav {
+    display: flex;
   }
   .sidebar-foot {
     display: none;
   }
   .content {
     padding: 1.25rem 1rem 2rem;
+  }
+  .stats {
+    gap: 1rem 2rem;
   }
 }
 
@@ -289,8 +352,14 @@ a {
   padding-top: 1.25rem;
 }
 
-.tabs > .tab-panel > * + * {
-  margin-top: 1rem;
+/* default rhythm inside a panel; later, more specific rules (.section,
+   .note) may override — :first-child reset wins on specificity */
+.tab-panel > * + * {
+  margin-top: 1.25rem;
+}
+
+.tab-panel > :first-child {
+  margin-top: 0;
 }
 
 /* checked radio N activates label pill N … */
@@ -325,6 +394,84 @@ a {
 .tab-input:nth-of-type(5):checked ~ .tab-panel:nth-of-type(5),
 .tab-input:nth-of-type(6):checked ~ .tab-panel:nth-of-type(6) {
   display: block;
+}
+
+/* ---------- flat sections (the shadcn-like default: headings + whitespace,
+   not boxes) ---------- */
+
+.section {
+  margin-top: 2.25rem;
+}
+
+.section-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.subsection-title {
+  margin: 0 0 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+}
+
+/* flat multi-column arrangement of subsections (State tab) */
+.grid-flat {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.75rem 3.5rem;
+}
+
+/* headline stat strip (flat, no boxes) */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 3rem;
+  padding: 0.25rem 0;
+}
+
+.stat-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.stat-value small {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+
+.stat-value .badge {
+  font-size: 0.8rem;
+  padding: 0.15rem 0.7rem;
+}
+
+/* muted one-line file reference above flat prose blocks */
+.file-ref {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+
+.muted-line {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
 }
 
 /* ---------- cards ---------- */
@@ -393,19 +540,6 @@ a {
 .kv .v {
   text-align: right;
   overflow-wrap: anywhere;
-}
-
-.big-number {
-  font-size: 1.9rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-}
-
-.big-number small {
-  font-size: 0.95rem;
-  font-weight: 400;
-  color: var(--muted-foreground);
 }
 
 /* ---------- badges ---------- */
@@ -509,14 +643,11 @@ table.data tbody tr:hover {
   margin-bottom: 0.3rem;
 }
 
+/* flat footnote — fewer boxes: muted text, no border, no background */
 .note {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--muted);
-  color: var(--muted-foreground);
-  padding: 0.7rem 1rem;
-  font-size: 0.8rem;
   margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
 }
 
 .chip-row {
@@ -534,6 +665,42 @@ table.data tbody tr:hover {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 0.1rem 0.45rem;
+}
+
+/* ---------- charts (rendered client-side by /charts.js) ---------- */
+
+.chart {
+  position: relative; /* anchors the .chart-tip */
+  width: 100%;
+  height: 320px;
+}
+
+.chart svg {
+  display: block;
+}
+
+.chart-tip {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  white-space: nowrap;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+}
+
+.chart-tip .t {
+  display: block;
+  color: var(--muted-foreground);
+}
+
+.chart-tip .v {
+  display: block;
+  font-family: var(--font-mono);
+  font-weight: 600;
 }
 
 /* ---------- rendered markdown ---------- */
