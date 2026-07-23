@@ -1,0 +1,18 @@
+# Recurring daily family: highest-temperature-in-nyc-on-<month>-<day>-<year>
+# negRisk event with 11 bucket legs; per-leg condition_ids/token_ids fetched daily
+# by `runningmax live`. market_slug below = today's instance.
+market_slug = "highest-temperature-in-nyc-on-july-23-2026"
+condition_id = "" # negRisk family-of-the-day; per-leg ids resolved at runtime via Gamma
+added = "2026-07-23"
+active = false # parked 2026-07-23: day-1 backtest kill recommendation (results/backtest-2026-07-23.md); tails quote $1-26 top-of-book, edge is a sub-3-min speed race
+
+[params]
+city = "nyc"
+station_id = "KLGA" # LaGuardia Airport
+resolution_source = "https://www.wunderground.com/history/daily/us/ny/new-york-city/KLGA"
+feed_url = "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?station=KLGA&data=tmpc,tmpf&tz=Etc/UTC&format=onlycomma&report_type=3,4" # + year1/month1/day1..
+unit = "F"           # whole-degree Fahrenheit display, 2°F buckets; METAR T-group 0.1°C precision
+bucket_width = 2
+tz_offset_hours = -4 # EDT (summer 2026)
+peak_window_local = "13:00-17:00"
+obs_cadence_min = 60 # routine :51 METARs + SPECIs

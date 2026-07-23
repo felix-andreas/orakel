@@ -1,0 +1,18 @@
+# Recurring daily family: highest-temperature-in-london-on-<month>-<day>-<year>
+# negRisk event with 11 bucket legs; per-leg condition_ids/token_ids are fetched daily
+# by `runningmax live` (they change every day). market_slug below = today's instance.
+market_slug = "highest-temperature-in-london-on-july-23-2026"
+condition_id = "" # negRisk family-of-the-day; per-leg ids resolved at runtime via Gamma
+added = "2026-07-23"
+active = false # parked 2026-07-23: day-1 backtest kill recommendation (results/backtest-2026-07-23.md); tails quote $1-26 top-of-book, edge is a sub-3-min speed race
+
+[params]
+city = "london"
+station_id = "EGLC" # London City Airport
+resolution_source = "https://www.wunderground.com/history/daily/gb/london/EGLC"
+feed_url = "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?station=EGLC&data=tmpc,tmpf&tz=Etc/UTC&format=onlycomma&report_type=3,4" # + year1/month1/day1..
+unit = "C"           # whole-degree Celsius, display = round(tmpc)
+bucket_width = 1
+tz_offset_hours = 1  # BST (summer 2026)
+peak_window_local = "12:00-17:00"
+obs_cadence_min = 30 # METARs at :20 and :50; whole-degree tmpc only (no T-group at EGLC)
