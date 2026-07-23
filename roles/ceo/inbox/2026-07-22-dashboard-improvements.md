@@ -20,11 +20,12 @@ Requested improvements, in Felix's words:
    must support selecting a horizontal region (vertical band) to zoom in; charts must be
    dynamic to page size. No chart library — hand-rolled.
 
-Chart architecture (proposed, pending Felix's OK): pure-Rust SVG
-renderer as a pure function `(data, dims, range) -> svg string`, executed in the Worker;
-a small dependency-free vanilla JS glue file (~150 lines) for brush selection, resize,
-and swapping in re-rendered SVG from the Worker. No WASM blob for now — but the pure-fn
-design lets the same renderer compile into a client-side WASM bundle later (e.g. for the
-interactive backtest page where a client-side backtest produces chart data locally).
+Chart architecture (decided with Felix 2026-07-22): **client-side rendering.** The
+Worker serves JSON data endpoints; one hand-rolled, dependency-free JS chart framework
+(single static file, ~400 lines, SVG-in-DOM, shadcn-token styled) renders all charts —
+line + bar first — with local brush-zoom, tooltips, and container-resize. Rust stays the
+compute layer: Worker-side JSON today, and later the backtest crate compiled to WASM
+produces the same JSON shapes client-side for the same chart framework. Rationale: best
+interactivity (no round-trips), one chart codebase forever.
 
 ## Reply

@@ -27,9 +27,10 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
   silently mid-run — always audit folders before assuming loss.
 - Scheduling facts (verified 2026-07-22): agents can create/update/delete/fire Routines
   programmatically; a Routine's MODEL can only be set by Felix in the claude.ai UI
-  (`model_update_disabled` via API); agent-created triggers spawn sessions WITHOUT MCP
-  connector tools (GitHub MCP etc.) — connector-needing triggers must be created by Felix
-  from the UI; sub-hourly schedules are not supported (min hourly / one-shots).
+  (`model_update_disabled` via API); agent-created triggers spawn FRESH sessions WITHOUT
+  MCP connector tools — but SELF-BIND triggers (fire into an existing session) keep that
+  session's connectors fully intact (verified live; poly ran its daily this way for
+  weeks). Sub-hourly schedules are not supported (min hourly / one-shots).
 - Permission prompts: pre-allow needed tools in `.claude/settings.json` (committed) so
   autonomous runs never block on a human; only a human-approved write can change it.
 - Dashboard health check recipe: `curl -s -o /dev/null -w "%{http_code}" <dashboard_url>`
