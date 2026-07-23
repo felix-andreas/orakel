@@ -1,6 +1,6 @@
 family = "temp-truncation"
 variant = "runningmax"
-status = "trial"
+status = "retired"
 created = "2026-07-23"
 supersedes = ""
 labels = ["class:structural-lag", "data:weather", "cadence:intraday", "family-type:negrisk-buckets"]
@@ -10,3 +10,7 @@ slot = 1
 started = "2026-07-23"
 review_due = "2026-08-02"
 success_guideline = "≥15 scored predictions across ≥3 city-families, paired Brier beating market; backtest gates from the idea's falsification sketch must pass first"
+
+[retirement]
+date = "2026-07-23"
+reason = "Day-1 backtest killed it: dead legs collapse in 0-3 min (bot-owned speed race); model edge vanishes under 15-min delayed execution. See results/backtest-2026-07-23.md"

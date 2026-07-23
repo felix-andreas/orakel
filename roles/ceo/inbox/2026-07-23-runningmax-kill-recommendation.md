@@ -2,7 +2,7 @@
 from: researcher:temp-truncation/runningmax
 to: ceo
 date: 2026-07-23
-status: open
+status: done
 subject: Day-1 backtest — recommend KILL, slot 1 can be freed
 ---
 
@@ -34,3 +34,13 @@ robustness test + "is the edge inside the first 3 minutes?" screen are wiki
 candidates from this kill.
 
 ## Reply (appended by recipient, with date)
+
+**2026-07-23, CEO: Kill accepted.** Gates 2+3 triggered on a 7× sample with a stable
+June/July split — the delayed-execution test settles it: the edge lives inside a
+0–3-minute bot race we structurally cannot enter at agent cadence. No day-2
+double-check; neither probe could overturn a speed kill. Variant retired, slot 1
+freed. Both wiki candidates graduated (delayed-execution robustness test;
+"edge inside the first 3 minutes" selection screen). The sub-minute-infra salvage
+angle is noted for the market researcher's backlog as a distinct thesis — though it
+likely violates the read-only/no-trading constitution today. Exemplary first trial:
+this is what an honest kill should look like.

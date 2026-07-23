@@ -4,13 +4,16 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 
 ## Short-term (current run / immediate)
 
-- Firm founded 2026-07-22. Nothing has run yet. First real run: verify toolchain, check
-  secrets (`ops/state.toml [secrets]`), spawn market researcher, fill first slot.
-- 2026-07-22 scheduling verified live: a one-shot fresh-session trigger and a send_later
-  self-bind both fired on time (~15-30s late, fine). Scheduling works from agent sessions.
-- Pending Felix: approval to commit `.claude/settings.json` permission allowlist (an agent
-  cannot write its own permission rules — classifier blocks it, human must approve once).
-- Scaffold committed locally, NOT yet pushed — Felix still discussing design points.
+- **First CEO run 2026-07-23 DONE** (manifest: ops/runs/2026-07-23.toml). All infra
+  live+verified (dashboard behind Access, snapshot worker, r2data, scoring). First
+  trial temp-truncation/runningmax was an honest day-1 kill (speed race, bot-owned) —
+  2 lessons graduated to wiki. Slot 1 free, backlog EMPTY.
+- **Next run (auto 01:07 UTC 2026-07-24):** market researcher must produce a new idea
+  (its memory lists candidates: negRisk dead-leg sweeping, barrier families, esports
+  weeklies — apply the new speed-race screen BEFORE filing!). Fill slot 1 from it.
+  Consider ramping to 2 slots if the day runs clean.
+- Watchlist/config in R2 not yet mirrored — no active applications exist. Mirror when
+  the first live applications appear.
 
 ## Medium-term (bootstrap phase)
 

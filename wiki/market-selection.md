@@ -29,6 +29,11 @@ can beat the marginal trader. Distilled from poly's scored runs (2026-07).
 
 ## Select AGAINST
 
+- **Speed-race mispricings** — if the inefficiency closes within minutes of a public
+  print, bots own it and agent cadence structurally cannot compete. Measure before
+  trialing: how fast does the target mispricing actually close on resolved instances?
+  (temp-truncation kill, 2026-07-23: dead legs collapsed in 0–3 min; see
+  [delayed-execution-test](reference/delayed-execution-test.md).)
 - Deep, professionally-arbitraged books (major crypto levels, headline politics).
 - Pure insider processes (M&A rumor resolution) — the decisive information is private;
   only worth it with a structural angle (e.g. wash-trade detection changing the read).
