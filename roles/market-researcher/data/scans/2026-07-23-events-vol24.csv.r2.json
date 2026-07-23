@@ -1,0 +1,11 @@
+{
+  "key": "blobs/42c2c29f7f5c7610bc0c14bdc4f4de6a54fd30da47da4666f929a1d42e590310",
+  "sha256": "42c2c29f7f5c7610bc0c14bdc4f4de6a54fd30da47da4666f929a1d42e590310",
+  "bytes": 10699246,
+  "content_type": "text/csv",
+  "original_name": "2026-07-23-events-vol24.csv",
+  "source_url": "https://gamma-api.polymarket.com/events?closed=false&active=true&order=volume24hr (top 2000 events, 20 pages)",
+  "note": "market-researcher landscape scan 2026-07-23, 26539 open market rows flattened from events",
+  "fetched_at": "2026-07-23T08:11:21Z",
+  "bucket": "orakel"
+}
