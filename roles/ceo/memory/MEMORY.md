@@ -32,3 +32,8 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
   from the UI; sub-hourly schedules are not supported (min hourly / one-shots).
 - Permission prompts: pre-allow needed tools in `.claude/settings.json` (committed) so
   autonomous runs never block on a human; only a human-approved write can change it.
+- Dashboard health check recipe: `curl -s -o /dev/null -w "%{http_code}" <dashboard_url>`
+  must be 302 (Access on) without headers and 200 with
+  `CF-Access-Client-Id/CF-Access-Client-Secret` headers from env. Both verified
+  2026-07-22. Access gotcha: service tokens only work via a policy with action
+  "Service Auth" (not Allow), attached to the app from the app's Policies tab.

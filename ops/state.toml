@@ -44,6 +44,7 @@ r2 = "present"                # R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCES
                               # live round-trip verified 2026-07-22 (push/verify/pull byte-identical)
 cloudflare_api_token = "present"
 github_token = "present"
+cf_access_service_token = "present" # CF_ACCESS_CLIENT_ID/SECRET; verified 2026-07-22 (no creds→302, creds→200)
 
 [cloudflare]
 # Cloudflare Developer Platform MCP is connected in agent sessions (bucket/D1/KV/Workers
