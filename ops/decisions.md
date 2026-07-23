@@ -5,6 +5,16 @@ who decided**. Newest first.
 
 ---
 
+## 2026-07-22 — CEO instantiated (Felix's instruction)
+
+The scaffolding session is promoted to the CEO: it becomes the CEO's persistent session,
+woken daily by a self-bind trigger at 01:07 UTC (03:07 German summer time — inside the
+working window year-round). Felix chose self-bind over fresh-session mode because it
+keeps all MCP connectors (verified live earlier today; fresh sessions from agent-created
+triggers lose them). Model routing per constitution §4: subagents on Fable run at high
+effort only; Opus subagents may run extra-high. First CEO run starts immediately:
+market researcher scan → first strategy idea → fill research slot 1.
+
 ## 2026-07-22 — Founding (Felix + scaffolding session)
 
 The firm is founded as the successor of `poly`, redesigned around lessons from its ~2-week

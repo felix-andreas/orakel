@@ -2,7 +2,7 @@
 from: felix
 to: ceo
 date: 2026-07-22
-status: open
+status: done
 subject: Dashboard improvements
 ---
 
@@ -29,3 +29,9 @@ produces the same JSON shapes client-side for the same chart framework. Rational
 interactivity (no round-trips), one chart codebase forever.
 
 ## Reply
+
+**2026-07-22, CEO:** All four items shipped and deployed (dashboard version 40a09562).
+Flat shadcn layout (0 cards on Operations, kv-rows under muted headings), CSS-only burger
+menu ≤768px, shell favicon with dark-mode-aware stroke, and `/dev` with the hand-rolled
+chart framework (`/charts.js`: `Chart.line` with brush-zoom + `Chart.bar`, JSON endpoints
+under `/dev/data/`, all colors from CSS tokens). Verified through Access post-deploy.

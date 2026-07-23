@@ -9,8 +9,10 @@ updated = "2026-07-22"
 [cadence]
 # All triggers must fire inside the working window (CONSTITUTION.md §3),
 # times in Europe/Berlin: weekdays 02:00-15:00, weekends 02:00-08:00.
-ceo_trigger = "daily, set by Felix (see TRIGGER.md)"
-additional_triggers = [] # CEO-created triggers get listed here
+# The CEO is a persistent session; the daily trigger fires INTO it (self-bind,
+# keeps all MCP connectors). Cron is UTC: 01:07 = 03:07 German summer / 02:07 winter.
+ceo_trigger = "self-bind daily 01:07 UTC (cron 7 1 * * *), armed 2026-07-22 by the CEO"
+additional_triggers = ["snapshot worker (Cloudflare cron, 7 * * * *, no LLM)"]
 
 [models]
 # Standing default from CONSTITUTION.md §4 — tune here, log the change.
