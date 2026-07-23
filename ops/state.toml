@@ -14,10 +14,11 @@ additional_triggers = [] # CEO-created triggers get listed here
 
 [models]
 # Standing default from CONSTITUTION.md §4 — tune here, log the change.
-market_researcher = "fable, effort high/xhigh"
-initial_research = "fable, effort high/xhigh"
-recurring_research = "opus"
-execution = "opus"
+# Felix 2026-07-22: fable only at HIGH effort (never xhigh); opus may run xhigh.
+market_researcher = "fable, effort high"
+initial_research = "fable, effort high"
+recurring_research = "opus, xhigh ok"
+execution = "opus, xhigh ok"
 
 [research]
 slots_total = 5

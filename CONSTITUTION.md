@@ -37,9 +37,10 @@ additional triggers the CEO creates must respect this window and be listed in
 
 ## 4. Model routing (standing default; tune in `ops/state.toml`)
 
-- **Fable, high or extra-high effort** — market researcher and *initial* research on a new
-  variant (idea development, first backtests, trial setup).
-- **Opus** — recurring research triggers (daily slot updates) and execution.
+- **Fable, high effort only** (never extra-high) — market researcher and *initial*
+  research on a new variant (idea development, first backtests, trial setup).
+- **Opus, extra-high effort permitted** — recurring research (daily slot updates) and
+  execution.
 - Every prediction row and worklog entry records the exact model id that produced it.
 
 ## 5. Hard lines (Felix-only decisions)
