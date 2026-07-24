@@ -14,6 +14,19 @@ landfall (NHC).
 Variants:
 
 - [`gistemp-era5/`](gistemp-era5/) — monthly GISTEMP LOTI bucket families nowcast from
-  ERA5 daily 2m via a seasonal transfer model (trial, slot 2, started 2026-07-24).
+  ERA5 daily 2m via a seasonal transfer model (trial, slot 2, started 2026-07-24;
+  day-1 backtest KILL recommendation same day — see its `results/`).
 
-Cross-variant lessons: (none yet)
+Cross-variant lessons:
+
+- **Ask "who is the sharpest agent already in this market?" before building.** The
+  GISTEMP family is priced pre-print at σ ≈ 0.014–0.018 °C — only achievable by
+  replicating the index from its own upstream inputs (GHCN-M + ERSST). A *proxy* feed
+  (ERA5 reanalysis) has an irreducible transfer floor (~0.038 here); if the incumbent
+  crowd plausibly runs the *primary* inputs, a proxy-based nowcast is structurally
+  dominated regardless of how well it's built. Future nowcast variants should target
+  prints where the primary inputs are NOT public ahead of the print, or where no one
+  credibly runs them.
+- **Resolution = first print, never the settled series.** GISTEMP revisions (sd 0.019,
+  bucket-flips in 9/28 instances) would silently corrupt any backtest scored on the
+  current file. Wayback vintages of the resolution file are cheap ground truth.
