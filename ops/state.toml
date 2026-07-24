@@ -4,7 +4,7 @@
 
 [firm]
 phase = "bootstrap" # bootstrap | operating
-updated = "2026-07-23"
+updated = "2026-07-24"
 
 [cadence]
 # All triggers must fire inside the working window (CONSTITUTION.md §3),
@@ -24,7 +24,7 @@ execution = "opus, xhigh ok"
 
 [research]
 slots_total = 5
-slots_active = 1
+slots_active = 2
 
 [[research.slot]]
 id = 1
@@ -32,9 +32,15 @@ variant = "barrier-touch/ladder-rv"
 trial_started = "2026-07-23"
 trial_review_due = "2026-08-02"
 
+[[research.slot]]
+id = 2
+variant = "climate-nowcast/gistemp-era5"
+trial_started = "2026-07-24"
+trial_review_due = "2026-08-03"
+
 [strategies]
 live = []    # promoted variants, e.g. ["barrier-touch/gbm"]
-trial = ["barrier-touch/ladder-rv"]
+trial = ["barrier-touch/ladder-rv", "climate-nowcast/gistemp-era5"]
 retired = ["temp-truncation/runningmax"] # folders stay; post-mortems in results/
 
 [roles]

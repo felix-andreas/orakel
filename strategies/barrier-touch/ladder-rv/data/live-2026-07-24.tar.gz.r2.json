@@ -1,0 +1,11 @@
+{
+  "key": "blobs/0f2ea9bb2f86bbbae1daeda209ca3d59a6b223841724f145de3b760cd0761d54",
+  "sha256": "0f2ea9bb2f86bbbae1daeda209ca3d59a6b223841724f145de3b760cd0761d54",
+  "bytes": 125527,
+  "content_type": "application/gzip",
+  "original_name": "live-2026-07-24.tar.gz",
+  "source_url": "gamma-api.polymarket.com/events + clob.polymarket.com/book",
+  "note": "ladder-rv live snapshot 2026-07-24 01:14Z: Gamma event JSON (WTI-July, SPY/NVDA w-Jul-20, BTC-July) + model prediction rows (54 raw, 32 handoff). Spot U6 91.60/SPY 738.33/NVDA 208.78/BTC 65046. OVX 69.0 VIX 18.7 DVOL-btc 38.5.",
+  "fetched_at": "2026-07-24T01:18:59Z",
+  "bucket": "orakel"
+}

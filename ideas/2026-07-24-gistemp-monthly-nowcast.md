@@ -1,7 +1,7 @@
 ---
 date: 2026-07-24
 slug: gistemp-monthly-nowcast
-status: backlog
+status: trialing # -> strategies/climate-nowcast/gistemp-era5 (slot 2, 2026-07-24)
 example_markets:
   [
     "july-2026-temperature-increase-c-20260608140824583",
