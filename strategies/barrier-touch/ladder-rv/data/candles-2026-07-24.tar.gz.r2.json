@@ -1,0 +1,11 @@
+{
+  "key": "blobs/9123bbed09fb6d7daae7365b2874f7fa120650645c2ba20d7913acfd598d0e0f",
+  "sha256": "9123bbed09fb6d7daae7365b2874f7fa120650645c2ba20d7913acfd598d0e0f",
+  "bytes": 14439865,
+  "content_type": "application/gzip",
+  "original_name": "candles-2026-07-24.tar.gz",
+  "source_url": "benchmarks.pyth.network (BTCUSDT via binance data-api; SPY/NVDA/USOILSPOT/WTIU6 via pyth TV-shim) + data-api.binance.vision + cdn.cboe.com (OVX/VIX) + deribit.com (DVOL)",
+  "note": "ladder-rv daily resolution-feed archive thru 2026-07-24 01:12Z: 1-min candles all 6 keys (WTIU6 active-month full 07-23 session + 07-24 partial — delisting insurance), + OVX/VIX/DVOL. Supersedes day-1 candles; 07-23 now COMPLETE (was partial in day-1 freeze).",
+  "fetched_at": "2026-07-24T01:14:01Z",
+  "bucket": "orakel"
+}
