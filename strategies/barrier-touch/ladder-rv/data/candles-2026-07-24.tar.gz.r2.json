@@ -1,11 +1,11 @@
 {
-  "key": "blobs/9123bbed09fb6d7daae7365b2874f7fa120650645c2ba20d7913acfd598d0e0f",
-  "sha256": "9123bbed09fb6d7daae7365b2874f7fa120650645c2ba20d7913acfd598d0e0f",
-  "bytes": 14439865,
+  "key": "blobs/092cb3e4e9801f8b08f59f69adf5ba3f1cb421f914bd7451cf345382bc6974c9",
+  "sha256": "092cb3e4e9801f8b08f59f69adf5ba3f1cb421f914bd7451cf345382bc6974c9",
+  "bytes": 15172573,
   "content_type": "application/gzip",
   "original_name": "candles-2026-07-24.tar.gz",
-  "source_url": "benchmarks.pyth.network (BTCUSDT via binance data-api; SPY/NVDA/USOILSPOT/WTIU6 via pyth TV-shim) + data-api.binance.vision + cdn.cboe.com (OVX/VIX) + deribit.com (DVOL)",
-  "note": "ladder-rv daily resolution-feed archive thru 2026-07-24 01:12Z: 1-min candles all 6 keys (WTIU6 active-month full 07-23 session + 07-24 partial — delisting insurance), + OVX/VIX/DVOL. Supersedes day-1 candles; 07-23 now COMPLETE (was partial in day-1 freeze).",
-  "fetched_at": "2026-07-24T01:14:01Z",
+  "source_url": "benchmarks.pyth.network (Metal.XAU|XAG, Commodities.WTIU6|USOILSPOT, Equity.US.SPY|NVDA via TV-shim; BTC|ETH via data-api.binance.vision) + cdn.cboe.com (OVX/VIX/GVZ/VXSLV) + deribit.com (DVOL)",
+  "note": "ladder-rv daily resolution-feed archive thru 2026-07-24 ~01:26Z: 1-min candles 8 keys (added XAUUSD/XAGUSD continuous metals for gold/silver widen; WTIU6 active-month delisting insurance) + OVX/VIX/GVZ/VXSLV/DVOL. 07-23 COMPLETE. Supersedes earlier same-day freeze (which lacked metals).",
+  "fetched_at": "2026-07-24T01:28:49Z",
   "bucket": "orakel"
 }

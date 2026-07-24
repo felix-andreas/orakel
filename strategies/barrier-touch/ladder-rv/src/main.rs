@@ -165,6 +165,8 @@ enum Asset {
     Wti,
     Spy,
     Nvda,
+    Gold,
+    Silver,
 }
 
 impl Asset {
@@ -179,6 +181,10 @@ impl Asset {
             Ok(Asset::Spy)
         } else if slug.contains("-nvda-") {
             Ok(Asset::Nvda)
+        } else if slug.contains("xauusd") {
+            Ok(Asset::Gold)
+        } else if slug.contains("xagusd") {
+            Ok(Asset::Silver)
         } else {
             bail!("cannot detect asset from slug {slug}")
         }
@@ -190,6 +196,8 @@ impl Asset {
             Asset::Wti => "wti",
             Asset::Spy => "spy",
             Asset::Nvda => "nvda",
+            Asset::Gold => "gold",
+            Asset::Silver => "silver",
         }
     }
     fn from_name(n: &str) -> Result<Asset> {
@@ -199,6 +207,8 @@ impl Asset {
             "wti" => Asset::Wti,
             "spy" => Asset::Spy,
             "nvda" => Asset::Nvda,
+            "gold" => Asset::Gold,
+            "silver" => Asset::Silver,
             _ => bail!("unknown asset {n}"),
         })
     }
@@ -206,7 +216,9 @@ impl Asset {
         match self {
             Asset::Btc | Asset::Eth => Class::Crypto,
             Asset::Spy | Asset::Nvda => Class::Equity,
-            Asset::Wti => Class::Wti,
+            // Metals (XAUUSD/XAGUSD) resolve on a COMEX-style session: 6pm ET Sun ->
+            // 5pm ET Fri with a daily 5-6pm ET break == WTI's 22:00Z->21:00Z model.
+            Asset::Wti | Asset::Gold | Asset::Silver => Class::Wti,
         }
     }
     /// Candle store key for backtests (WTI: continuous USOILSPOT proxy).
@@ -217,6 +229,9 @@ impl Asset {
             Asset::Wti => "USOILSPOT",
             Asset::Spy => "SPY",
             Asset::Nvda => "NVDA",
+            // Continuous Pyth metals feeds (not per-contract) — no delisting, no proxy.
+            Asset::Gold => "XAUUSD",
+            Asset::Silver => "XAGUSD",
         }
     }
     /// Candle store key for LIVE spot reads (WTI: the current active-month contract).
@@ -238,6 +253,8 @@ fn key_url(key: &str) -> (&'static str, String) {
         "NVDA" => ("pyth", "Equity.US.NVDA/USD".into()),
         "WTIU6" => ("pyth", "Commodities.WTIU6/USD".into()),
         "WTIV6" => ("pyth", "Commodities.WTIV6/USD".into()),
+        "XAUUSD" => ("pyth", "Metal.XAU/USD".into()),
+        "XAGUSD" => ("pyth", "Metal.XAG/USD".into()),
         _ => panic!("unknown candle key {key}"),
     }
 }
@@ -729,6 +746,8 @@ fn cmd_vol(data: &Path) -> Result<()> {
     for (name, url) in [
         ("ovx.csv", "https://cdn.cboe.com/api/global/us_indices/daily_prices/OVX_History.csv"),
         ("vix.csv", "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv"),
+        ("gvz.csv", "https://cdn.cboe.com/api/global/us_indices/daily_prices/GVZ_History.csv"),
+        ("vxslv.csv", "https://cdn.cboe.com/api/global/us_indices/daily_prices/VXSLV_History.csv"),
     ] {
         let txt = get_text(&client, url)?;
         fs::write(dir.join(name), &txt)?;
@@ -751,7 +770,12 @@ fn cmd_vol(data: &Path) -> Result<()> {
 fn load_iv(data: &Path) -> HashMap<&'static str, BTreeMap<NaiveDate, f64>> {
     let dir = data.join("vol");
     let mut out: HashMap<&'static str, BTreeMap<NaiveDate, f64>> = HashMap::new();
-    for (name, tag) in [("ovx.csv", "wti"), ("vix.csv", "spy")] {
+    for (name, tag) in [
+        ("ovx.csv", "wti"),
+        ("vix.csv", "spy"),
+        ("gvz.csv", "gold"),
+        ("vxslv.csv", "silver"),
+    ] {
         let mut m = BTreeMap::new();
         if let Ok(txt) = fs::read_to_string(dir.join(name)) {
             for line in txt.lines().skip(1) {
@@ -883,7 +907,10 @@ fn cmd_analyze(data: &Path) -> Result<()> {
         .map(|c| (c, SessionCal::build(c)))
         .collect();
     println!("loading candles...");
-    let db = CandleDb::load(data, &["BTCUSDT", "ETHUSDT", "USOILSPOT", "SPY", "NVDA", "WTIU6"]);
+    let db = CandleDb::load(
+        data,
+        &["BTCUSDT", "ETHUSDT", "USOILSPOT", "SPY", "NVDA", "WTIU6", "XAUUSD", "XAGUSD"],
+    );
     let iv = load_iv(data);
 
     // ---- Gate 0: resolution reproduction ----
@@ -1519,7 +1546,10 @@ fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
         .into_iter()
         .map(|c| (c, SessionCal::build(c)))
         .collect();
-    let db = CandleDb::load(data, &["BTCUSDT", "ETHUSDT", "USOILSPOT", "SPY", "NVDA", "WTIU6"]);
+    let db = CandleDb::load(
+        data,
+        &["BTCUSDT", "ETHUSDT", "USOILSPOT", "SPY", "NVDA", "WTIU6", "XAUUSD", "XAGUSD"],
+    );
     let iv = load_iv(data);
     let mut pred_rows = vec![
         "market_slug,condition_id,outcome,token_id,probability,market_midpoint,bid,ask,dir,barrier,note"

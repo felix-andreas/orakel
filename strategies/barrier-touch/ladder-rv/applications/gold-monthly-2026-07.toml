@@ -1,0 +1,57 @@
+# Board-level application (see wti-monthly-2026-07.toml comment). WIDEN day-2 (2026-07-24):
+# metals map onto the WTI session model (Class::Wti in code) — continuous Pyth feed,
+# NO per-contract delisting, backfillable. Symbol map extended for XAUUSD/XAGUSD.
+market_slug = "what-price-will-xauusd-hit-in-july-2026"
+condition_id = ""            # board = Gamma event; per-leg condition_ids below
+added = "2026-07-24"
+active = true                # PREDICTION-ONLY: no trade edge found (see note); books thin
+
+[params]
+asset = "gold"
+tier = "monthly"
+resolution_feed = "Pyth Metal.XAU/USD (Gold XAUUSD spot), 1-min candles"
+pyth_symbol = "Metal.XAU/USD"
+session = "6pm ET Sun -> 5pm ET Fri, daily 5-6pm ET break == WTI 22:00Z->21:00Z model"
+window_end = 2026-07-31T21:00:00Z     # last session close; Gamma endDate Aug 1 03:59Z
+iv_source = "GVZ (CBOE gold vol index, daily close)"  # 25.1% on 2026-07-23; RV14d 21.2%
+fallback_feed = "COMEX Gold Futures (GC) daily high/low if Pyth outage (per market rules)"
+note = """
+Applicability PASSES structurally (feed mirrored, fundable 3-50c legs, two-sided books).
+BUT at 2026-07-24 01:26Z the driftless-GBM+RV model finds NO tradeable sell edge in the
+fundable zone: q_rv sits AT or ABOVE the market mid (H4300 q_rv .058 vs mid .043;
+L3900 q_rv .257 vs mid .232) -> would-be BUYS, which are disabled. The classic wing
+overpricing appears only on the deep sub-3c wings (L3300-L3600, H4500-H4600: market
+0.3-1.7c vs q~0) which are un-fundable & thin. Gold books are thin (tob$ <$20) -> like
+equity weeklies: PREDICTIONS yes, TRADES no. Whether the model beats market Brier on
+metals is UNKNOWN (no metals backtest yet) -> treat like BTC/equity: predict, let Jul-31
+resolution classify. spot XAU 4045.05.
+"""
+
+# Fundable-zone legs (3-50c) predicted for scoring. Signals are informational; none clear
+# the sell threshold (q_rv < mid - spread - 2c) on the tradeable-book side.
+[[legs]]
+leg = "H4300"
+market_slug = "will-xauusd-reach-4300-in-july-2026"
+condition_id = "0x1db1cc616c475e747cab966517066d36dadcf1ba71d3b740379f610a7a09e059"
+barrier = 4300.0
+direction = "high"
+window_start = 1782856800    # 2026-06-30 22:00Z (July session open; leg listed Jun 25)
+signal = "no trade: q_rv 0.058 > mid 0.043 (model above market -> buy-side, disabled); book tob$16"
+
+[[legs]]
+leg = "L3900"
+market_slug = "will-xauusd-dip-to-3900-in-july-2026"
+condition_id = "0x0fe111894949f0e3007c5220be03d9f2f98d3eca39ad0adc1f35ed36bcf26e28"
+barrier = 3900.0
+direction = "low"
+window_start = 1782856800
+signal = "no trade: q_rv 0.257 > mid 0.232 (buy-side, disabled); book tob$9"
+
+[[legs]]
+leg = "L3800"
+market_slug = "will-xauusd-dip-to-3800-in-july-2026"
+condition_id = "0x41bfaa8f94e9eb7015ea7a336431c42771d8f33fa94b43bee27760a39cf36671"
+barrier = 3800.0
+direction = "low"
+window_start = 1782856800
+signal = "sell lean q_rv 0.053 vs mid 0.106 (edge -5.4c) but book tob$3 -> diagnostic, not tradeable"

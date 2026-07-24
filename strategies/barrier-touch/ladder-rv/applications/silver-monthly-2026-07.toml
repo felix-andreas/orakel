@@ -1,0 +1,62 @@
+# Board-level application (see wti-monthly-2026-07.toml comment). WIDEN day-2 (2026-07-24):
+# metals map onto the WTI session model (Class::Wti). Continuous Pyth feed, backfillable.
+market_slug = "what-price-will-xagusd-hit-in-july-2026"
+condition_id = ""
+added = "2026-07-24"
+active = true                # PREDICTION-ONLY: no trade edge found; books thin
+
+[params]
+asset = "silver"
+tier = "monthly"
+resolution_feed = "Pyth Metal.XAG/USD (Silver XAGUSD spot), 1-min candles"
+pyth_symbol = "Metal.XAG/USD"
+session = "6pm ET Sun -> 5pm ET Fri, daily 5-6pm ET break == WTI 22:00Z->21:00Z model"
+window_end = 2026-07-31T21:00:00Z     # last session close; Gamma endDate Aug 1 03:59Z
+iv_source = "VXSLV (CBOE silver vol index, daily close)"  # 49.5% on 2026-07-23; RV14d 41.9%
+fallback_feed = "COMEX Silver Futures (SI) daily high/low if Pyth outage (per market rules)"
+note = """
+Very volatile July: touched BOTH >$62 (H58/H60/H62 resolved YES) and <$56 (L56 YES) —
+wide realized range, VXSLV 49.5%. At 2026-07-24 01:26Z the model finds NO tradeable sell
+edge in the fundable zone: near-money legs q_rv ~= mid (L54 .326 vs .325) or ABOVE
+(H64 .093 vs .080, L52 .116 vs .106 -> buy-side, disabled). Overpricing only on deep
+sub-3c wings (L44-L48, H70). Books thin (best tob$ ~$55 on L52/L54, rest <$40) ->
+PREDICTIONS yes, TRADES no. Model-vs-market Brier on metals UNKNOWN pending a backtest;
+predict & let Jul-31 resolution classify. spot XAG 57.49.
+"""
+
+# Fundable-zone legs (3-50c) predicted for scoring.
+[[legs]]
+leg = "H66"
+market_slug = "will-xagusd-reach-66-in-july-2026"
+condition_id = "0xe44ae4a2b20197080c08ae426fb4567a236cb7ef4eada72a0d7dfe1d4dfab410"
+barrier = 66.0
+direction = "high"
+window_start = 1782856800
+signal = "no trade: q_rv 0.030 vs mid 0.034 (edge -0.4c, within noise); book tob$0 (one-sided now)"
+
+[[legs]]
+leg = "H64"
+market_slug = "will-xagusd-reach-64-in-july-2026"
+condition_id = "0x4a7acaa21b589c5c731a69db2e7539718bc923288da33e37e62d5f44faa71c97"
+barrier = 64.0
+direction = "high"
+window_start = 1782856800
+signal = "no trade: q_rv 0.093 > mid 0.080 (buy-side, disabled); book tob$38"
+
+[[legs]]
+leg = "L54"
+market_slug = "will-xagusd-dip-to-54-in-july-2026"
+condition_id = "0x35380c09fef1d77965ef5df4e7c48ce823884f310f0d8418bb2bc8b6e6a86298"
+barrier = 54.0
+direction = "low"
+window_start = 1782856800
+signal = "no trade: q_rv 0.326 == mid 0.325 (no edge); book tob$55 (deepest metals leg)"
+
+[[legs]]
+leg = "L52"
+market_slug = "will-xagusd-dip-to-52-in-july-2026"
+condition_id = "0x992de268ddb9881a9ef132be463fef25d7772903f48d9befc48eedea55a37c00"
+barrier = 52.0
+direction = "low"
+window_start = 1782856800
+signal = "no trade: q_rv 0.116 > mid 0.106 (buy-side, disabled); book tob$56"
