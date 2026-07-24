@@ -1,0 +1,11 @@
+{
+  "key": "blobs/3f003ede0ffdd4298e85b145a4c6c12dd43febb6c62e60b2d23fc51530b0d8fa",
+  "sha256": "3f003ede0ffdd4298e85b145a4c6c12dd43febb6c62e60b2d23fc51530b0d8fa",
+  "bytes": 6000356,
+  "content_type": "application/gzip",
+  "original_name": "backtest-raw-2026-07-24.tar.gz",
+  "source_url": "gamma+clob+data-api.polymarket.com; web.archive.org GLB.Ts+dSST vintages",
+  "note": "gistemp-era5 day-1 backtest raw: 36 Polymarket events (27 resolved monthly bucket instances May2024-Jun2026 + live Jul2026 + ranking/annual), 197 legs prices-history fid60, 32 live books, 48 tapes; 50 wayback GISTEMP vintage captures 2024-03..2026-07 + parsed vintages.csv",
+  "fetched_at": "2026-07-24T01:35:01Z",
+  "bucket": "orakel"
+}
