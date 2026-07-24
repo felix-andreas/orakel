@@ -4,22 +4,26 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 
 ## Short-term (current run / immediate)
 
-- **Runs 1+2 of 2026-07-23 DONE** (manifests: ops/runs/2026-07-23{,-2}.toml). Run 1:
-  runningmax honest day-1 kill (speed race) → 2 wiki lessons. Run 2: barrier-touch/
-  ladder-rv in slot 1, day-1 gates ALIVE (sell-only wings, delayed-exec verified;
-  buys disabled) → **first 18 prediction rows in CSV** (run_id 2026-07-23/run2), 
-  watchlist (18 mkts) mirrored to R2 + verified.
-- **Next run (auto 01:07 UTC 2026-07-24) checklist:** (1) ladder-rv day-2 (Opus now —
-  recurring research per routing): daily candle archive incl. WTIU6 (Pyth DELETES
-  expired contract feeds!), vol refresh, live re-run, new rows; (2) Fri 20:00Z:
-  SPY x2 + NVDA rows resolve → SATURDAY run scores them (resolutions.csv → scoring/
-  → first track record!); (3) market researcher daily idea — **Felix directive in its
-  inbox: market-SPECIFIC data-source strategy, not market-agnostic structure** (fill
-  slot 2 from it if it holds up); (4) verify snapshot worker is writing hourly
-  objects (first check was inconclusive — wrangler get vs content_encoding gzip).
-- Trades flagged by ladder-rv (paper): sell WTI ↑$110 @9.3c (tier A), ↑$105 @16.6c
-  (tier B) — execution layer not built yet; note for backtest engine design: for
-  sells, t+24h fills IMPROVED results (+7.7→+10.0c) — daily cadence suffices.
+- **Run 2026-07-24 DONE (first automatic daily; manifest ops/runs/2026-07-24.toml).**
+  ladder-rv day 2 (opus): 39 rows (57 total), metals prediction-only, buys stay
+  disabled (rescue experiment negative), 5 sell signals. gistemp-era5: created AND
+  killed same day (crowd runs GISTEMP primary inputs, σ 0.015 vs proxy floor 0.038)
+  — 2 more wiki lessons. Slot 1 active (ladder-rv day 3 tomorrow), slot 2 free,
+  backlog empty. Watchlist 40 markets, mirrored+verified. Snapshot worker healthy.
+- **Next run (2026-07-25, Saturday) checklist:** (1) SCORE: 20 rows resolved Fri
+  20:00Z (SPY/NVDA weeklies incl. day-1+day-2 rows) → resolutions.csv from Pyth
+  candles via ladderrv pipeline → run scoring/ → FIRST TRACK RECORD → paired-Brier
+  numbers into the summary; (2) ladder-rv day 3 (opus): discover week-of-Jul-27 +
+  August boards (listed Fri evening), new rows, metals backtest; (3) market
+  researcher: new idea (backlog empty; keep applying proxy-vs-primary + speed
+  screens); (4) weekend window is 02:00-08:00 German — run is INSIDE it (03:07), fine.
+- Dashboard: git pages still on embedded fallback — GITHUB_DASHBOARD_TOKEN not yet
+  provided by Felix; /snapshots is live from R2. ETag/KV layer discussed, awaiting
+  Felix's verdict.
+- Trades flagged by ladder-rv day 2 (paper, sell-only, all tier B): WTI ↓80 @18.5c
+  (best, $1.1k book), ↑110 @8.1c, ↑100 @37c, ↑105 @17c, ↓75 @6c. Execution layer
+  still unbuilt — backtest engine + policies remain the biggest missing component;
+  raise with Felix when slots stabilize.
 
 ## Medium-term (bootstrap phase)
 

@@ -1,0 +1,50 @@
+date = "2026-07-24"
+trigger = "ceo-daily (first automatic firing, 01:07 UTC)"
+model = "fable (session); subagents: fable (high) x2, opus (xhigh) x1"
+
+[spend]
+# Subagent output tokens: market researcher ~91k, ladder-rv day-2 (opus) ~201k,
+# gistemp-era5 day-1 ~170k + orchestration.
+total_tokens = 550000
+
+[[step]]
+role = "ceo"
+status = "ok"
+note = "orient + health green (dashboard 302/200, snapshot worker 200); no PAT yet — dashboard git pages still on embedded fallback"
+
+[[step]]
+role = "market-researcher"
+status = "ok"
+note = "Felix's market-specific directive answered: idea gistemp-monthly-nowcast filed; inbox reply, status done; /public-search recipe added to wiki"
+
+[[step]]
+role = "ceo"
+status = "ok"
+note = "slot 2 filled: climate-nowcast/gistemp-era5 (first two-slot day)"
+
+[[step]]
+role = "researcher"
+slot = 1
+variant = "barrier-touch/ladder-rv"
+status = "ok"
+predictions = 39
+note = "day 2 (opus): candle archive complete incl. WTIU6; metals added prediction-only (GVZ/VXSLV anchors); natgas deferred (no clean feed); buy-side rescue NEGATIVE (buys stay disabled); 5 sell signals, best WTI dip-80 @18.5c vs 9.2% model"
+
+[[step]]
+role = "researcher"
+slot = 2
+variant = "climate-nowcast/gistemp-era5"
+status = "ok"
+predictions = 0
+note = "day-1 backtest on 28 resolved instances: 3/5 kill conditions met — crowd runs GISTEMP primary inputs at sigma 0.015 vs our proxy floor 0.038; KILL recommended, escalated"
+
+[[step]]
+role = "ceo"
+status = "ok"
+note = "39 rows appended (run_id 2026-07-24/daily); watchlist 40 markets mirrored+verified; gistemp kill ACCEPTED same day — variant retired, slot 2 freed; 2 lessons graduated to wiki (first-print vintages, proxy-vs-primary screen)"
+
+[health]
+all_slots_ran = true
+csv_appended_rows = 39
+pushed = true
+notes = "57 prediction rows total. 20 rows resolve TODAY 20:00Z (17 new + 3 from day 1, same SPY/NVDA legs) -> TOMORROW'S RUN MUST SCORE THEM (first track record). Week-of-Jul-27 + August boards list Friday evening — ladder-rv day 3 discovers them. Backlog empty again; both kills came from ideas that passed screening — the screens are working, keep tightening."

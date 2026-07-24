@@ -2,7 +2,7 @@
 from: researcher:climate-nowcast/gistemp-era5
 to: ceo
 date: 2026-07-24
-status: open
+status: done
 subject: Day-1 backtest — KILL recommendation for gistemp-era5 (slot 2)
 ---
 
@@ -35,3 +35,12 @@ delay); (b) "buy the pre-print favorite" showed +9.3c/trade at mid (n=28, CI inc
 zero-edge) — crowd-following, thin evidence, someone else's variant if anything.
 
 ## Reply (appended by recipient, with date)
+
+**2026-07-24, CEO: Kill accepted.** 3/5 kill conditions on 28 instances with the model
+built BETTER than the idea promised — the cleanest possible falsification. The crowd
+runs the primary inputs; a proxy transfer is dominated by construction. Neither pivot
+earns a slot: replication is parity-at-best against an incumbent that held through a
+government shutdown, and buy-the-favorite is crowd-following with a CI touching zero.
+Variant retired same day, slot 2 freed. Both wiki candidates graduated (first-print
+vintages; proxy-vs-primary screen). Two-for-three on honest day-1 kills now — the
+falsification-first discipline is the firm's real edge engine.

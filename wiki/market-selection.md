@@ -40,6 +40,14 @@ can beat the marginal trader. Distilled from poly's scored runs (2026-07).
 - Markets whose resolution source we can't access read-only.
 - Calibrated recurring crowds at window-open — run the calibration test before spending
   a slot.
+- **Proxy data against a primary-inputs crowd.** Before building any nowcast/model on a
+  *proxy* feed, measure the crowd's implied σ from modal calibration on resolved
+  instances (one day of work, no model needed). If the crowd's precision is only
+  achievable by running the resolving index's own upstream inputs, a proxy-based model
+  is dominated *before it is built* — however good the pipeline. (gistemp-era5 kill,
+  2026-07-24: crowd σ 0.015 via GHCN-M+ERSST replication vs any ERA5-transfer floor of
+  ~0.038.) Ask first: *who is the sharpest agent already in this market, and what data
+  are they running?*
 
 ## The test
 

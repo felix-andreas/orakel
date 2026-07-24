@@ -1,6 +1,6 @@
 family = "climate-nowcast"
 variant = "gistemp-era5"
-status = "trial"
+status = "retired"
 created = "2026-07-24"
 supersedes = ""
 labels = ["class:data-pipeline", "data:era5", "data:gistemp", "family-type:monthly-buckets", "horizon:8-19d", "felix-directive:market-specific"]
@@ -10,3 +10,7 @@ slot = 2
 started = "2026-07-24"
 review_due = "2026-08-03"
 success_guideline = "backtest gates (idea's 5 kill conditions) pass on ≥15 resolved monthly instances; then paired Brier beating market on forward predictions; July print (~Aug 8-14) is the first live scoring"
+
+[retirement]
+date = "2026-07-24"
+reason = "Day-1 backtest: 3/5 kill conditions on 28 resolved instances. Crowd nowcasts the print at sigma 0.014-0.018 by running GISTEMP's primary inputs; our ERA5-proxy floor is 0.038. See results/backtest-2026-07-24.md"

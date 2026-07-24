@@ -1,7 +1,7 @@
 ---
 date: 2026-07-24
 slug: gistemp-monthly-nowcast
-status: trialing # -> strategies/climate-nowcast/gistemp-era5 (slot 2, 2026-07-24)
+status: discarded-idea # trialed and killed same day: crowd runs GISTEMP primary inputs (sigma 0.015 vs our proxy floor 0.038); see variant post-mortem
 example_markets:
   [
     "july-2026-temperature-increase-c-20260608140824583",

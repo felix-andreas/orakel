@@ -29,3 +29,16 @@ collecting from next :07. 3 rows resolve Friday -> Saturday run scores them.
 Manifest: ops/runs/2026-07-23-2.toml.
 
 ---
+## 2026-07-24 — daily run (first automatic firing)
+
+Model: fable (high). Market researcher answered Felix's market-specific directive
+with gistemp-monthly-nowcast; slot 2 trialed climate-nowcast/gistemp-era5 — killed
+same day by its own 5-gate backtest (28 instances; crowd replicates GISTEMP primary
+inputs at sigma 0.015, our proxy floor 0.038; model built BETTER than promised and
+still lost). Kill accepted; first-print-vintages + proxy-vs-primary screens
+graduated to wiki. ladder-rv day 2 (opus/xhigh): 39 rows appended (57 total),
+watchlist 40 mkts mirrored, buys stay disabled, metals prediction-only, 5 tier-B
+sell signals. 20 rows resolve 20:00Z today -> tomorrow scores the first track
+record. Manifest: ops/runs/2026-07-24.toml.
+
+---
