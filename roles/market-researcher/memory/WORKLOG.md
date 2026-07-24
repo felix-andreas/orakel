@@ -4,6 +4,37 @@ One dated entry per run. Name the exact model id that did the work.
 
 ---
 
+## 2026-07-24 — Felix directive: market-specific data sources; gistemp idea filed
+
+Model: fable (high). Governing input: inbox
+`2026-07-23-felix-market-specific-strategies.md` (now status: done).
+
+- Fresh scan (20 pages, 26,614 open market rows, frozen:
+  `data/scans/2026-07-24-events-vol24.csv.r2.json`). Grepped for primary-source
+  topics: climate/GISTEMP, hurricanes/NHC, CDC counts, CPI/BLS, EIA gas, Netflix/
+  Spotify/Billboard weeklies, earthquakes/USGS, box office. Strongest data-advantage
+  candidate by far: the GISTEMP monthly bucket family (poly's literal heritage).
+- Verified both primary sources read-only from this box and froze snapshots to R2
+  (`data/sources/2026-07-24-{gistemp-glb,era5-daily-2t-global}.csv.r2.json`): GISTEMP
+  LOTI monthly CSV (Jun 2026 = 1.18) and ECMWF Climate Pulse ERA5 daily global 2t
+  (through Jul 21, updated Jul 23).
+- Built the actual nowcast live: ERA5 July MTD(21d) +0.632, persistence-projected
+  full month 0.629±0.032; June-anchored + year-effect transfer → GISTEMP nowcast
+  center ~1.246 σ 0.056 (30-month day-21 hindcast: MAE 0.052, bias +0.025, only 6/30
+  within ±0.025). Market prices modal 1.20–1.24 bucket 72/83 vs model 0.31–0.37;
+  adjacent buckets 4.9c/20c asks vs model 0.15–0.24/0.25–0.32; $108k ranking sibling
+  bids 0.94 on "1st hottest" vs model 0.68–0.82. Confirmed the family trades past
+  month-end until the print (Jul-2025 closedTime Aug 8) → 8–19 day model-revealed
+  edge horizon, no print to race; speed screen passes by construction.
+- Filed `ideas/2026-07-24-gistemp-monthly-nowcast.md` (backlog): 5 kill conditions
+  incl. market-already-sharp test, modal-calibration test, t+24h delayed-exec sim,
+  GISTEMP first-print vintage check, capacity floor. Replied to Felix (status: done).
+- Wiki maintenance: added Gamma `/public-search` series-discovery recipe to
+  `wiki/recipes/polymarket-api.md`. Memory pruned (run-2 detail compressed; climate
+  family facts + "start from the resolution source" heuristic added).
+
+---
+
 ## 2026-07-23 (run 2) — extra cycle after same-day kill; idea 2 filed
 
 Model: fable (high). Felix requested a second cycle after runningmax was killed day 1.

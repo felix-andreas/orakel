@@ -25,6 +25,10 @@ let markets: serde_json::Value = reqwest::blocking::Client::new()
 - Single market by slug: `/markets?slug=<slug>`. Resolution check: `closed == true` and
   `outcomePrices` collapsed to `[1, 0]` / `[0, 1]`.
 - `closed=true` queries are the backtest goldmine: resolved markets + their metadata.
+- **Series discovery** (find all instances of a recurring family, open AND resolved):
+  `/public-search?q=<text>&limit_per_type=20` → `{events: [...], ...}` with `closed`
+  flags. Much better than paging `/events` when you know the family's title words
+  (e.g. `q=temperature+increase` returns 20+ monthly instances back to 2024).
 
 ## Prices — CLOB (keyed by outcome token id, not market)
 
