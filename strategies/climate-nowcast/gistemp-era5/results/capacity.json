@@ -1,0 +1,108 @@
+{
+ "late_window_tape": [
+  {
+   "event": "july-2025-temperature-increase-c-513",
+   "zone_notional": 43204,
+   "matched_notional": 16694,
+   "n_zone_prints": 742
+  },
+  {
+   "event": "september-2025-temperature-increase-c",
+   "zone_notional": 21807,
+   "matched_notional": 10866,
+   "n_zone_prints": 811
+  },
+  {
+   "event": "january-2026-temperature-increase-c",
+   "zone_notional": 39641,
+   "matched_notional": 22979,
+   "n_zone_prints": 1878
+  },
+  {
+   "event": "february-2026-temperature-increase-c",
+   "zone_notional": 37362,
+   "matched_notional": 21542,
+   "n_zone_prints": 3561
+  },
+  {
+   "event": "march-2026-temperature-increase-c",
+   "zone_notional": 15180,
+   "matched_notional": 4046,
+   "n_zone_prints": 1310
+  },
+  {
+   "event": "april-2026-temperature-increase-c",
+   "zone_notional": 14045,
+   "matched_notional": 6885,
+   "n_zone_prints": 681
+  },
+  {
+   "event": "may-2026-temperature-increase-c",
+   "zone_notional": 4609,
+   "matched_notional": 3851,
+   "n_zone_prints": 238
+  },
+  {
+   "event": "june-2026-temperature-increase-c",
+   "zone_notional": 2240,
+   "matched_notional": 2884,
+   "n_zone_prints": 83
+  }
+ ],
+ "live_books": [
+  {
+   "market_slug": "will-global-temperature-increase-by-less-than-1pt10c-in-july-2026-20260608140825776",
+   "bid": 0.001,
+   "bid_top_usd": 2,
+   "ask": 0.003,
+   "ask_top_usd": 2,
+   "bid_5c_usd": 2,
+   "ask_5c_usd": 4
+  },
+  {
+   "market_slug": "will-global-temperature-increase-by-between-1pt10c-and-1pt14c-in-july-2026-20260608140825777",
+   "bid": 0.001,
+   "bid_top_usd": 1,
+   "ask": 0.009,
+   "ask_top_usd": 6,
+   "bid_5c_usd": 1,
+   "ask_5c_usd": 52
+  },
+  {
+   "market_slug": "will-global-temperature-increase-by-between-1pt15c-and-1pt19c-in-july-2026-20260608140825778",
+   "bid": 0.036,
+   "bid_top_usd": 14,
+   "ask": 0.049,
+   "ask_top_usd": 7,
+   "bid_5c_usd": 15,
+   "ask_5c_usd": 14
+  },
+  {
+   "market_slug": "will-global-temperature-increase-by-between-1pt20c-and-1pt24c-in-july-2026-20260608140825779",
+   "bid": 0.72,
+   "bid_top_usd": 36,
+   "ask": 0.83,
+   "ask_top_usd": 33,
+   "bid_5c_usd": 43,
+   "ask_5c_usd": 235
+  },
+  {
+   "market_slug": "will-global-temperature-increase-by-between-1pt25c-and-1pt29c-in-july-2026-20260608140825780",
+   "bid": 0.14,
+   "bid_top_usd": 6,
+   "ask": 0.2,
+   "ask_top_usd": 288,
+   "bid_5c_usd": 39,
+   "ask_5c_usd": 296
+  },
+  {
+   "market_slug": "will-global-temperature-increase-by-more-than-1pt29c-in-july-2026-20260608140825781",
+   "bid": 0.001,
+   "bid_top_usd": 2,
+   "ask": 0.002,
+   "ask_top_usd": 0,
+   "bid_5c_usd": 2,
+   "ask_5c_usd": 3
+  }
+ ]
+}
