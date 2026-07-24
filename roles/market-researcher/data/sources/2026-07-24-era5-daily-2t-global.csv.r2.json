@@ -1,0 +1,11 @@
+{
+  "key": "blobs/3ecb4d896a290749455f7f210a4c649d4d9461d7ae75a24e9758cf532c15e455",
+  "sha256": "3ecb4d896a290749455f7f210a4c649d4d9461d7ae75a24e9758cf532c15e455",
+  "bytes": 1194969,
+  "content_type": "text/csv",
+  "original_name": "2026-07-24-era5-daily-2t-global.csv",
+  "source_url": "https://sites.ecmwf.int/data/climatepulse/data/series/era5_daily_series_2t_global.csv",
+  "note": "ECMWF Climate Pulse ERA5 daily global 2m temp + anomalies (1940-2026-07-21, updated 23 Jul 2026); nowcast input for GISTEMP monthly idea",
+  "fetched_at": "2026-07-24T01:16:22Z",
+  "bucket": "orakel"
+}

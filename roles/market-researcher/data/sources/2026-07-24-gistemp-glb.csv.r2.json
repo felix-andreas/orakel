@@ -1,0 +1,11 @@
+{
+  "key": "blobs/99d659d8c955c6599e93be3691467ff56eff80ee4b066c5cacfaaa6f7332ca9f",
+  "sha256": "99d659d8c955c6599e93be3691467ff56eff80ee4b066c5cacfaaa6f7332ca9f",
+  "bytes": 12881,
+  "content_type": "text/csv",
+  "original_name": "2026-07-24-gistemp-glb.csv",
+  "source_url": "https://data.giss.nasa.gov/gistemp/tabledata_v4/GLB.Ts+dSST.csv",
+  "note": "NASA GISTEMP v4 global land-ocean monthly anomalies through Jun 2026; resolution source for Polymarket monthly temperature-increase family",
+  "fetched_at": "2026-07-24T01:16:21Z",
+  "bucket": "orakel"
+}
