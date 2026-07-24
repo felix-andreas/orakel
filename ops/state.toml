@@ -16,11 +16,15 @@ additional_triggers = ["snapshot worker (Cloudflare cron, 7 * * * *, no LLM)"]
 
 [models]
 # Standing default from CONSTITUTION.md §4 — tune here, log the change.
-# Felix 2026-07-22: fable only at HIGH effort (never xhigh); opus may run xhigh.
-market_researcher = "fable, effort high"
-initial_research = "fable, effort high"
-recurring_research = "opus, xhigh ok"
-execution = "opus, xhigh ok"
+# Felix 2026-07-24: Opus 5 everywhere; MAX effort where fable/high was used before,
+# xhigh or high for the rest. Fable retired from routing.
+market_researcher = "opus-5, effort max"
+initial_research = "opus-5, effort max"
+recurring_research = "opus-5, effort xhigh/high"
+execution = "opus-5, effort xhigh/high"
+# NOTE: the Agent tool selects MODEL per subagent; EFFORT follows the CEO session's
+# setting (Felix controls it via /model + effort). Always name the intended effort in
+# the subagent prompt and record the actual model id in worklogs/predictions.
 
 [research]
 slots_total = 5

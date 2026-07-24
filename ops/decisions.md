@@ -5,6 +5,18 @@ who decided**. Newest first.
 
 ---
 
+## 2026-07-24 — Model routing: Opus 5 everywhere (Felix)
+
+Opus 5 released; Felix directs: use it wherever Fable was used, at **max** effort, and
+**xhigh/high** for the roles that already ran Opus. Rationale carried over from the
+original split — idea generation and day-1 falsification are the highest-leverage
+decisions (each bad call burns a slot), so they get the deepest thinking; recurring
+daily research and execution are more mechanical. Fable is retired from routing. Note:
+prediction rows and worklogs must now record `opus-5` (+ effort) as the producing model
+— the model column keeps separating method-edge from model-edge.
+
+---
+
 ## 2026-07-22 — CEO instantiated (Felix's instruction)
 
 The scaffolding session is promoted to the CEO: it becomes the CEO's persistent session,
