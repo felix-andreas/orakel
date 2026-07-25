@@ -92,6 +92,29 @@ Consequences: (a) mid-priced legs are the *most* fee-expensive per share, so a 3
 fee entirely — worth modelling separately from a taker fill; (c) geopolitics markets are
 the only genuinely fee-free ones.
 
+*Added 2026-07-25 by the execution agent while implementing this in the simulator — three
+things the entry did not say that change PnL:*
+
+- **(d) Charged per fill: entry AND exit, but never at resolution.** Fees apply "at match
+  time", so a position closed in the market pays **twice** while one held to settlement
+  pays **once** — redemption is not a match. This is the single most consequential fact
+  for execution modelling: it is a standing tax on early-exit and rebalancing policies,
+  and it does not appear anywhere in a hold-to-resolution backtest.
+- **(e) Commodities and equities are `finance` (0.04), not `economics` (0.05).** Read off
+  `feeType`: gold/silver/WTI and SPY/NVDA barrier markets all return
+  `finance_prices_fees` @ 0.04; BTC/ETH return `crypto_fees_v2` @ 0.07. `economics_fees`
+  is Fed/CPI-style macro, not commodity prices. Do not infer the category from the
+  underlying — read `feeSchedule` per market.
+- **(f) The sports rate is a moving target: it was 0.03 until 2026-07-10**, when it rose
+  to 0.05. Any backtest spanning that date needs both. Rates have changed twice in 2026
+  and are off-chain operator policy, not a protocol invariant — re-read them, don't cache
+  them.
+
+Verified against `docs.polymarket.com/trading/fees` (which serves a 403 to plain fetchers —
+use curl with a browser UA), the per-market `feeSchedule`, and by fitting ~2,300 real
+executed fills from the Data API: the fee residual matches `p × (1 − p)` and rules out the
+`min(p, 1−p)` form; fills with zero implied fee are the maker side.
+
 ## Identity conventions
 
 `condition_id` (stable market id) + `market_slug` (human) identify a market; each outcome

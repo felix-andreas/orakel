@@ -43,6 +43,19 @@ were built, and every interpretive call behind them:
 [signals/README.md](signals/README.md). Engine defaults and mechanics:
 [engine/README.md](engine/README.md).
 
+## Policy versions
+
+Policies are versioned and **never edited** (DESIGN.md §5); results are written per
+version to `results/<set>/<policy>-v<n>.json`, so an old number always stays traceable
+to the file that produced it.
+
+- **`-v1`** — the first matrix. Charges **no venue fee**, which was wrong. Kept only so
+  earlier reports remain attributable.
+- **`-v2`** — identical in every respect except that it charges Polymarket's real taker
+  fee (`shares × rate × p × (1 − p)` per fill; DESIGN.md §4.4). **Read conclusions off
+  v2.** SUMMARY.md leads with an explicit v1→v2 before/after and re-checks each
+  conclusion the firm has on record.
+
 ## The number that decides
 
 Not cents per trade — **annualized return on locked capital**. Selling a 15c wing and

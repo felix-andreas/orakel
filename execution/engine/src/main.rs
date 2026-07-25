@@ -397,7 +397,13 @@ fn write_summary_md(path: &Path, by_set: &Matrix) -> Result<(), String> {
         // should hit before any superseded one.
         for (ver, rows) in versions.iter().rev() {
             let model = rows.first().map(|r| r.fee_model.clone()).unwrap_or_default();
-            s.push_str(&format!("### Policies `v{ver}` — fees: {model}\n\n"));
+            let short = if model.starts_with("none") {
+                "**no venue fee charged — superseded, kept for attribution**"
+            } else {
+                "with the venue's taker fee"
+            };
+            s.push_str(&format!("### Policies `v{ver}` — {short}\n\n"));
+            s.push_str(&format!("Cost model: `{model}`\n\n"));
             s.push_str(&version_block(rows, "####"));
         }
     }
@@ -510,6 +516,20 @@ fn version_block(rows: &[SimResult], h: &str) -> String {
     s.push_str(&reading(rows, h));
     s.push_str(&cannot_tell(rows, h));
     s
+}
+
+/// The policy leading on cents/trade (`by_cents`) or on annROLC.
+fn lead<'a>(v: &[&'a SimResult], by_cents: bool) -> Option<&'a SimResult> {
+    v.iter().copied().max_by(|a, b| {
+        if by_cents {
+            cmpf(a.metrics.cents_per_trade, b.metrics.cents_per_trade)
+        } else {
+            cmpf(
+                a.metrics.annualized_return_on_locked_capital,
+                b.metrics.annualized_return_on_locked_capital,
+            )
+        }
+    })
 }
 
 /// Policies ranked by annROLC, underpowered ones excluded (DESIGN.md §7).
@@ -636,6 +656,40 @@ fn fee_comparison(versions: &BTreeMap<u32, Vec<SimResult>>) -> String {
         _ => {}
     }
 
+    // Keeping first place and keeping a lead are different things. A margin
+    // that collapses is the warning the bare ranking hides.
+    if let (Some(a1), Some(a2), Some(b1), Some(b2)) =
+        (rank_lo.first(), rank_lo.get(1), rank_hi.first(), rank_hi.get(1))
+    {
+        let gap = |x: &SimResult, y: &SimResult| {
+            match (
+                x.metrics.annualized_return_on_locked_capital,
+                y.metrics.annualized_return_on_locked_capital,
+            ) {
+                (Some(p), Some(q)) => Some((p - q) * 100.0),
+                _ => None,
+            }
+        };
+        if let (Some(g0), Some(g1)) = (gap(a1, a2), gap(b1, b2)) {
+            let shrank = g0 > 0.0 && g1 < g0;
+            s.push_str(&format!(
+                "**Margin at the top: {g0:.0} pp → {g1:.0} pp.** `{}` led `{}` by {g0:.0} pp fee-free; `{}` leads `{}` by {g1:.0} pp once fees are charged{}\n\n",
+                a1.policy,
+                a2.policy,
+                b1.policy,
+                b2.policy,
+                if shrank {
+                    format!(
+                        " — the lead shrank by {:.0}%. Ranking alone would have hidden that; the first place is no longer a comfortable one.",
+                        (1.0 - g1 / g0) * 100.0
+                    )
+                } else {
+                    ".".to_string()
+                },
+            ));
+        }
+    }
+
     // ---- the three conclusions the firm has already reported, re-checked.
     s.push_str("**The conclusions on record, re-checked after fees**\n\n");
 
@@ -686,38 +740,26 @@ fn fee_comparison(versions: &BTreeMap<u32, Vec<SimResult>>) -> String {
     }
 
     // (c) the two metrics disagree: who leads each.
-    let lead = |v: &[&SimResult], by_cents: bool| -> Option<&SimResult> {
-        v.iter()
-            .copied()
-            .max_by(|a, b| {
-                if by_cents {
-                    cmpf(a.metrics.cents_per_trade, b.metrics.cents_per_trade)
-                } else {
-                    cmpf(
-                        a.metrics.annualized_return_on_locked_capital,
-                        b.metrics.annualized_return_on_locked_capital,
-                    )
-                }
-            })
-    };
-    match (lead(&rank_lo, true), lead(&rank_lo, false), lead(&rank_hi, true), lead(&rank_hi, false)) {
-        (Some(co), Some(ao), Some(cn), Some(an)) => {
-            let verdict = if co.policy == cn.policy && ao.policy == an.policy {
-                "**SURVIVES**"
-            } else {
-                "**CHANGES**"
-            };
-            s.push_str(&format!(
-                "- (c) *`{}` wins annROLC while `{}` wins cents/trade* — {verdict}. After fees the annROLC leader is **`{}`** ({}) and the cents/trade leader is **`{}`** ({}).\n",
-                ao.policy,
-                co.policy,
-                an.policy,
-                pct(an.metrics.annualized_return_on_locked_capital),
-                cn.policy,
-                md(cn.metrics.cents_per_trade, 2),
-            ));
-        }
-        _ => {}
+    if let (Some(co), Some(ao), Some(cn), Some(an)) = (
+        lead(&rank_lo, true),
+        lead(&rank_lo, false),
+        lead(&rank_hi, true),
+        lead(&rank_hi, false),
+    ) {
+        let verdict = if co.policy == cn.policy && ao.policy == an.policy {
+            "**SURVIVES**"
+        } else {
+            "**CHANGES**"
+        };
+        s.push_str(&format!(
+            "- (c) *`{}` wins annROLC while `{}` wins cents/trade* — {verdict}. After fees the annROLC leader is **`{}`** ({}) and the cents/trade leader is **`{}`** ({}).\n",
+            ao.policy,
+            co.policy,
+            an.policy,
+            pct(an.metrics.annualized_return_on_locked_capital),
+            cn.policy,
+            md(cn.metrics.cents_per_trade, 2),
+        ));
     }
     s.push('\n');
     s

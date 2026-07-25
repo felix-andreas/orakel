@@ -69,8 +69,33 @@ Our own wiki says thin-market midpoints are decorative
    silently dropped.
 3. **Walks the book** when the stake exceeds top-of-book (with real book data), else
    applies a linear slippage penalty.
-4. **Charges nothing for fees** by default (`fee_bps = 0`, Polymarket) but the field
-   exists.
+4. **Charges the venue's real taker fee.** *Corrected 2026-07-25: the first version of
+   this clause said Polymarket charges nothing. It does.* Since 2026-01-05 it charges
+   takers, per fill:
+
+   ```
+   fee_usdc = shares × rate × p × (1 − p)
+   ```
+
+   `rate` is per market category, read off each market's own `feeSchedule` on the Gamma
+   API: **crypto 0.07 · sports 0.05 · economics/culture/weather/other 0.05 ·
+   finance/politics/tech/mentions 0.04 · geopolitics 0**. The dollar fee is symmetric
+   about p = 0.50 and *peaks* there (1.25c/share at rate 0.05) — i.e. it is largest
+   exactly in the 3–50c band every policy targets. Makers pay nothing, but every fill
+   this simulator takes crosses the spread, so every fill is a taker fill.
+
+   The fee is charged **on entry, and again on an exit taken in the market**. Settlement
+   at resolution is a redemption, not a match, and costs nothing — so a held position
+   pays once and a round trip pays twice. Fees enter `pnl`; `capital_locked` stays
+   collateral only, so the fee moves the numerator of every return and leaves the
+   denominator alone.
+
+   Policies declare this as `costs.fee_model = "polymarket-taker"` plus a `fee_rate`
+   table and an `asset_category` map. `fee_model = "none"` (the default, and what every
+   `-v1` policy carries) charges nothing and every such result **says so in its notes**:
+   a fee-free number must never be mistakable for a costed one. An asset with no
+   category mapping is charged `fee_rate_default` and **counted** (`fee_rate_unmapped`),
+   never silently freed.
 5. **Never trades inside the venue-epsilon** (`wiki/reference/venue-resolution-epsilon.md`):
    no sell of a barrier within 0.2% of its running extreme.
 

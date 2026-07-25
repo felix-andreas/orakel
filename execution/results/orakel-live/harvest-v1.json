@@ -1,9 +1,9 @@
 {
   "signal_set": "orakel-live",
-  "policy": "anchor",
+  "policy": "harvest",
   "policy_version": 1,
-  "policy_character": "Kelly with capacity realism: hard depth cap and per-market exposure limits. What the book will actually absorb.",
-  "engine_version": "0.1.0",
+  "policy_character": "Fade, but exit once 60% of the edge has closed instead of holding to resolution. Frees capital early; tests whether patience is actually being paid for.",
+  "engine_version": "0.2.0",
   "set_date_start": "2026-07-23",
   "set_date_end": "2026-07-24",
   "date_start": "",
@@ -11,6 +11,7 @@
   "span_days": 0.0,
   "bankroll_usd": 1000.0,
   "assumed_spread": 0.03,
+  "fee_model": "none (fee-free — the venue's real taker fee is NOT modelled)",
   "entry_delay_hours": 0.0,
   "counts": {
     "signals": 21,
@@ -30,12 +31,17 @@
     "delay_unavailable_token_won": 0,
     "depth_unknown": 0,
     "epsilon_unavailable": 0,
-    "book_synthetic": 18
+    "book_synthetic": 18,
+    "fee_rate_unmapped": 0
   },
   "metrics": {
     "n": 0,
     "underpowered": true,
     "staked_usd": 0.0,
+    "gross_pnl_usd": 0.0,
+    "fees_usd": 0.0,
+    "fee_share_of_gross": null,
+    "fee_cents_per_share": null,
     "net_pnl_usd": 0.0,
     "cents_per_trade": null,
     "cents_per_trade_se": null,

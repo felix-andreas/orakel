@@ -6,7 +6,7 @@ the implementation.
 
 ```sh
 cargo build --release
-cargo test                                    # 28 tests; the accounting ones are hand-computed
+cargo test                                    # 37 tests; the accounting ones are hand-computed
 
 target/release/engine run --set all --policy all
 target/release/engine run --set ladder-rv-hist --policy fade
@@ -71,6 +71,28 @@ rejected with the reason that did it.
 only slip to zero. Consuming the whole visible depth walks the price the whole
 band. We cannot walk individual levels, because the canonical schema carries
 aggregate depth rather than the ladder; that is a future-signal-set ask.
+
+**Fees.** `costs.fee_model = "polymarket-taker"` charges the venue's published
+taker fee `shares × rate × p × (1 − p)` USDC **per fill**, at that fill's price,
+with `rate` looked up as `asset → costs.asset_category → costs.fee_rate`.
+Rounding follows the venue: 5 decimals, and anything under 0.00001 USDC is not
+charged. Because `p(1−p)` is symmetric, selling YES at `p` and buying NO at
+`1 − p` — the same trade under DESIGN.md §3 — cost the same, so the fee is
+computed on the YES price whatever the side.
+
+Entry is always one fill. An exit is a second fill **only** for `take-profit`:
+settling at resolution is a redemption, not a match, and the venue charges
+nothing for it. So a held position pays the fee once and a round trip pays it
+twice — which is why `harvest`, alone among the policies, loses about twice as
+much to fees as its hold-to-resolution twin `fade` (1.18c/share vs 0.78c).
+
+Three deliberate non-choices: the fee does **not** shrink the stake (sizing is
+identical across versions, so a v1→v2 delta is the fee and nothing else), it does
+**not** enter `capital_locked` (that is collateral, not expense), and there is no
+maker path (every fill here crosses the spread). `fee_model = "none"` is the
+default and makes every affected result carry a note saying fees were not
+charged — a fee-free result that looks costed is the failure mode this field
+exists to prevent.
 
 **Exits.** `hold-to-resolution` settles at 1 or 0 with no spread paid.
 `take-profit` computes `target = fill ∓ close_fraction × |fill − p|` and exits at

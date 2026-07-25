@@ -1,0 +1,1370 @@
+{
+  "signal_set": "ladder-rv-hist",
+  "policy": "anchor",
+  "policy_version": 2,
+  "policy_character": "Kelly with capacity realism: hard depth cap and per-market exposure limits. What the book will actually absorb.",
+  "engine_version": "0.2.0",
+  "set_date_start": "2026-04-01",
+  "set_date_end": "2026-07-24",
+  "date_start": "2026-04-01",
+  "date_end": "2026-07-24",
+  "span_days": 114.375,
+  "bankroll_usd": 1000.0,
+  "assumed_spread": 0.03,
+  "fee_model": "polymarket-taker: shares x rate x p x (1-p) per fill [crypto 0.07, culture 0.05, economics 0.05, finance 0.04, general 0.05, geopolitics 0, mentions 0.04, politics 0.04, sports 0.05, tech 0.04, weather 0.05]",
+  "entry_delay_hours": 0.0,
+  "counts": {
+    "signals": 5927,
+    "traded": 690,
+    "no_quote": 0,
+    "entry_after_resolution": 0,
+    "delay_unavailable": 0,
+    "no_executable_edge": 2623,
+    "side_excluded": 0,
+    "below_min_edge": 2018,
+    "below_edge_percentile": 0,
+    "spread_too_wide": 0,
+    "depth_too_thin": 0,
+    "unfundable": 0,
+    "market_cap_full": 596,
+    "stake_too_small": 0,
+    "delay_unavailable_token_won": 0,
+    "depth_unknown": 690,
+    "epsilon_unavailable": 322,
+    "book_synthetic": 5927,
+    "fee_rate_unmapped": 0
+  },
+  "metrics": {
+    "n": 690,
+    "underpowered": false,
+    "staked_usd": 17094.787658,
+    "gross_pnl_usd": 3564.835498,
+    "fees_usd": 391.55006,
+    "fee_share_of_gross": 0.109837,
+    "fee_cents_per_share": 0.747518,
+    "net_pnl_usd": 3173.285438,
+    "cents_per_trade": 6.378207,
+    "cents_per_trade_se": 1.5864,
+    "t_stat": 4.020554,
+    "hit_rate": 0.513043,
+    "mean_hold_days": 8.022177,
+    "return_on_locked_capital": 0.185629,
+    "annualized_return_on_locked_capital": 8.465149,
+    "capital_efficiency": 1.19629,
+    "max_capital_efficiency": 3.043829,
+    "max_drawdown_usd": 1537.361703,
+    "max_drawdown_frac": 0.287725,
+    "longest_losing_streak": 26,
+    "synthetic_fill_share": 1.0,
+    "take_profit_exits": 0,
+    "mean_fill_price": 0.347669
+  },
+  "by_variant": [
+    {
+      "key": "barrier-touch/ladder-rv",
+      "n": 690,
+      "net_pnl_usd": 3173.285438,
+      "fees_usd": 391.55006,
+      "cents_per_trade": 6.378207,
+      "cents_per_trade_se": 1.5864,
+      "hit_rate": 0.513043,
+      "return_on_locked_capital": 0.185629,
+      "annualized_return_on_locked_capital": 8.465149,
+      "mean_hold_days": 8.022177,
+      "underpowered": false
+    }
+  ],
+  "by_asset": [
+    {
+      "key": "silver",
+      "n": 230,
+      "net_pnl_usd": 1111.419059,
+      "fees_usd": 130.87069,
+      "cents_per_trade": 4.421993,
+      "cents_per_trade_se": 3.016421,
+      "hit_rate": 0.46087,
+      "return_on_locked_capital": 0.196596,
+      "annualized_return_on_locked_capital": 11.887414,
+      "mean_hold_days": 6.075764,
+      "underpowered": false
+    },
+    {
+      "key": "gold",
+      "n": 212,
+      "net_pnl_usd": 1929.998543,
+      "fees_usd": 107.09674,
+      "cents_per_trade": 12.250717,
+      "cents_per_trade_se": 2.826797,
+      "hit_rate": 0.622642,
+      "return_on_locked_capital": 0.359702,
+      "annualized_return_on_locked_capital": 15.748149,
+      "mean_hold_days": 8.186055,
+      "underpowered": false
+    },
+    {
+      "key": "spy",
+      "n": 70,
+      "net_pnl_usd": -735.302228,
+      "fees_usd": 44.44386,
+      "cents_per_trade": -1.949052,
+      "cents_per_trade_se": 3.755036,
+      "hit_rate": 0.328571,
+      "return_on_locked_capital": -0.422273,
+      "annualized_return_on_locked_capital": -52.699245,
+      "mean_hold_days": 2.877778,
+      "underpowered": false
+    },
+    {
+      "key": "wti",
+      "n": 62,
+      "net_pnl_usd": 1303.249243,
+      "fees_usd": 30.54108,
+      "cents_per_trade": 22.108383,
+      "cents_per_trade_se": 4.892708,
+      "hit_rate": 0.725806,
+      "return_on_locked_capital": 0.839128,
+      "annualized_return_on_locked_capital": 20.67913,
+      "mean_hold_days": 14.82397,
+      "underpowered": false
+    },
+    {
+      "key": "nvda",
+      "n": 56,
+      "net_pnl_usd": 119.325739,
+      "fees_usd": 29.27864,
+      "cents_per_trade": -2.667893,
+      "cents_per_trade_se": 5.818575,
+      "hit_rate": 0.446429,
+      "return_on_locked_capital": 0.084028,
+      "annualized_return_on_locked_capital": 12.952023,
+      "mean_hold_days": 2.310565,
+      "underpowered": false
+    },
+    {
+      "key": "btc",
+      "n": 42,
+      "net_pnl_usd": -316.398223,
+      "fees_usd": 33.94224,
+      "cents_per_trade": -3.660493,
+      "cents_per_trade_se": 5.070152,
+      "hit_rate": 0.404762,
+      "return_on_locked_capital": -0.333439,
+      "annualized_return_on_locked_capital": -6.454631,
+      "mean_hold_days": 18.63497,
+      "underpowered": false
+    },
+    {
+      "key": "eth",
+      "n": 18,
+      "net_pnl_usd": -239.006695,
+      "fees_usd": 15.37681,
+      "cents_per_trade": -8.021734,
+      "cents_per_trade_se": 6.171393,
+      "hit_rate": 0.333333,
+      "return_on_locked_capital": -0.579337,
+      "annualized_return_on_locked_capital": -10.12383,
+      "mean_hold_days": 20.546759,
+      "underpowered": true
+    }
+  ],
+  "by_side": [
+    {
+      "key": "buy",
+      "n": 368,
+      "net_pnl_usd": 1213.382816,
+      "fees_usd": 252.59532,
+      "cents_per_trade": 2.183024,
+      "cents_per_trade_se": 2.203725,
+      "hit_rate": 0.331522,
+      "return_on_locked_capital": 0.13895,
+      "annualized_return_on_locked_capital": 8.277146,
+      "mean_hold_days": 6.253738,
+      "underpowered": false
+    },
+    {
+      "key": "sell",
+      "n": 322,
+      "net_pnl_usd": 1959.902622,
+      "fees_usd": 138.95474,
+      "cents_per_trade": 11.172701,
+      "cents_per_trade_se": 2.257325,
+      "hit_rate": 0.720497,
+      "return_on_locked_capital": 0.234375,
+      "annualized_return_on_locked_capital": 8.585883,
+      "mean_hold_days": 10.04325,
+      "underpowered": false
+    }
+  ],
+  "by_fill": [
+    {
+      "key": "synthetic",
+      "n": 690,
+      "net_pnl_usd": 3173.285438,
+      "fees_usd": 391.55006,
+      "cents_per_trade": 6.378207,
+      "cents_per_trade_se": 1.5864,
+      "hit_rate": 0.513043,
+      "return_on_locked_capital": 0.185629,
+      "annualized_return_on_locked_capital": 8.465149,
+      "mean_hold_days": 8.022177,
+      "underpowered": false
+    }
+  ],
+  "equity_curve": [
+    {
+      "t": "2026-04-01T12:00:00Z",
+      "equity": 1000.0,
+      "deployed": 657.300613
+    },
+    {
+      "t": "2026-04-01T17:09:00Z",
+      "equity": 1016.660161,
+      "deployed": 627.300613
+    },
+    {
+      "t": "2026-04-02T02:32:00Z",
+      "equity": 1038.324074,
+      "deployed": 597.300613
+    },
+    {
+      "t": "2026-04-02T12:00:00Z",
+      "equity": 1038.324074,
+      "deployed": 880.0
+    },
+    {
+      "t": "2026-04-03T12:00:00Z",
+      "equity": 1038.324074,
+      "deployed": 1000.0
+    },
+    {
+      "t": "2026-04-04T12:00:00Z",
+      "equity": 1038.324074,
+      "deployed": 1040.0
+    },
+    {
+      "t": "2026-04-07T22:55:00Z",
+      "equity": 1032.58502,
+      "deployed": 990.0
+    },
+    {
+      "t": "2026-04-10T12:00:00Z",
+      "equity": 1032.58502,
+      "deployed": 1010.0
+    },
+    {
+      "t": "2026-04-14T08:37:00Z",
+      "equity": 1062.997348,
+      "deployed": 960.0
+    },
+    {
+      "t": "2026-04-15T01:12:00Z",
+      "equity": 1073.815018,
+      "deployed": 910.0
+    },
+    {
+      "t": "2026-04-17T13:09:00Z",
+      "equity": 1022.797018,
+      "deployed": 860.0
+    },
+    {
+      "t": "2026-04-20T12:00:00Z",
+      "equity": 1022.797018,
+      "deployed": 1100.0
+    },
+    {
+      "t": "2026-04-21T12:00:00Z",
+      "equity": 1022.797018,
+      "deployed": 1150.0
+    },
+    {
+      "t": "2026-04-21T17:26:00Z",
+      "equity": 971.493018,
+      "deployed": 1100.0
+    },
+    {
+      "t": "2026-04-21T19:43:00Z",
+      "equity": 940.893018,
+      "deployed": 1070.0
+    },
+    {
+      "t": "2026-04-22T12:00:00Z",
+      "equity": 940.893018,
+      "deployed": 1330.0
+    },
+    {
+      "t": "2026-04-23T12:00:00Z",
+      "equity": 940.893018,
+      "deployed": 1460.0
+    },
+    {
+      "t": "2026-04-24T06:51:00Z",
+      "equity": 889.866218,
+      "deployed": 1410.0
+    },
+    {
+      "t": "2026-04-24T21:00:00Z",
+      "equity": 1004.553461,
+      "deployed": 860.0
+    },
+    {
+      "t": "2026-04-27T12:00:00Z",
+      "equity": 1004.553461,
+      "deployed": 1202.78799
+    },
+    {
+      "t": "2026-04-28T05:12:00Z",
+      "equity": 1025.337512,
+      "deployed": 1172.78799
+    },
+    {
+      "t": "2026-04-28T05:30:00Z",
+      "equity": 1051.377286,
+      "deployed": 1142.78799
+    },
+    {
+      "t": "2026-04-28T11:11:00Z",
+      "equity": 1156.804922,
+      "deployed": 1112.78799
+    },
+    {
+      "t": "2026-04-28T12:00:00Z",
+      "equity": 1156.804922,
+      "deployed": 1387.058824
+    },
+    {
+      "t": "2026-04-29T12:00:00Z",
+      "equity": 1156.804922,
+      "deployed": 1607.058824
+    },
+    {
+      "t": "2026-04-29T12:52:00Z",
+      "equity": 1569.43473,
+      "deployed": 1557.058824
+    },
+    {
+      "t": "2026-04-29T12:55:00Z",
+      "equity": 1650.31721,
+      "deployed": 1507.058824
+    },
+    {
+      "t": "2026-04-29T18:44:00Z",
+      "equity": 1642.521963,
+      "deployed": 1457.058824
+    },
+    {
+      "t": "2026-04-30T21:00:00Z",
+      "equity": 2517.303539,
+      "deployed": 597.058824
+    },
+    {
+      "t": "2026-05-01T12:00:00Z",
+      "equity": 2517.303539,
+      "deployed": 927.058824
+    },
+    {
+      "t": "2026-05-01T21:00:00Z",
+      "equity": 2452.421835,
+      "deployed": 330.0
+    },
+    {
+      "t": "2026-05-02T12:00:00Z",
+      "equity": 2452.421835,
+      "deployed": 640.0
+    },
+    {
+      "t": "2026-05-03T12:00:00Z",
+      "equity": 2452.421835,
+      "deployed": 811.231343
+    },
+    {
+      "t": "2026-05-04T12:00:00Z",
+      "equity": 2452.421835,
+      "deployed": 971.525461
+    },
+    {
+      "t": "2026-05-05T12:00:00Z",
+      "equity": 2452.421835,
+      "deployed": 1148.900348
+    },
+    {
+      "t": "2026-05-06T03:19:00Z",
+      "equity": 2608.913835,
+      "deployed": 1118.900348
+    },
+    {
+      "t": "2026-05-06T07:45:00Z",
+      "equity": 2603.598847,
+      "deployed": 1068.900348
+    },
+    {
+      "t": "2026-05-06T08:52:00Z",
+      "equity": 2681.360958,
+      "deployed": 1039.825006
+    },
+    {
+      "t": "2026-05-06T10:34:00Z",
+      "equity": 2630.050958,
+      "deployed": 989.825006
+    },
+    {
+      "t": "2026-05-06T12:00:00Z",
+      "equity": 2630.050958,
+      "deployed": 1079.825006
+    },
+    {
+      "t": "2026-05-07T07:07:00Z",
+      "equity": 2902.257992,
+      "deployed": 1031.365546
+    },
+    {
+      "t": "2026-05-07T07:13:00Z",
+      "equity": 2871.393992,
+      "deployed": 1001.365546
+    },
+    {
+      "t": "2026-05-07T12:00:00Z",
+      "equity": 2871.393992,
+      "deployed": 1071.424941
+    },
+    {
+      "t": "2026-05-07T14:47:00Z",
+      "equity": 2903.464116,
+      "deployed": 1041.424941
+    },
+    {
+      "t": "2026-05-08T12:00:00Z",
+      "equity": 2903.464116,
+      "deployed": 1142.47227
+    },
+    {
+      "t": "2026-05-08T21:00:00Z",
+      "equity": 2887.766652,
+      "deployed": 991.047328
+    },
+    {
+      "t": "2026-05-09T12:00:00Z",
+      "equity": 2887.766652,
+      "deployed": 1031.047328
+    },
+    {
+      "t": "2026-05-11T12:00:00Z",
+      "equity": 2887.766652,
+      "deployed": 1384.127328
+    },
+    {
+      "t": "2026-05-11T12:21:00Z",
+      "equity": 2896.700338,
+      "deployed": 1354.127328
+    },
+    {
+      "t": "2026-05-11T12:31:00Z",
+      "equity": 2912.087865,
+      "deployed": 1324.127328
+    },
+    {
+      "t": "2026-05-11T13:04:00Z",
+      "equity": 2940.899805,
+      "deployed": 1294.127328
+    },
+    {
+      "t": "2026-05-11T13:10:00Z",
+      "equity": 2980.759472,
+      "deployed": 1269.847328
+    },
+    {
+      "t": "2026-05-12T12:00:00Z",
+      "equity": 2980.759472,
+      "deployed": 1373.581375
+    },
+    {
+      "t": "2026-05-13T12:00:00Z",
+      "equity": 2980.759472,
+      "deployed": 1462.075203
+    },
+    {
+      "t": "2026-05-14T12:00:00Z",
+      "equity": 2980.759472,
+      "deployed": 1497.53716
+    },
+    {
+      "t": "2026-05-15T05:03:00Z",
+      "equity": 2953.402198,
+      "deployed": 1417.689832
+    },
+    {
+      "t": "2026-05-15T05:33:00Z",
+      "equity": 2922.520198,
+      "deployed": 1387.689832
+    },
+    {
+      "t": "2026-05-15T05:40:00Z",
+      "equity": 2891.818198,
+      "deployed": 1357.689832
+    },
+    {
+      "t": "2026-05-15T08:17:00Z",
+      "equity": 2823.10157,
+      "deployed": 1291.133204
+    },
+    {
+      "t": "2026-05-15T09:10:00Z",
+      "equity": 3045.979607,
+      "deployed": 1225.461957
+    },
+    {
+      "t": "2026-05-15T09:50:00Z",
+      "equity": 2995.373607,
+      "deployed": 1175.461957
+    },
+    {
+      "t": "2026-05-15T12:00:00Z",
+      "equity": 2995.373607,
+      "deployed": 1213.177376
+    },
+    {
+      "t": "2026-05-15T13:45:00Z",
+      "equity": 3195.777534,
+      "deployed": 1163.177376
+    },
+    {
+      "t": "2026-05-15T21:00:00Z",
+      "equity": 3183.326682,
+      "deployed": 1040.0
+    },
+    {
+      "t": "2026-05-16T12:00:00Z",
+      "equity": 3183.326682,
+      "deployed": 1080.0
+    },
+    {
+      "t": "2026-05-18T00:34:00Z",
+      "equity": 3212.664176,
+      "deployed": 1030.0
+    },
+    {
+      "t": "2026-05-18T12:00:00Z",
+      "equity": 3212.664176,
+      "deployed": 1524.8974
+    },
+    {
+      "t": "2026-05-18T13:48:00Z",
+      "equity": 3230.982664,
+      "deployed": 1494.8974
+    },
+    {
+      "t": "2026-05-19T12:00:00Z",
+      "equity": 3230.982664,
+      "deployed": 1654.689067
+    },
+    {
+      "t": "2026-05-20T12:00:00Z",
+      "equity": 3230.982664,
+      "deployed": 1793.621622
+    },
+    {
+      "t": "2026-05-21T12:00:00Z",
+      "equity": 3230.982664,
+      "deployed": 1903.621622
+    },
+    {
+      "t": "2026-05-22T12:00:00Z",
+      "equity": 3230.982664,
+      "deployed": 1933.621622
+    },
+    {
+      "t": "2026-05-22T17:29:00Z",
+      "equity": 3262.220334,
+      "deployed": 1903.621622
+    },
+    {
+      "t": "2026-05-22T21:00:00Z",
+      "equity": 3081.350307,
+      "deployed": 1200.0
+    },
+    {
+      "t": "2026-05-23T07:46:00Z",
+      "equity": 3029.367797,
+      "deployed": 1150.0
+    },
+    {
+      "t": "2026-05-23T12:00:00Z",
+      "equity": 3029.367797,
+      "deployed": 1190.0
+    },
+    {
+      "t": "2026-05-24T12:00:00Z",
+      "equity": 3029.367797,
+      "deployed": 1230.0
+    },
+    {
+      "t": "2026-05-25T12:00:00Z",
+      "equity": 3029.367797,
+      "deployed": 1796.361111
+    },
+    {
+      "t": "2026-05-25T22:00:00Z",
+      "equity": 2978.155187,
+      "deployed": 1746.361111
+    },
+    {
+      "t": "2026-05-26T12:00:00Z",
+      "equity": 2978.155187,
+      "deployed": 2156.361111
+    },
+    {
+      "t": "2026-05-26T17:30:00Z",
+      "equity": 3001.823744,
+      "deployed": 2106.361111
+    },
+    {
+      "t": "2026-05-27T06:25:00Z",
+      "equity": 3047.477469,
+      "deployed": 2056.361111
+    },
+    {
+      "t": "2026-05-27T10:47:00Z",
+      "equity": 3116.637469,
+      "deployed": 2026.361111
+    },
+    {
+      "t": "2026-05-27T11:30:00Z",
+      "equity": 3203.157318,
+      "deployed": 1976.361111
+    },
+    {
+      "t": "2026-05-27T12:00:00Z",
+      "equity": 3203.157318,
+      "deployed": 2030.0
+    },
+    {
+      "t": "2026-05-28T02:13:00Z",
+      "equity": 3485.329897,
+      "deployed": 1930.0
+    },
+    {
+      "t": "2026-05-28T03:01:00Z",
+      "equity": 3637.20323,
+      "deployed": 1880.0
+    },
+    {
+      "t": "2026-05-28T04:28:00Z",
+      "equity": 3905.55323,
+      "deployed": 1830.0
+    },
+    {
+      "t": "2026-05-28T12:00:00Z",
+      "equity": 3905.55323,
+      "deployed": 1870.0
+    },
+    {
+      "t": "2026-05-29T12:00:00Z",
+      "equity": 3905.55323,
+      "deployed": 1900.0
+    },
+    {
+      "t": "2026-05-29T21:00:00Z",
+      "equity": 4855.578645,
+      "deployed": 180.0
+    },
+    {
+      "t": "2026-05-30T12:00:00Z",
+      "equity": 4855.578645,
+      "deployed": 230.0
+    },
+    {
+      "t": "2026-05-31T12:00:00Z",
+      "equity": 4855.578645,
+      "deployed": 247.434211
+    },
+    {
+      "t": "2026-06-01T04:00:00Z",
+      "equity": 4822.578919,
+      "deployed": 0.0
+    },
+    {
+      "t": "2026-06-01T12:00:00Z",
+      "equity": 4822.578919,
+      "deployed": 418.5948
+    },
+    {
+      "t": "2026-06-02T12:00:00Z",
+      "equity": 4822.578919,
+      "deployed": 717.182304
+    },
+    {
+      "t": "2026-06-03T12:00:00Z",
+      "equity": 4822.578919,
+      "deployed": 968.835814
+    },
+    {
+      "t": "2026-06-04T01:49:00Z",
+      "equity": 4791.969919,
+      "deployed": 938.835814
+    },
+    {
+      "t": "2026-06-04T12:00:00Z",
+      "equity": 4791.969919,
+      "deployed": 1514.729316
+    },
+    {
+      "t": "2026-06-05T06:12:00Z",
+      "equity": 4804.169111,
+      "deployed": 1484.729316
+    },
+    {
+      "t": "2026-06-05T08:29:00Z",
+      "equity": 4809.691396,
+      "deployed": 1454.729316
+    },
+    {
+      "t": "2026-06-05T12:00:00Z",
+      "equity": 4809.691396,
+      "deployed": 1474.729316
+    },
+    {
+      "t": "2026-06-05T13:31:00Z",
+      "equity": 4758.127396,
+      "deployed": 1424.729316
+    },
+    {
+      "t": "2026-06-05T13:56:00Z",
+      "equity": 4805.773354,
+      "deployed": 1374.729316
+    },
+    {
+      "t": "2026-06-05T14:06:00Z",
+      "equity": 4754.688354,
+      "deployed": 1324.729316
+    },
+    {
+      "t": "2026-06-05T15:41:00Z",
+      "equity": 4705.731288,
+      "deployed": 1277.328
+    },
+    {
+      "t": "2026-06-05T19:17:00Z",
+      "equity": 4789.538223,
+      "deployed": 1227.328
+    },
+    {
+      "t": "2026-06-06T12:00:00Z",
+      "equity": 4789.538223,
+      "deployed": 1484.232017
+    },
+    {
+      "t": "2026-06-07T12:00:00Z",
+      "equity": 4789.538223,
+      "deployed": 1635.939645
+    },
+    {
+      "t": "2026-06-08T05:34:00Z",
+      "equity": 4802.264158,
+      "deployed": 1585.939645
+    },
+    {
+      "t": "2026-06-08T12:00:00Z",
+      "equity": 4802.264158,
+      "deployed": 2268.393323
+    },
+    {
+      "t": "2026-06-09T12:00:00Z",
+      "equity": 4802.264158,
+      "deployed": 2670.450881
+    },
+    {
+      "t": "2026-06-09T14:43:00Z",
+      "equity": 4975.424105,
+      "deployed": 2590.450881
+    },
+    {
+      "t": "2026-06-09T16:20:00Z",
+      "equity": 4944.782105,
+      "deployed": 2560.450881
+    },
+    {
+      "t": "2026-06-09T16:38:00Z",
+      "equity": 4893.578105,
+      "deployed": 2510.450881
+    },
+    {
+      "t": "2026-06-10T00:44:00Z",
+      "equity": 4968.088693,
+      "deployed": 2410.450881
+    },
+    {
+      "t": "2026-06-10T01:05:00Z",
+      "equity": 4886.150803,
+      "deployed": 2330.450881
+    },
+    {
+      "t": "2026-06-10T11:58:00Z",
+      "equity": 4855.838803,
+      "deployed": 2300.450881
+    },
+    {
+      "t": "2026-06-10T12:00:00Z",
+      "equity": 4855.838803,
+      "deployed": 2360.450881
+    },
+    {
+      "t": "2026-06-10T18:50:00Z",
+      "equity": 4827.292376,
+      "deployed": 2260.450881
+    },
+    {
+      "t": "2026-06-10T22:02:00Z",
+      "equity": 4776.514376,
+      "deployed": 2210.450881
+    },
+    {
+      "t": "2026-06-10T22:16:00Z",
+      "equity": 4746.424376,
+      "deployed": 2180.450881
+    },
+    {
+      "t": "2026-06-10T23:14:00Z",
+      "equity": 4695.778376,
+      "deployed": 2130.450881
+    },
+    {
+      "t": "2026-06-11T12:00:00Z",
+      "equity": 4695.778376,
+      "deployed": 2180.996463
+    },
+    {
+      "t": "2026-06-11T19:32:00Z",
+      "equity": 4722.525356,
+      "deployed": 2130.996463
+    },
+    {
+      "t": "2026-06-12T12:00:00Z",
+      "equity": 4722.525356,
+      "deployed": 2180.567989
+    },
+    {
+      "t": "2026-06-12T21:00:00Z",
+      "equity": 4631.60985,
+      "deployed": 1725.511171
+    },
+    {
+      "t": "2026-06-13T12:00:00Z",
+      "equity": 4631.60985,
+      "deployed": 1740.173019
+    },
+    {
+      "t": "2026-06-14T12:00:00Z",
+      "equity": 4631.60985,
+      "deployed": 1754.859059
+    },
+    {
+      "t": "2026-06-14T21:40:00Z",
+      "equity": 4659.930304,
+      "deployed": 1704.859059
+    },
+    {
+      "t": "2026-06-14T22:02:00Z",
+      "equity": 4720.264413,
+      "deployed": 1654.859059
+    },
+    {
+      "t": "2026-06-15T12:00:00Z",
+      "equity": 4720.264413,
+      "deployed": 2062.009334
+    },
+    {
+      "t": "2026-06-16T12:00:00Z",
+      "equity": 4720.264413,
+      "deployed": 2291.772455
+    },
+    {
+      "t": "2026-06-16T15:58:00Z",
+      "equity": 4972.157652,
+      "deployed": 2241.772455
+    },
+    {
+      "t": "2026-06-17T12:00:00Z",
+      "equity": 4972.157652,
+      "deployed": 2331.448051
+    },
+    {
+      "t": "2026-06-17T19:38:00Z",
+      "equity": 5004.330985,
+      "deployed": 2281.448051
+    },
+    {
+      "t": "2026-06-18T12:00:00Z",
+      "equity": 5004.330985,
+      "deployed": 2358.891816
+    },
+    {
+      "t": "2026-06-18T15:29:00Z",
+      "equity": 5008.79254,
+      "deployed": 2308.891816
+    },
+    {
+      "t": "2026-06-19T12:00:00Z",
+      "equity": 5008.79254,
+      "deployed": 2378.891816
+    },
+    {
+      "t": "2026-06-19T21:00:00Z",
+      "equity": 4988.093335,
+      "deployed": 1769.26347
+    },
+    {
+      "t": "2026-06-21T12:00:00Z",
+      "equity": 4988.093335,
+      "deployed": 1812.144109
+    },
+    {
+      "t": "2026-06-22T12:00:00Z",
+      "equity": 4988.093335,
+      "deployed": 2671.149539
+    },
+    {
+      "t": "2026-06-22T13:33:00Z",
+      "equity": 4996.778374,
+      "deployed": 2641.149539
+    },
+    {
+      "t": "2026-06-22T14:10:00Z",
+      "equity": 5003.36619,
+      "deployed": 2611.149539
+    },
+    {
+      "t": "2026-06-23T01:42:00Z",
+      "equity": 4983.732402,
+      "deployed": 2592.020751
+    },
+    {
+      "t": "2026-06-23T07:52:00Z",
+      "equity": 4952.982402,
+      "deployed": 2562.020751
+    },
+    {
+      "t": "2026-06-23T12:00:00Z",
+      "equity": 4952.982402,
+      "deployed": 3043.829085
+    },
+    {
+      "t": "2026-06-23T13:30:00Z",
+      "equity": 4895.788479,
+      "deployed": 2913.829085
+    },
+    {
+      "t": "2026-06-24T11:06:00Z",
+      "equity": 4881.210115,
+      "deployed": 2863.829085
+    },
+    {
+      "t": "2026-06-24T12:00:00Z",
+      "equity": 4881.210115,
+      "deployed": 3000.098544
+    },
+    {
+      "t": "2026-06-24T12:25:00Z",
+      "equity": 4861.099346,
+      "deployed": 2950.098544
+    },
+    {
+      "t": "2026-06-24T12:56:00Z",
+      "equity": 4880.220525,
+      "deployed": 2870.098544
+    },
+    {
+      "t": "2026-06-24T13:29:00Z",
+      "equity": 5289.308091,
+      "deployed": 2820.098544
+    },
+    {
+      "t": "2026-06-24T13:30:00Z",
+      "equity": 5262.052951,
+      "deployed": 2770.098544
+    },
+    {
+      "t": "2026-06-24T17:23:00Z",
+      "equity": 5251.470992,
+      "deployed": 2720.098544
+    },
+    {
+      "t": "2026-06-25T12:00:00Z",
+      "equity": 5251.470992,
+      "deployed": 2786.137842
+    },
+    {
+      "t": "2026-06-25T13:45:00Z",
+      "equity": 5200.814992,
+      "deployed": 2736.137842
+    },
+    {
+      "t": "2026-06-25T13:55:00Z",
+      "equity": 5288.851876,
+      "deployed": 2686.137842
+    },
+    {
+      "t": "2026-06-26T12:00:00Z",
+      "equity": 5288.851876,
+      "deployed": 2716.137842
+    },
+    {
+      "t": "2026-06-26T13:30:00Z",
+      "equity": 5343.167033,
+      "deployed": 2666.137842
+    },
+    {
+      "t": "2026-06-26T20:00:00Z",
+      "equity": 4910.232569,
+      "deployed": 2074.409685
+    },
+    {
+      "t": "2026-06-26T21:00:00Z",
+      "equity": 4765.776838,
+      "deployed": 1755.585285
+    },
+    {
+      "t": "2026-06-27T12:00:00Z",
+      "equity": 4765.776838,
+      "deployed": 1776.673995
+    },
+    {
+      "t": "2026-06-28T12:00:00Z",
+      "equity": 4765.776838,
+      "deployed": 1789.815519
+    },
+    {
+      "t": "2026-06-29T12:00:00Z",
+      "equity": 4765.776838,
+      "deployed": 2270.375637
+    },
+    {
+      "t": "2026-06-29T13:30:00Z",
+      "equity": 4740.104081,
+      "deployed": 2245.61888
+    },
+    {
+      "t": "2026-06-29T13:45:00Z",
+      "equity": 4709.126081,
+      "deployed": 2215.61888
+    },
+    {
+      "t": "2026-06-29T14:11:00Z",
+      "equity": 4715.279717,
+      "deployed": 2185.61888
+    },
+    {
+      "t": "2026-06-29T17:13:00Z",
+      "equity": 4684.403717,
+      "deployed": 2155.61888
+    },
+    {
+      "t": "2026-06-30T01:07:00Z",
+      "equity": 4714.498127,
+      "deployed": 2133.909478
+    },
+    {
+      "t": "2026-06-30T12:00:00Z",
+      "equity": 4714.498127,
+      "deployed": 2443.628701
+    },
+    {
+      "t": "2026-06-30T14:31:00Z",
+      "equity": 4683.940127,
+      "deployed": 2413.628701
+    },
+    {
+      "t": "2026-06-30T19:55:00Z",
+      "equity": 4653.268127,
+      "deployed": 2383.628701
+    },
+    {
+      "t": "2026-06-30T21:00:00Z",
+      "equity": 4248.96766,
+      "deployed": 1480.423738
+    },
+    {
+      "t": "2026-07-01T04:00:00Z",
+      "equity": 3880.875588,
+      "deployed": 593.813182
+    },
+    {
+      "t": "2026-07-01T12:00:00Z",
+      "equity": 3880.875588,
+      "deployed": 816.581779
+    },
+    {
+      "t": "2026-07-01T13:45:00Z",
+      "equity": 3983.278921,
+      "deployed": 786.581779
+    },
+    {
+      "t": "2026-07-02T12:00:00Z",
+      "equity": 3983.278921,
+      "deployed": 871.68984
+    },
+    {
+      "t": "2026-07-02T12:30:00Z",
+      "equity": 4078.674539,
+      "deployed": 821.68984
+    },
+    {
+      "t": "2026-07-02T13:43:00Z",
+      "equity": 4141.155527,
+      "deployed": 771.68984
+    },
+    {
+      "t": "2026-07-02T13:47:00Z",
+      "equity": 4444.817645,
+      "deployed": 721.68984
+    },
+    {
+      "t": "2026-07-03T12:00:00Z",
+      "equity": 4444.817645,
+      "deployed": 751.68984
+    },
+    {
+      "t": "2026-07-03T20:00:00Z",
+      "equity": 4060.937235,
+      "deployed": 336.598888
+    },
+    {
+      "t": "2026-07-03T21:00:00Z",
+      "equity": 3889.772156,
+      "deployed": 0.0
+    },
+    {
+      "t": "2026-07-06T12:00:00Z",
+      "equity": 3889.772156,
+      "deployed": 614.771746
+    },
+    {
+      "t": "2026-07-06T14:30:00Z",
+      "equity": 3863.368925,
+      "deployed": 589.251515
+    },
+    {
+      "t": "2026-07-07T12:00:00Z",
+      "equity": 3863.368925,
+      "deployed": 1131.614312
+    },
+    {
+      "t": "2026-07-07T13:30:00Z",
+      "equity": 3832.414925,
+      "deployed": 1101.614312
+    },
+    {
+      "t": "2026-07-07T19:15:00Z",
+      "equity": 3805.80533,
+      "deployed": 1075.769717
+    },
+    {
+      "t": "2026-07-08T08:40:00Z",
+      "equity": 3878.07212,
+      "deployed": 1025.769717
+    },
+    {
+      "t": "2026-07-08T12:00:00Z",
+      "equity": 3878.07212,
+      "deployed": 1272.035836
+    },
+    {
+      "t": "2026-07-08T13:30:00Z",
+      "equity": 3885.105201,
+      "deployed": 1242.035836
+    },
+    {
+      "t": "2026-07-08T14:36:00Z",
+      "equity": 4007.907876,
+      "deployed": 1192.035836
+    },
+    {
+      "t": "2026-07-08T15:25:00Z",
+      "equity": 4074.447351,
+      "deployed": 1142.035836
+    },
+    {
+      "t": "2026-07-08T16:23:00Z",
+      "equity": 4168.513502,
+      "deployed": 1092.035836
+    },
+    {
+      "t": "2026-07-08T18:59:00Z",
+      "equity": 4335.185423,
+      "deployed": 1042.035836
+    },
+    {
+      "t": "2026-07-09T12:00:00Z",
+      "equity": 4335.185423,
+      "deployed": 1070.519336
+    },
+    {
+      "t": "2026-07-10T14:13:00Z",
+      "equity": 4793.133194,
+      "deployed": 1020.519336
+    },
+    {
+      "t": "2026-07-10T19:03:00Z",
+      "equity": 4793.409274,
+      "deployed": 970.519336
+    },
+    {
+      "t": "2026-07-10T20:00:00Z",
+      "equity": 4593.787553,
+      "deployed": 533.926064
+    },
+    {
+      "t": "2026-07-10T21:00:00Z",
+      "equity": 4223.445189,
+      "deployed": 0.0
+    },
+    {
+      "t": "2026-07-13T12:00:00Z",
+      "equity": 4223.445189,
+      "deployed": 940.328135
+    },
+    {
+      "t": "2026-07-13T13:43:00Z",
+      "equity": 4194.183144,
+      "deployed": 912.061089
+    },
+    {
+      "t": "2026-07-13T16:30:00Z",
+      "equity": 4163.211144,
+      "deployed": 882.061089
+    },
+    {
+      "t": "2026-07-13T16:33:00Z",
+      "equity": 4182.731144,
+      "deployed": 852.061089
+    },
+    {
+      "t": "2026-07-13T17:25:00Z",
+      "equity": 4151.885144,
+      "deployed": 822.061089
+    },
+    {
+      "t": "2026-07-14T01:03:00Z",
+      "equity": 4169.060192,
+      "deployed": 792.061089
+    },
+    {
+      "t": "2026-07-14T12:00:00Z",
+      "equity": 4169.060192,
+      "deployed": 1164.438073
+    },
+    {
+      "t": "2026-07-14T18:15:00Z",
+      "equity": 4183.440311,
+      "deployed": 1134.438073
+    },
+    {
+      "t": "2026-07-15T12:00:00Z",
+      "equity": 4183.440311,
+      "deployed": 1194.438073
+    },
+    {
+      "t": "2026-07-15T13:32:00Z",
+      "equity": 4169.153677,
+      "deployed": 1144.438073
+    },
+    {
+      "t": "2026-07-16T12:00:00Z",
+      "equity": 4169.153677,
+      "deployed": 1217.896639
+    },
+    {
+      "t": "2026-07-16T12:54:00Z",
+      "equity": 4229.487785,
+      "deployed": 1167.896639
+    },
+    {
+      "t": "2026-07-17T02:33:00Z",
+      "equity": 4378.602007,
+      "deployed": 1117.896639
+    },
+    {
+      "t": "2026-07-17T12:00:00Z",
+      "equity": 4378.602007,
+      "deployed": 1197.896639
+    },
+    {
+      "t": "2026-07-17T13:30:00Z",
+      "equity": 4327.270007,
+      "deployed": 1147.896639
+    },
+    {
+      "t": "2026-07-17T13:37:00Z",
+      "equity": 4276.670007,
+      "deployed": 1097.896639
+    },
+    {
+      "t": "2026-07-17T20:00:00Z",
+      "equity": 4192.473724,
+      "deployed": 598.47733
+    },
+    {
+      "t": "2026-07-17T21:00:00Z",
+      "equity": 3821.666995,
+      "deployed": 0.0
+    },
+    {
+      "t": "2026-07-20T12:00:00Z",
+      "equity": 3821.666995,
+      "deployed": 128.580742
+    },
+    {
+      "t": "2026-07-21T12:00:00Z",
+      "equity": 3821.666995,
+      "deployed": 243.807075
+    },
+    {
+      "t": "2026-07-22T00:30:00Z",
+      "equity": 3856.218449,
+      "deployed": 216.173146
+    },
+    {
+      "t": "2026-07-22T01:15:00Z",
+      "equity": 3832.745709,
+      "deployed": 166.173146
+    },
+    {
+      "t": "2026-07-22T12:00:00Z",
+      "equity": 3832.745709,
+      "deployed": 172.759561
+    },
+    {
+      "t": "2026-07-22T13:43:00Z",
+      "equity": 3876.081598,
+      "deployed": 152.57708
+    },
+    {
+      "t": "2026-07-22T13:58:00Z",
+      "equity": 3999.707017,
+      "deployed": 102.57708
+    },
+    {
+      "t": "2026-07-23T11:35:00Z",
+      "equity": 4241.36629,
+      "deployed": 72.57708
+    },
+    {
+      "t": "2026-07-24T12:00:00Z",
+      "equity": 4241.36629,
+      "deployed": 132.57708
+    },
+    {
+      "t": "2026-07-24T21:00:00Z",
+      "equity": 4173.285438,
+      "deployed": 0.0
+    }
+  ],
+  "notes": [
+    "signal set spans 2026-04-01 .. 2026-07-24 — one regime; every number below is conditional on it.",
+    "venue fees cost $391.55 (11.0% of gross PnL, 0.75c per share on average, vs a 3c assumed spread). 0 of the 690 trades exited in the market and paid the fee twice; the rest settled at resolution, which the venue does not charge for.",
+    "100% of fills are synthetic (3c assumed spread, no real book) — DESIGN.md §4 flags such a result, it does not celebrate it.",
+    "require_book = true was asked for, but 100% of the trades taken filled against a book the engine had to synthesize. The engine reads require_book as \"price it honestly and flag it\", not \"refuse it\" — under the strict reading this policy would have taken 0 trades on the synthetic rows. This is the single most consequential interpretive choice in the engine; see engine/README.md.",
+    "respect_venue_epsilon is on but UNAPPLIED to 322 of the sells taken: no signal set carries the barrier-to-running-extreme distance, so the screen could not run. Counted, not silently passed.",
+    "690 of the trades taken carried no depth data: the depth gate and the depth cap could not be evaluated for them.",
+    "peak deployment was 304% of the stated $1000 bankroll — that bankroll could not actually have funded this policy; treat the dollar PnL as a scale-free rate, not a fund result.",
+    "repeated signals on one market share a single outcome, so the per-trade standard error above is optimistic: collapse the trades on a leg to one observation before believing the t-stat."
+  ]
+}

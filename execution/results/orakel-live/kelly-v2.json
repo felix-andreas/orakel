@@ -1,9 +1,9 @@
 {
   "signal_set": "orakel-live",
-  "policy": "gate",
-  "policy_version": 1,
-  "policy_character": "Mirror plus discipline only — edge, spread, depth and venue-epsilon gates, still flat stakes. Isolates how much of the value is filtering rather than cleverness.",
-  "engine_version": "0.1.0",
+  "policy": "kelly",
+  "policy_version": 2,
+  "policy_character": "Gate plus quarter-Kelly sizing on the executable price. Tests whether sizing by conviction beats equal stakes.",
+  "engine_version": "0.2.0",
   "set_date_start": "2026-07-23",
   "set_date_end": "2026-07-24",
   "date_start": "",
@@ -11,6 +11,7 @@
   "span_days": 0.0,
   "bankroll_usd": 1000.0,
   "assumed_spread": 0.03,
+  "fee_model": "polymarket-taker: shares x rate x p x (1-p) per fill [crypto 0.07, culture 0.05, economics 0.05, finance 0.04, general 0.05, geopolitics 0, mentions 0.04, politics 0.04, sports 0.05, tech 0.04, weather 0.05]",
   "entry_delay_hours": 0.0,
   "counts": {
     "signals": 21,
@@ -30,12 +31,17 @@
     "delay_unavailable_token_won": 0,
     "depth_unknown": 0,
     "epsilon_unavailable": 0,
-    "book_synthetic": 18
+    "book_synthetic": 18,
+    "fee_rate_unmapped": 0
   },
   "metrics": {
     "n": 0,
     "underpowered": true,
     "staked_usd": 0.0,
+    "gross_pnl_usd": 0.0,
+    "fees_usd": 0.0,
+    "fee_share_of_gross": null,
+    "fee_cents_per_share": null,
     "net_pnl_usd": 0.0,
     "cents_per_trade": null,
     "cents_per_trade_se": null,

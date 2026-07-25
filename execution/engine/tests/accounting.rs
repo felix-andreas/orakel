@@ -540,6 +540,7 @@ fn fees_are_charged_on_traded_notional_only() {
 // by hand in the comment above it.
 
 /// A row with an explicit `asset`, so the per-category rate can be exercised.
+#[allow(clippy::too_many_arguments)]
 fn row_asset(
     asset: &str,
     t: &str,

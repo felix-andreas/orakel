@@ -452,7 +452,10 @@ pub fn kelly_fraction(side: Side, p: f64, price: f64) -> f64 {
 /// Venue rounding, from the same page: fees are rounded to 5 decimals and the
 /// smallest fee charged is 0.00001 USDC; anything below that rounds to zero.
 pub fn taker_fee(shares: f64, rate: f64, price: f64) -> f64 {
-    if !(shares > 0.0) || !(rate > 0.0) || !(0.0..=1.0).contains(&price) {
+    if !shares.is_finite() || !rate.is_finite() || shares <= 0.0 || rate <= 0.0 {
+        return 0.0;
+    }
+    if !(0.0..=1.0).contains(&price) {
         return 0.0;
     }
     let raw = shares * rate * price * (1.0 - price);

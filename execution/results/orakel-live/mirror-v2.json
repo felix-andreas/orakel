@@ -1,0 +1,174 @@
+{
+  "signal_set": "orakel-live",
+  "policy": "mirror",
+  "policy_version": 2,
+  "policy_character": "Trade every signal with any edge, flat stake, hold to resolution. The naive baseline that the disciplined policies must beat.",
+  "engine_version": "0.2.0",
+  "set_date_start": "2026-07-23",
+  "set_date_end": "2026-07-24",
+  "date_start": "2026-07-23",
+  "date_end": "2026-07-24",
+  "span_days": 1.080451,
+  "bankroll_usd": 1000.0,
+  "assumed_spread": 0.03,
+  "fee_model": "polymarket-taker: shares x rate x p x (1-p) per fill [crypto 0.07, culture 0.05, economics 0.05, finance 0.04, general 0.05, geopolitics 0, mentions 0.04, politics 0.04, sports 0.05, tech 0.04, weather 0.05]",
+  "entry_delay_hours": 0.0,
+  "counts": {
+    "signals": 21,
+    "traded": 9,
+    "no_quote": 0,
+    "entry_after_resolution": 0,
+    "delay_unavailable": 0,
+    "no_executable_edge": 9,
+    "side_excluded": 0,
+    "below_min_edge": 3,
+    "below_edge_percentile": 0,
+    "spread_too_wide": 0,
+    "depth_too_thin": 0,
+    "unfundable": 0,
+    "market_cap_full": 0,
+    "stake_too_small": 0,
+    "delay_unavailable_token_won": 0,
+    "depth_unknown": 8,
+    "epsilon_unavailable": 0,
+    "book_synthetic": 18,
+    "fee_rate_unmapped": 0
+  },
+  "metrics": {
+    "n": 9,
+    "underpowered": true,
+    "staked_usd": 90.0,
+    "gross_pnl_usd": 2.103641,
+    "fees_usd": 0.08155,
+    "fee_share_of_gross": 0.038766,
+    "fee_cents_per_share": 0.087833,
+    "net_pnl_usd": 2.022091,
+    "cents_per_trade": 2.177346,
+    "cents_per_trade_se": 0.458399,
+    "t_stat": 4.749893,
+    "hit_rate": 1.0,
+    "mean_hold_days": 0.646331,
+    "return_on_locked_capital": 0.022468,
+    "annualized_return_on_locked_capital": 12.688086,
+    "capital_efficiency": 0.053838,
+    "max_capital_efficiency": 0.09,
+    "max_drawdown_usd": 0.0,
+    "max_drawdown_frac": 0.0,
+    "longest_losing_streak": 0,
+    "synthetic_fill_share": 0.888889,
+    "take_profit_exits": 0,
+    "mean_fill_price": 0.022652
+  },
+  "by_variant": [
+    {
+      "key": "barrier-touch/ladder-rv",
+      "n": 9,
+      "net_pnl_usd": 2.022091,
+      "fees_usd": 0.08155,
+      "cents_per_trade": 2.177346,
+      "cents_per_trade_se": 0.458399,
+      "hit_rate": 1.0,
+      "return_on_locked_capital": 0.022468,
+      "annualized_return_on_locked_capital": 12.688086,
+      "mean_hold_days": 0.646331,
+      "underpowered": true
+    }
+  ],
+  "by_asset": [
+    {
+      "key": "spy",
+      "n": 6,
+      "net_pnl_usd": 1.317175,
+      "fees_usd": 0.05295,
+      "cents_per_trade": 2.120817,
+      "cents_per_trade_se": 0.686997,
+      "hit_rate": 1.0,
+      "return_on_locked_capital": 0.021953,
+      "annualized_return_on_locked_capital": 12.397382,
+      "mean_hold_days": 0.646331,
+      "underpowered": true
+    },
+    {
+      "key": "nvda",
+      "n": 3,
+      "net_pnl_usd": 0.704917,
+      "fees_usd": 0.0286,
+      "cents_per_trade": 2.290404,
+      "cents_per_trade_se": 0.390054,
+      "hit_rate": 1.0,
+      "return_on_locked_capital": 0.023497,
+      "annualized_return_on_locked_capital": 13.269493,
+      "mean_hold_days": 0.646331,
+      "underpowered": true
+    }
+  ],
+  "by_side": [
+    {
+      "key": "sell",
+      "n": 9,
+      "net_pnl_usd": 2.022091,
+      "fees_usd": 0.08155,
+      "cents_per_trade": 2.177346,
+      "cents_per_trade_se": 0.458399,
+      "hit_rate": 1.0,
+      "return_on_locked_capital": 0.022468,
+      "annualized_return_on_locked_capital": 12.688086,
+      "mean_hold_days": 0.646331,
+      "underpowered": true
+    }
+  ],
+  "by_fill": [
+    {
+      "key": "synthetic",
+      "n": 8,
+      "net_pnl_usd": 1.994498,
+      "fees_usd": 0.0804,
+      "cents_per_trade": 2.415122,
+      "cents_per_trade_se": 0.444382,
+      "hit_rate": 1.0,
+      "return_on_locked_capital": 0.024931,
+      "annualized_return_on_locked_capital": 13.512088,
+      "mean_hold_days": 0.673464,
+      "underpowered": true
+    },
+    {
+      "key": "real-book",
+      "n": 1,
+      "net_pnl_usd": 0.027593,
+      "fees_usd": 0.00115,
+      "cents_per_trade": 0.275139,
+      "cents_per_trade_se": null,
+      "hit_rate": 1.0,
+      "return_on_locked_capital": 0.002759,
+      "annualized_return_on_locked_capital": 2.346173,
+      "mean_hold_days": 0.429271,
+      "underpowered": true
+    }
+  ],
+  "equity_curve": [
+    {
+      "t": "2026-07-23T10:04:09Z",
+      "equity": 1000.0,
+      "deployed": 30.0
+    },
+    {
+      "t": "2026-07-24T01:41:51Z",
+      "equity": 1000.0,
+      "deployed": 90.0
+    },
+    {
+      "t": "2026-07-24T12:00:00Z",
+      "equity": 1002.022091,
+      "deployed": 0.0
+    }
+  ],
+  "notes": [
+    "signal set spans 2026-07-23 .. 2026-07-24 — one regime; every number below is conditional on it.",
+    "UNDERPOWERED: n = 9 < 30. DESIGN.md §7 forbids calling this policy a winner or a loser.",
+    "venue fees cost $0.08 (3.9% of gross PnL, 0.09c per share on average, vs a 3c assumed spread). 0 of the 9 trades exited in the market and paid the fee twice; the rest settled at resolution, which the venue does not charge for.",
+    "89% of fills are synthetic (3c assumed spread, no real book) — DESIGN.md §4 flags such a result, it does not celebrate it.",
+    "8 of the trades taken carried no depth data: the depth gate and the depth cap could not be evaluated for them.",
+    "mean hold is 0.65 days — the annualized figure extrapolates a sub-daily holding period by a factor of 565; read it as an order of magnitude at best.",
+    "repeated signals on one market share a single outcome, so the per-trade standard error above is optimistic: collapse the trades on a leg to one observation before believing the t-stat."
+  ]
+}
