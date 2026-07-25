@@ -36,8 +36,10 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 ## Medium-term (bootstrap phase)
 
 - Ramp plan: 1–2 slots until a full day runs clean, then scale toward 5.
-- Dashboard needs first deploy once `CLOUDFLARE_API_TOKEN` exists (then Access setup by
-  Felix; then `GITHUB_TOKEN` as Worker secret via wrangler).
+- Dashboard fully wired (2026-07-25): deployed, Access enforced, and `GITHUB_TOKEN` set as
+  the Worker secret — pages are **live** (read `main` per request), no longer snapshot.
+  Caveat filed to Felix: the env token is a broad classic PAT (`repo` write), not the
+  read-only fine-grained PAT the README asks for.
 
 ## Long-term (durable principles)
 

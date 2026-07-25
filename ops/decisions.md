@@ -5,6 +5,30 @@ who decided**. Newest first.
 
 ---
 
+## 2026-07-25 — Dashboard switched from build-time snapshot to live repo reads
+
+Felix provisioned `GITHUB_TOKEN` in the environment, so it was set as the `orakel-dashboard`
+Worker secret (`wrangler secret put`) and the Worker redeployed on the current `main`. Every
+page now reads `main` at request time instead of the pack embedded at build time; the
+"snapshot" banner is gone and the top bar says `live`.
+
+Verified rather than assumed: the freshness stamp on the deployed dashboard tracked a commit
+pushed **after** the running build's timestamp — only possible via a request-time read — and
+all eleven routes return 200 with content, including the tree-driven listings (`/strategies`
+lists all four variants), which exercise the Trees API and not just Contents.
+
+Why it matters operationally: agents and Felix now see the firm's actual state, not the
+state as of the last deploy. A stale dashboard was a real risk — the previous build was 5
+minutes old and already missing a code change and three commits.
+
+One caveat filed to Felix (`roles/felix/inbox/2026-07-25-github-token-scope.md`): the
+provisioned token is a classic PAT with `repo` write scope on all his repositories, where
+the dashboard needs only read-only Contents on this one. Working as-is; worth narrowing.
+
+**Decided by:** Felix (asked for the redeploy); executed and verified in-session.
+
+---
+
 ## 2026-07-25 — Venue fees found, verified, and priced into every policy (v2)
 
 The market researcher discovered Polymarket charges real taker fees, undocumented in our

@@ -64,7 +64,9 @@ active = ["ceo", "market-researcher"]
 r2 = "present"                # R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY (bucket "orakel" is hard-coded)
                               # live round-trip verified 2026-07-22 (push/verify/pull byte-identical)
 cloudflare_api_token = "present"
-github_token = "present"
+github_token = "present"     # env var AND the orakel-dashboard Worker secret (set 2026-07-25);
+                              # dashboard now reads main at request time — verified live
+                              # (freshness stamp tracked a commit pushed after the build)
 cf_access_service_token = "present" # CF_ACCESS_CLIENT_ID/SECRET; verified 2026-07-22 (no creds→302, creds→200)
 
 [cloudflare]

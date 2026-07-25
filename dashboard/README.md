@@ -162,6 +162,12 @@ worker-build --release --no-opt          # --no-opt skips the blocked wasm-opt
 `WASM_BINDGEN_BIN` first in restricted ones). Unoptimised output with the embedded pack is
 ~1.5 MiB raw / ~575 KiB gzipped — well inside the Workers limit.
 
+Which downloads are blocked is not fixed: in an agent session on 2026-07-25 only
+`wasm-bindgen` needed the workaround — with `WASM_BINDGEN_BIN` exported, worker-build's
+`wasm-opt` download went through and the optimised pipeline ran end to end (1.59 MiB raw /
+636 KiB gzipped; larger than the figure above only because the embedded pack has grown, not
+because of `wasm-opt`). Export `WASM_BINDGEN_BIN` and let the fallback decide the rest.
+
 Two gotchas baked into the config, do not undo them:
 
 - **No `strip = true` in `[profile.release]`** — stripping removes the wasm
@@ -185,10 +191,20 @@ CLOUDFLARE_API_TOKEN=... npx wrangler deploy
 - The token needs the *Edit Cloudflare Workers* permission template. It is **not** in the
   repo; presence is tracked in `ops/state.toml` `[secrets]`.
 - **Live repo reads need the `GITHUB_TOKEN` worker secret**:
-  `npx wrangler secret put GITHUB_TOKEN`. Until it is set every page renders the embedded
-  build-time pack and says so. NB: agent sessions cannot verify a PAT — the session proxy
-  answers `api.github.com` with its own 403, so test the token from the deployed Worker or
-  locally outside a session.
+  `npx wrangler secret put GITHUB_TOKEN` (**set 2026-07-25**, live reads verified). Until it
+  is set every page renders the embedded build-time pack and says so. `secret put` deploys a
+  new version by itself — no rebuild needed to turn live reads on — but allow a few seconds
+  before the change shows.
+- **Verifying live vs snapshot** (the reliable check, since the word `live` also appears in
+  page content): the top-bar indicator is `dot-ok</span>live · <stamp>` and `stamp` is the
+  **HEAD commit time of `main`**, while the footer carries the build time. Live reads are
+  proven when the stamp is *newer* than the footer's build stamp — a request-time read is
+  the only way the Worker could know about a commit made after it was built.
+- Agent sessions can partly verify a PAT after all: the session proxy blocks *repo*
+  endpoints (`/repos/...` → its own 403 `"GitHub access is not enabled for this session"`,
+  not GitHub's), but `/user` and `/rate_limit` pass through, so the token's identity and
+  `X-OAuth-Scopes` are readable in-session. Contents/Trees access itself still has to be
+  tested from the deployed Worker.
 - `wrangler.toml` runs `worker-build` as the build command, so `npx wrangler deploy` is
   the whole pipeline (wrangler is fetched by npx, no `package.json` needed).
 - First deploy prints the `*.workers.dev` URL.
