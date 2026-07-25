@@ -78,12 +78,47 @@ pub async fn tree(env: &Env) -> (Vec<String>, bool) {
 // CSV
 // ---------------------------------------------------------------------------
 
-/// Minimal CSV: comma-separated, no quoting (predictions/README.md schema
-/// forbids embedded commas in our canonical files). Columns are addressed by
-/// name so an added column never shifts a page's data.
+/// Minimal CSV, RFC4180 quoting supported. Our canonical prediction files never
+/// quote (predictions/README.md forbids embedded commas), but generated files do
+/// — `execution/results/summary.csv` states its fee model in a sentence that
+/// contains commas — and a plain `split(',')` silently shifts every column after
+/// it. Columns are addressed by NAME so an added column never shifts a page's
+/// data; quoting makes sure the names still line up with the values.
 pub struct Table {
     pub head: Vec<String>,
     pub rows: Vec<Vec<String>>,
+}
+
+/// One CSV line → fields. `"` opens a quoted field, `""` inside one is a literal
+/// quote. Unterminated quotes just run to the end of the line.
+fn split_csv(line: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut field = String::new();
+    let mut quoted = false;
+    let mut chars = line.chars().peekable();
+    while let Some(c) = chars.next() {
+        match c {
+            '"' if quoted => {
+                if chars.peek() == Some(&'"') {
+                    chars.next();
+                    field.push('"');
+                } else {
+                    quoted = false;
+                }
+            }
+            '"' if field.trim().is_empty() => {
+                field.clear();
+                quoted = true;
+            }
+            ',' if !quoted => {
+                out.push(field.trim().to_string());
+                field = String::new();
+            }
+            _ => field.push(c),
+        }
+    }
+    out.push(field.trim().to_string());
+    out
 }
 
 impl Table {
@@ -91,7 +126,7 @@ impl Table {
         let mut lines = src
             .lines()
             .filter(|l| !l.trim().is_empty())
-            .map(|l| l.split(',').map(|f| f.trim().to_string()).collect::<Vec<_>>());
+            .map(split_csv);
         let head = lines.next().unwrap_or_default();
         Table { head, rows: lines.collect() }
     }

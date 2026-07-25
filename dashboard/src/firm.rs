@@ -7,8 +7,8 @@
 
 use crate::data;
 use crate::render::{
-    self, badge, chip_row, doc, esc, fmt_int, icon, item, items, markdown, markdown_body, panel,
-    panel_flush, panel_foot, stat_line, table,
+    self, badge, chip_row, doc, esc, fmt_int, icon, item, items, markdown, markdown_body, section,
+    section_foot, stat_line, table,
 };
 use crate::snapshots;
 use crate::{shell, snapshot_banner, trail};
@@ -178,35 +178,34 @@ pub async fn state(env: &Env) -> String {
         "{banner}{stats}<div class=\"grid-main\">{slots}{strategies}</div><div class=\"grid-3\">{cadence}{models}{roles}</div><div class=\"grid-pair\">{secrets}{cf}</div>{note}",
         banner = if all_live { String::new() } else { snapshot_banner() },
         stats = stats,
-        slots = panel_foot(
+        slots = section_foot(
             "Research slots",
             "one trial variant per slot",
             &badge(&format!("{active} of {total} active"), "warn"),
             &items(&slot_items),
-            "<span class=\"mono\">ops/state.toml [[research.slot]]</span><a href=\"/strategies\">Strategies →</a>",
-            false,
+            "<span class=\"mono\">ops/state.toml [[research.slot]]</span><a href=\"/strategies\">Strategies →</a>"
         ),
-        strategies = panel(
+        strategies = section(
             "Strategies",
             "by status, as recorded in state",
             "",
             &render::rows(&strat),
         ),
-        cadence = panel("Cadence", "when work fires", "", &render::rows(&cadence)),
-        models = panel("Model routing", "per-task defaults", "", &render::rows(&models)),
-        roles = panel(
+        cadence = section("Cadence", "when work fires", "", &render::rows(&cadence)),
+        models = section("Model routing", "per-task defaults", "", &render::rows(&models)),
+        roles = section(
             "Active roles",
             "researchers are instantiated per slot",
             "",
             &roles_html,
         ),
-        secrets = panel(
+        secrets = section(
             "Secrets",
             "presence only — never values",
             "",
             &render::rows(&secrets),
         ),
-        cf = panel("Cloudflare", "the firm's infrastructure", "", &render::rows(&cf)),
+        cf = section("Cloudflare", "the firm's infrastructure", "", &render::rows(&cf)),
         note = render::note(
             "From <span class=\"mono\">ops/state.toml</span> on main. Every change here needs a dated entry in <a class=\"link\" href=\"/decisions\">decisions</a>.",
         ),
@@ -261,13 +260,12 @@ pub async fn decisions(env: &Env) -> String {
                     "",
                 ),
             ]),
-            panel = panel_foot(
+            panel = section_foot(
                 "What changed, and when",
                 "newest first — open an entry for the reasoning behind it",
                 &badge(&render::count(entries.len(), "entry"), ""),
                 &format!("<div class=\"entries\">{list}</div>"),
-                "<span class=\"mono\">ops/decisions.md</span><a href=\"/state\">Current state →</a>",
-                true,
+                "<span class=\"mono\">ops/decisions.md</span><a href=\"/state\">Current state →</a>"
             ),
         )
     };
@@ -373,13 +371,12 @@ pub async fn inboxes(env: &Env) -> String {
         if inner.is_empty() {
             inner = "<p class=\"note\">No messages.</p>".to_string();
         }
-        panels.push_str(&panel_foot(
+        panels.push_str(&section_foot(
             &role,
             "messages waiting for this role",
             &badge(&format!("{n}"), if n > 0 { "info" } else { "" }),
             &inner,
-            &format!("<span class=\"mono\">roles/{role}/inbox/</span>"),
-            false,
+            &format!("<span class=\"mono\">roles/{role}/inbox/</span>")
         ));
     }
 
@@ -498,7 +495,7 @@ pub async fn ideas(env: &Env) -> String {
             (fmt_int(trialing as i64), "taken to trial".to_string(), "warn"),
             (fmt_int(killed as i64), "screened out".to_string(), ""),
         ]),
-        panel = panel_foot(
+        panel = section_foot(
             "Backlog",
             "the market researcher's candidate strategies",
             &badge(&render::count(files.len(), "idea"), ""),
@@ -510,8 +507,7 @@ pub async fn ideas(env: &Env) -> String {
             } else {
                 docs
             },
-            "<span class=\"mono\">ideas/</span><a href=\"/strategies\">Strategies →</a>",
-            false,
+            "<span class=\"mono\">ideas/</span><a href=\"/strategies\">Strategies →</a>"
         ),
     );
 
@@ -566,7 +562,7 @@ pub async fn wiki(env: &Env) -> String {
                 esc(n)
             ));
         }
-        group_panels.push_str(&panel(
+        group_panels.push_str(&section(
             folder,
             &format!("wiki/{}", if folder == "pages" { "" } else { folder }),
             &badge(&format!("{}", names.len()), ""),
@@ -581,13 +577,12 @@ pub async fn wiki(env: &Env) -> String {
             (fmt_int(pages.len() as i64), "pages".to_string(), ""),
             (fmt_int(groups.len() as i64), "sections".to_string(), ""),
         ]),
-        index_panel = panel_foot(
+        index_panel = section_foot(
             "Index",
             "durable, cross-strategy knowledge — what generalises beyond one run",
             "",
             &format!("<div class=\"prose\">{}</div>", markdown_body(&index.text)),
-            "<span class=\"mono\">wiki/index.md</span>",
-            false,
+            "<span class=\"mono\">wiki/index.md</span>"
         ),
         groups = format!("<div class=\"stack\">{group_panels}</div>"),
     );
@@ -610,7 +605,7 @@ pub async fn wiki_page(env: &Env, page: &str) -> String {
     }
     let f = data::text(env, &format!("wiki/{page}.md")).await;
     let body = if f.is_empty() {
-        panel(
+        section(
             page,
             &format!("wiki/{page}.md"),
             "",
@@ -620,13 +615,12 @@ pub async fn wiki_page(env: &Env, page: &str) -> String {
             ),
         )
     } else {
-        panel_foot(
+        section_foot(
             &render::md_title(&f.text).unwrap_or_else(|| page.to_string()),
             &format!("wiki/{page}.md"),
             "",
             &format!("<div class=\"prose prose-wide\">{}</div>", markdown_body(&f.text)),
-            &format!("<span class=\"mono\">wiki/{page}.md</span><a href=\"/wiki\">← wiki index</a>"),
-            false,
+            &format!("<span class=\"mono\">wiki/{page}.md</span><a href=\"/wiki\">← wiki index</a>")
         )
     };
     shell(env, "/wiki", crumbs, f.live, &body).await
@@ -696,15 +690,14 @@ pub async fn snapshots(env: &Env) -> String {
             format!(
                 "{kpis}<div class=\"grid-main\">{chart_panel}{table_panel}</div>",
                 kpis = kpis,
-                chart_panel = panel_foot(
+                chart_panel = section_foot(
                     "Midpoint series",
                     "hourly midpoints for one market, from the R2 objects",
                     &badge(&l.date, ""),
                     &chart,
-                    "<span>drag to zoom, double-click to reset</span><span class=\"mono\">snapshots/books/</span>",
-                    false,
+                    "<span>drag to zoom, double-click to reset</span><span class=\"mono\">snapshots/books/</span>"
                 ),
-                table_panel = panel_flush(
+                table_panel = section(
                     "Latest book",
                     "first outcome token per market",
                     &badge(&render::count(slugs.len(), "market"), ""),

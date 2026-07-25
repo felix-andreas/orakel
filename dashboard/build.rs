@@ -17,7 +17,15 @@ use std::path::{Path, PathBuf};
 const ROOT: &str = "..";
 
 /// Directories walked for the pack. Each is also a `rerun-if-changed` watch.
-const ROOTS: [&str; 6] = ["ops", "predictions", "ideas", "wiki", "strategies", "roles"];
+const ROOTS: [&str; 7] = [
+    "ops",
+    "predictions",
+    "ideas",
+    "wiki",
+    "strategies",
+    "roles",
+    "execution",
+];
 
 fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR set by cargo"));
@@ -78,18 +86,32 @@ fn collect(dir: &Path, rel_dir: &str, out: &mut Vec<String>) {
     }
 }
 
-/// Allowlist: markdown / TOML / CSV under the rendered trees. Role folders
-/// contribute inbox messages only (playbooks and private memory stay out).
+/// Allowlist: markdown / TOML / CSV under the rendered trees, plus the
+/// execution engine's RESULTS (including the per-run JSON the equity curves are
+/// drawn from — the only JSON in the pack). Role folders contribute inbox
+/// messages only (playbooks and private memory stay out). The engine's own
+/// source tree and the raw signal sets are deliberately excluded:
+/// `execution/signals/ladder-rv-hist.csv` alone is 1.8 MiB and nothing renders
+/// it.
 fn wanted(rel: &str) -> bool {
-    if !(rel.ends_with(".md") || rel.ends_with(".toml") || rel.ends_with(".csv")) {
-        return false;
-    }
     if rel.ends_with("Cargo.toml") {
         return false;
     }
+    let text = rel.ends_with(".md") || rel.ends_with(".toml") || rel.ends_with(".csv");
     match rel.split('/').next().unwrap_or("") {
-        "ops" | "predictions" | "ideas" | "wiki" | "strategies" => true,
-        "roles" => rel.contains("/inbox/"),
+        "ops" | "predictions" | "ideas" | "wiki" | "strategies" => text,
+        "roles" => text && rel.contains("/inbox/"),
+        "execution" => {
+            if rel.starts_with("execution/results/") {
+                text || rel.ends_with(".json")
+            } else {
+                text
+                    && (rel.starts_with("execution/policies/")
+                        || rel == "execution/DESIGN.md"
+                        || rel == "execution/README.md"
+                        || rel == "execution/signals/README.md")
+            }
+        }
         _ => false,
     }
 }

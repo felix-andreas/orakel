@@ -4,7 +4,7 @@ The human window into the firm (ARCHITECTURE.md §7): a Rust Cloudflare Worker
 ([workers-rs](https://github.com/cloudflare/workers-rs)) that server-renders the repo's
 state as HTML. No external assets, no framework, no build step beyond `worker-build`.
 
-## v3 — information architecture
+## v4 — information architecture
 
 The sidebar is the map of the firm. Groups collapse and remember their state in
 `localStorage` (per section); the group holding the active route is always expanded, and
@@ -22,6 +22,8 @@ Detail routes hang off those and light up their parent nav item:
 
 | Route | What it shows |
 |---|---|
+| `/execution?fees=v1` | the same matrix priced with **no venue fee** (superseded, kept for attribution) |
+| `/execution?doc=summary` \| `?doc=design` | the engine's own write-up / the accounting rules, rendered whole |
 | `/strategies/<family>` | FAMILY.md, the family's variants with status, family + variant scoring |
 | `/strategies/<family>/<variant>` | STRATEGY.md, strategy.toml facts (status, trial clock, labels, success guideline), applications, results/worklog documents, the variant's predictions and scoring |
 | `/strategies/<family>/<variant>?doc=<path>` | one of that variant's markdown documents (`results/*.md`, `memory/*.md`, `STRATEGY.md`) |
@@ -32,32 +34,47 @@ Detail routes hang off those and light up their parent nav item:
 log, run steps, applications, scoring aggregates and the snapshot book table.
 
 There is **no page title**: the breadcrumb in the top bar is the title. The top bar
-carries only things that do something — breadcrumbs, a light/dark toggle (persisted in
-`localStorage`, respected by the charts) and the data-freshness stamp.
+carries only things that do something — breadcrumbs, the data-freshness stamp and (below
+900px) the burger.
 
-Below 900px that top bar is the **only** header. The sidebar stops being a band: its
-wordmark row is dropped, the burger joins the theme toggle on the right of the bar, and
-the nav opens as an overlay hanging off it (`position: fixed`, so opening the menu never
-pushes the page). With the menu open the breadcrumb hands its slot to the `orakel`
+**Every setting lives in one place**: a **settings popover** at the bottom-left of the
+sidebar, built on the native Popover API (`popover` attribute + `popovertarget`), so
+opening, light-dismiss, Esc and focus handling are the browser's. It holds theme
+(**light / dark / system**, system being the default — with no explicit choice there is no
+`data-theme` attribute at all and the stylesheet's `prefers-color-scheme` block decides),
+a **density** switch (comfortable / compact, which retunes four spacing tokens at once),
+expand/collapse all sidebar sections, and links out. Theme and density are persisted in
+`localStorage` and applied by a tiny inline script before first paint; charts re-render on
+both. Without JavaScript the popover still opens and says the controls need JS — the page
+then follows the system scheme, which is the default anyway.
+
+Below 900px the top bar is the **only** header. The sidebar stops being a band: its
+wordmark row is dropped and the nav opens as an overlay hanging off the bar
+(`position: fixed`), filling the **dynamic** viewport (`100dvh - var(--topbar-h)`) so
+mobile browser chrome can neither clip it nor leave it short; the settings control stays
+pinned to its bottom. With the menu open the breadcrumb hands its slot to the `orakel`
 wordmark — navigation has replaced the page's context, so the app's name is what belongs
-there. One band, 48px, in every state; the content starts at 64px instead of 137px.
+there. One band, 48px, in every state.
 
 ## Layout language
 
-Four bands, in this order, and nothing else:
+**Cards are the exception, not the container** (PRINCIPLES.md). There is no generic
+bordered "panel" component: a page is a headline stat strip and then **sections** — a
+heading, a hairline, content — separated by space. Lists are hairline-separated rows, so
+five things read as five lines rather than five boxes. **No bordered surface may contain
+another one**; the only bordered surfaces left are things that float (settings popover,
+chart tooltip) or warn (the snapshot banner). This is asserted programmatically in
+verification: no element with a full border + radius, ≥120×44px, may contain another.
 
-1. a row of compact **KPI cards** — label, big number, delta chip, one line of context;
-2. a **dominant panel** (≈2/3) beside a **secondary list panel** (≈1/3);
-3. **paired panels** — usually one chart, one dense table with inline mini-bars;
-4. a compact table of recent activity.
-
-Components live in `src/render.rs` and are deliberately few: `kpi_row`, `panel`, `table`,
-`items`/`row`, `badge`/`chip`, `minibar`, `prose`. `src/style.css` holds the tokens (one
-type scale, a 4px spacing rhythm, hairline borders, tabular figures on every number) and
-both themes as first-class token blocks. **Labels are sentence case everywhere — there is
-no `text-transform: uppercase` in the stylesheet.** When a rendered document's own `# `
-heading would repeat the breadcrumb or panel title, it becomes the panel title instead of
-being printed twice (`render::md_title` / `markdown_body`).
+Components live in `src/render.rs` and are deliberately few: `stat_grid`/`stat_line`,
+`section`/`section_foot`, `table`/`table_sortable`, `items`/`row`, `badge`/`chip`,
+`minibar`, `notes`, `doc`, `prose`. `src/style.css` holds the tokens (one type scale, a
+4px spacing rhythm, hairline borders, tabular figures on every number), both themes as
+first-class token blocks, and the four density tokens (`--gap`, `--pad-page`, `--cell-y`,
+`--rowsp`) that `[data-density="compact"]` retunes. **Labels are sentence case everywhere
+— there is no `text-transform: uppercase` in the stylesheet.** When a rendered document's
+own `# ` heading would repeat the breadcrumb or section title, it becomes the section
+title instead of being printed twice (`render::md_title` / `markdown_body`).
 
 ## Data: live reads, complete embedded fallback
 
@@ -68,9 +85,12 @@ being printed twice (`render::md_title` / `markdown_body`).
   Requires the `GITHUB_TOKEN` worker secret (fine-grained PAT, read-only *Contents* on
   felix-andreas/orakel).
 - **Embedded repo pack** (`build.rs` → `src/data.rs`): every renderable repo text file
-  (`ops/`, `predictions/`, `ideas/`, `wiki/`, `strategies/` markdown + TOML + CSV, and
-  `roles/*/inbox/*.md`) is concatenated into ONE file staged in `OUT_DIR` and pulled in
-  with a single `include_str!` — ~95 files, ~290 KiB. Without the PAT the **whole**
+  (`ops/`, `predictions/`, `ideas/`, `wiki/`, `strategies/` markdown + TOML + CSV,
+  `roles/*/inbox/*.md`, and all of `execution/results/` **including the per-run JSON** the
+  equity curves are drawn from) is concatenated into ONE file staged in `OUT_DIR` and
+  pulled in with a single `include_str!` — ~170 files, ~1.0 MiB. The engine's source tree
+  and the raw signal sets are excluded on purpose: `execution/signals/ladder-rv-hist.csv`
+  alone is 1.8 MiB and nothing renders it. Without the PAT the **whole**
   dashboard still renders from that snapshot (every page, including runs, strategies and
   ideas, which v2 could only show as empty states); the top bar says `snapshot` instead of
   `live` and a banner names the build. `data::tree()` falls back to the pack's file list,
@@ -96,6 +116,8 @@ Chart.bar (el, { bars: [{ label, v, tone }] }, opts)
 // opts: { min, max, x: "time" | "index", yPrecision }
 ```
 
+- **eight** series colours (`--chart-1..8`), because the execution page draws one line per
+  policy and there are eight policies;
 - multi-series with per-series `mode` (`"line"` / `"dots"`) and a pinned palette `color`,
   so a series that is absent at render time never recolours the others (the legend is
   server-rendered from the same tokens, and would otherwise disagree);
@@ -119,7 +141,8 @@ dashboard/
     ├── data.rs         # pack + live reads, CSV Table, repo discovery, dates
     ├── live.rs         # GitHub API with Cache API caching
     ├── snapshots.rs    # R2 book snapshots and series endpoints
-    ├── overview.rs     # / dashboard, /execution
+    ├── overview.rs     # / dashboard
+    ├── execution.rs    # /execution, its ?doc= views and the equity-curve JSON
     ├── runs.rs         # /runs narrative
     ├── strategies.rs   # /strategies, family, variant, ?doc=
     ├── predictions.rs  # /predictions, /markets/<slug>
@@ -127,17 +150,37 @@ dashboard/
     ├── dev.rs          # /dev, /dev/endpoints, example JSON
     ├── style.css       # tokens + components, light and dark
     ├── charts.js       # SVG chart framework
+    ├── table.js        # click-to-sort for table.data.sortable
     └── favicon.svg
 ```
 
 Rendering is plain `format!` string building (CODING.md: procedural, no template engine).
-Markdown → HTML via `pulldown-cmark`; TOML via the `toml` crate; CSV is a comma-split with
-**column access by name** (`data::Table`), so an added column never shifts a page's data.
+Markdown → HTML via `pulldown-cmark`; TOML via the `toml` crate; CSV is parsed with
+RFC4180 quoting and **column access by name** (`data::Table`), so an added column never
+shifts a page's data — and `execution/results/summary.csv`, whose `fee_model` column is a
+sentence full of commas, lines up with its header.
+
+### The execution page
+
+`/execution` reads `execution/results/summary.csv` (one row per signal set × policy ×
+policy version) and `execution/README.md` (the policies' plain-English characters). It
+never recomputes a metric.
+
+- The headline is **annualized return on locked capital**, not cents per trade
+  (DESIGN.md §3) — both are shown, and the two leaders disagreeing is the finding.
+- **v1 is fee-free, v2 charges the venue's real taker fee.** The version is a visible
+  switch, each row prints the other version's number and the gap in percentage points,
+  the cost model is quoted in the engine's own words, and choosing v1 raises a banner.
+- Sample size sits under every headline number, and the engine's `n < 30` rule is
+  respected: underpowered rows are shown, labelled and **not ranked** (DESIGN.md §7).
+- Caveats are generated from the same CSV (synthetic fills, one regime, `patient`'s
+  dropped 24h-later observations, peak deployment above bankroll), so they cannot drift
+  from the numbers.
+- Equity curves come from `execution/results/<set>/<policy>-v<n>.json` via
+  `/execution/data/<set>/v<n>.json`, one `Chart.line` series per policy.
 
 ### Still planned
 
-- Execution/backtest output on `/execution` once the engine lands (the nav slot and the
-  page are already reserved).
 - Live Polymarket prices server-side, beyond the hourly R2 snapshots.
 - R2-backed backtest dataset browsing (manifests → tables/charts).
 
@@ -167,7 +210,8 @@ worker-build --release --no-opt          # --no-opt skips the blocked wasm-opt
 `wrangler.toml`'s build command already falls back to `--no-opt` automatically, so
 `npx wrangler deploy` works in both restricted and unrestricted environments (export
 `WASM_BINDGEN_BIN` first in restricted ones). Unoptimised output with the embedded pack is
-~1.5 MiB raw / ~575 KiB gzipped — well inside the Workers limit.
+~2.4 MiB raw / ~775 KiB gzipped (the execution results account for ~140 KiB of that) —
+well inside the Workers limit, which is on the compressed size.
 
 Which downloads are blocked is not fixed: in an agent session on 2026-07-25 only
 `wasm-bindgen` needed the workaround — with `WASM_BINDGEN_BIN` exported, worker-build's

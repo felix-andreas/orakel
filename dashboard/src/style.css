@@ -1,28 +1,31 @@
 /* orakel dashboard — hand-written CSS, no frameworks, no build step.
    ------------------------------------------------------------------
-   Design rules of the house (v3):
+   Design rules of the house (v4):
 
    1. SENTENCE CASE EVERYWHERE. No text-transform: uppercase anywhere in this
       file. Small caps labels are hard to read; hierarchy comes from size,
       weight and colour instead.
    2. 4px spacing rhythm. Every margin/padding/gap is a multiple of 4px,
       expressed in rem (0.25rem = 4px at the 16px root).
-   3. Hairline borders (1px var(--border)), one radius scale, no drop shadows
-      beyond a 1px lift on floating surfaces (tooltips, sticky bars).
+   3. CARDS ARE THE EXCEPTION (PRINCIPLES.md). There is no generic bordered
+      "panel". A section is a heading, a hairline and content; lists are
+      hairline-separated rows. The only bordered surfaces are things that float
+      (settings popover, chart tooltip) or warn (the snapshot banner) — and no
+      bordered surface may contain another one.
    4. Type scale below — do not invent sizes inline.
    5. Every number in a table or stat uses tabular-nums so columns line up.
    6. Light and dark are both first class: the dark token block is duplicated
-      once for `prefers-color-scheme` and once for `[data-theme="dark"]`
-      (charts.js reads the raw custom properties, so light-dark() is out).
-
-   Layout language: KPI row → dominant panel + side panel → paired panels.
-   Panels are the only boxed component; inside them, content is flat. */
+      once for `prefers-color-scheme` (the default — "system") and once for
+      `[data-theme="dark"]` (charts.js reads the raw custom properties, so
+      light-dark() is out).
+   7. Density is a token, not a rewrite: --gap / --pad-page / --cell-y / --rowsp
+      carry it, and [data-density="compact"] tightens all four at once. */
 
 :root {
   /* --- surfaces & text (zinc) --- */
   --bg: #ffffff;
   --bg-sunken: #fafafa;
-  --panel: #ffffff;
+  --panel: #ffffff; /* floating surfaces; also read by charts.js */
   --fg: #09090b;
   --fg-muted: #52525b; /* body-secondary — 7.0:1 on white */
   --fg-subtle: #6b7280; /* labels/captions — 4.9:1, still AA for normal text */
@@ -45,7 +48,7 @@
   --info-bg: #eff6ff;
   --info-border: #bfdbfe;
 
-  /* --- accent tints for KPI icon squares (kept to five) --- */
+  /* --- accent tints --- */
   --tint-1: #2563eb;
   --tint-2: #15803d;
   --tint-3: #b45309;
@@ -58,6 +61,9 @@
   --chart-3: #b45309;
   --chart-4: #7c3aed;
   --chart-5: #be123c;
+  --chart-6: #4d7c0f;
+  --chart-7: #0369a1;
+  --chart-8: #a21caf;
 
   /* --- radii --- */
   --r-sm: 4px;
@@ -72,8 +78,14 @@
   --fs-md: 0.875rem; /* 14 — body */
   --fs-lg: 1rem; /* 16 */
   --fs-xl: 1.125rem; /* 18 */
-  --fs-2xl: 1.375rem; /* 22 */
-  --fs-3xl: 1.75rem; /* 28 — KPI numbers */
+  --fs-2xl: 1.375rem; /* 22 — headline numbers */
+  --fs-3xl: 1.75rem; /* 28 */
+
+  /* --- density (see rule 7) --- */
+  --gap: 1.25rem; /* between sections */
+  --pad-page: 1.5rem; /* content padding */
+  --cell-y: 0.4375rem; /* table cell vertical padding */
+  --rowsp: 0.5rem; /* list row vertical padding */
 
   --shadow: 0 1px 2px rgba(9, 9, 11, 0.06);
   --shadow-pop: 0 4px 12px rgba(9, 9, 11, 0.1);
@@ -88,7 +100,9 @@
   color-scheme: light;
 }
 
-/* Dark tokens — block A: system preference, unless the user forced light. */
+/* Dark tokens — block A: SYSTEM preference. This is the default: with no
+   explicit choice stored there is no data-theme attribute at all, so this
+   block decides. Suppressed only when the user forced light. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #09090b;
@@ -123,13 +137,16 @@
     --chart-3: #fbbf24;
     --chart-4: #c084fc;
     --chart-5: #fb7185;
+    --chart-6: #a3e635;
+    --chart-7: #38bdf8;
+    --chart-8: #f0abfc;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-pop: 0 4px 14px rgba(0, 0, 0, 0.5);
     color-scheme: dark;
   }
 }
 
-/* Dark tokens — block B: explicit user choice (theme toggle, localStorage).
+/* Dark tokens — block B: explicit user choice (settings popover, localStorage).
    Identical values to block A; kept in sync by hand. */
 :root[data-theme="dark"] {
   --bg: #09090b;
@@ -164,9 +181,22 @@
   --chart-3: #fbbf24;
   --chart-4: #c084fc;
   --chart-5: #fb7185;
+  --chart-6: #a3e635;
+  --chart-7: #38bdf8;
+  --chart-8: #f0abfc;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-pop: 0 4px 14px rgba(0, 0, 0, 0.5);
   color-scheme: dark;
+}
+
+/* Compact density. Attribute specificity beats every plain :root block above
+   and every responsive one below, so this wins wherever it is set. */
+:root[data-density="compact"] {
+  --gap: 0.75rem;
+  --pad-page: 1rem;
+  --cell-y: 0.25rem;
+  --rowsp: 0.3125rem;
+  --fs-2xl: 1.25rem;
 }
 
 * {
@@ -217,6 +247,7 @@ a {
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* ---- sidebar ---- */
@@ -225,16 +256,17 @@ a {
   position: sticky;
   top: 0;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: 0 0.5rem 0.75rem 0.75rem;
+  padding: 0 0.5rem 0.5rem 0.75rem;
   border-right: 1px solid var(--border);
   background: var(--bg-sunken);
 }
 
-/* Same band height as the top bar, so the wordmark and the theme toggle sit on
-   one visual header row across the sidebar/main seam. Below 900px this row is
-   gone entirely and the top bar is the only band (see the responsive block). */
+/* Same band height as the top bar, so the wordmark sits on one visual header
+   row across the sidebar/main seam. Below 900px this row is gone entirely and
+   the top bar is the only band (see the responsive block). */
 .sidebar-top {
   display: flex;
   align-items: center;
@@ -272,8 +304,7 @@ a {
 }
 
 /* burger (mobile only) — CSS-only via the #nav-toggle checkbox. It lives in the
-   top bar, next to the theme toggle, since below 900px that bar is the only
-   header there is. */
+   top bar, since below 900px that bar is the only header there is. */
 .nav-toggle {
   position: absolute;
   width: 1px;
@@ -305,12 +336,13 @@ a {
 }
 
 /* 0.75rem between sections: items inside a section sit 1px apart, so 12px is
-   what makes a section read as a group rather than as more list. One
-   declaration, not a gap plus a margin that silently add up. */
+   what makes a section read as a group rather than as more list. */
 .nav {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   padding-bottom: 0.5rem;
 }
@@ -338,7 +370,7 @@ a {
 }
 
 .nav-group-head .chev {
-  order: 1;              /* chevron sits at the far right of the header row */
+  order: 1; /* chevron sits at the far right of the header row */
   margin-left: auto;
   transition: transform 0.12s ease;
   opacity: 0.8;
@@ -392,6 +424,147 @@ a {
   color: var(--tint-1);
 }
 
+/* ---- sidebar foot: one control, one place (PRINCIPLES: every setting lives
+   here, nothing floats in the top bar) ---- */
+
+.sidebar-foot {
+  flex: none;
+  margin-top: auto;
+  padding-top: 0.375rem;
+  border-top: 1px solid var(--border);
+}
+
+.settings-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.3125rem 0.5rem;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-btn svg {
+  color: var(--fg-subtle);
+  flex: none;
+}
+
+.settings-btn:hover {
+  background: var(--hover);
+}
+
+.settings-btn:hover svg {
+  color: var(--fg);
+}
+
+/* ---- settings popover (native Popover API; top layer) ---- */
+
+.pop {
+  position: fixed;
+  inset: auto;
+  left: 0.75rem;
+  bottom: 3.25rem;
+  z-index: 60;
+  width: min(18rem, calc(100vw - 1.5rem));
+  max-height: min(30rem, calc(100dvh - 5rem));
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.625rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+  color: var(--fg);
+  box-shadow: var(--shadow-pop);
+}
+
+.pop-group + .pop-group {
+  margin-top: 0.625rem;
+}
+
+.pop-label {
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  color: var(--fg-subtle);
+  margin-bottom: 0.25rem;
+}
+
+.seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+}
+
+.seg button {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0.25rem 0.375rem;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.seg button svg {
+  flex: none;
+}
+
+.seg button:hover {
+  color: var(--fg);
+  background: var(--hover);
+}
+
+.seg button[aria-pressed="true"] {
+  background: var(--panel);
+  color: var(--fg);
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+.pop-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.625rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-xs);
+}
+
+.pop-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--info);
+  text-decoration: none;
+}
+
+.pop-links a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.pop-note {
+  margin: 0.5rem 0 0;
+  font-size: var(--fs-2xs);
+  color: var(--fg-subtle);
+}
+
 /* ---- main column ---- */
 
 .main {
@@ -409,7 +582,7 @@ a {
   justify-content: space-between;
   gap: 1rem;
   height: var(--topbar-h);
-  padding: 0 1.5rem;
+  padding: 0 var(--pad-page);
   border-bottom: 1px solid var(--border);
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(8px);
@@ -487,67 +660,20 @@ a {
   background: var(--bad);
 }
 
-.icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--panel);
-  color: var(--fg-muted);
-  cursor: pointer;
-}
-
-.icon-btn:hover {
-  color: var(--fg);
-  border-color: var(--border-strong);
-}
-
-.icon-btn .moon {
-  display: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .icon-btn .sun {
-    display: none;
-  }
-  :root:not([data-theme="light"]) .icon-btn .moon {
-    display: block;
-  }
-}
-
-:root[data-theme="dark"] .icon-btn .sun {
-  display: none;
-}
-
-:root[data-theme="dark"] .icon-btn .moon {
-  display: block;
-}
-
-:root[data-theme="light"] .icon-btn .sun {
-  display: block;
-}
-
-:root[data-theme="light"] .icon-btn .moon {
-  display: none;
-}
-
 .content {
   flex: 1;
   width: 100%;
   max-width: 84rem;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: var(--pad-page);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--gap);
 }
 
 .footer {
   border-top: 1px solid var(--border);
-  padding: 0.75rem 1.5rem;
+  padding: 0.625rem var(--pad-page);
   font-size: var(--fs-2xs);
   color: var(--fg-subtle);
   display: flex;
@@ -558,49 +684,30 @@ a {
 
 /* ======================== layout grids ======================== */
 
-.grid-kpi {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.grid-kpi-4 {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.grid-kpi-3 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-/* dominant panel + side panel */
+/* dominant column + side column */
 .grid-main {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 1rem;
+  gap: var(--gap) 2rem;
   align-items: start;
 }
 
-/* paired panels */
+/* paired columns */
 .grid-pair {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: var(--gap) 2rem;
   align-items: start;
 }
 
 .grid-3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
+  gap: var(--gap) 2rem;
   align-items: start;
 }
 
 @media (max-width: 1100px) {
-  .grid-kpi,
-  .grid-kpi-4 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .grid-kpi-3,
   .grid-3 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -610,168 +717,71 @@ a {
   }
 }
 
-/* ============================ KPI cards ============================ */
-
-.kpi {
+/* vertical stack inside one grid cell */
+.stack {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.875rem 1rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  background: var(--panel);
+  gap: var(--gap);
+}
+
+/* ==================== headline stats (no cards) ==================== */
+
+/* The dashboard's headline band: as many columns as fit, value + label +
+   one line of context. About a third of the height a row of KPI cards cost,
+   for more numbers. */
+.statgrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem 1.25rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.statgrid .stat {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
 }
 
-.kpi-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.kpi-label {
-  font-size: var(--fs-xs);
-  font-weight: 500;
-  color: var(--fg-muted);
-  letter-spacing: 0;
-}
-
-.kpi-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: var(--r-md);
-  flex: none;
-  background: var(--hover);
-  color: var(--fg-muted);
-}
-
-.kpi-icon-1 {
-  color: var(--tint-1);
-  background: color-mix(in srgb, var(--tint-1) 12%, transparent);
-}
-
-.kpi-icon-2 {
-  color: var(--tint-2);
-  background: color-mix(in srgb, var(--tint-2) 12%, transparent);
-}
-
-.kpi-icon-3 {
-  color: var(--tint-3);
-  background: color-mix(in srgb, var(--tint-3) 12%, transparent);
-}
-
-.kpi-icon-4 {
-  color: var(--tint-4);
-  background: color-mix(in srgb, var(--tint-4) 12%, transparent);
-}
-
-.kpi-icon-5 {
-  color: var(--tint-5);
-  background: color-mix(in srgb, var(--tint-5) 12%, transparent);
-}
-
-.kpi-value {
-  font-size: var(--fs-3xl);
+.statgrid .stat-v {
+  font-size: var(--fs-2xl);
   font-weight: 650;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-  margin-top: 0.125rem;
+  text-decoration: none;
 }
 
-.kpi-value small {
-  font-size: var(--fs-lg);
+.statgrid a.stat-v:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.statgrid .stat-v small {
+  font-size: var(--fs-md);
   font-weight: 500;
   color: var(--fg-subtle);
-  letter-spacing: -0.01em;
 }
 
-.kpi-foot {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  flex-wrap: wrap;
-  margin-top: 0.125rem;
+.statgrid .stat-k {
   font-size: var(--fs-xs);
-  color: var(--fg-subtle);
-  min-height: 1.25rem;
+  color: var(--fg-muted);
 }
 
-.kpi-context {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* delta chip */
-.delta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.1875rem;
-  padding: 0.0625rem 0.375rem;
-  border-radius: var(--r-full);
+.statgrid .stat-c {
   font-size: var(--fs-2xs);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  background: var(--hover);
-  color: var(--fg-muted);
-  white-space: nowrap;
+  color: var(--fg-subtle);
+  line-height: 1.4;
 }
 
-.delta-up {
-  color: var(--ok);
-  background: var(--ok-bg);
-}
-
-.delta-down {
-  color: var(--bad);
-  background: var(--bad-bg);
-}
-
-.delta-warn {
-  color: var(--warn);
-  background: var(--warn-bg);
-}
-
-/* The plain-English sentence that describes a thing. It is the description —
-   it goes above the numbers and above the internal prose, never instead of
-   them (PRINCIPLES.md: plain English, no jargon). */
-.lede {
-  margin: 0;
-  font-size: var(--fs-xl);
-  line-height: 1.45;
-  font-weight: 450;
-  letter-spacing: -0.01em;
-  max-width: 58rem;
-  color: var(--fg);
-}
-
-.lede-missing {
-  font-size: var(--fs-sm);
-  color: var(--warn);
-}
-
-.item-summary {
-  display: block;
-  color: var(--fg-muted);
-  font-size: var(--fs-sm);
-  white-space: normal;
-  margin-bottom: 0.125rem;
-}
-
-/* One-line stat strip — the compact alternative to a KPI card row. */
+/* One-line stat strip — for pages whose point is the content below it. */
 .statline {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.375rem 1.5rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--panel);
+  gap: 0.25rem 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .statline .stat {
@@ -788,104 +798,123 @@ a {
   font-variant-numeric: tabular-nums;
 }
 
-.statline .s-ok {
-  color: var(--ok);
-}
-
-.statline .s-warn {
-  color: var(--warn);
-}
-
-.statline .s-bad {
-  color: var(--bad);
-}
-
 .statline .stat-k {
   font-size: var(--fs-xs);
   color: var(--fg-subtle);
 }
 
-/* KPI values that carry an identifier rather than a number */
-.kpi-value .mono {
+.s-ok {
+  color: var(--ok);
+}
+
+.s-warn {
+  color: var(--warn);
+}
+
+.s-bad {
+  color: var(--bad);
+}
+
+/* The plain-English sentence that describes a thing. It is the description —
+   it goes above the numbers and above the internal prose, never instead of
+   them (PRINCIPLES.md: plain English, no jargon). */
+.lede {
+  margin: 0;
   font-size: var(--fs-lg);
-  font-weight: 600;
-  letter-spacing: 0;
+  line-height: 1.5;
+  font-weight: 450;
+  letter-spacing: -0.01em;
+  max-width: 58rem;
+  color: var(--fg);
 }
 
-/* ============================ panels ============================ */
-
-/* vertical stack of panels inside one grid cell */
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.lede-missing {
+  font-size: var(--fs-sm);
+  color: var(--warn);
 }
 
-.panel {
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  background: var(--panel);
+.item-summary {
+  display: block;
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+  white-space: normal;
+}
+
+/* The one-sentence answer a section exists to give, in plain English, above
+   the table that backs it up. */
+.finding {
+  margin: 0 0 0.5rem;
+  font-size: var(--fs-md);
+  line-height: 1.55;
+  max-width: 62rem;
+}
+
+.finding b {
+  font-weight: 650;
+}
+
+/* ============================ sections ============================ */
+
+/* A section is a heading, a hairline and content. It is NOT a box: no border,
+   no background, no padding. Nesting one inside another is allowed precisely
+   because neither draws a box. */
+.sec {
   min-width: 0;
-  overflow: hidden;
 }
 
-.panel-head {
+.sec-head {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.875rem 1rem;
+  align-items: baseline;
+  gap: 0.25rem 0.625rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.375rem;
+  margin-bottom: 0.5rem;
   border-bottom: 1px solid var(--border);
 }
 
-.panel-title {
+.sec-title {
   margin: 0;
   font-size: var(--fs-md);
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: -0.01em;
 }
 
-.panel-sub {
-  margin: 0.125rem 0 0;
+.sec-sub {
   font-size: var(--fs-xs);
   color: var(--fg-subtle);
+  min-width: 0;
 }
 
-.panel-body {
-  padding: 1rem;
+.sec-head > .badge,
+.sec-head > .chip {
+  margin-left: auto;
 }
 
-.panel-body > :first-child {
+.sec-body > :first-child {
   margin-top: 0;
 }
 
-.panel-body > :last-child {
+.sec-body > :last-child {
   margin-bottom: 0;
 }
 
-/* a table that fills the panel edge to edge */
-.panel-body-flush {
-  padding: 0;
-}
-
-.panel-foot {
-  padding: 0.625rem 1rem;
-  border-top: 1px solid var(--border);
-  font-size: var(--fs-xs);
-  color: var(--fg-subtle);
+.sec-foot {
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;
   flex-wrap: wrap;
+  margin-top: 0.5rem;
+  font-size: var(--fs-xs);
+  color: var(--fg-subtle);
 }
 
-.panel-foot a,
+.sec-foot a,
 .link {
   color: var(--info);
   text-decoration: none;
 }
 
-.panel-foot a:hover,
+.sec-foot a:hover,
 .link:hover {
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -939,7 +968,7 @@ a {
 }
 
 /* Chips hold short identifiers, but state.toml values can be a sentence —
-   wrap rather than overflow the panel. */
+   wrap rather than overflow. */
 .chip {
   display: inline-flex;
   align-items: center;
@@ -958,6 +987,36 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
+}
+
+/* Small in-page switches (fee version, signal set). Controls, not cards. */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.tabs a {
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tabs a:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+
+.tabs a[aria-current="true"] {
+  color: var(--fg);
+  font-weight: 600;
+  background: var(--hover);
+  border-color: var(--border-strong);
 }
 
 /* ============================ tables ============================ */
@@ -986,14 +1045,24 @@ table.data th {
   font-weight: 500;
   font-size: var(--fs-xs);
   color: var(--fg-subtle);
-  padding: 0.5rem 0.625rem;
-  background: var(--panel);
+  padding: 0.375rem 0.625rem;
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 
+table.data th:first-child,
+table.data td:first-child {
+  padding-left: 0;
+}
+
+table.data th:last-child,
+table.data td:last-child {
+  padding-right: 0;
+}
+
 table.data td {
-  padding: 0.4375rem 0.625rem;
+  padding: var(--cell-y) 0.625rem;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
   vertical-align: top;
@@ -1019,6 +1088,13 @@ table.data td.wrap {
   line-height: 1.45;
 }
 
+table.data td.wrap-sm {
+  white-space: normal;
+  min-width: 9rem;
+  line-height: 1.4;
+  color: var(--fg-muted);
+}
+
 table.data td a {
   text-decoration: none;
   border-bottom: 1px solid transparent;
@@ -1032,6 +1108,35 @@ table.data .sub {
   display: block;
   font-size: var(--fs-2xs);
   color: var(--fg-subtle);
+  font-weight: 400;
+}
+
+/* every header cell sorts (see /table.js) */
+table.data.sortable th {
+  cursor: pointer;
+  user-select: none;
+}
+
+table.data.sortable th:hover {
+  color: var(--fg);
+}
+
+table.data.sortable th::after {
+  content: "";
+  display: inline-block;
+  width: 0.75rem;
+  text-align: right;
+  color: var(--fg-subtle);
+}
+
+table.data.sortable th[aria-sort="descending"]::after {
+  content: "↓";
+  color: var(--fg);
+}
+
+table.data.sortable th[aria-sort="ascending"]::after {
+  content: "↑";
+  color: var(--fg);
 }
 
 /* inline mini bar for dense tables */
@@ -1085,10 +1190,10 @@ td.bar-cell {
 
 .frow > summary {
   display: grid;
-  grid-template-columns: 13rem minmax(0, 1fr) 5rem 5rem 6rem;
+  grid-template-columns: 12rem minmax(0, 1fr) 5rem 5rem 6rem;
   align-items: baseline;
   gap: 0.75rem;
-  padding: 0.5rem 1rem;
+  padding: var(--rowsp) 0;
   cursor: pointer;
   list-style: none;
   font-size: var(--fs-sm);
@@ -1138,9 +1243,9 @@ td.bar-cell {
 
 .fhead {
   display: grid;
-  grid-template-columns: 13rem minmax(0, 1fr) 5rem 5rem 6rem;
+  grid-template-columns: 12rem minmax(0, 1fr) 5rem 5rem 6rem;
   gap: 0.75rem;
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0;
   border-bottom: 1px solid var(--border);
   font-size: var(--fs-xs);
   color: var(--fg-subtle);
@@ -1150,22 +1255,24 @@ td.bar-cell {
   text-align: right;
 }
 
+/* The variants of an open family: indented by a rule, not boxed in. */
 .fvariants {
-  padding: 0 1rem 0.75rem 1rem;
-  background: var(--bg-sunken);
+  padding: 0 0 0.5rem 0.75rem;
+  margin-left: 0.25rem;
+  border-left: 2px solid var(--border);
 }
 
 .fvar {
   display: grid;
-  grid-template-columns: 13rem minmax(0, 1fr) 5rem 5rem 6rem;
+  grid-template-columns: 12rem minmax(0, 1fr) 5rem 5rem 6rem;
   gap: 0.75rem;
   align-items: baseline;
-  padding: 0.5rem 0;
+  padding: var(--rowsp) 0;
   border-bottom: 1px solid var(--border);
   font-size: var(--fs-sm);
 }
 
-.fvar:last-child {
+.fvar:last-of-type {
   border-bottom: none;
 }
 
@@ -1192,8 +1299,8 @@ td.bar-cell {
   font-variant-numeric: tabular-nums;
 }
 
-/* Narrow screens: one column, stacked — name, then what it does, then status.
-   The two numeric columns drop out; they are one tap away on the detail page. */
+/* Narrow screens: one column, stacked — name, what it does, status. The two
+   numeric columns drop out; they are one tap away on the detail page. */
 @media (max-width: 900px) {
   .fhead {
     display: none;
@@ -1201,7 +1308,7 @@ td.bar-cell {
   .frow > summary,
   .fvar {
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.25rem;
+    gap: 0.125rem;
   }
   .frow > summary > :nth-child(n + 4),
   .fvar > :nth-child(n + 4) {
@@ -1225,7 +1332,7 @@ td.bar-cell {
   align-items: baseline;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.5rem 0;
+  padding: var(--rowsp) 0;
   border-bottom: 1px solid var(--border);
   font-size: var(--fs-sm);
 }
@@ -1257,17 +1364,16 @@ td.bar-cell {
 .row-block .v {
   display: block;
   text-align: left;
-  margin-top: 0.25rem;
+  margin-top: 0.125rem;
   color: var(--fg-muted);
   font-size: var(--fs-xs);
   line-height: 1.5;
 }
 
-/* slot list / entity list */
+/* Entity list: five things read as FIVE LINES, not five boxes. */
 .items {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
 }
 
 .item {
@@ -1275,16 +1381,19 @@ td.bar-cell {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.5rem 0.625rem;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--bg-sunken);
+  padding: var(--rowsp) 0.375rem;
+  margin: 0 -0.375rem;
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--r-sm);
   text-decoration: none;
   min-width: 0;
 }
 
+.items > .item:last-child {
+  border-bottom: none;
+}
+
 a.item:hover {
-  border-color: var(--border-strong);
   background: var(--hover);
 }
 
@@ -1309,15 +1418,13 @@ a.item:hover {
 }
 
 .item-empty {
-  border-style: dashed;
-  background: none;
   color: var(--fg-subtle);
 }
 
 .link-list {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.125rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1328,7 +1435,7 @@ a.item:hover {
   display: inline-flex;
   gap: 0.375rem;
   align-items: center;
-  padding: 0.1875rem 0;
+  padding: 0.125rem 0;
   text-decoration: none;
   color: var(--info);
 }
@@ -1343,7 +1450,7 @@ a.item:hover {
 
 .run,
 .entry {
-  padding: 0.75rem 1rem;
+  padding: 0.625rem 0;
   border-bottom: 1px solid var(--border);
 }
 
@@ -1363,7 +1470,7 @@ a.item:hover {
 
 .run-when b,
 .entry-line b {
-  font-size: var(--fs-lg);
+  font-size: var(--fs-md);
   font-weight: 650;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
@@ -1383,14 +1490,15 @@ a.item:hover {
 
 .run-story,
 .entry-what {
-  margin: 0.25rem 0 0;
-  font-size: var(--fs-md);
-  line-height: 1.6;
+  margin: 0.125rem 0 0;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
   max-width: 62rem;
 }
 
 .entry-what {
   font-weight: 500;
+  font-size: var(--fs-md);
 }
 
 .run-story b {
@@ -1409,49 +1517,27 @@ a.item:hover {
   text-underline-offset: 2px;
 }
 
-/* The disclosure holding the raw, internal version. Two classes so it beats
-   `details.doc`, which is declared later in this file. */
-details.doc.doc-plain {
-  border: 0;
-  background: none;
-  margin-top: 0.25rem;
-}
-
-details.doc.doc-plain > summary {
-  padding: 0.125rem 0;
-  font-size: var(--fs-xs);
-  font-weight: 400;
-  color: var(--fg-subtle);
-}
-
-details.doc.doc-plain > summary:hover {
-  background: none;
-  color: var(--fg);
-}
-
-details.doc.doc-plain > .doc-body {
-  padding: 0.5rem 0 0;
-  border-top: 0;
-}
-
 /* ============================ documents ============================ */
 
+/* A disclosure ROW: hairline separated, no border, no background. Open, the
+   body is set off by a left rule — hierarchy without a second box. */
 details.doc {
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--panel);
+  border-bottom: 1px solid var(--border);
 }
 
-details.doc + details.doc {
-  margin-top: 0.5rem;
+.sec-body > details.doc:last-child,
+details.doc:last-of-type {
+  border-bottom: none;
 }
 
 details.doc > summary {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   flex-wrap: wrap;
-  padding: 0.5rem 0.75rem;
+  padding: var(--rowsp) 0.375rem;
+  margin: 0 -0.375rem;
+  border-radius: var(--r-sm);
   cursor: pointer;
   list-style: none;
   font-size: var(--fs-sm);
@@ -1462,8 +1548,16 @@ details.doc > summary::-webkit-details-marker {
   display: none;
 }
 
+/* One flex item for the whole title, so a long subject wraps beside the
+   triangle instead of pushing itself onto a line of its own. */
+.doc-title {
+  flex: 1 1 0; /* basis 0: a long subject never gets pushed onto its own line */
+  min-width: 0;
+}
+
 details.doc > summary::before {
   content: "";
+  margin-top: 0.4em; /* line up with the first line of a wrapped title */
   width: 0;
   height: 0;
   border-left: 5px solid var(--fg-subtle);
@@ -1489,24 +1583,35 @@ details.doc > summary:hover {
 }
 
 .doc-body {
-  padding: 0.75rem;
-  border-top: 1px solid var(--border);
+  padding: 0.25rem 0 0.625rem 0.75rem;
+  margin-left: 0.25rem;
+  border-left: 2px solid var(--border);
 }
 
-/* a details block that sits flush at the bottom of a panel */
-details.doc-flush {
-  border: 0;
-  border-top: 1px solid var(--border);
-  border-radius: 0;
+/* The disclosure holding the raw, internal version of a story. */
+details.doc.doc-plain {
+  border-bottom: 0;
+  margin-top: 0.125rem;
+}
+
+details.doc.doc-plain > summary {
+  padding: 0.125rem 0;
+  margin: 0;
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--fg-subtle);
+}
+
+details.doc.doc-plain > summary:hover {
+  background: none;
+  color: var(--fg);
 }
 
 /* ============================ empty states & notes ============================ */
 
+/* An empty state is a sentence, not a dashed box. */
 .empty {
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--r-lg);
-  padding: 2rem 1.5rem;
-  text-align: center;
+  padding: 0.5rem 0;
   color: var(--fg-muted);
   font-size: var(--fs-sm);
 }
@@ -1516,21 +1621,38 @@ details.doc-flush {
   color: var(--fg);
   font-weight: 600;
   font-size: var(--fs-md);
-  margin-bottom: 0.25rem;
 }
 
 .note {
-  margin: 0.75rem 0 0;
+  margin: 0.5rem 0 0;
   font-size: var(--fs-xs);
-  color: var(--fg-subtle);
+  color: var(--fg-muted);
   line-height: 1.5;
+}
+
+.notes {
+  margin: 0.5rem 0 0;
+  padding-left: 1rem;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  line-height: 1.5;
+}
+
+.notes li {
+  margin: 0.1875rem 0;
+}
+
+.notes b,
+.notes strong {
+  color: var(--fg);
+  font-weight: 600;
 }
 
 .banner {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.375rem 0.625rem;
   border: 1px solid var(--warn-border);
   background: var(--warn-bg);
   color: var(--warn);
@@ -1547,7 +1669,7 @@ select {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  padding: 0.25rem 0.5rem;
+  padding: 0.125rem 0.375rem;
   max-width: 100%;
 }
 
@@ -1556,7 +1678,13 @@ select:hover {
 }
 
 .chart-controls {
-  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.375rem;
+  font-size: var(--fs-xs);
+  color: var(--fg-subtle);
 }
 
 /* ============================ charts ============================ */
@@ -1564,11 +1692,11 @@ select:hover {
 .chart {
   position: relative;
   width: 100%;
-  height: 20rem;
+  height: 17rem;
 }
 
 .chart-sm {
-  height: 15rem;
+  height: 13rem;
 }
 
 .chart svg {
@@ -1624,10 +1752,10 @@ select:hover {
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.5rem 0.75rem;
   font-size: var(--fs-xs);
   color: var(--fg-muted);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.375rem;
 }
 
 .legend span {
@@ -1662,6 +1790,18 @@ select:hover {
   background: var(--chart-5);
 }
 
+.legend i.c6 {
+  background: var(--chart-6);
+}
+
+.legend i.c7 {
+  background: var(--chart-7);
+}
+
+.legend i.c8 {
+  background: var(--chart-8);
+}
+
 .legend i.dotmark {
   width: 7px;
   height: 7px;
@@ -1673,7 +1813,7 @@ select:hover {
 .prose {
   max-width: 46rem;
   font-size: var(--fs-md);
-  line-height: 1.65;
+  line-height: 1.6;
 }
 
 .prose-wide {
@@ -1686,7 +1826,7 @@ select:hover {
 .prose h4 {
   letter-spacing: -0.015em;
   line-height: 1.3;
-  margin: 1.5em 0 0.5em;
+  margin: 1.25em 0 0.4em;
   font-weight: 600;
 }
 
@@ -1731,7 +1871,7 @@ select:hover {
   background: var(--bg-sunken);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  padding: 0.75rem;
+  padding: 0.625rem;
   overflow-x: auto;
   font-size: var(--fs-xs);
 }
@@ -1743,12 +1883,11 @@ select:hover {
   font-size: inherit;
 }
 
+/* A quote is set off by a rule, not by a box — it can sit inside anything. */
 .prose blockquote {
   margin: 1em 0;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--bg-sunken);
+  padding: 0.125rem 0 0.125rem 0.75rem;
+  border-left: 2px solid var(--border-strong);
   color: var(--fg-muted);
 }
 
@@ -1766,13 +1905,13 @@ select:hover {
 }
 
 .prose li {
-  margin: 0.25em 0;
+  margin: 0.2em 0;
 }
 
 .prose hr {
   border: none;
   border-top: 1px solid var(--border);
-  margin: 1.5rem 0;
+  margin: 1.25rem 0;
 }
 
 .prose table {
@@ -1786,7 +1925,7 @@ select:hover {
 .prose th,
 .prose td {
   border: 1px solid var(--border);
-  padding: 0.375rem 0.625rem;
+  padding: 0.3125rem 0.5rem;
   text-align: left;
 }
 
@@ -1797,15 +1936,30 @@ select:hover {
 
 /* ============================ responsive ============================ */
 
+/* Headline stats: four columns, then three, then two. Explicit counts rather
+   than auto-fit, so eight numbers always land as whole rows. */
+@media (max-width: 1100px) {
+  .statgrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+
 /* Below the sidebar breakpoint there is ONE header band, not two. The sidebar
-   used to keep its own wordmark row here and the page's top bar sat directly
-   under it: same visual weight twice, ~73px of chrome for nothing, on the axis
-   where space is scarcest. So the sidebar stops being a band — it becomes just
-   the nav, hanging off the bar as an overlay — and the top bar carries the lot:
-   breadcrumb, freshness, theme toggle, burger. Opening the menu swaps the
-   breadcrumb for the wordmark, because navigation has replaced the page's
-   context and the app's name is what belongs in that slot. */
+   stops being a band — it becomes just the nav, hanging off the bar as a
+   FULL-HEIGHT overlay — and the top bar carries the lot: breadcrumb,
+   freshness, burger. Opening the menu swaps the breadcrumb for the wordmark,
+   because navigation has replaced the page's context.
+
+   The overlay fills the dynamic viewport (100dvh minus the bar): mobile
+   browser chrome grows and shrinks as you scroll, and a menu measured against
+   the *static* viewport either overflows behind that chrome or stops short of
+   it. The settings control stays pinned to its bottom. */
 @media (max-width: 900px) {
+  :root {
+    --pad-page: 1rem;
+    --gap: 1rem;
+  }
   .shell {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1814,15 +1968,14 @@ select:hover {
     top: var(--topbar-h);
     left: 0;
     right: 0;
+    bottom: 0;
     z-index: 30;
     display: none; /* menu closed: no second band at all */
-    height: auto;
-    max-height: calc(100vh - var(--topbar-h));
-    max-height: calc(100dvh - var(--topbar-h));
+    height: calc(100vh - var(--topbar-h));
+    height: calc(100dvh - var(--topbar-h));
+    max-height: none;
     border-right: none;
-    border-bottom: 1px solid var(--border);
     background: var(--bg);
-    box-shadow: var(--shadow);
     padding: 0.5rem 0.75rem;
   }
   .nav-toggle:checked ~ .sidebar {
@@ -1836,7 +1989,7 @@ select:hover {
     display: inline-flex;
   }
   .nav {
-    padding: 0;
+    padding: 0 0 0.5rem;
   }
   /* The bar is tighter than the desktop one and the breadcrumb IS the title, so
      the ancestor hops give up their width first (ellipsised, still present and
@@ -1856,34 +2009,30 @@ select:hover {
   .nav-toggle:checked ~ .main .wordmark-bar {
     display: flex;
   }
-  .topbar {
-    padding: 0 1rem;
-  }
-  .content {
-    padding: 1rem;
-    gap: 0.75rem;
-  }
-  .grid-kpi,
-  .grid-kpi-4,
-  .grid-kpi-3,
-  .grid-3 {
+  .statgrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem 1rem;
   }
-  .kpi-value {
-    font-size: var(--fs-2xl);
+  .lede {
+    font-size: var(--fs-md);
   }
-  .footer {
-    padding: 0.75rem 1rem;
+  /* the file name belongs under the title, not squeezed against the edge */
+  .doc-meta {
+    margin-left: 0;
+    width: 100%;
+  }
+  .chart {
+    height: 14rem;
+  }
+  .chart-sm {
+    height: 11rem;
+  }
+  .prose table {
+    font-size: var(--fs-xs);
   }
 }
 
 @media (max-width: 520px) {
-  .grid-kpi,
-  .grid-kpi-4,
-  .grid-kpi-3,
-  .grid-3 {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .updated {
     display: none;
   }

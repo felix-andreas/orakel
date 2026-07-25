@@ -12,7 +12,7 @@
 use crate::data::{self, Table};
 use crate::render::{
     self, badge, chip_row, doc, esc, fmt_int, fmt_prob, fmt_signed, fmt_ts, icon, item, items,
-    markdown_body, panel, panel_flush, panel_foot, stat_line, table, table_scroll,
+    markdown_body, section, section_foot, stat_line, table, table_scroll,
 };
 use crate::{shell, snapshot_banner, trail};
 use worker::Env;
@@ -198,13 +198,12 @@ pub async fn index(env: &Env) -> String {
         "{banner}{stats}{table}",
         banner = if all_live { String::new() } else { snapshot_banner() },
         stats = stats,
-        table = panel_foot(
+        table = section_foot(
             "Families",
             "click a family to see the strategies inside it",
             "",
             &format!("<div class=\"ftable\">{rows}</div>"),
-            "<span class=\"mono\">strategies/&lt;family&gt;/&lt;variant&gt;/strategy.toml</span><span>improvement = how much better than the market, per scored prediction</span>",
-            true,
+            "<span class=\"mono\">strategies/&lt;family&gt;/&lt;variant&gt;/strategy.toml</span><span>improvement = how much better than the market, per scored prediction</span>"
         ),
     );
 
@@ -298,7 +297,7 @@ pub async fn family(env: &Env, family: &str) -> String {
     let mut all_live = fam_doc.live && tree_live && preds.live && scores.live;
 
     if fam_doc.is_empty() {
-        let body = panel(
+        let body = section(
             "Family not found",
             &format!("strategies/{family}/FAMILY.md"),
             "",
@@ -398,7 +397,7 @@ pub async fn family(env: &Env, family: &str) -> String {
         .collect();
 
     let scoring = if scoring_rows.is_empty() {
-        panel(
+        section(
             "Scoring",
             "aggregates for this family",
             "",
@@ -420,7 +419,7 @@ pub async fn family(env: &Env, family: &str) -> String {
                 ]
             })
             .collect();
-        panel_flush(
+        section(
             "Scoring",
             "aggregates for this family and its variants",
             &badge(&render::count(scoring_rows.len(), "row"), ""),
@@ -443,15 +442,14 @@ pub async fn family(env: &Env, family: &str) -> String {
         "{banner}{stats}<div class=\"grid-main\">{thesis}{variants}</div>{scoring}",
         banner = if all_live { String::new() } else { snapshot_banner() },
         stats = stats,
-        thesis = panel_foot(
+        thesis = section_foot(
             "The idea in full",
             "what this family trades, and who is on the other side",
             "",
             &format!("<div class=\"prose\">{}</div>", markdown_body(&fam_doc.text)),
-            &format!("<span class=\"mono\">strategies/{family}/FAMILY.md</span><a href=\"/predictions\">Predictions →</a>"),
-            false,
+            &format!("<span class=\"mono\">strategies/{family}/FAMILY.md</span><a href=\"/predictions\">Predictions →</a>")
         ),
-        variants = panel(
+        variants = section(
             "Strategies in this family",
             "each one is a separate experiment with its own clock",
             &badge(&render::count(variants.len(), "variant"), ""),
@@ -507,7 +505,7 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
         && detail.live;
 
     if strategy_md.is_empty() && toml_doc.is_empty() {
-        let body = panel(
+        let body = section(
             "Variant not found",
             &base,
             "",
@@ -663,13 +661,13 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
 
     let side = format!(
         "{}{}",
-        panel(
+        section(
             "Facts",
             "status, trial clock and labels as recorded in the repo",
             &render::status_badge(&status),
             &render::rows(&facts),
         ),
-        panel(
+        section(
             "Documents",
             "the variant's own write-ups",
             &badge(&render::count(results.len() + 3, "document"), ""),
@@ -717,7 +715,7 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
         ]);
     }
     let applications = if app_rows.is_empty() {
-        panel(
+        section(
             "Applications",
             "the markets this variant is pointed at",
             "",
@@ -727,7 +725,7 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
             ),
         )
     } else {
-        panel_flush(
+        section(
             "Applications",
             "the boards and markets this variant is pointed at",
             &badge(&render::count(app_paths.len(), "file"), ""),
@@ -748,7 +746,7 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
 
     // --- this variant's predictions ---
     let pred_panel = if rows.is_empty() {
-        panel(
+        section(
             "Predictions",
             "rows logged by this variant",
             "",
@@ -787,7 +785,7 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
                 ]
             })
             .collect();
-        panel_flush(
+        section(
             "Predictions",
             "rows logged by this variant, newest first",
             &badge(&render::count(rows.len(), "row"), ""),
@@ -826,13 +824,12 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
         banner = if all_live { String::new() } else { snapshot_banner() },
         summary = summary_html,
         stats = stats,
-        thesis = panel_foot(
+        thesis = section_foot(
             "How it works",
             "the runbook: method, gates, and what would kill it",
             "",
             &format!("<div class=\"prose\">{}</div>", markdown_body(&strategy_md.text)),
-            &format!("<span class=\"mono\">{base}/STRATEGY.md</span><a href=\"/strategies/{family}\">Family →</a>"),
-            false,
+            &format!("<span class=\"mono\">{base}/STRATEGY.md</span><a href=\"/strategies/{family}\">Family →</a>")
         ),
         side = format!("<div class=\"stack\">{side}</div>"),
         applications = applications,
@@ -868,14 +865,14 @@ async fn variant_doc(env: &Env, family: &str, variant: &str, base: &str, rel: &s
 
     let f = data::text(env, &format!("{base}/{rel}")).await;
     let body = if f.is_empty() {
-        panel(
+        section(
             rel,
             &format!("{base}/{rel}"),
             "",
             &render::empty_state("Not found", ""),
         )
     } else {
-        panel_foot(
+        section_foot(
             &render::md_title(&f.text).unwrap_or_else(|| rel.to_string()),
             &format!("{base}/{rel}"),
             "",
@@ -885,8 +882,7 @@ async fn variant_doc(env: &Env, family: &str, variant: &str, base: &str, rel: &s
             ),
             &format!(
                 "<span class=\"mono\">{base}/{rel}</span><a href=\"/strategies/{family}/{variant}\">← back to {variant}</a>"
-            ),
-            false,
+            )
         )
     };
     shell(env, "/strategies", crumbs, f.live, &body).await

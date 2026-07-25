@@ -21,7 +21,7 @@
 //! them.
 
 use crate::data::{self, Table, VariantMeta};
-use crate::render::{self, badge, esc, fmt_int, fmt_tokens, panel_foot, stat_line, table};
+use crate::render::{self, badge, esc, fmt_int, fmt_tokens, section_foot, stat_line, table};
 use crate::{shell, snapshot_banner, trail};
 use worker::Env;
 
@@ -129,13 +129,12 @@ pub async fn page(env: &Env) -> String {
     let body = format!(
         "{banner}{stats}{list}",
         stats = summary_line(&runs, &p),
-        list = panel_foot(
+        list = section_foot(
             "What happened, day by day",
             "newest first",
             &badge(&render::count(runs.len(), "run"), ""),
             &format!("<div class=\"runs\">{blocks}</div>"),
-            "<span class=\"mono\">ops/runs/*.toml · predictions/*.csv · strategies/*/*/strategy.toml</span><a href=\"/predictions\">Prediction log →</a>",
-            true,
+            "<span class=\"mono\">ops/runs/*.toml · predictions/*.csv · strategies/*/*/strategy.toml</span><a href=\"/predictions\">Prediction log →</a>"
         ),
     );
 

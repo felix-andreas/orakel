@@ -1,17 +1,21 @@
-//! `/` — the dashboard, and `/execution` — the reserved slot for the
-//! execution/backtest engine.
+//! `/` — the dashboard.
 //!
-//! Layout (the whole point of v3): one screen, four bands.
-//!   1. five compact KPI cards
-//!   2. dominant chart panel (2/3) + research-slot panel (1/3)
-//!   3. scoring chart (1/2) + dense coverage table with mini-bars (1/2)
-//!   4. recent runs, compact
+//! One question per band, and as many answers per screen as the data supports
+//! (PRINCIPLES.md: density is a feature; vertical space is the scarcest
+//! resource). No cards: a headline stat grid, then sections separated by space
+//! and a heading.
+//!
+//!   1. eight headline numbers, each with the basis it rests on
+//!   2. what we are betting on (chart) beside what is running (strategies)
+//!   3. how we scored (chart) beside where we play (coverage table)
+//!   4. what the firm did lately (runs) beside what it said lately (predictions)
+//!
 //! Nothing here needs a click to be understood; everything links deeper.
 
 use crate::data::{self, Table};
 use crate::render::{
-    self, badge, esc, fmt_int, fmt_signed, fmt_tokens, item, items, kpi, kpi_row, minibar, panel,
-    panel_flush, panel_foot, table,
+    self, badge, esc, fmt_int, fmt_prob, fmt_signed, fmt_tokens, item, items, minibar, section,
+    section_foot, stat, stat_grid, table,
 };
 use crate::{json_str, shell, snapshot_banner, trail};
 use worker::Env;
@@ -22,6 +26,7 @@ pub async fn page(env: &Env) -> String {
     let scores = data::text(env, "predictions/scores.csv").await;
     let resolutions = data::text(env, "predictions/resolutions.csv").await;
     let state_doc = data::text(env, "ops/state.toml").await;
+    let exec_doc = data::text(env, "execution/results/summary.csv").await;
     let (paths, tree_live) = data::tree(env).await;
     let (metas, metas_live) = data::variant_metas(env, &paths).await;
     let mut all_live = preds.live
@@ -29,6 +34,7 @@ pub async fn page(env: &Env) -> String {
         && scores.live
         && resolutions.live
         && state_doc.live
+        && exec_doc.live
         && tree_live
         && metas_live;
 
@@ -36,6 +42,7 @@ pub async fn page(env: &Env) -> String {
     let d = Table::parse(&detail.text);
     let s = Table::parse(&scores.text);
     let r = Table::parse(&resolutions.text);
+    let x = Table::parse(&exec_doc.text);
     let state = data::toml_of(&state_doc.text);
 
     // Run manifests, newest first — spend and the recent-runs strip.
@@ -52,19 +59,23 @@ pub async fn page(env: &Env) -> String {
 
     let banner = if all_live { String::new() } else { snapshot_banner() };
     let body = format!(
-        "{banner}{kpis}{band2}{band3}{band4}",
-        kpis = kpis(&p, &d, &s, &r, &state, &runs),
+        "{banner}{headline}{band2}{band3}{band4}",
+        headline = headline(&p, &d, &s, &r, &x, &state, &metas, &runs),
         band2 = format!(
             "<div class=\"grid-main\">{}{}</div>",
             model_vs_market(&p),
-            slots_panel(&state, &metas)
+            strategies_section(&p, &d, &metas)
         ),
         band3 = format!(
             "<div class=\"grid-pair\">{}{}</div>",
-            scoring_panel(&d),
-            coverage_panel(&p, &d)
+            scoring_section(&d),
+            coverage_section(&p, &d)
         ),
-        band4 = recent_runs(&runs),
+        band4 = format!(
+            "<div class=\"grid-pair\">{}{}</div>",
+            recent_runs(&runs),
+            latest_predictions(&p, &d)
+        ),
     );
 
     shell(
@@ -78,19 +89,20 @@ pub async fn page(env: &Env) -> String {
 }
 
 // ---------------------------------------------------------------------------
-// Band 1 — KPI cards
+// Band 1 — the headline numbers
 // ---------------------------------------------------------------------------
 
-fn kpis(
+#[allow(clippy::too_many_arguments)]
+fn headline(
     p: &Table,
     d: &Table,
     s: &Table,
     r: &Table,
+    x: &Table,
     state: &toml::Table,
+    metas: &[data::VariantMeta],
     runs: &[(String, toml::Table)],
 ) -> String {
-    // 1. predictions logged, and how many the newest run added
-    let n_preds = p.rows.len();
     let mut markets: Vec<&str> = p.rows.iter().map(|row| p.cell(row, "market_slug")).collect();
     markets.sort_unstable();
     markets.dedup();
@@ -105,7 +117,6 @@ fn kpis(
         .filter(|row| p.cell(row, "run_id") == latest_run)
         .count();
 
-    // 2. scored rows and how many beat the market
     let n_scored = d.rows.len();
     let n_ahead = d
         .rows
@@ -113,7 +124,6 @@ fn kpis(
         .filter(|row| d.num(row, "improvement") > 0.0)
         .count();
 
-    // 3. headline scoring numbers from the overall row of scores.csv
     let overall = s
         .rows
         .iter()
@@ -123,7 +133,6 @@ fn kpis(
     let our_brier = overall.map(|row| s.num(row, "mean_brier")).unwrap_or(0.0);
     let mkt_brier = overall.map(|row| s.num(row, "mean_market_brier")).unwrap_or(0.0);
 
-    // 4. research slots
     let slots_total = data::int_at(state, &["research", "slots_total"]).unwrap_or(0);
     let slots_active = data::int_at(state, &["research", "slots_active"]).unwrap_or(0);
     let next_review = data::arr_at(state, &["research", "slot"])
@@ -133,7 +142,10 @@ fn kpis(
         .unwrap_or("")
         .to_string();
 
-    // 5. token spend
+    let n_live = metas.iter().filter(|m| m.status == "live").count();
+    let n_trial = metas.iter().filter(|m| m.status == "trial").count();
+    let n_retired = metas.iter().filter(|m| m.status == "retired").count();
+
     let total_tokens: i64 = runs
         .iter()
         .filter_map(|(_, t)| data::int_at(t, &["spend", "total_tokens"]))
@@ -143,68 +155,86 @@ fn kpis(
         .and_then(|(_, t)| data::int_at(t, &["spend", "total_tokens"]))
         .unwrap_or(0);
 
-    let cards = vec![
-        kpi("Predictions logged", &fmt_int(n_preds as i64), "list", 1)
-            .delta(&format!("{latest_n} new"), "up")
+    // Best execution policy the engine is willing to rank, fee-charging version.
+    let best = x
+        .rows
+        .iter()
+        .filter(|row| {
+            x.cell(row, "policy_version") == "2"
+                && x.cell(row, "underpowered") == "no"
+                && x.numo(row, "annualized_return_on_locked_capital").is_some()
+        })
+        .max_by(|a, b| {
+            x.num(a, "annualized_return_on_locked_capital")
+                .total_cmp(&x.num(b, "annualized_return_on_locked_capital"))
+        });
+
+    stat_grid(&[
+        stat(&fmt_int(p.rows.len() as i64), "predictions logged")
+            .href("/predictions")
             .context(&format!(
-                "{} markets · {} runs",
+                "{} markets · {} runs · {latest_n} in the last run",
                 markets.len(),
                 runs.len().max(1)
             )),
-        kpi("Scored", &fmt_int(n_scored as i64), "target", 2)
-            .delta(
-                &format!("{n_ahead} of {n_scored} ahead"),
-                if n_scored > 0 && n_ahead == n_scored { "up" } else { "" },
-            )
-            .context(&format!("{} markets resolved", r.rows.len())),
-        kpi(
-            "Mean improvement",
+        stat(&fmt_int(n_scored as i64), "scored so far")
+            .context(&format!(
+                "{n_ahead} beat the market · {} markets settled",
+                r.rows.len()
+            ))
+            .tone(if n_scored > 0 && n_ahead == n_scored { "ok" } else { "" }),
+        stat(
             &match mean_imp {
                 Some(v) => fmt_signed(v),
                 None => "—".to_string(),
             },
-            "trend-up",
-            2,
+            "better than the market, per prediction",
         )
-        .delta(
-            match mean_imp {
-                Some(v) if v > 0.0 => "beats market",
-                Some(_) => "behind market",
-                None => "not scored yet",
-            },
-            match mean_imp {
-                Some(v) if v > 0.0 => "up",
-                Some(_) => "down",
-                None => "",
-            },
-        )
+        .tone(match mean_imp {
+            Some(v) if v > 0.0 => "ok",
+            Some(_) => "bad",
+            None => "",
+        })
         .context(&format!(
-            "Brier {our_brier:.4} ours vs {mkt_brier:.4} market"
+            "Brier {our_brier:.4} ours vs {mkt_brier:.4} theirs"
         )),
-        kpi(
-            "Research slots",
+        stat(
             &format!("{slots_active}<small> / {slots_total}</small>"),
-            "layers",
-            4,
+            "research slots in use",
         )
-        .delta(
-            &format!("{slots_active} in trial"),
-            if slots_active > 0 { "warn" } else { "" },
-        )
+        .href("/state")
         .context(&if next_review.is_empty() {
             "no trial running".to_string()
         } else {
             format!("next review {next_review}")
         }),
-        kpi("Token spend", &fmt_tokens(total_tokens), "bolt", 3)
-            .delta(&format!("{} last run", fmt_tokens(last_tokens)), "")
-            .context("recorded per run, no cap set"),
-    ];
-    kpi_row(&cards)
+        stat(&fmt_int(metas.len() as i64), "strategies")
+            .href("/strategies")
+            .context(&format!(
+                "{n_live} live · {n_trial} in trial · {n_retired} dropped"
+            )),
+        match best {
+            Some(row) => stat(&esc(x.cell(row, "policy")), "best way to trade the signals")
+                .href("/execution")
+                .tone("ok")
+                .context(&format!(
+                    "{}%/yr on locked capital · {} trades",
+                    fmt_int((x.num(row, "annualized_return_on_locked_capital") * 100.0).round() as i64),
+                    fmt_int(x.num(row, "n_trades") as i64)
+                )),
+            None => stat("—", "best way to trade the signals")
+                .href("/execution")
+                .context("no policy reaches n = 30 yet"),
+        },
+        stat(&fmt_int(markets.len() as i64), "markets covered")
+            .context(&format!("{} of them have settled", r.rows.len())),
+        stat(&fmt_tokens(total_tokens), "tokens spent")
+            .context(&format!("{} in the last run", fmt_tokens(last_tokens))),
+    ])
 }
 
 // ---------------------------------------------------------------------------
-// Band 2 — the dominant chart + research slots
+// Band 2 — what we are betting on, and what is running
 // ---------------------------------------------------------------------------
 
 /// Every logged prediction, sorted by the market's price at the time: the
@@ -212,7 +242,7 @@ fn kpis(
 /// the claimed edge — one picture of what the firm is betting on.
 fn model_vs_market(p: &Table) -> String {
     if p.rows.is_empty() {
-        return panel(
+        return section(
             "Model vs market",
             "our probability against the market's price, per prediction",
             "",
@@ -250,7 +280,6 @@ fn model_vs_market(p: &Table) -> String {
     }
 
     let above = pts.iter().filter(|(mp, our, _)| our < mp).count();
-    let chip = badge(&render::count(pts.len(), "row"), "");
     let legend = "<div class=\"legend\"><span><i></i>market price</span><span><i class=\"c2 dotmark\"></i>our probability</span></div>";
     let script = format!(
         r#"<div class="chart" id="chart-mm"></div>
@@ -263,90 +292,97 @@ Chart.line(document.getElementById("chart-mm"), {{series:[
 </script>"#
     );
 
-    panel_foot(
+    section_foot(
         "Model vs market",
         "every logged prediction, sorted by the market's price at the time",
-        &chip,
+        &badge(&render::count(pts.len(), "row"), ""),
         &format!("{legend}{script}"),
         &format!(
             "<span>{} of {} rows priced below the market — the wing-fade thesis</span><a href=\"/predictions\">All predictions →</a>",
             above,
             pts.len()
         ),
-        false,
     )
 }
 
-fn slots_panel(state: &toml::Table, metas: &[data::VariantMeta]) -> String {
-    let total = data::int_at(state, &["research", "slots_total"]).unwrap_or(0);
-    let slots = data::arr_at(state, &["research", "slot"]);
-    let updated = data::str_at(state, &["firm", "updated"]);
+/// Every strategy the firm has, in its own plain English, newest and most
+/// active first. One line each.
+fn strategies_section(p: &Table, d: &Table, metas: &[data::VariantMeta]) -> String {
+    if metas.is_empty() {
+        return section(
+            "Strategies",
+            "what the firm is running",
+            "",
+            &render::empty_state("No strategies yet", ""),
+        );
+    }
+    let rank = |m: &data::VariantMeta| match m.status.as_str() {
+        "live" => 0,
+        "trial" => 1,
+        "retired" => 3,
+        _ => 2,
+    };
+    let mut sorted: Vec<&data::VariantMeta> = metas.iter().collect();
+    sorted.sort_by(|a, b| rank(a).cmp(&rank(b)).then(b.created.cmp(&a.created)));
 
     let mut inner = String::new();
-    for slot in &slots {
-        let id = slot.get("id").and_then(|v| v.as_integer()).unwrap_or(0);
-        let variant = slot.get("variant").and_then(|v| v.as_str()).unwrap_or("");
-        let started = slot.get("trial_started").and_then(|v| v.as_str()).unwrap_or("");
-        let due = slot
-            .get("trial_review_due")
-            .and_then(|v| v.as_str())
-            .unwrap_or("");
-        let day = data::days_between(started, updated)
-            .map(|d| format!("day {}", d + 1))
-            .unwrap_or_default();
-        let href = match variant.split_once('/') {
-            Some((f, v)) => format!("/strategies/{f}/{v}"),
-            None => String::new(),
-        };
-        // What the strategy IS, in plain English, beats its slot number.
-        let summary = metas
+    for m in sorted.iter().take(5) {
+        let n = p
+            .rows
             .iter()
-            .find(|m| m.key() == variant)
-            .map(|m| m.summary.clone())
-            .unwrap_or_default();
+            .filter(|row| p.cell(row, "family") == m.family && p.cell(row, "variant") == m.variant)
+            .count();
+        let scored = d
+            .rows
+            .iter()
+            .filter(|row| d.cell(row, "family") == m.family && d.cell(row, "variant") == m.variant)
+            .count();
+        let when = if m.status == "trial" && !m.review_due.is_empty() {
+            format!("review due {}", m.review_due)
+        } else if m.status == "retired" && !m.retired_on.is_empty() {
+            format!("dropped {}", m.retired_on)
+        } else {
+            format!("created {}", m.created)
+        };
         inner.push_str(&item(
-            &href,
-            &esc(variant),
+            &m.href(),
+            &esc(&m.key()),
             &format!(
                 "{}{}",
-                if summary.is_empty() {
+                if m.summary.is_empty() {
                     String::new()
                 } else {
-                    format!("<span class=\"item-summary\">{}</span>", esc(&summary))
+                    format!("<span class=\"item-summary\">{}</span>", esc(&m.summary))
                 },
-                esc(&format!("slot {id} · {day} · review {due}"))
+                esc(&format!(
+                    "{when} · {n} predictions{}",
+                    if scored > 0 {
+                        format!(", {scored} scored")
+                    } else {
+                        String::new()
+                    }
+                ))
             ),
-            &badge("trial", "warn"),
+            &render::status_badge(&m.status),
         ));
-    }
-    let used = slots.len() as i64;
-    for n in used..total {
-        inner.push_str(&format!(
-            "<div class=\"item item-empty\"><div class=\"item-main\"><div class=\"item-title\">slot {}</div><div class=\"item-sub\">free — filled by the CEO from the ideas backlog</div></div></div>",
-            n + 1
-        ));
-    }
-    if inner.is_empty() {
-        inner = "<div class=\"item item-empty\"><div class=\"item-main\"><div class=\"item-title\">No slots configured</div></div></div>".to_string();
     }
 
-    panel_foot(
-        "Research slots",
-        "one trial variant per slot, reviewed on its own clock",
-        &badge(&format!("{used} of {total} active"), if used > 0 { "warn" } else { "" }),
+    section_foot(
+        "Strategies",
+        "what each one does, in its own words",
+        &badge(&render::count(metas.len(), "strategy"), ""),
         &items(&inner),
-        "<span class=\"mono\">ops/state.toml</span><a href=\"/state\">Firm state →</a>",
-        false,
+        "<span class=\"mono\">strategies/&lt;family&gt;/&lt;variant&gt;</span><a href=\"/strategies\">All strategies →</a>",
     )
 }
 
 // ---------------------------------------------------------------------------
-// Band 3 — scoring chart + coverage table
+// Band 3 — scoring and coverage
 // ---------------------------------------------------------------------------
 
-fn scoring_panel(d: &Table) -> String {
+fn scoring_section(d: &Table) -> String {
     if d.rows.is_empty() {
-        return panel(
+        return section(
             "Scoring",
             "market Brier minus our Brier, per resolved prediction",
             "",
@@ -384,7 +420,7 @@ fn scoring_panel(d: &Table) -> String {
         .collect();
 
     let ahead = rows.iter().filter(|(_, v)| *v > 0.0).count();
-    panel_foot(
+    section_foot(
         "Scoring",
         "market Brier minus our Brier, per resolved prediction",
         &badge(
@@ -399,15 +435,14 @@ Chart.bar(document.getElementById("chart-score"), {{bars:[{bars}]}}, {{yPrecisio
 </script>"#
         ),
         "<span>positive = we beat the market on that leg</span><span class=\"mono\">predictions/scores_detail.csv</span>",
-        false,
     )
 }
 
 /// Predictions grouped by board (the asset token in the slug), with a mini-bar
 /// for volume and the average edge we claimed.
-fn coverage_panel(p: &Table, d: &Table) -> String {
+fn coverage_section(p: &Table, d: &Table) -> String {
     if p.rows.is_empty() {
-        return panel("Coverage", "predictions by board", "", &render::empty_state("No predictions yet", ""));
+        return section("Coverage", "predictions by board", "", &render::empty_state("No predictions yet", ""));
     }
 
     struct Group {
@@ -480,7 +515,7 @@ fn coverage_panel(p: &Table, d: &Table) -> String {
         })
         .collect();
 
-    panel_flush(
+    section(
         "Coverage by board",
         "predictions grouped by the asset in the market slug",
         &badge(
@@ -507,12 +542,12 @@ fn coverage_panel(p: &Table, d: &Table) -> String {
 }
 
 // ---------------------------------------------------------------------------
-// Band 4 — recent runs
+// Band 4 — what the firm did, and what it last said
 // ---------------------------------------------------------------------------
 
 fn recent_runs(runs: &[(String, toml::Table)]) -> String {
     if runs.is_empty() {
-        return panel(
+        return section(
             "Recent runs",
             "one manifest per orchestrated run",
             "",
@@ -548,7 +583,7 @@ fn recent_runs(runs: &[(String, toml::Table)]) -> String {
         })
         .collect();
 
-    panel_foot(
+    section_foot(
         "Recent runs",
         "what the firm did, newest first",
         &badge(&render::count(runs.len(), "run"), ""),
@@ -557,37 +592,78 @@ fn recent_runs(runs: &[(String, toml::Table)]) -> String {
                 ("Date", ""),
                 ("Trigger", ""),
                 ("Steps", "num"),
-                ("Rows added", "num"),
+                ("Rows", "num"),
                 ("Tokens", "num"),
                 ("Health", ""),
             ],
             &body,
         ),
         "<span class=\"mono\">ops/runs/</span><a href=\"/runs\">Read the narrative →</a>",
-        true,
     )
 }
 
-// ---------------------------------------------------------------------------
-// /execution — reserved for the engine the CEO is building
-// ---------------------------------------------------------------------------
+/// The last thing the firm actually claimed, market by market.
+fn latest_predictions(p: &Table, d: &Table) -> String {
+    if p.rows.is_empty() {
+        return section(
+            "Latest predictions",
+            "newest rows in the log",
+            "",
+            &render::empty_state("Nothing logged yet", ""),
+        );
+    }
+    let body: Vec<Vec<String>> = p
+        .rows
+        .iter()
+        .rev()
+        .take(6)
+        .map(|row| {
+            let slug = p.cell(row, "market_slug");
+            let outcome = p.cell(row, "outcome");
+            let ts = p.cell(row, "timestamp");
+            let ours = p.num(row, "prediction");
+            let mkt = p.num(row, "market_price");
+            let score = d.rows.iter().find(|sr| {
+                d.cell(sr, "market_slug") == slug
+                    && d.cell(sr, "outcome") == outcome
+                    && d.cell(sr, "timestamp") == ts
+            });
+            vec![
+                format!(
+                    "<a href=\"/markets/{0}\">{1}</a><span class=\"sub\">{2} · {3}</span>",
+                    esc(slug),
+                    esc(&data::short_market(slug)),
+                    esc(outcome),
+                    esc(&render::fmt_ts(ts))
+                ),
+                fmt_prob(ours),
+                fmt_prob(mkt),
+                fmt_signed(mkt - ours),
+                match score {
+                    Some(sr) => {
+                        let v = d.num(sr, "improvement");
+                        badge(&fmt_signed(v), if v > 0.0 { "ok" } else { "bad" })
+                    }
+                    None => "<span class=\"muted\">open</span>".to_string(),
+                },
+            ]
+        })
+        .collect();
 
-pub async fn execution(env: &Env) -> String {
-    // No panel, no empty-state heading: the breadcrumb already says
-    // "Execution" and PRINCIPLES.md allows exactly one name per thing.
-    let body = format!(
-        "{}{}",
-        "<p class=\"lede\">The engine that turns our predictions into simulated trades is being built. When it lands, this page shows what each strategy would actually have earned — fills against the order book we snapshot hourly, and the return on the money each trade ties up.</p>",
-        render::note(
-            "Until then the firm's claims live in <a class=\"link\" href=\"/predictions\">Predictions</a> (our probability against the market's price, marked when a market settles) and in the per-strategy backtests under <a class=\"link\" href=\"/strategies\">Strategies</a>. There is no real trading and never will be: paper only (CONSTITUTION.md §5).",
+    section_foot(
+        "Latest predictions",
+        "the newest rows in the log, with what happened",
+        &badge(&render::count(p.rows.len(), "row"), ""),
+        &table(
+            &[
+                ("Market", ""),
+                ("Ours", "num"),
+                ("Market", "num"),
+                ("Edge", "num"),
+                ("Result", ""),
+            ],
+            &body,
         ),
-    );
-    shell(
-        env,
-        "/execution",
-        trail(&[("Overview", ""), ("Execution", "")]),
-        true,
-        &body,
+        "<span class=\"mono\">predictions/predictions.csv</span><a href=\"/predictions\">The whole log →</a>",
     )
-    .await
 }

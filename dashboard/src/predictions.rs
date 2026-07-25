@@ -8,8 +8,8 @@
 
 use crate::data::{self, Table};
 use crate::render::{
-    self, badge, esc, fmt_int, fmt_prob, fmt_signed, fmt_ts, item, items, kpi, kpi_row, panel,
-    panel_flush, panel_foot, table, table_scroll,
+    self, badge, esc, fmt_int, fmt_prob, fmt_signed, fmt_ts, item, items, section, section_foot,
+    stat, stat_grid, table, table_scroll,
 };
 use crate::{json_str, shell, snapshot_banner, trail};
 use worker::Env;
@@ -65,29 +65,25 @@ fn kpi_strip(p: &Table, d: &Table, s: &Table, r: &Table) -> String {
     let overall = s.rows.iter().find(|row| s.cell(row, "level") == "overall");
     let mean_imp = overall.map(|row| s.num(row, "mean_improvement"));
 
-    kpi_row(&[
-        kpi("Rows", &fmt_int(p.rows.len() as i64), "list", 1)
+    stat_grid(&[
+        stat(&fmt_int(p.rows.len() as i64), "rows logged")
             .context("append-only, one per market outcome per run"),
-        kpi("Markets", &fmt_int(markets.len() as i64), "target", 4)
+        stat(&fmt_int(markets.len() as i64), "markets")
             .context(&format!("{} resolved so far", r.rows.len())),
-        kpi("Scored", &fmt_int(d.rows.len() as i64), "check", 2)
-            .delta(
-                &format!("{ahead} ahead of market"),
-                if d.rows.is_empty() {
-                    ""
-                } else if ahead == d.rows.len() {
-                    "up"
-                } else {
-                    "warn"
-                },
-            )
-            .context("paired against the market price at the time"),
-        kpi(
-            "Mean improvement",
+        stat(&fmt_int(d.rows.len() as i64), "scored")
+            .tone(if !d.rows.is_empty() && ahead == d.rows.len() { "ok" } else { "" })
+            .context(&format!(
+                "{ahead} ahead of the market's own price at the time"
+            )),
+        stat(
             &mean_imp.map(fmt_signed).unwrap_or_else(|| "—".to_string()),
-            "trend-up",
-            2,
+            "better than the market, per prediction",
         )
+        .tone(match mean_imp {
+            Some(v) if v > 0.0 => "ok",
+            Some(_) => "bad",
+            None => "",
+        })
         .context("market Brier minus our Brier"),
     ])
 }
@@ -121,7 +117,7 @@ fn attribution(p: &Table, metas: &[data::VariantMeta]) -> String {
             &badge(&render::count(n, "row"), ""),
         ));
     }
-    panel(
+    section(
         "Where these predictions come from",
         "the strategies that produced the rows below, in their own words",
         "",
@@ -132,7 +128,7 @@ fn attribution(p: &Table, metas: &[data::VariantMeta]) -> String {
 /// The log itself. Newest first; scores and resolutions joined on the row.
 fn log_panel(p: &Table, d: &Table, r: &Table, metas: &[data::VariantMeta]) -> String {
     if p.rows.is_empty() {
-        return panel(
+        return section(
             "Prediction log",
             "predictions/predictions.csv",
             "",
@@ -211,7 +207,7 @@ fn log_panel(p: &Table, d: &Table, r: &Table, metas: &[data::VariantMeta]) -> St
         })
         .collect();
 
-    panel_foot(
+    section_foot(
         "Prediction log",
         "what we said, what the market said, and what happened",
         &badge(&render::count(p.rows.len(), "row"), ""),
@@ -229,8 +225,7 @@ fn log_panel(p: &Table, d: &Table, r: &Table, metas: &[data::VariantMeta]) -> St
             ],
             &body,
         ),
-        "<span class=\"mono\">predictions/predictions.csv · scores_detail.csv · resolutions.csv</span><span>edge = market price − our probability</span>",
-        true,
+        "<span class=\"mono\">predictions/predictions.csv · scores_detail.csv · resolutions.csv</span><span>edge = market price − our probability</span>"
     )
 }
 
@@ -258,7 +253,7 @@ fn strategy_links(family: &str, variant: &str, metas: &[data::VariantMeta]) -> S
 
 fn scoring_table(s: &Table) -> String {
     if s.rows.is_empty() {
-        return panel(
+        return section(
             "Scoring aggregates",
             "predictions/scores.csv",
             "",
@@ -297,7 +292,7 @@ fn scoring_table(s: &Table) -> String {
         })
         .collect();
 
-    panel_flush(
+    section(
         "Scoring aggregates",
         "the same rows scored by every grouping we care about",
         &badge(&render::count(s.rows.len(), "group"), ""),
@@ -317,7 +312,7 @@ fn scoring_table(s: &Table) -> String {
 
 fn resolutions_table(r: &Table, p: &Table) -> String {
     if r.rows.is_empty() {
-        return panel(
+        return section(
             "Resolutions",
             "predictions/resolutions.csv",
             "",
@@ -355,7 +350,7 @@ fn resolutions_table(r: &Table, p: &Table) -> String {
         })
         .collect();
 
-    panel_flush(
+    section(
         "Resolutions",
         "how each market settled, newest first",
         &badge(&render::count(r.rows.len(), "market"), ""),
@@ -406,7 +401,7 @@ pub async fn market(env: &Env, slug: &str) -> String {
     ]);
 
     if rows.is_empty() {
-        let body = panel(
+        let body = section(
             "Market",
             slug,
             "",
@@ -431,34 +426,39 @@ pub async fn market(env: &Env, slug: &str) -> String {
         .collect();
     let mean_imp = data::mean(&d, &scored, "improvement");
 
-    let kpis = kpi_row(&[
-        kpi("Predictions", &fmt_int(rows.len() as i64), "list", 1)
-            .context(&format!("{} distinct outcomes", {
+    let kpis = stat_grid(&[
+        stat(&fmt_int(rows.len() as i64), "predictions on this market").context(&format!(
+            "{} distinct outcomes",
+            {
                 let mut o: Vec<&str> = rows.iter().map(|row| p.cell(row, "outcome")).collect();
                 o.sort_unstable();
                 o.dedup();
                 o.len()
-            })),
-        kpi("Our latest", &fmt_prob(p.num(latest, "prediction")), "target", 4)
+            }
+        )),
+        stat(&fmt_prob(p.num(latest, "prediction")), "our latest probability")
             .context(&format!("logged {}", fmt_ts(p.cell(latest, "timestamp")))),
-        kpi("Market latest", &fmt_prob(p.num(latest, "market_price")), "trend-up", 3)
-            .delta(
-                &fmt_signed(p.num(latest, "market_price") - p.num(latest, "prediction")),
-                "",
-            )
-            .context("edge we claimed on the last row"),
+        stat(&fmt_prob(p.num(latest, "market_price")), "the market's latest price").context(
+            &format!(
+                "{} edge claimed on the last row",
+                fmt_signed(p.num(latest, "market_price") - p.num(latest, "prediction"))
+            ),
+        ),
         match resolution {
-            Some(rr) => kpi("Resolved", r.cell(rr, "winning_outcome"), "check", 2)
-                .delta(
-                    &mean_imp.map(fmt_signed).unwrap_or_else(|| "not scored".to_string()),
-                    match mean_imp {
-                        Some(v) if v > 0.0 => "up",
-                        Some(_) => "down",
-                        None => "",
-                    },
-                )
-                .context(&format!("on {}", r.cell(rr, "resolved_date"))),
-            None => kpi("Resolution", "open", "clock", 5).context("not settled yet"),
+            Some(rr) => stat(&esc(r.cell(rr, "winning_outcome")), "how it settled")
+                .tone(match mean_imp {
+                    Some(v) if v > 0.0 => "ok",
+                    Some(_) => "bad",
+                    None => "",
+                })
+                .context(&format!(
+                    "on {} · {} vs the market",
+                    r.cell(rr, "resolved_date"),
+                    mean_imp
+                        .map(fmt_signed)
+                        .unwrap_or_else(|| "not scored".to_string())
+                )),
+            None => stat("open", "how it settled").context("not settled yet"),
         },
     ]);
 
@@ -536,13 +536,12 @@ fn market_chart(p: &Table, rows: &[&Vec<String>], slug: &str) -> String {
         slug = esc(slug),
     );
 
-    panel_foot(
+    section_foot(
         "Probability over time",
         "our number against the market, every time we logged it",
         &badge(&render::count(n, "point"), ""),
         &format!("{legend}{script}"),
-        "<span>drag to zoom, double-click to reset</span><a href=\"/snapshots\">Order-book snapshots →</a>",
-        false,
+        "<span>drag to zoom, double-click to reset</span><a href=\"/snapshots\">Order-book snapshots →</a>"
     )
 }
 
@@ -607,7 +606,7 @@ fn market_facts(
         None => inner.push_str(&render::row("Resolved", "<span class=\"muted\">open</span>")),
     }
 
-    panel(
+    section(
         "Market facts",
         "identifiers as logged with the prediction",
         "",
@@ -664,7 +663,7 @@ fn market_log(p: &Table, d: &Table, rows: &[&Vec<String>], slug: &str) -> String
         })
         .collect();
 
-    panel_flush(
+    section(
         "Predictions and scoring",
         "one row per logged prediction, joined with its score",
         &badge(&render::count(rows.len(), "row"), ""),

@@ -5,28 +5,26 @@
 //!
 //! New dashboard features live here before graduating to the real pages.
 
-use crate::render::{badge, esc, panel, panel_foot, table};
+use crate::render::{badge, esc, section, section_foot, table};
 use crate::{shell, trail};
 use worker::Env;
 
 pub async fn charts(env: &Env) -> String {
     let body = format!(
         "{line}{bar}{note}",
-        line = panel_foot(
+        line = section_foot(
             "Line",
             "market probability over time — drag horizontally to zoom, double-click to reset",
             &badge("Chart.line", ""),
             r#"<div class="chart" id="chart-line"></div>"#,
-            "<span>multi-series and dot-mode series are supported: <span class=\"mono\">{series:[{label,points,mode}]}</span></span><a href=\"/dev/data/line.json\">line.json →</a>",
-            false,
+            "<span>multi-series and dot-mode series are supported: <span class=\"mono\">{series:[{label,points,mode}]}</span></span><a href=\"/dev/data/line.json\">line.json →</a>"
         ),
-        bar = panel_foot(
+        bar = section_foot(
             "Bar",
             "Brier score by variant — hover a bar for the exact value, lower is better",
             &badge("Chart.bar", ""),
             r#"<div class="chart" id="chart-bar"></div>"#,
-            "<span>bars carry a tone: <span class=\"mono\">ok</span> / <span class=\"mono\">bad</span> / neutral, and negative values draw below a zero baseline</span><a href=\"/dev/data/bar.json\">bar.json →</a>",
-            false,
+            "<span>bars carry a tone: <span class=\"mono\">ok</span> / <span class=\"mono\">bad</span> / neutral, and negative values draw below a zero baseline</span><a href=\"/dev/data/bar.json\">bar.json →</a>"
         ),
         note = format!(
             "{}{}",
@@ -92,6 +90,18 @@ pub async fn endpoints(env: &Env) -> String {
             "",
         ),
         row(
+            "GET /execution/data/&lt;set&gt;/v&lt;n&gt;.json",
+            "{series:[{label, color, points:[{t, v}]}]}",
+            "one equity curve per execution policy, for one signal set and policy version",
+            "/execution/data/ladder-rv-hist/v2.json",
+        ),
+        row(
+            "GET /table.js",
+            "click a header to sort; third click restores the server's order",
+            "sorting for any table.data.sortable, no dependencies",
+            "/table.js",
+        ),
+        row(
             "GET /charts.js",
             "Chart.line(el, data, opts) · Chart.bar(el, data, opts)",
             "the chart framework itself, no dependencies",
@@ -107,7 +117,7 @@ pub async fn endpoints(env: &Env) -> String {
 
     let body = format!(
         "{}{}",
-        panel_foot(
+        section_foot(
             "JSON and asset endpoints",
             "everything the Worker serves that is not a page",
             &badge(&crate::render::count(rows.len(), "endpoint"), ""),
@@ -115,19 +125,20 @@ pub async fn endpoints(env: &Env) -> String {
                 &[("Endpoint", ""), ("Shape", ""), ("What it is", "wrap"), ("", "")],
                 &rows,
             ),
-            "<span class=\"mono\">dashboard/src/lib.rs</span><span>pages are server-rendered HTML; JSON exists only for charts</span>",
-            true,
+            "<span class=\"mono\">dashboard/src/lib.rs</span><span>pages are server-rendered HTML; JSON exists only for charts</span>"
         ),
-        panel(
+        section(
             "Routes",
             "the page routes behind the sidebar",
             "",
             &table(
                 &[("Route", ""), ("Page", "")],
                 &[
-                    vec!["/".into(), "Dashboard — KPIs, model vs market, slots, scoring, coverage".into()],
+                    vec!["/".into(), "Dashboard — headline numbers, model vs market, strategies, scoring, coverage, runs".into()],
                     vec!["/runs".into(), "Daily runs — every manifest as a narrative".into()],
-                    vec!["/execution".into(), "Execution — reserved for the engine being built".into()],
+                    vec!["/execution".into(), "Execution — the policy × signal-set matrix, equity curves, caveats".into()],
+                    vec!["/execution?fees=v1".into(), "The same matrix priced with NO venue fee (superseded)".into()],
+                    vec!["/execution?doc=summary".into(), "The engine's full write-up (?doc=design for the accounting rules)".into()],
                     vec!["/strategies".into(), "Families and their variants".into()],
                     vec!["/strategies/&lt;family&gt;".into(), "Family thesis, variants, scoring".into()],
                     vec!["/strategies/&lt;family&gt;/&lt;variant&gt;".into(), "Strategy, facts, applications, predictions, worklog".into()],

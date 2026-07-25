@@ -16,11 +16,13 @@
 //! Detail routes hang off those: /strategies/<family>[/<variant>], /markets/<slug>,
 //! /wiki/<page>.
 //!
-//! No external assets. Client JS is limited to: sidebar persistence + theme
-//! toggle (inline, in the shell) and /charts.js on pages that draw charts.
+//! No external assets. Client JS is limited to: sidebar persistence + the
+//! settings popover's theme/density choices (inline, in the shell), /charts.js
+//! on pages that draw charts and /table.js on pages with a sortable table.
 
 mod data;
 mod dev;
+mod execution;
 mod firm;
 mod live;
 mod overview;
@@ -35,6 +37,7 @@ use worker::{event, Context, Env, Headers, Request, Response, Result, Router};
 
 const CSS: &str = include_str!("style.css");
 const CHARTS_JS: &str = include_str!("charts.js");
+const TABLE_JS: &str = include_str!("table.js");
 const FAVICON_SVG: &str = include_str!("favicon.svg");
 
 /// Set by build.rs at compile time — the build stamp is always compile-time.
@@ -69,8 +72,29 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .get_async("/runs", |_, ctx| async move {
             Response::from_html(runs::page(&ctx.env).await)
         })
-        .get_async("/execution", |_, ctx| async move {
-            Response::from_html(overview::execution(&ctx.env).await)
+        .get_async("/execution", |req, ctx| async move {
+            // v2 (the venue's real taker fee) is the default; v1 is fee-free and
+            // must be asked for explicitly.
+            let version = match query(&req, "fees").as_deref() {
+                Some("v1") | Some("1") => 1,
+                _ => 2,
+            };
+            Response::from_html(execution::page(&ctx.env, version, query(&req, "doc")).await)
+        })
+        .get_async("/execution/data/:set/:file", |_, ctx| async move {
+            let set = ctx.param("set").cloned().unwrap_or_default();
+            let file = ctx.param("file").cloned().unwrap_or_default();
+            let version = file
+                .strip_suffix(".json")
+                .and_then(|s| s.strip_prefix('v'))
+                .and_then(|s| s.parse::<u32>().ok());
+            let Some(version) = version else {
+                return Response::error("bad request", 400);
+            };
+            static_response(
+                &execution::equity_json(&ctx.env, &set, version).await,
+                "application/json; charset=utf-8",
+            )
         })
         // --- Research ---
         .get_async("/strategies", |_, ctx| async move {
@@ -162,6 +186,9 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         })
         .get("/charts.js", |_, _| {
             static_response(CHARTS_JS, "text/javascript; charset=utf-8")
+        })
+        .get("/table.js", |_, _| {
+            static_response(TABLE_JS, "text/javascript; charset=utf-8")
         })
         .get("/favicon.svg", |_, _| {
             static_response(FAVICON_SVG, "image/svg+xml")

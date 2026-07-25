@@ -70,6 +70,9 @@
         cssVar("--chart-3", "#b45309"),
         cssVar("--chart-4", "#7c3aed"),
         cssVar("--chart-5", "#be123c"),
+        cssVar("--chart-6", "#4d7c0f"),
+        cssVar("--chart-7", "#0369a1"),
+        cssVar("--chart-8", "#a21caf"),
       ],
     };
   }

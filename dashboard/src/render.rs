@@ -3,13 +3,21 @@
 //! template engine (CODING.md: procedural, data in → HTML out).
 //!
 //! Component vocabulary — nothing else exists, on purpose:
-//!   kpi_row     a row of compact stat cards (label, number, delta, context)
-//!   panel       a bordered surface with a header (title, subtitle, chip)
+//!   section     a heading, optional one-line subtitle, and content. NOT a box.
+//!   stat_grid   dense grid of value/label/context stats (the headline strip)
+//!   stat_line   one-line stat strip, for pages whose point is the content below
 //!   table       a dense data table (per-column class drives alignment)
-//!   items/row   compact lists inside panels
+//!   items/row   compact lists — hairline-separated rows, never boxes
 //!   badge/chip  status and metadata
 //!   minibar     inline proportional bar for dense tables
 //!   prose       rendered markdown
+//!
+//! PRINCIPLES.md, binding: **cards are the exception, not the container** and
+//! **never nest a card in a card**. There is therefore no generic bordered
+//! "panel" component any more — hierarchy is carried by headings, spacing and
+//! type scale. The only bordered surfaces left in the stylesheet are things
+//! that float (the settings popover, chart tooltips) or warn (the snapshot
+//! banner).
 //!
 //! Labels are SENTENCE CASE everywhere. No uppercasing, in code or CSS.
 
@@ -33,8 +41,8 @@ pub fn esc(s: &str) -> String {
     out
 }
 
-/// The document's leading `# ` heading, if it has one. Panels use it as their
-/// title so the same words aren't printed twice (breadcrumb, panel header and
+/// The document's leading `# ` heading, if it has one. Sections use it as their
+/// title so the same words aren't printed twice (breadcrumb, section header and
 /// then an H1 in the prose was exactly the "repeated page title" problem).
 pub fn md_title(src: &str) -> Option<String> {
     let first = src.lines().find(|l| !l.trim().is_empty())?;
@@ -42,7 +50,7 @@ pub fn md_title(src: &str) -> Option<String> {
 }
 
 /// Markdown → HTML with the leading `# ` heading removed. Use wherever the
-/// surrounding panel or breadcrumb already names the document.
+/// surrounding section or breadcrumb already names the document.
 pub fn markdown_body(src: &str) -> String {
     let trimmed = src.trim_start_matches(['\r', '\n', ' ', '\t']);
     match md_title(src) {
@@ -71,7 +79,7 @@ pub fn markdown(src: &str) -> String {
 
 // ---------------------------------------------------------------------------
 // Icons — a closed set of 16px stroke glyphs. An icon exists only where it
-// speeds up recognition (nav items, KPI cards, the theme toggle).
+// speeds up recognition (nav items, the settings control, theme choices).
 // ---------------------------------------------------------------------------
 
 pub fn icon(name: &str) -> String {
@@ -89,6 +97,7 @@ pub fn icon(name: &str) -> String {
         "chart" => r#"<path d="M3 3v18h18"/><path d="m7 14 3-4 3 3 4-6"/>"#,
         "plug" => r#"<path d="M9 2v6M15 2v6"/><path d="M6 8h12v3a6 6 0 0 1-12 0V8Z"/><path d="M12 17v5"/>"#,
         "settings" => r#"<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7.5 19l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3 13.6H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.7 7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1.3Z"/>"#,
+        "sliders" => r#"<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h10M18 18h2"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/>"#,
         "target" => r#"<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/>"#,
         "trend-up" => r#"<path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/>"#,
         "layers" => r#"<path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/>"#,
@@ -97,6 +106,7 @@ pub fn icon(name: &str) -> String {
         "check" => r#"<path d="m5 13 4 4 10-10"/>"#,
         "sun" => r#"<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>"#,
         "moon" => r#"<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/>"#,
+        "monitor" => r#"<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>"#,
         "chevron" => r#"<path d="m6 9 6 6 6-6"/>"#,
         "burger" => r#"<path d="M4 6h16M4 12h16M4 18h16"/>"#,
         "external" => r#"<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>"#,
@@ -141,7 +151,7 @@ pub const NAV: &[NavGroup] = &[
         links: &[
             NavLink { href: "/", label: "Dashboard", icon: "gauge", owns: &[] },
             NavLink { href: "/runs", label: "Daily runs", icon: "calendar", owns: &["/runs/"] },
-            NavLink { href: "/execution", label: "Execution", icon: "play", owns: &[] },
+            NavLink { href: "/execution", label: "Execution", icon: "play", owns: &["/execution/"] },
         ],
     },
     NavGroup {
@@ -236,14 +246,59 @@ pub struct Freshness {
     pub build: String,
 }
 
-/// The full page: sidebar (collapsible groups, localStorage-persisted), top bar
-/// (breadcrumbs + theme toggle + freshness), content, footer.
+/// The settings popover: theme (light / dark / system), density, sidebar
+/// sections, and where the thing lives. Native Popover API — `popovertarget`
+/// on the button, `popover` on the panel — so opening, light-dismiss, Esc and
+/// focus handling are the browser's, not ours. Without JS it still opens; the
+/// controls then say so instead of pretending to work.
+fn settings_popover() -> String {
+    format!(
+        r#"<div id="settings-pop" popover class="pop" aria-label="Settings">
+  <div class="pop-group">
+    <div class="pop-label">Theme</div>
+    <div class="seg" id="seg-theme" role="group" aria-label="Colour theme">
+      <button type="button" data-theme-set="light">{sun}<span>Light</span></button>
+      <button type="button" data-theme-set="dark">{moon}<span>Dark</span></button>
+      <button type="button" data-theme-set="system">{monitor}<span>System</span></button>
+    </div>
+  </div>
+  <div class="pop-group">
+    <div class="pop-label">Density</div>
+    <div class="seg" id="seg-density" role="group" aria-label="Row density">
+      <button type="button" data-density-set="comfortable"><span>Comfortable</span></button>
+      <button type="button" data-density-set="compact"><span>Compact</span></button>
+    </div>
+  </div>
+  <div class="pop-group">
+    <div class="pop-label">Sidebar sections</div>
+    <div class="seg" role="group" aria-label="Sidebar sections">
+      <button type="button" data-nav-all="1"><span>Expand all</span></button>
+      <button type="button" data-nav-all="0"><span>Collapse all</span></button>
+    </div>
+  </div>
+  <div class="pop-links">
+    <a href="https://github.com/felix-andreas/orakel" target="_blank" rel="noreferrer">{ext}<span>Repository</span></a>
+    <a href="/dev/endpoints">{plug}<span>Endpoints</span></a>
+  </div>
+  <noscript><p class="pop-note">These settings need JavaScript. Without it the page follows your system colour scheme and every sidebar section stays open.</p></noscript>
+</div>"#,
+        sun = icon("sun"),
+        moon = icon("moon"),
+        monitor = icon("monitor"),
+        ext = icon("external"),
+        plug = icon("plug"),
+    )
+}
+
+/// The full page: sidebar (collapsible groups + the settings popover at its
+/// bottom-left), top bar (breadcrumbs + freshness), content, footer.
 /// `active` is the current route path; `body` is already-safe HTML.
 ///
 /// One header band, always. On desktop the wordmark sits in the sidebar's own
 /// 3rem row, level with the top bar across the seam. Below 900px the sidebar
 /// stops being a band at all — the burger moves into the top bar, which then
-/// carries everything, and the nav drops out of it as an overlay. The bar's
+/// carries everything, and the nav drops out of it as a FULL-VIEWPORT overlay
+/// (dynamic viewport units, so mobile browser chrome cannot clip it). The bar's
 /// left slot is the breadcrumb while the menu is closed and the wordmark while
 /// it is open (`.wordmark-bar`), because navigation has replaced the page's
 /// context and the app's name is what belongs there.
@@ -323,7 +378,7 @@ pub fn layout(active: &str, crumbs: &[Crumb], body: &str, fresh: &Freshness) -> 
 <title>{title} — orakel</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="stylesheet" href="/style.css">
-<script>try{{var t=localStorage.getItem("orakel-theme");if(t)document.documentElement.setAttribute("data-theme",t);}}catch(e){{}}</script>
+<script>try{{var t=localStorage.getItem("orakel-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);var d=localStorage.getItem("orakel-density");if(d==="compact")document.documentElement.setAttribute("data-density","compact");}}catch(e){{}}</script>
 </head>
 <body>
 <div class="shell">
@@ -333,6 +388,9 @@ pub fn layout(active: &str, crumbs: &[Crumb], body: &str, fresh: &Freshness) -> 
       <a class="wordmark" href="/">orakel<small>dashboard</small></a>
     </div>
     <nav class="nav" id="nav">{nav}</nav>
+    <div class="sidebar-foot">
+      <button type="button" class="settings-btn" popovertarget="settings-pop">{gear}<span>Settings</span></button>
+    </div>
   </aside>
   <div class="main">
     <div class="topbar">
@@ -340,7 +398,6 @@ pub fn layout(active: &str, crumbs: &[Crumb], body: &str, fresh: &Freshness) -> 
       <nav class="crumbs" aria-label="Breadcrumb">{crumb_html}</nav>
       <div class="topbar-right">
         <span class="updated" title="Data freshness"><span class="{dot}"></span>{source} · {stamp}</span>
-        <button type="button" class="icon-btn" id="theme-toggle" aria-label="Switch colour theme"><span class="sun">{sun}</span><span class="moon">{moon}</span></button>
         <label class="burger" for="nav-toggle" aria-label="Toggle navigation">{burger}</label>
       </div>
     </div>
@@ -353,41 +410,79 @@ pub fn layout(active: &str, crumbs: &[Crumb], body: &str, fresh: &Freshness) -> 
     </footer>
   </div>
 </div>
+{pop}
 <script>
 (function () {{
+  var root = document.documentElement;
+  function store(k, v) {{ try {{ localStorage.setItem(k, v); }} catch (e) {{}} }}
+  function read(k) {{ try {{ return localStorage.getItem(k); }} catch (e) {{ return null; }} }}
+
   /* Sidebar groups: expanded/collapsed per section, remembered in
      localStorage. The group holding the active route is always expanded.
      Without JS every group stays open — nothing is unreachable. */
   var nav = document.getElementById("nav");
-  if (nav) {{
-    var groups = nav.querySelectorAll(".nav-group");
-    for (var i = 0; i < groups.length; i++) (function (g) {{
-      var id = g.getAttribute("data-group");
-      var head = g.querySelector(".nav-group-head");
-      var open = true;
-      if (g.getAttribute("data-active") !== "1") {{
-        try {{
-          var saved = localStorage.getItem("orakel-nav:" + id);
-          if (saved !== null) open = saved === "1";
-        }} catch (e) {{}}
-      }}
-      head.setAttribute("aria-expanded", open ? "true" : "false");
-      head.addEventListener("click", function () {{
-        var next = head.getAttribute("aria-expanded") !== "true";
-        head.setAttribute("aria-expanded", next ? "true" : "false");
-        try {{ localStorage.setItem("orakel-nav:" + id, next ? "1" : "0"); }} catch (e) {{}}
-      }});
-    }})(groups[i]);
+  var groups = nav ? nav.querySelectorAll(".nav-group") : [];
+  function setGroup(g, open, persist) {{
+    var head = g.querySelector(".nav-group-head");
+    head.setAttribute("aria-expanded", open ? "true" : "false");
+    if (persist) store("orakel-nav:" + g.getAttribute("data-group"), open ? "1" : "0");
   }}
-  /* Theme toggle: system default, overridden by an explicit choice that
-     survives reloads. charts.js re-renders on the data-theme change. */
-  var btn = document.getElementById("theme-toggle");
-  if (btn) btn.addEventListener("click", function () {{
-    var cur = document.documentElement.getAttribute("data-theme");
-    if (!cur) cur = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    var next = cur === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    try {{ localStorage.setItem("orakel-theme", next); }} catch (e) {{}}
+  for (var i = 0; i < groups.length; i++) (function (g) {{
+    var open = true;
+    if (g.getAttribute("data-active") !== "1") {{
+      var saved = read("orakel-nav:" + g.getAttribute("data-group"));
+      if (saved !== null) open = saved === "1";
+    }}
+    setGroup(g, open, false);
+    g.querySelector(".nav-group-head").addEventListener("click", function () {{
+      var head = g.querySelector(".nav-group-head");
+      setGroup(g, head.getAttribute("aria-expanded") !== "true", true);
+    }});
+  }})(groups[i]);
+
+  /* Settings: theme (light / dark / SYSTEM — the default) and density, both
+     persisted. "system" removes the attribute so the stylesheet's
+     prefers-color-scheme block takes over; charts.js re-renders on both. */
+  function currentTheme() {{
+    var t = read("orakel-theme");
+    return t === "dark" || t === "light" ? t : "system";
+  }}
+  function currentDensity() {{
+    return read("orakel-density") === "compact" ? "compact" : "comfortable";
+  }}
+  function mark(sel, attr, value) {{
+    var btns = document.querySelectorAll(sel + " [" + attr + "]");
+    for (var i = 0; i < btns.length; i++)
+      btns[i].setAttribute("aria-pressed", btns[i].getAttribute(attr) === value ? "true" : "false");
+  }}
+  function applyTheme(v) {{
+    if (v === "dark" || v === "light") root.setAttribute("data-theme", v);
+    else root.removeAttribute("data-theme");
+    mark('#seg-theme', 'data-theme-set', v);
+  }}
+  function applyDensity(v) {{
+    if (v === "compact") root.setAttribute("data-density", "compact");
+    else root.removeAttribute("data-density");
+    mark('#seg-density', 'data-density-set', v);
+  }}
+  applyTheme(currentTheme());
+  applyDensity(currentDensity());
+
+  document.addEventListener("click", function (e) {{
+    var t = e.target.closest ? e.target.closest("[data-theme-set],[data-density-set],[data-nav-all]") : null;
+    if (!t) return;
+    if (t.hasAttribute("data-theme-set")) {{
+      var v = t.getAttribute("data-theme-set");
+      store("orakel-theme", v);
+      applyTheme(v);
+    }} else if (t.hasAttribute("data-density-set")) {{
+      var d = t.getAttribute("data-density-set");
+      store("orakel-density", d);
+      applyDensity(d);
+    }} else {{
+      var open = t.getAttribute("data-nav-all") === "1";
+      for (var i = 0; i < groups.length; i++) setGroup(groups[i], open, true);
+    }}
   }});
 }})();
 </script>
@@ -395,167 +490,160 @@ pub fn layout(active: &str, crumbs: &[Crumb], body: &str, fresh: &Freshness) -> 
 </html>"#,
         title = esc(&title),
         burger = icon_sized("burger", 18),
+        gear = icon("sliders"),
         nav = nav,
+        pop = settings_popover(),
         crumb_html = crumb_html,
         dot = dot,
         source = source,
         stamp = esc(&fresh.stamp),
-        sun = icon("sun"),
-        moon = icon("moon"),
         build = esc(&fresh.build),
         body = body,
     )
 }
 
 // ---------------------------------------------------------------------------
-// KPI cards
+// Stats — the headline numbers. No cards: a grid of value + label + context,
+// separated by space, at about a third of the height a card row costs.
 // ---------------------------------------------------------------------------
 
-pub struct Kpi {
-    pub label: String,
+pub struct Stat {
     /// Already-safe HTML (usually a number, optionally with a <small> suffix).
     pub value: String,
-    /// (text, tone) — tone: "up" | "down" | "warn" | "" (neutral).
-    pub delta: Option<(String, &'static str)>,
+    pub label: String,
+    /// "" | "ok" | "warn" | "bad"
+    pub tone: &'static str,
+    /// One short line under the label. Plain text.
     pub context: String,
-    pub icon: &'static str,
-    /// 1..5 — which accent tint the icon square uses.
-    pub tint: u8,
+    /// Wraps the value in a link when set.
+    pub href: String,
 }
 
-pub fn kpi(label: &str, value: &str, icon_name: &'static str, tint: u8) -> Kpi {
-    Kpi {
-        label: label.to_string(),
+pub fn stat(value: &str, label: &str) -> Stat {
+    Stat {
         value: value.to_string(),
-        delta: None,
+        label: label.to_string(),
+        tone: "",
         context: String::new(),
-        icon: icon_name,
-        tint,
+        href: String::new(),
     }
 }
 
-impl Kpi {
-    pub fn delta(mut self, text: &str, tone: &'static str) -> Self {
-        self.delta = Some((text.to_string(), tone));
+impl Stat {
+    pub fn tone(mut self, tone: &'static str) -> Self {
+        self.tone = tone;
         self
     }
     pub fn context(mut self, text: &str) -> Self {
         self.context = text.to_string();
         self
     }
+    pub fn href(mut self, href: &str) -> Self {
+        self.href = href.to_string();
+        self
+    }
 }
 
-/// One-line statistics strip: the same numbers a KPI row carries, in about a
-/// quarter of the height. Used on every page whose point is the content below
-/// it — KPI cards are reserved for pages where the numbers ARE the headline.
-/// Each entry is (value_html, label, tone) with tone "" | "ok" | "warn" | "bad".
+fn tone_class(tone: &str) -> &'static str {
+    match tone {
+        "ok" => " s-ok",
+        "warn" => " s-warn",
+        "bad" => " s-bad",
+        _ => "",
+    }
+}
+
+/// Dense headline grid: as many columns as fit, one line of context each.
+pub fn stat_grid(items: &[Stat]) -> String {
+    let mut out = String::new();
+    for s in items {
+        let value = if s.href.is_empty() {
+            format!("<b class=\"stat-v{}\">{}</b>", tone_class(s.tone), s.value)
+        } else {
+            format!(
+                "<a class=\"stat-v{}\" href=\"{}\">{}</a>",
+                tone_class(s.tone),
+                esc(&s.href),
+                s.value
+            )
+        };
+        out.push_str(&format!(
+            "<div class=\"stat\">{value}<span class=\"stat-k\">{}</span>{}</div>",
+            esc(&s.label),
+            if s.context.is_empty() {
+                String::new()
+            } else {
+                format!("<span class=\"stat-c\">{}</span>", esc(&s.context))
+            }
+        ));
+    }
+    format!("<div class=\"statgrid\">{out}</div>")
+}
+
+/// One-line statistics strip: the same numbers in about a quarter of the
+/// height. Each entry is (value_html, label, tone) with tone "" | "ok" | "warn"
+/// | "bad".
 pub fn stat_line(items: &[(String, String, &str)]) -> String {
     let mut out = String::new();
     for (value, label, tone) in items {
-        let class = match *tone {
-            "ok" => " s-ok",
-            "warn" => " s-warn",
-            "bad" => " s-bad",
-            _ => "",
-        };
         out.push_str(&format!(
-            "<span class=\"stat\"><b class=\"stat-v{class}\">{value}</b><span class=\"stat-k\">{}</span></span>",
+            "<span class=\"stat\"><b class=\"stat-v{}\">{value}</b><span class=\"stat-k\">{}</span></span>",
+            tone_class(tone),
             esc(label)
         ));
     }
     format!("<div class=\"statline\">{out}</div>")
 }
 
-pub fn kpi_row(cards: &[Kpi]) -> String {
-    let class = match cards.len() {
-        3 => "grid-kpi grid-kpi-3",
-        4 => "grid-kpi grid-kpi-4",
-        _ => "grid-kpi",
-    };
-    let mut out = String::new();
-    for c in cards {
-        let delta = match &c.delta {
-            Some((text, tone)) => {
-                let (cls, mark) = match *tone {
-                    "up" => ("delta delta-up", "↑ "),
-                    "down" => ("delta delta-down", "↓ "),
-                    "warn" => ("delta delta-warn", ""),
-                    _ => ("delta", ""),
-                };
-                format!("<span class=\"{}\">{}{}</span>", cls, mark, esc(text))
-            }
-            None => String::new(),
-        };
-        out.push_str(&format!(
-            r#"<article class="kpi"><div class="kpi-head"><span class="kpi-label">{label}</span><span class="kpi-icon kpi-icon-{tint}">{icon}</span></div><div class="kpi-value">{value}</div><div class="kpi-foot">{delta}<span class="kpi-context">{context}</span></div></article>"#,
-            label = esc(&c.label),
-            tint = c.tint,
-            icon = icon(c.icon),
-            value = c.value,
-            delta = delta,
-            context = esc(&c.context),
-        ));
-    }
-    format!("<div class=\"{class}\">{out}</div>")
-}
-
 // ---------------------------------------------------------------------------
-// Panels
+// Sections — a heading, a hairline, content. The default container; NOT a box.
 // ---------------------------------------------------------------------------
 
-/// Bordered surface: title + subtitle line on the left, status chip right.
-/// `body_html` is already-safe HTML.
-pub fn panel(title: &str, subtitle: &str, chip_html: &str, body_html: &str) -> String {
-    panel_inner(title, subtitle, chip_html, body_html, "panel-body", "")
+/// Section: title (+ optional one-line subtitle beside it, and a chip on the
+/// right), then the body. `body_html` is already-safe HTML.
+pub fn section(title: &str, subtitle: &str, chip_html: &str, body_html: &str) -> String {
+    section_inner(title, subtitle, chip_html, body_html, "")
 }
 
-/// Panel whose body is a flush table (no padding) — for dense data.
-pub fn panel_flush(title: &str, subtitle: &str, chip_html: &str, body_html: &str) -> String {
-    panel_inner(title, subtitle, chip_html, body_html, "panel-body panel-body-flush", "")
-}
-
-/// Panel with a footer strip (links, counts).
-pub fn panel_foot(
+/// Section with a footer strip (source path, links, counts).
+pub fn section_foot(
     title: &str,
     subtitle: &str,
     chip_html: &str,
     body_html: &str,
     foot_html: &str,
-    flush: bool,
 ) -> String {
-    let body_class = if flush { "panel-body panel-body-flush" } else { "panel-body" };
-    panel_inner(
+    section_inner(
         title,
         subtitle,
         chip_html,
         body_html,
-        body_class,
-        &format!("<div class=\"panel-foot\">{foot_html}</div>"),
+        &format!("<div class=\"sec-foot\">{foot_html}</div>"),
     )
 }
 
-fn panel_inner(
+fn section_inner(
     title: &str,
     subtitle: &str,
     chip_html: &str,
     body_html: &str,
-    body_class: &str,
     foot: &str,
 ) -> String {
     let sub = if subtitle.is_empty() {
         String::new()
     } else {
-        format!("<p class=\"panel-sub\">{}</p>", esc(subtitle))
+        format!("<span class=\"sec-sub\">{}</span>", esc(subtitle))
     };
-    format!(
-        r#"<section class="panel"><div class="panel-head"><div><h2 class="panel-title">{title}</h2>{sub}</div>{chip}</div><div class="{body_class}">{body}</div>{foot}</section>"#,
-        title = esc(title),
-        sub = sub,
-        chip = chip_html,
-        body_class = body_class,
-        body = body_html,
-        foot = foot,
-    )
+    let head = if title.is_empty() && subtitle.is_empty() && chip_html.is_empty() {
+        String::new()
+    } else {
+        format!(
+            "<div class=\"sec-head\"><h2 class=\"sec-title\">{}</h2>{sub}{chip}</div>",
+            esc(title),
+            chip = chip_html,
+        )
+    };
+    format!("<section class=\"sec\">{head}<div class=\"sec-body\">{body_html}</div>{foot}</section>")
 }
 
 // ---------------------------------------------------------------------------
@@ -622,7 +710,16 @@ pub fn note(html_inner: &str) -> String {
     format!("<p class=\"note\">{html_inner}</p>")
 }
 
-/// key → value row inside a panel. `value_html` is already-safe HTML.
+/// A short list of caveats. Each entry is already-safe HTML.
+pub fn notes(items: &[String]) -> String {
+    let inner: String = items
+        .iter()
+        .map(|n| format!("<li>{n}</li>"))
+        .collect();
+    format!("<ul class=\"notes\">{inner}</ul>")
+}
+
+/// key → value row inside a list. `value_html` is already-safe HTML.
 pub fn row(key: &str, value_html: &str) -> String {
     format!(
         "<div class=\"row\"><span class=\"k\">{}</span><span class=\"v\">{}</span></div>",
@@ -636,6 +733,7 @@ pub fn rows(inner: &str) -> String {
 }
 
 /// Compact list entry: title + sub line on the left, trailing HTML right.
+/// A hairline-separated ROW, not a box — five things read as five lines.
 /// `href` empty ⇒ not a link.
 pub fn item(href: &str, title_html: &str, sub_html: &str, trailing_html: &str) -> String {
     let inner = format!(
@@ -661,7 +759,20 @@ pub fn items(inner: &str) -> String {
 /// on tabular figures, "wrap" lets long prose wrap). Cells are already-safe
 /// HTML so rows can carry links, badges and mini-bars.
 pub fn table(head: &[(&str, &str)], body_rows: &[Vec<String>]) -> String {
-    let mut out = String::from("<div class=\"table-wrap\"><table class=\"data\"><thead><tr>");
+    table_classed(head, body_rows, "data")
+}
+
+/// Same, but every header cell sorts the table (see /table.js). Use where the
+/// reader's question decides the order — the execution matrix, above all.
+pub fn table_sortable(head: &[(&str, &str)], body_rows: &[Vec<String>]) -> String {
+    format!(
+        "{}<script src=\"/table.js\"></script>",
+        table_classed(head, body_rows, "data sortable")
+    )
+}
+
+fn table_classed(head: &[(&str, &str)], body_rows: &[Vec<String>], class: &str) -> String {
+    let mut out = format!("<div class=\"table-wrap\"><table class=\"{class}\"><thead><tr>");
     for (label, class) in head {
         out.push_str(&format!(
             "<th class=\"{}\">{}</th>",
@@ -714,10 +825,11 @@ pub fn cell_text(cell: &str) -> String {
 // Collapsible documents (inbox messages, ideas, worklogs, results)
 // ---------------------------------------------------------------------------
 
-/// `<details>` block: summary line + already-safe body HTML.
+/// `<details>` block: summary line + already-safe body HTML. A row with a
+/// disclosure triangle, not a card — the body is what deserves the space.
 pub fn doc(summary_html: &str, meta_html: &str, body_html: &str, open: bool) -> String {
     format!(
-        "<details class=\"doc\"{}><summary>{}<span class=\"doc-meta\">{}</span></summary><div class=\"doc-body\">{}</div></details>",
+        "<details class=\"doc\"{}><summary><span class=\"doc-title\">{}</span><span class=\"doc-meta\">{}</span></summary><div class=\"doc-body\">{}</div></details>",
         if open { " open" } else { "" },
         summary_html,
         meta_html,
@@ -761,6 +873,11 @@ pub fn fmt_prob(v: f64) -> String {
 /// Signed small metric (improvement, edge): 4 decimals with an explicit sign.
 pub fn fmt_signed(v: f64) -> String {
     format!("{}{:.4}", if v >= 0.0 { "+" } else { "−" }, v.abs())
+}
+
+/// A rate held as a fraction, shown as a percentage (0.1723 → "17.2%").
+pub fn fmt_pct(v: f64, decimals: usize) -> String {
+    format!("{:.*}%", decimals, v * 100.0)
 }
 
 /// "1 variant" / "3 variants" — every count chip goes through here.
