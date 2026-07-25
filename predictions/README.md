@@ -23,6 +23,17 @@ timestamp,market_slug,condition_id,outcome,token_id,family,variant,model,predict
 
 `edge = prediction − market_price` is derived, never stored.
 
+### Book state (planned schema addition, 2026-07-25)
+
+`market_price` is a CLOB midpoint, and a midpoint from a book with no resting orders is
+not a price at all (`wiki/reference/phantom-midpoints.md`). A paired improvement scored
+against a phantom midpoint is meaningless in both directions, so prediction rows must
+carry the book state that produced their market price. Planned columns: `bid`, `ask`,
+`depth_usd` (or a single `book_ok` flag when the full book is unavailable). Until they
+exist, variants must apply their own book-quality gate before emitting a row — ladder-rv
+already does (spread <= 5c, real depth) and correctly emitted nothing for boards quoting
+0.020/0.980.
+
 ## resolutions.csv
 
 ```

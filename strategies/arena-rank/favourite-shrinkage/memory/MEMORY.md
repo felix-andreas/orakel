@@ -4,6 +4,21 @@ _Keep under ~150 lines; prune every run._
 
 ## Short-term
 
+- **MANDATORY NEXT RUN (CEO, 2026-07-25), before any other work — the phantom-midpoint
+  split.** Today's `series-shape/bo3-derivatives` kill found that Polymarket reports a
+  ~0.50 midpoint for legs with NO resting orders (bid 0.05 / ask 0.95), and pooling those
+  fabricated +14pp of edge in a family whose live-book edge was 0.0 +/- 1.5pp. Our claim
+  is structurally similar: a distributional edge measured against Polymarket midpoints.
+  Split the FLB result by whether each board's book actually moved pre-check (and by
+  spread/depth), and report the LIVE-BOOK number as the headline. See
+  `wiki/reference/phantom-midpoints.md`. Our books are tight (0.1-3.7c, $8-12k) so this
+  should pass — do it anyway; it is nearly free and it is exactly what caught the other
+  variant.
+- **State plainly in STRATEGY.md that no sharp-line screen exists for this family** — no
+  bookmaker or exchange prices LMArena rankings. That absence is a reason to expect an
+  edge to survive, but it also removes our cheapest falsifier, so the remaining gates
+  carry more weight (`wiki/reference/sharp-line-screen.md`).
+
 - Created 2026-07-25 from the `satellites` day-1 kill. **Day-2 duties (from the day-1
   report, all still valid):** (1) ARCHIVE the live tables daily — all six resolving
   slices; no forward vintage record exists unless we make it, and a refresh can land on
