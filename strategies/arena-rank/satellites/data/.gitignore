@@ -1,0 +1,5 @@
+# raw pulls are frozen to R2 as tarballs (*.r2.json manifests are committed)
+poly/events/
+arena/
+*.tar.gz
+*.html
