@@ -1,7 +1,9 @@
 # Reading the real price of a thin market
 
 **Rule of thumb: spread > 10c or top-of-book < $100 ⇒ the midpoint is an artifact, not a
-consensus.** Price discovery then lives in the *tape* and *related markets*, not the book.
+consensus.** The quantified version of this warning — including the case where a *dead*
+book reports a ~0.50 midpoint and fabricates double-digit fake edge — is
+[phantom-midpoints](phantom-midpoints.md). Read it before pooling midpoints into any study. Price discovery then lives in the *tape* and *related markets*, not the book.
 (Origin: poly's Mt. Washington market — quoted "0.41" was the midpoint of a 0.25/0.57 book
 with a $3 top bid while real money transacted at 0.51–0.54.)
 

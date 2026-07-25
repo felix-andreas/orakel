@@ -63,6 +63,18 @@ can beat the marginal trader. Distilled from poly's scored runs (2026-07).
   an ordering over many public objects — so the competition is modelling skill rather
   than who bothered to look.
 
+## Before you spend a slot
+
+Run the cheap screens first, in this order — each has killed a real trial in one day:
+
+1. **[Sharp-line screen](reference/sharp-line-screen.md)** — if a bookmaker or exchange
+   prices this event, fetch their line. Minutes of work; killed a whole slot on 2026-07-25.
+2. **[Phantom-midpoint split](reference/phantom-midpoints.md)** — decompose the claimed
+   edge by whether the book actually moves. If it lives in the dead half, there is no edge.
+3. **Speed screen** — how fast does the mispricing close? Minutes means bots own it.
+4. **[Proxy-vs-primary](reference/published-ci-vs-printed.md)** — can the crowd run the
+   resolving source's own inputs? Then a proxy model is dominated before it is built.
+
 ## The test
 
 > Can a well-calibrated model, buildable from public data, know something this market's

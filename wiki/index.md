@@ -11,6 +11,9 @@ overlaps, pruning stale pages. One concept per file.
 
 ## Reference (base rates, biases, methods)
 
+- [reference/sharp-line-screen.md](reference/sharp-line-screen.md) — if a bookmaker prices it, check their line FIRST; cheapest kill we have
+- [reference/phantom-midpoints.md](reference/phantom-midpoints.md) — a dead book quotes 0.05/0.95 and the API calls it 0.51; pooling those fabricated +14pp of fake edge
+
 - [reference/favorite-longshot-bias.md](reference/favorite-longshot-bias.md) — tails rich, favorites shaved inside bucket families
 - [reference/recurring-crowd-calibration.md](reference/recurring-crowd-calibration.md) — cheap test: is this recurring market's crowd already calibrated?
 - [reference/delayed-execution-test.md](reference/delayed-execution-test.md) — re-run intraday backtests with t+15min fills; "is the edge inside the first 3 minutes?"
