@@ -1,7 +1,7 @@
 ---
 date: 2026-07-25
 slug: quake-ladder-overdispersion
-status: backlog        # backlog | trialing | discarded-idea | promoted
+status: trialing # -> strategies/count-overdispersion/quake-etas (slot 3, 2026-07-25)        # backlog | trialing | discarded-idea | promoted
 example_markets: ["how-many-5pt5-or-above-earthquakes-july-20-july-26-20260718184830018", "how-many-6pt5-or-above-earthquakes-july-20-july-26-20260718184921053", "how-many-6pt5-or-above-earthquakes-july-27-august-2-20260723165219436"]
 model: opus-5 (xhigh)
 summary: >-

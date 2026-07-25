@@ -1,0 +1,13 @@
+family = "count-overdispersion"
+variant = "quake-etas"
+summary = "Markets on how many earthquakes happen this week are priced as if quakes were independent. They cluster - aftershocks follow big ones - so the real spread of outcomes is twice as wide, and the extreme buckets are too cheap."
+status = "trial"
+created = "2026-07-25"
+supersedes = ""
+labels = ["class:shape-claim", "class:simulation", "data:usgs", "process:self-exciting", "family-type:count-ladders", "cadence:weekly", "no-sharp-line"]
+
+[trial]
+slot = 3
+started = "2026-07-25"
+review_due = "2026-08-04"
+success_guideline = "Gate 3 decides the trial: after the 0.05 fee and the book gate, does tradeable edge remain in FUNDABLE legs (>=3c), or does it sit only in sub-3c wings that fees make unfundable? Then: does the ETAS simulation beat the crude benchmark that produced the +0.110 log-loss signal (se 0.046, n=22 - one bad month from noise)? Weekly cadence means fast scoring."
