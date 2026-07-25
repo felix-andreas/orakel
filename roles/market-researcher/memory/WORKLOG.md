@@ -4,6 +4,58 @@ One dated entry per run. Name the exact model id that did the work.
 
 ---
 
+## 2026-07-25 — Netflix killed in research; arena-rank-satellites filed
+
+Model: **opus-5 (max)** — claude-opus-5. First run under the 2026-07-24 routing change
+(Opus 5 everywhere, max effort for this role; fable retired).
+
+- Onboarded on both kills + the three screens. Fresh scan (20 pages, 26,668 open market
+  rows). Backlog was empty, slot 2 free.
+- **Candidate 1, Netflix weekly Top-10 — measured hard, killed before filing.** Structure
+  looked close to ideal: 8 boards/week, 243 resolved instances, precise fine print
+  (global boards are **"English only"**; US boards resolve on country rank, global on
+  views), and — verified — *every* official Netflix publication lands before the market
+  opens, with nothing further until the resolving print, so Mon–Tue trades a frozen,
+  unpublished outcome. Netflix hands out complete free ground truth
+  (`all-weeks-{global,countries}.tsv`, 264 weeks × 94 countries). Measured on resolved
+  instances: crowd modal leg underpriced at all 7 checkpoints (Wed 0.651→won 0.750;
+  Mon-frozen 0.920→won 0.971, n=102), field legs in the 3–50c zone priced 0.08–0.12 vs
+  0.02–0.07 realized, taker flow ~$160k/wk arriving 71–88% in the frozen window,
+  "Other" wins 4.5%. Two independent kill findings: (a) the executable side is missing —
+  bids are $0–96 top-of-book while tail *asks* are deep, so the sell-the-field direction
+  cannot be filled; (b) decisive — a decay model fitted on Netflix's own 264 weeks scores
+  **23% (shows) / 42% (films) argmax vs the market's 77% / 83%** at Thursday. The crowd
+  has an observation channel we don't (in-app daily Top 10; FlixPatrol 403 from this box).
+  Same shape as the gistemp kill, caught for one day of research instead of a slot.
+- **Candidate 2, filed: `ideas/2026-07-25-arena-rank-satellites.md`.** Monthly
+  arena.ai/LMArena family — 7+ boards resolving off ONE Text-Arena Rank column read at
+  ONE instant, liquidity spanning 250× ($30,299 WebDev → $7,587,062 #1-overall), spreads
+  spanning 37×. Thesis inverts the deep-book rule: the efficient $7.6M board is a free
+  sharp anchor on the same latent ranking that seven thin satellites price separately.
+  Two mechanical mispricings: company boards are order statistics over *portfolios*
+  (Anthropic holds ranks 1,2,3,4,6 today), and the Rank column is an estimate whose
+  publisher stamps every row with ±CI, vote count, Preliminary flag and an explicit Rank
+  Spread (rank 1 → "1–5", rank 10 → "4–27"). Screen 2 passes structurally: the upstream
+  is a private vote stream, so *nobody* can hold a better feed — the published table is
+  the primary for every participant, and a cache-busted fetch confirmed we hold the same
+  Jul-21 vintage. Live incoherence evidence: WebDev-Aug legs sum 1.222 vs Math-Aug 0.934;
+  Moonshot priced 0.001 / 0.017 / 0.182 / 0.662 across four boards on one ranking; the
+  $655k Chinese board has Alibaba 0.786 vs Moonshot 0.182 while the table has Moonshot
+  11 points ahead. 6 kill gates incl. gate-0 resolution reproduction, refresh-lifetime
+  speed gate, paired log-loss, a portfolio-effect gate, t+24h delayed exec, capacity.
+  Whole July cohort checks 2026-07-31 → a trial scores in six days, then monthly.
+- Screen 3 has real teeth here and is written into the file: the leaderboard is
+  *recomputed retroactively* at each refresh, so today's table resolved nothing; Wayback
+  has 500 captures 2025-05-28→2026-01-28 and **zero after**, so Feb–Jul 2026 instances
+  are unscoreable and we must archive the live table ourselves from day 1.
+- Wiki maintenance: new SELECT AGAINST bullet in `wiki/market-selection.md` —
+  **"glanceable within-window state"**, the sibling of proxy-vs-primary, earned by the
+  Netflix numbers, with the corollary on where to look instead (state hidden from the
+  amateur too). Memory pruned and restructured; API gotchas recorded (prices-history
+  `interval=max` 30-day cap, placeholder legs pinned at 0.500, Wayback CDX needs https).
+
+---
+
 ## 2026-07-24 — Felix directive: market-specific data sources; gistemp idea filed
 
 Model: fable (high). Governing input: inbox
