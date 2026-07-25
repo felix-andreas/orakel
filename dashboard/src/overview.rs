@@ -282,7 +282,7 @@ fn model_vs_market(p: &Table) -> String {
     let above = pts.iter().filter(|(mp, our, _)| our < mp).count();
     let legend = "<div class=\"legend\"><span><i></i>market price</span><span><i class=\"c2 dotmark\"></i>our probability</span></div>";
     let script = format!(
-        r#"<div class="chart" id="chart-mm"></div>
+        r#"<div class="chart chart-lg" id="chart-mm"></div>
 <script src="/charts.js"></script>
 <script>
 Chart.line(document.getElementById("chart-mm"), {{series:[

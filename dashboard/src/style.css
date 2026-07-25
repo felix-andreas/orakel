@@ -1699,6 +1699,12 @@ select:hover {
   height: 13rem;
 }
 
+/* The dashboard's dominant chart: taller because the distribution is the point,
+   not because the column beside it is long. */
+.chart-lg {
+  height: 20rem;
+}
+
 .chart svg {
   display: block;
 }
@@ -2026,6 +2032,9 @@ select:hover {
   }
   .chart-sm {
     height: 11rem;
+  }
+  .chart-lg {
+    height: 15rem;
   }
   .prose table {
     font-size: var(--fs-xs);
