@@ -18,6 +18,15 @@ metric nobody can interpret.
   professional. Panels that hold one number are not panels.
 - **Vertical space is the scarcest resource.** Headline boxes must be compact; the
   content people came for should be visible without scrolling.
+- **Cards are the exception, not the container.** A card is a claim that its contents are
+  a distinct object worth a border. Most content is not. Prefer **sections separated by
+  space and a heading**; use a card only where a bordered box genuinely aids scanning.
+- **Never nest a card in a card.** If you find yourself doing it, the hierarchy belongs in
+  headings and spacing, not in borders. Nested boxes cost horizontal room, double the
+  padding, and communicate nothing.
+- **Density is a feature.** Wasted vertical space is wasted bandwidth. On mobile
+  especially, card padding is the main thief — a list of five things should read as five
+  lines, not five boxes.
 - **Tables over cards** for anything with more than three attributes. Expandable rows
   beat separate pages for hierarchy (family → variants).
 - **Plain English, no jargon.** Every strategy, run and decision needs a one-sentence
