@@ -1758,6 +1758,20 @@ details.doc.doc-plain > summary:hover {
   font-size: var(--fs-xs);
 }
 
+/* A failed repo read. There is no fallback data source, so this is an error,
+   not a notice — it must not read as "showing you something older". */
+.banner-bad {
+  align-items: flex-start; /* the text wraps; the icon stays on the first line */
+  border-color: var(--bad-border);
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+
+.banner-bad svg {
+  flex: none;
+  margin-top: 0.125rem;
+}
+
 /* ============================ form controls ============================ */
 
 select {

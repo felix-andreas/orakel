@@ -11,7 +11,7 @@ use crate::render::{
     self, badge, esc, fmt_int, fmt_prob, fmt_signed, fmt_ts, item, items, section, section_foot,
     stat, stat_grid, table, table_scroll,
 };
-use crate::{json_str, shell, snapshot_banner, trail};
+use crate::{json_str, shell, trail};
 use worker::Env;
 
 // ---------------------------------------------------------------------------
@@ -33,9 +33,8 @@ pub async fn page(env: &Env) -> String {
     let s = Table::parse(&scores.text);
     let r = Table::parse(&resolutions.text);
 
-    let banner = if all_live { String::new() } else { snapshot_banner() };
     let body = format!(
-        "{banner}{kpis}{who}{log}<div class=\"grid-pair\">{scoring}{res}</div>",
+        "{kpis}{who}{log}<div class=\"grid-pair\">{scoring}{res}</div>",
         kpis = kpi_strip(&p, &d, &s, &r),
         who = attribution(&p, &metas),
         log = log_panel(&p, &d, &r, &metas),
@@ -481,8 +480,7 @@ pub async fn market(env: &Env, slug: &str) -> String {
     ]);
 
     let body = format!(
-        "{banner}{kpis}<div class=\"grid-main\">{chart}{facts}</div>{log}",
-        banner = if all_live { String::new() } else { snapshot_banner() },
+        "{kpis}<div class=\"grid-main\">{chart}{facts}</div>{log}",
         kpis = kpis,
         chart = market_chart(&p, &rows, slug),
         facts = market_facts(&p, &r, &rows, first, latest, resolution, &family, &variant, &metas),

@@ -103,6 +103,7 @@ pub fn icon(name: &str) -> String {
         "layers" => r#"<path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/>"#,
         "bolt" => r#"<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/>"#,
         "clock" => r#"<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>"#,
+        "alert" => r#"<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/>"#,
         "check" => r#"<path d="m5 13 4 4 10-10"/>"#,
         "sun" => r#"<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>"#,
         "moon" => r#"<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/>"#,
@@ -252,9 +253,13 @@ pub fn crumb(label: &str, href: &str) -> Crumb {
 pub struct Freshness {
     /// true ⇒ every read on this page came from GitHub at request time.
     pub live: bool,
-    /// Timestamp shown next to the dot (state date when live, build stamp otherwise).
+    /// Repo timestamp shown next to the dot. Empty when nothing could be read.
     pub stamp: String,
     pub build: String,
+    /// What went wrong, in words. `Some` ⇒ the page is showing an incomplete
+    /// picture and the banner says why. There is no fallback data source, so
+    /// this is never "here is an older copy" — it is "this is missing".
+    pub reason: Option<String>,
 }
 
 /// The settings popover: theme (light / dark / system), density, sidebar
@@ -380,10 +385,12 @@ pub fn layout(
         .map(|c| c.label.clone())
         .unwrap_or_else(|| "Dashboard".to_string());
 
-    let (dot, source) = if fresh.live {
-        ("dot dot-ok", "live")
+    // There is no second source of data, so "not live" means "not shown", not
+    // "shown from a snapshot". The indicator has to read as a fault.
+    let (dot, source, stamp_html) = if fresh.live {
+        ("dot dot-ok", "live", format!(" · {}", esc(&fresh.stamp)))
     } else {
-        ("dot dot-warn", "snapshot")
+        ("dot dot-bad", "cannot read repo", String::new())
     };
 
     format!(
@@ -415,13 +422,13 @@ pub fn layout(
       {wordmark_bar}
       <nav class="crumbs" aria-label="Breadcrumb">{crumb_html}</nav>
       <div class="topbar-right">
-        <span class="updated" title="Data freshness"><span class="{dot}"></span>{source} · {stamp}</span>
+        <span class="updated" title="Data freshness"><span class="{dot}"></span>{source}{stamp}</span>
         <label class="burger" for="nav-toggle" aria-label="Toggle navigation">{burger}</label>
       </div>
     </div>
 {subbar}
     <main class="content">
-{body}
+{fetch_error}{body}
     </main>
     <footer class="footer">
       <span>orakel — agentic prediction-market research firm</span>
@@ -518,7 +525,13 @@ pub fn layout(
         crumb_html = crumb_html,
         dot = dot,
         source = source,
-        stamp = esc(&fresh.stamp),
+        stamp = stamp_html,
+        // Rendered here rather than by each page, so a page cannot forget it.
+        fetch_error = fresh
+            .reason
+            .as_deref()
+            .map(crate::fetch_error_banner)
+            .unwrap_or_default(),
         build = esc(&fresh.build),
         body = body,
     )

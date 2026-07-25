@@ -2,10 +2,12 @@
 //!
 //! Data path: LIVE reads at request time — repo files from the GitHub API
 //! (src/live.rs, 60s Cache API caching) and hourly book snapshots from R2
-//! (src/snapshots.rs). Every repo file the dashboard can render is ALSO
-//! embedded at build time (build.rs → the pack in src/data.rs), so without the
-//! GITHUB_TOKEN secret the whole dashboard still renders — from the build's
-//! snapshot, flagged as such in the top bar. It never shows an error page.
+//! (src/snapshots.rs). **There is no fallback copy of the repo.** Earlier
+//! builds compiled every renderable file into the Worker and served that when
+//! GitHub was unreachable; the result was that an outage looked like a working
+//! dashboard quietly showing outdated numbers, which is the worst failure this
+//! thing can have. A read that fails now renders as an error, with the reason,
+//! and the top bar says `cannot read repo` instead of a timestamp.
 //!
 //! Information architecture (src/render.rs NAV):
 //!   Overview     Dashboard · Daily runs · Execution
@@ -215,16 +217,26 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
 // ---------------------------------------------------------------------------
 
 /// Freshness indicator for the top bar. `live` is the AND of every read the
-/// page made; the stamp is the repo's last commit time when live, otherwise
-/// the build stamp (which is exactly what the embedded pack is from).
+/// page made; the stamp is the repo's last commit time. There is no fallback
+/// source, so when a read fails the page is showing an incomplete picture and
+/// has to say so — `reason` carries what GitHub actually told us.
 pub async fn freshness(env: &Env, live: bool) -> Freshness {
-    // No reachable HEAD ⇒ no live reads happened, whatever the caller thinks.
     let head = live::head_commit_date(env).await;
-    let live = live && head.is_some();
+    let reason = match &head {
+        Ok(_) if live => None,
+        // HEAD is reachable but some read on this page was not: the cause is
+        // per-file (a path that 5xx'd, a truncated body), not repo-wide.
+        Ok(_) => Some(
+            "Part of this page could not be read from the repository. What you see may be incomplete."
+                .to_string(),
+        ),
+        Err(e) => Some(e.clone()),
+    };
     Freshness {
-        live,
-        stamp: render::fmt_ts(&head.unwrap_or_else(|| BUILD_TIMESTAMP.to_string())),
+        live: live && head.is_ok(),
+        stamp: render::fmt_ts(head.as_deref().unwrap_or(BUILD_TIMESTAMP)),
         build: BUILD_TIMESTAMP.to_string(),
+        reason,
     }
 }
 
@@ -247,12 +259,18 @@ pub async fn shell_sub(
     render::layout(active, &crumbs, subbar, body, &fresh)
 }
 
-/// Shown at the top of a page whose data came from the build-time pack.
-pub fn snapshot_banner() -> String {
+/// Shown at the top of a page that could not read everything it needed.
+///
+/// The dashboard has no second copy of the repo to fall back to — by design,
+/// since a stale copy served silently is worse than a visible gap. So this
+/// banner is an error, not a notice: it says what is missing and why.
+pub fn fetch_error_banner(reason: &str) -> String {
     format!(
-        "<div class=\"banner\">{} Live GitHub reads are unavailable — showing the repo snapshot embedded at build time ({}). Set the GITHUB_TOKEN worker secret to read main at request time.</div>",
-        render::icon("clock"),
-        render::esc(BUILD_TIMESTAMP)
+        "<div class=\"banner banner-bad\">{} <strong>Some of this page is missing.</strong> {} \
+         Nothing below is a cached or older copy — the dashboard reads <span class=\"mono\">main</span> \
+         at request time and shows only what it could read.</div>",
+        render::icon("alert"),
+        render::esc(reason)
     )
 }
 

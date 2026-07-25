@@ -2,13 +2,13 @@
 //!
 //! Two layers:
 //!
-//! 1. **Reads.** `text()` fetches a repo file live from GitHub (src/live.rs) and
-//!    falls back to the build-time EMBEDDED PACK — one `include_str!` of every
-//!    renderable repo file, staged by build.rs. The pack means every page works
-//!    without the `GITHUB_TOKEN` secret (it renders the build's snapshot and
-//!    says so in the top bar), instead of showing an empty state.
-//!    `tree()` likewise returns the live recursive listing, or the pack's file
-//!    list as fallback.
+//! 1. **Reads.** `text()` fetches a repo file live from GitHub (src/live.rs).
+//!    There is no fallback: `main` at request time is the only source of truth,
+//!    and a read that fails returns empty text with `live: false` so the page
+//!    can say so. Earlier builds compiled a copy of the repo into the Worker
+//!    and served it during an outage, which made a broken dashboard look like a
+//!    working one showing quietly outdated numbers.
+//!    `tree()` likewise returns the live recursive listing, or nothing.
 //!
 //! 2. **Parsing.** `Table` for the canonical CSVs (column access by NAME, so a
 //!    schema that gains a column doesn't break the dashboard) and small
@@ -16,33 +16,6 @@
 
 use crate::live;
 use worker::Env;
-
-/// Every renderable repo text file, concatenated by build.rs.
-/// Format: `\x1e<path>\n<body>` records.
-const PACK: &str = include_str!(concat!(env!("OUT_DIR"), "/pack.txt"));
-
-// ---------------------------------------------------------------------------
-// Embedded pack
-// ---------------------------------------------------------------------------
-
-fn pack_records() -> impl Iterator<Item = (&'static str, &'static str)> {
-    PACK.split('\u{1e}')
-        .skip(1)
-        .filter_map(|chunk| chunk.split_once('\n'))
-}
-
-/// Embedded body of a repo file (empty string when it isn't in the pack).
-pub fn embedded(path: &str) -> &'static str {
-    pack_records()
-        .find(|(p, _)| *p == path)
-        .map(|(_, body)| body)
-        .unwrap_or("")
-}
-
-/// Every path in the embedded pack, sorted (build.rs sorts before writing).
-pub fn embedded_paths() -> Vec<String> {
-    pack_records().map(|(p, _)| p.to_string()).collect()
-}
 
 // ---------------------------------------------------------------------------
 // Reads
@@ -60,17 +33,19 @@ impl Doc {
     }
 }
 
-/// A repo file, live when possible, embedded otherwise.
+/// A repo file at request time. Empty text with `live: false` when the read
+/// failed — never a stale copy.
 pub async fn text(env: &Env, path: &str) -> Doc {
-    let f = live::repo_text(env, path, embedded(path)).await;
+    let f = live::repo_text(env, path).await;
     Doc { text: f.text, live: f.live }
 }
 
-/// Every repo path, live when possible, embedded pack listing otherwise.
+/// Every repo path. An unreadable listing yields no paths and `false`, so the
+/// page shows its error rather than an empty repo.
 pub async fn tree(env: &Env) -> (Vec<String>, bool) {
     match live::repo_tree(env).await {
         Some(paths) => (paths, true),
-        None => (embedded_paths(), false),
+        None => (Vec::new(), false),
     }
 }
 
@@ -163,7 +138,7 @@ pub fn mean(t: &Table, rows: &[&Vec<String>], col: &str) -> Option<f64> {
 }
 
 // ---------------------------------------------------------------------------
-// Repo structure discovery (works on live or embedded path listings)
+// Repo structure discovery (over a path listing)
 // ---------------------------------------------------------------------------
 
 /// `strategies/<family>/<variant>/strategy.toml` → (family, variant), sorted.
@@ -237,7 +212,7 @@ pub fn parse_variant_meta(family: &str, variant: &str, src: &str) -> VariantMeta
 }
 
 /// Every variant in the repo, with its manifest read. Returns `live = false`
-/// if any read fell back to the embedded pack.
+/// if any manifest could not be read.
 pub async fn variant_metas(env: &Env, paths: &[String]) -> (Vec<VariantMeta>, bool) {
     let mut out = Vec::new();
     let mut live = true;

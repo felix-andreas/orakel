@@ -26,7 +26,7 @@ use crate::render::{
     self, badge, chip_row, esc, fmt_int, fmt_prob, fmt_signed, fmt_ts, icon, item, items,
     markdown_body, section, section_foot, stat_line, table, table_scroll,
 };
-use crate::{shell, shell_sub, snapshot_banner, trail};
+use crate::{shell, shell_sub, trail};
 use worker::Env;
 
 /// Where a repo file can be read in full — for result artifacts the dashboard
@@ -218,8 +218,7 @@ pub async fn index(env: &Env) -> String {
     }
 
     let body = format!(
-        "{banner}{stats}{table}",
-        banner = if all_live { String::new() } else { snapshot_banner() },
+        "{stats}{table}",
         stats = stats,
         table = section_foot(
             "Families",
@@ -630,8 +629,7 @@ pub async fn family(env: &Env, family: &str, want_tab: Option<String>) -> String
     };
 
     let body = format!(
-        "{banner}{stats}{content}",
-        banner = if all_live { String::new() } else { snapshot_banner() },
+        "{stats}{content}",
         stats = stats,
         content = content,
     );
@@ -1023,8 +1021,7 @@ pub async fn variant(env: &Env, family: &str, variant: &str, want_tab: Option<St
     };
 
     let body = format!(
-        "{banner}{stats}{content}",
-        banner = if all_live { String::new() } else { snapshot_banner() },
+        "{stats}{content}",
         stats = stats,
         content = content,
     );

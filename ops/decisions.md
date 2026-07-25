@@ -5,6 +5,41 @@ who decided**. Newest first.
 
 ---
 
+## 2026-07-25 — Dashboard has no fallback copy of the repo: it reads `main` or shows an error
+
+The Worker compiled every renderable repo file into its own binary (~170 files, ~1.0 MiB)
+and served that whenever a GitHub read failed. Felix called it: we don't need it, show an
+error instead. Removed.
+
+The reason it had to go is not the megabyte, it is the failure mode. A dashboard that
+silently swaps in a build-time copy during an outage does not look broken — it looks like
+a working dashboard showing numbers that happen to be old. Every number on it is a claim
+about the firm's current state, so an invisible fallback is a machine for producing
+confident wrong answers. A visible gap is strictly better than a plausible stale one, and
+that is the same principle as the fillable-count decision above: prefer the honest hole.
+
+- `main` at request time is the only source of truth. A failed read yields empty text.
+- The top bar reads **`cannot read repo`** instead of a timestamp, and a red banner names
+  the cause: no token, 401 (token revoked), 403 (rate limit or scope), 5xx (upstream).
+- The banner is rendered once in `render::layout` from the freshness state, not by each
+  page — a page cannot forget it. That deleted 15 per-page banner call sites.
+- Transient failures (network, 5xx) are retried once. A retry costs one subrequest and no
+  staleness, unlike serving an old copy; 401/403/404 are definitive and never retried.
+- Bundle: 2390 KiB → 1306 KiB raw, 781 KiB → 521 KiB gzipped (−45%). Repo edits also no
+  longer trigger a Worker rebuild, since nothing outside `src/` is compiled in.
+
+Verified with the token removed: every route still returns 200, renders its empty state
+plus the error banner, and leaks **zero** repo content (grep for `barrier-touch` on the
+no-token render: 0 hits). With the token, 76 loads across every route showed one failure —
+the first request against a freshly deployed version. It is rare, it is now visible by
+design, and a reload clears it. Decided by Felix, implemented by the CEO (claude-opus-5).
+
+Worth being precise about one thing, since it came up: we do **not** mirror the repo to
+R2. The bucket holds hourly market book snapshots written by `workers/snapshot`, and
+`tools/r2data` blobs. The thing just deleted was a copy compiled into the Worker binary.
+
+---
+
 ## 2026-07-25 — Scoring reports tradeability next to calibration; the first batch was 2/21 fillable
 
 Our first scored batch was 21 predictions, all `barrier-touch/ladder-rv`, and all 21 beat the

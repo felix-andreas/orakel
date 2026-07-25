@@ -93,7 +93,7 @@ first-class token blocks, and the four density tokens (`--gap`, `--pad-page`, `-
 own `# ` heading would repeat the breadcrumb or section title, it becomes the section
 title instead of being printed twice (`render::md_title` / `markdown_body`).
 
-## Data: live reads, complete embedded fallback
+## Data: live reads, no fallback
 
 - **GitHub API** (`src/live.rs`): file bodies via the Contents API
   (`Accept: application/vnd.github.raw+json`), all directory listings derived from ONE
@@ -101,17 +101,15 @@ title instead of being printed twice (`render::md_title` / `markdown_body`).
   Responses are cached ~60s in the Workers Cache API keyed on the API URL (404s too).
   Requires the `GITHUB_TOKEN` worker secret (fine-grained PAT, read-only *Contents* on
   felix-andreas/orakel).
-- **Embedded repo pack** (`build.rs` → `src/data.rs`): every renderable repo text file
-  (`ops/`, `predictions/`, `ideas/`, `wiki/`, `strategies/` markdown + TOML + CSV,
-  `roles/*/inbox/*.md`, and all of `execution/results/` **including the per-run JSON** the
-  equity curves are drawn from) is concatenated into ONE file staged in `OUT_DIR` and
-  pulled in with a single `include_str!` — ~170 files, ~1.0 MiB. The engine's source tree
-  and the raw signal sets are excluded on purpose: `execution/signals/ladder-rv-hist.csv`
-  alone is 1.8 MiB and nothing renders it. Without the PAT the **whole**
-  dashboard still renders from that snapshot (every page, including runs, strategies and
-  ideas, which v2 could only show as empty states); the top bar says `snapshot` instead of
-  `live` and a banner names the build. `data::tree()` falls back to the pack's file list,
-  so directory discovery works offline too.
+- **No fallback copy.** Until 2026-07-25 `build.rs` also concatenated every renderable
+  repo file (~170 files, ~1.0 MiB) into the binary, and the Worker served that whenever
+  GitHub was unreachable. It was removed: an outage then looked like a working dashboard
+  quietly showing outdated numbers, which is the worst failure this thing can have — and
+  the pack was 45% of the bundle. `main` at request time is now the only source of truth.
+  A failed read yields empty text, the top bar reads `cannot read repo` instead of a
+  timestamp, and a red banner names the cause (no token / 401 / 403 rate limit / 5xx).
+  Transient failures (network, 5xx) are retried once — a retry costs one subrequest and no
+  staleness, unlike serving an old copy. 401/403/404 are definitive and never retried.
 - **R2 binding `ORAKEL`** (`src/snapshots.rs`): hourly
   `snapshots/books/<YYYY-MM-DD>/<HH>.json.gz` objects. Binding gets return the stored
   gzipped bytes verbatim (the `content_encoding=gzip` metadata is HTTP-layer only), so
@@ -151,11 +149,11 @@ Chart.bar (el, { bars: [{ label, v, tone }] }, opts)
 dashboard/
 ├── Cargo.toml          # cdylib crate: worker, toml, pulldown-cmark, serde_json, flate2
 ├── wrangler.toml       # name=orakel-dashboard, build via worker-build, R2 binding
-├── build.rs            # BUILD_TIMESTAMP + the embedded repo pack
+├── build.rs            # BUILD_TIMESTAMP (nothing else — no embedded pack)
 └── src/
     ├── lib.rs          # router, page shell plumbing, static assets
     ├── render.rs       # layout (sidebar, breadcrumbs, theme toggle) + components
-    ├── data.rs         # pack + live reads, CSV Table, repo discovery, dates
+    ├── data.rs         # live reads, CSV Table, repo discovery, dates
     ├── live.rs         # GitHub API with Cache API caching
     ├── snapshots.rs    # R2 book snapshots and series endpoints
     ├── overview.rs     # / dashboard
@@ -230,15 +228,15 @@ worker-build --release --no-opt          # --no-opt skips the blocked wasm-opt
 
 `wrangler.toml`'s build command already falls back to `--no-opt` automatically, so
 `npx wrangler deploy` works in both restricted and unrestricted environments (export
-`WASM_BINDGEN_BIN` first in restricted ones). Unoptimised output with the embedded pack is
-~2.4 MiB raw / ~775 KiB gzipped (the execution results account for ~140 KiB of that) —
+`WASM_BINDGEN_BIN` first in restricted ones). Since the embedded pack was dropped the
+deployed bundle is ~1.31 MiB raw / ~521 KiB gzipped, down from ~2.39 MiB / ~781 KiB —
 well inside the Workers limit, which is on the compressed size.
 
 Which downloads are blocked is not fixed: in an agent session on 2026-07-25 only
 `wasm-bindgen` needed the workaround — with `WASM_BINDGEN_BIN` exported, worker-build's
 `wasm-opt` download went through and the optimised pipeline ran end to end (1.59 MiB raw /
-636 KiB gzipped; larger than the figure above only because the embedded pack has grown, not
-because of `wasm-opt`). Export `WASM_BINDGEN_BIN` and let the fallback decide the rest.
+636 KiB gzipped at the time, when the pack was still embedded). Export `WASM_BINDGEN_BIN`
+and let the fallback decide the rest.
 
 Two gotchas baked into the config, do not undo them:
 
@@ -263,11 +261,11 @@ CLOUDFLARE_API_TOKEN=... npx wrangler deploy
 - The token needs the *Edit Cloudflare Workers* permission template. It is **not** in the
   repo; presence is tracked in `ops/state.toml` `[secrets]`.
 - **Live repo reads need the `GITHUB_TOKEN` worker secret**:
-  `npx wrangler secret put GITHUB_TOKEN` (**set 2026-07-25**, live reads verified). Until it
-  is set every page renders the embedded build-time pack and says so. `secret put` deploys a
+  `npx wrangler secret put GITHUB_TOKEN` (**set 2026-07-25**, live reads verified). Without
+  it every page renders its error banner and no content at all. `secret put` deploys a
   new version by itself — no rebuild needed to turn live reads on — but allow a few seconds
   before the change shows.
-- **Verifying live vs snapshot** (the reliable check, since the word `live` also appears in
+- **Verifying live reads** (the reliable check, since the word `live` also appears in
   page content): the top-bar indicator is `dot-ok</span>live · <stamp>` and `stamp` is the
   **HEAD commit time of `main`**, while the footer carries the build time. Live reads are
   proven when the stamp is *newer* than the footer's build stamp — a request-time read is

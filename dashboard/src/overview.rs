@@ -17,7 +17,7 @@ use crate::render::{
     self, badge, esc, fmt_int, fmt_prob, fmt_signed, fmt_tokens, item, items, minibar, section,
     section_foot, stat, stat_grid, table,
 };
-use crate::{json_str, shell, snapshot_banner, trail};
+use crate::{json_str, shell, trail};
 use worker::Env;
 
 pub async fn page(env: &Env) -> String {
@@ -57,9 +57,8 @@ pub async fn page(env: &Env) -> String {
         runs.push((stem, data::toml_of(&doc.text)));
     }
 
-    let banner = if all_live { String::new() } else { snapshot_banner() };
     let body = format!(
-        "{banner}{headline}{band2}{band3}{band4}",
+        "{headline}{band2}{band3}{band4}",
         headline = headline(&p, &d, &s, &r, &x, &state, &metas, &runs),
         band2 = format!(
             "<div class=\"grid-main\">{}{}</div>",

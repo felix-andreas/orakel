@@ -22,7 +22,7 @@
 
 use crate::data::{self, Table, VariantMeta};
 use crate::render::{self, badge, esc, fmt_int, fmt_tokens, section_foot, stat_line, table};
-use crate::{shell, snapshot_banner, trail};
+use crate::{shell, trail};
 use worker::Env;
 
 pub async fn page(env: &Env) -> String {
@@ -73,15 +73,11 @@ pub async fn page(env: &Env) -> String {
     let p = Table::parse(&preds.text);
     let r = Table::parse(&resolutions.text);
     let d = Table::parse(&detail.text);
-    let banner = if all_live { String::new() } else { snapshot_banner() };
 
     if runs.is_empty() {
-        let body = format!(
-            "{banner}{}",
-            render::empty_state(
-                "No runs yet",
-                "<div>The CEO writes one manifest to <span class=\"mono\">ops/runs/</span> at the end of every run.</div>",
-            )
+        let body = render::empty_state(
+            "No runs yet",
+            "<div>The CEO writes one manifest to <span class=\"mono\">ops/runs/</span> at the end of every run.</div>",
         );
         return shell(env, "/runs", trail(&[("Overview", ""), ("Daily runs", "")]), all_live, &body)
             .await;
@@ -127,7 +123,7 @@ pub async fn page(env: &Env) -> String {
     }
 
     let body = format!(
-        "{banner}{stats}{list}",
+        "{stats}{list}",
         stats = summary_line(&runs, &p),
         list = section_foot(
             "What happened, day by day",

@@ -11,7 +11,7 @@ use crate::render::{
     section_foot, stat_line, table,
 };
 use crate::snapshots;
-use crate::{shell, snapshot_banner, trail};
+use crate::{shell, trail};
 use serde_json::Value;
 use worker::Env;
 
@@ -175,8 +175,7 @@ pub async fn state(env: &Env) -> String {
     }
 
     let body = format!(
-        "{banner}{stats}<div class=\"grid-main\">{slots}{strategies}</div><div class=\"grid-3\">{cadence}{models}{roles}</div><div class=\"grid-pair\">{secrets}{cf}</div>{note}",
-        banner = if all_live { String::new() } else { snapshot_banner() },
+        "{stats}<div class=\"grid-main\">{slots}{strategies}</div><div class=\"grid-3\">{cadence}{models}{roles}</div><div class=\"grid-pair\">{secrets}{cf}</div>{note}",
         stats = stats,
         slots = section_foot(
             "Research slots",
@@ -228,11 +227,7 @@ pub async fn decisions(env: &Env) -> String {
     let entries = split_entries(&f.text);
 
     let body = if entries.is_empty() {
-        format!(
-            "{}{}",
-            if f.live { String::new() } else { snapshot_banner() },
-            render::empty_state("No decisions recorded yet", ""),
-        )
+        render::empty_state("No decisions recorded yet", "")
     } else {
         let mut list = String::new();
         for (date, what, detail) in &entries {
@@ -245,8 +240,7 @@ pub async fn decisions(env: &Env) -> String {
             ));
         }
         format!(
-            "{banner}{stats}{panel}",
-            banner = if f.live { String::new() } else { snapshot_banner() },
+            "{stats}{panel}",
             stats = stat_line(&[
                 (fmt_int(entries.len() as i64), "structural changes".to_string(), ""),
                 (
@@ -381,8 +375,7 @@ pub async fn inboxes(env: &Env) -> String {
     }
 
     let body = format!(
-        "{banner}{kpis}{panels}",
-        banner = if all_live { String::new() } else { snapshot_banner() },
+        "{kpis}{panels}",
         kpis = stat_line(&[
             (fmt_int(total as i64), "messages waiting".to_string(), ""),
             (fmt_int(role_count as i64), "role inboxes".to_string(), ""),
@@ -488,8 +481,7 @@ pub async fn ideas(env: &Env) -> String {
         .count();
 
     let body = format!(
-        "{banner}{kpis}{panel}",
-        banner = if all_live { String::new() } else { snapshot_banner() },
+        "{kpis}{panel}",
         kpis = stat_line(&[
             (fmt_int(files.len() as i64), "ideas filed".to_string(), ""),
             (fmt_int(trialing as i64), "taken to trial".to_string(), "warn"),
@@ -571,8 +563,7 @@ pub async fn wiki(env: &Env) -> String {
     }
 
     let body = format!(
-        "{banner}{kpis}<div class=\"grid-main\">{index_panel}{groups}</div>",
-        banner = if all_live { String::new() } else { snapshot_banner() },
+        "{kpis}<div class=\"grid-main\">{index_panel}{groups}</div>",
         kpis = stat_line(&[
             (fmt_int(pages.len() as i64), "pages".to_string(), ""),
             (fmt_int(groups.len() as i64), "sections".to_string(), ""),

@@ -27,7 +27,7 @@ use crate::render::{
     self, badge, esc, fmt_int, markdown_body, notes, section, section_foot, stat, stat_grid,
     table_sortable,
 };
-use crate::{shell, snapshot_banner, trail};
+use crate::{shell, trail};
 use worker::Env;
 
 /// Canonical policy order (execution/README.md) — also the colour order in the
@@ -220,13 +220,9 @@ pub async fn page(env: &Env, version: u32, doc: Option<String>) -> String {
     let runs = parse(&t);
 
     if runs.is_empty() {
-        let body = format!(
-            "{}{}",
-            if all_live { String::new() } else { snapshot_banner() },
-            render::empty_state(
-                "No results yet",
-                "<div>The engine writes <span class=\"mono\">execution/results/summary.csv</span> when it runs.</div>",
-            )
+        let body = render::empty_state(
+            "No results yet",
+            "<div>The engine writes <span class=\"mono\">execution/results/summary.csv</span> when it runs.</div>",
         );
         return shell(
             env,
@@ -384,8 +380,7 @@ pub async fn page(env: &Env, version: u32, doc: Option<String>) -> String {
     );
 
     let body = format!(
-        "{banner}<p class=\"lede\">Eight named ways of trading our signals, replayed against every signal set we have and priced against a spread. The question is not how many cents a trade earns — it is how much a year the capital each trade ties up earns, and whether the sample is big enough to believe.</p>{headline}{control}{sets}{curves}{reading}",
-        banner = if all_live { String::new() } else { snapshot_banner() },
+        "<p class=\"lede\">Eight named ways of trading our signals, replayed against every signal set we have and priced against a spread. The question is not how many cents a trade earns — it is how much a year the capital each trade ties up earns, and whether the sample is big enough to believe.</p>{headline}{control}{sets}{curves}{reading}",
         headline = headline,
         control = control,
         sets = set_sections,
