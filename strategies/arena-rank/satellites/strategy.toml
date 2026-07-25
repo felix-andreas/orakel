@@ -1,0 +1,12 @@
+family = "arena-rank"
+variant = "satellites"
+status = "trial"
+created = "2026-07-25"
+supersedes = ""
+labels = ["class:relative-value", "class:order-statistics", "data:lmarena", "anchor:deep-board", "family-type:multi-board-cohort", "screen:no-sharp-incumbent"]
+
+[trial]
+slot = 2
+started = "2026-07-25"
+review_due = "2026-08-04"
+success_guideline = "backtest gates from the idea pass on prior monthly cohorts; then paired Brier beating market on satellite boards; July cohort resolves 2026-07-31 12:00 ET = first live scoring"
