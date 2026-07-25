@@ -22,8 +22,13 @@ let markets: serde_json::Value = reqwest::blocking::Client::new()
   parse each again with `serde_json::from_str`.
 - `volume`/`liquidity` may be strings; use numeric `volumeNum`/`liquidityNum`.
 - `outcomePrices` = book midpoints, NOT trade prices.
-- Single market by slug: `/markets?slug=<slug>`. Resolution check: `closed == true` and
-  `outcomePrices` collapsed to `[1, 0]` / `[0, 1]`.
+- Single market by slug: `/markets?slug=<slug>`. **Gotcha: this returns `[]` once the
+  market closes** — add `&closed=true` to fetch resolved markets by slug (found while
+  scoring the first resolutions, 2026-07-25). Resolution check: `closed == true` and
+  `outcomePrices` collapsed to `[1, 0]` / `[0, 1]`; the winning outcome is the one whose
+  price is 1.
+- Prefer `curl` over Python `urllib` from agent sessions: the environment proxy 403s
+  urllib's default requests while curl works.
 - `closed=true` queries are the backtest goldmine: resolved markets + their metadata.
 - **Series discovery** (find all instances of a recurring family, open AND resolved):
   `/public-search?q=<text>&limit_per_type=20` → `{events: [...], ...}` with `closed`

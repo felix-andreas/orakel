@@ -1,1 +1,19 @@
 market_slug,condition_id,winning_outcome,resolved_date,note
+will-spy-dip-to-715-by-july-20-2026,0x904bfca24eb49543982b40f5e1e109f7189eedae7f451654a8d85731807dd8cc,No,2026-07-24,no touch during window
+will-spy-dip-to-720-by-july-20-2026,0x934f882cd498b01bb174f878d91eb6d80f68718f899157a3d9093bb21359d3e3,No,2026-07-24,no touch during window
+will-nvda-dip-to-192-by-july-20-2026,0x5a7a4f4d6f1b855e2741bbd4d24b0d42dab49e60126ce2845314c930361ec307,No,2026-07-24,no touch during window
+will-wti-dip-to-90-in-july-2026,0x1079c44973db509356875db06aa3b585598068bdc5ff0673584f10dc3255b80a,Yes,2026-07-24,barrier touched
+will-spy-reach-775-by-july-20-2026,0x244146efe34de46ce4251ec613f38dc1759aae86d25eea0a9a6a7365f63d01c2,No,2026-07-24,no touch during window
+will-spy-reach-770-by-july-20-2026,0xab2c16daae40be9a4d2c527b53a78fda00f98a6fed83c892ee9d04841932f768,No,2026-07-24,no touch during window
+will-spy-reach-765-by-july-20-2026,0x239a4219247b5bd23f9c05a16297b96cef9feb40734b0890ae5d3b318057339e,No,2026-07-24,no touch during window
+will-spy-reach-760-by-july-20-2026,0x1fd3f6bb6367a0d7f41ca15e0bbf7b3231e46846e8d7aa28ffb54fceb212d90c,No,2026-07-24,no touch during window
+will-spy-reach-755-by-july-20-2026,0x0ad5fbe9bfc3a179cf87eb14816d9718f0e41d6250a72f43f25daaf31e9b2cbd,No,2026-07-24,no touch during window
+will-spy-dip-to-725-by-july-20-2026,0x56e46efde18f255a9c472effb8af7a43ecfad755146574e82463db7abe9d0f45,No,2026-07-24,no touch during window
+will-spy-dip-to-710-by-july-20-2026,0x58fd7aecc63d2d945fd151b3d8b82ad05006e86931eacda78c8052062f457554,No,2026-07-24,no touch during window
+will-nvda-reach-228-by-july-20-2026,0xc1deb8775dbcc1ab49abe22837e6c1379f8db61b6cf8c45e71d587c0f0149e9b,No,2026-07-24,no touch during window
+will-nvda-reach-224-by-july-20-2026,0x6ff3921d3101cb89b2e201753a0c915482b566ff65d08c4d0f18505aea8675b2,No,2026-07-24,no touch during window
+will-nvda-dip-to-196-by-july-20-2026,0x4cd1c8d84a4e63d8db982a774abcc635b38298972e8c4a82c8714d8c9711c918,No,2026-07-24,no touch during window
+will-nvda-dip-to-188-by-july-20-2026,0x3d53646647d378e01b943e03b34b6f756b275508b1c92ca7b9e68104115bd8bd,No,2026-07-24,no touch during window
+will-nvda-dip-to-184-by-july-20-2026,0x88d20b0df968a6f9d64041d4acac4af205da9ddd9ae876ecf53b7f8b277bd476,No,2026-07-24,no touch during window
+will-nvda-dip-to-180-by-july-20-2026,0x941f844090600a543b62d651a55faf0b5dd07093b39e2cf695b875a8ae08b828,No,2026-07-24,no touch during window
+will-nvda-dip-to-176-by-july-20-2026,0x782ad54af79b232375e4996fc1bc15316c1d0c3381ba4993f23d4c6743882372,No,2026-07-24,no touch during window
