@@ -24,9 +24,10 @@ Detail routes hang off those and light up their parent nav item:
 |---|---|
 | `/execution?fees=v1` | the same matrix priced with **no venue fee** (superseded, kept for attribution) |
 | `/execution?doc=summary` \| `?doc=design` | the engine's own write-up / the accounting rules, rendered whole |
-| `/strategies/<family>` | FAMILY.md, the family's variants with status, family + variant scoring |
-| `/strategies/<family>/<variant>` | STRATEGY.md, strategy.toml facts (status, trial clock, labels, success guideline), applications, results/worklog documents, the variant's predictions and scoring |
-| `/strategies/<family>/<variant>?doc=<path>` | one of that variant's markdown documents (`results/*.md`, `memory/*.md`, `STRATEGY.md`) |
+| `/strategies/<family>` | the family, **tabbed**: Overview (its plain-English line, its variants) · How it works (FAMILY.md) · Predictions (every variant's rows + family/variant scoring) |
+| `/strategies/<family>/<variant>` | one strategy, **tabbed**: Overview (`explainer`, facts, applications) · How it works (STRATEGY.md) · Results (`results/*.md`) · Predictions · Logs (WORKLOG + MEMORY) |
+| `/strategies/…?tab=<key>` | the tab, as a real address. `how-it-works` \| `results` \| `predictions` \| `logs`; the default tab carries no parameter, so the bare URL is canonical |
+| `/strategies/<family>/<variant>?doc=<path>` | legacy deep link — **302** to the tab that now holds the document (`results/x.md` → `?tab=results#x`) |
 | `/markets/<slug>` | every prediction for one market over time (our probability vs market price vs the hourly R2 midpoint), the resolution, and per-row scoring |
 | `/wiki/<page>` | one wiki page (`/wiki?page=` still works) |
 
@@ -66,8 +67,24 @@ another one**; the only bordered surfaces left are things that float (settings p
 chart tooltip) or warn (the snapshot banner). This is asserted programmatically in
 verification: no element with a full border + radius, ≥120×44px, may contain another.
 
+A detail page with more than one kind of content gets a **secondary bar** — `render::tabbar`
+in `layout`'s subbar slot, a sibling of the top bar on the same gutters, sticky under it at
+three quarters its height. Every tab is a real link (`?tab=<key>`, default tab = no
+parameter) and the server renders that tab's content, so a fresh load, a bookmark and the
+back button all behave; nothing is hidden client-side. **A tab that would be empty is not
+rendered.** The active tab is marked by weight and a rule under it, never by dimming the
+others; the bar scrolls sideways when five tabs do not fit at 375px, so the page never
+does. The breadcrumb names the tab (`… / ladder-rv / Results`) and the tab's own content
+carries no repeated heading.
+
+The **lede** (`.lede`) is the plain-English paragraph that describes a thing — a strategy's
+`explainer`, a family's `> **In plain English:**` opener, which is lifted out of FAMILY.md
+rather than printed twice. It is larger than body text, set to a ~72-character measure, and
+sits above every number. When it is missing the page says which required field is missing
+instead of quietly showing less.
+
 Components live in `src/render.rs` and are deliberately few: `stat_grid`/`stat_line`,
-`section`/`section_foot`, `table`/`table_sortable`, `items`/`row`, `badge`/`chip`,
+`section`/`section_foot`, `tabbar`, `table`/`table_sortable`, `items`/`row`, `badge`/`chip`,
 `minibar`, `notes`, `doc`, `prose`. `src/style.css` holds the tokens (one type scale, a
 4px spacing rhythm, hairline borders, tabular figures on every number), both themes as
 first-class token blocks, and the four density tokens (`--gap`, `--pad-page`, `--cell-y`,
@@ -144,15 +161,19 @@ dashboard/
     ├── overview.rs     # / dashboard
     ├── execution.rs    # /execution, its ?doc= views and the equity-curve JSON
     ├── runs.rs         # /runs narrative
-    ├── strategies.rs   # /strategies, family, variant, ?doc=
+    ├── strategies.rs   # /strategies, family + variant (tabbed), ?doc= redirects
     ├── predictions.rs  # /predictions, /markets/<slug>
     ├── firm.rs         # /state /decisions /inboxes /wiki /ideas /snapshots
     ├── dev.rs          # /dev, /dev/endpoints, example JSON
     ├── style.css       # tokens + components, light and dark
     ├── charts.js       # SVG chart framework
     ├── table.js        # click-to-sort for table.data.sortable
-    └── favicon.svg
+    └── favicon.svg     # the sea-shell mark — render.rs inlines the same path
 ```
+
+The **wordmark** is that mark plus the word `orakel`, nothing else. `favicon.svg` has to
+hard-code its stroke colour (a browser tab icon inherits nothing); the inlined copy in
+`render.rs` uses `currentColor` so it follows the theme. Change one, change the other.
 
 Rendering is plain `format!` string building (CODING.md: procedural, no template engine).
 Markdown → HTML via `pulldown-cmark`; TOML via the `toml` crate; CSV is parsed with

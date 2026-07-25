@@ -126,6 +126,17 @@ fn icon_sized(name: &str, size: u32) -> String {
     )
 }
 
+/// The wordmark: the sea-shell mark and the firm's name, nothing else. The mark
+/// is the same path as `src/favicon.svg`, inlined so it can be drawn in
+/// `currentColor` and follow the theme — the favicon file itself must hard-code
+/// a colour, because a browser tab icon has nothing to inherit from. Keep the
+/// two paths in sync if the mark ever changes.
+fn wordmark(class: &str) -> String {
+    format!(
+        r#"<a class="{class}" href="/"><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.5 12A2.5 2.5 0 0 0 7 13.5c0 1.38 1 3.5 3.5 3.5c3 0 4.5-2.5 4.5-4.5c0-3-2-5.5-5.5-5.5S3 9.5 3 14c0 3.314 2.5 8 9 8c4.97 0 9-5.03 9-10S17 2 13 2a2 2 0 0 0-2 2v3"/></svg>orakel</a>"#
+    )
+}
+
 // ---------------------------------------------------------------------------
 // Navigation tree — the information architecture, in one place.
 // ---------------------------------------------------------------------------
@@ -291,8 +302,9 @@ fn settings_popover() -> String {
 }
 
 /// The full page: sidebar (collapsible groups + the settings popover at its
-/// bottom-left), top bar (breadcrumbs + freshness), content, footer.
-/// `active` is the current route path; `body` is already-safe HTML.
+/// bottom-left), top bar (breadcrumbs + freshness), an optional secondary bar,
+/// content, footer. `active` is the current route path; `subbar` and `body` are
+/// already-safe HTML ("" ⇒ no secondary bar).
 ///
 /// One header band, always. On desktop the wordmark sits in the sidebar's own
 /// 3rem row, level with the top bar across the seam. Below 900px the sidebar
@@ -302,7 +314,13 @@ fn settings_popover() -> String {
 /// left slot is the breadcrumb while the menu is closed and the wordmark while
 /// it is open (`.wordmark-bar`), because navigation has replaced the page's
 /// context and the app's name is what belongs there.
-pub fn layout(active: &str, crumbs: &[Crumb], body: &str, fresh: &Freshness) -> String {
+pub fn layout(
+    active: &str,
+    crumbs: &[Crumb],
+    subbar: &str,
+    body: &str,
+    fresh: &Freshness,
+) -> String {
     // --- sidebar ---
     let mut nav = String::new();
     for group in NAV {
@@ -385,7 +403,7 @@ pub fn layout(active: &str, crumbs: &[Crumb], body: &str, fresh: &Freshness) -> 
   <input type="checkbox" id="nav-toggle" class="nav-toggle">
   <aside class="sidebar">
     <div class="sidebar-top">
-      <a class="wordmark" href="/">orakel<small>dashboard</small></a>
+      {wordmark}
     </div>
     <nav class="nav" id="nav">{nav}</nav>
     <div class="sidebar-foot">
@@ -394,13 +412,14 @@ pub fn layout(active: &str, crumbs: &[Crumb], body: &str, fresh: &Freshness) -> 
   </aside>
   <div class="main">
     <div class="topbar">
-      <a class="wordmark wordmark-bar" href="/">orakel<small>dashboard</small></a>
+      {wordmark_bar}
       <nav class="crumbs" aria-label="Breadcrumb">{crumb_html}</nav>
       <div class="topbar-right">
         <span class="updated" title="Data freshness"><span class="{dot}"></span>{source} · {stamp}</span>
         <label class="burger" for="nav-toggle" aria-label="Toggle navigation">{burger}</label>
       </div>
     </div>
+{subbar}
     <main class="content">
 {body}
     </main>
@@ -493,6 +512,9 @@ pub fn layout(active: &str, crumbs: &[Crumb], body: &str, fresh: &Freshness) -> 
         gear = icon("sliders"),
         nav = nav,
         pop = settings_popover(),
+        wordmark = wordmark("wordmark"),
+        wordmark_bar = wordmark("wordmark wordmark-bar"),
+        subbar = subbar,
         crumb_html = crumb_html,
         dot = dot,
         source = source,
@@ -500,6 +522,43 @@ pub fn layout(active: &str, crumbs: &[Crumb], body: &str, fresh: &Freshness) -> 
         build = esc(&fresh.build),
         body = body,
     )
+}
+
+// ---------------------------------------------------------------------------
+// The secondary bar — a detail page's own tabs
+// ---------------------------------------------------------------------------
+
+/// The tab bar that sits under the top bar (`layout`'s `subbar` slot): one
+/// entry per tab, each a REAL link, so a tab is linkable, bookmarkable and
+/// correct under the back button. Nothing here hides content client-side.
+///
+/// Each tab is `(key, label, count)`; `key` "" is the page's default tab and
+/// carries no query parameter, so the bare URL stays the canonical address of
+/// the thing. `count` "" ⇒ no number. The active tab is marked by WEIGHT and a
+/// rule under it — never by dimming the others (PRINCIPLES: contrast serves
+/// reading).
+pub fn tabbar(base: &str, tabs: &[(&str, &str, String)], active: &str) -> String {
+    let mut out = String::new();
+    for (key, label, count) in tabs {
+        let href = if key.is_empty() {
+            base.to_string()
+        } else {
+            format!("{base}?tab={key}")
+        };
+        let n = if count.is_empty() {
+            String::new()
+        } else {
+            format!("<span class=\"tab-n\">{}</span>", esc(count))
+        };
+        out.push_str(&format!(
+            "<a href=\"{}\"{}>{}{}</a>",
+            esc(&href),
+            if *key == active { " aria-current=\"page\"" } else { "" },
+            esc(label),
+            n
+        ));
+    }
+    format!("<nav class=\"subbar\" aria-label=\"Sections of this page\"><div class=\"subbar-in\">{out}</div></nav>")
 }
 
 // ---------------------------------------------------------------------------

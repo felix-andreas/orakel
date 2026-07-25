@@ -1,21 +1,37 @@
 //! `/strategies` — the research unit of the firm, three levels deep.
 //!
 //!   /strategies                       every family, with its variants
-//!   /strategies/<family>              FAMILY.md, variants, family scoring
-//!   /strategies/<family>/<variant>    STRATEGY.md, strategy.toml facts,
-//!                                     applications, results, worklog,
-//!                                     scoring and the variant's predictions
+//!   /strategies/<family>              the family: what it is, its variants,
+//!                                     FAMILY.md, its predictions
+//!   /strategies/<family>/<variant>    the strategy: what it is, how it works,
+//!                                     its results, predictions and logs
 //!
-//! A variant page can also render one of that variant's markdown documents
-//! directly: `?doc=results/backtest-2026-07-23.md`.
+//! Both detail pages are TABBED. The tabs are a secondary bar under the top bar
+//! (`render::tabbar`, rendered into `layout`'s subbar slot) and every tab is a
+//! real URL: `?tab=<key>`, with the default tab carrying no parameter at all so
+//! the bare address stays the canonical one. Server-rendered — a fresh load of
+//! `?tab=results` returns the results; nothing is hidden client-side.
+//!
+//! Why a query parameter and not a path segment: `/strategies/<f>/<seg>` is
+//! ALREADY the variant route, so `/strategies/barrier-touch/results` could not
+//! be told apart from a variant called `results`. One scheme at both levels
+//! beats two.
+//!
+//! A tab that would be empty is not rendered, so the bar only ever offers what
+//! the repo actually has. The legacy `?doc=<rel>` deep link redirects to
+//! whichever tab now holds that document (`doc_target`, wired up in lib.rs).
 
 use crate::data::{self, Table};
 use crate::render::{
-    self, badge, chip_row, doc, esc, fmt_int, fmt_prob, fmt_signed, fmt_ts, icon, item, items,
+    self, badge, chip_row, esc, fmt_int, fmt_prob, fmt_signed, fmt_ts, icon, item, items,
     markdown_body, section, section_foot, stat_line, table, table_scroll,
 };
-use crate::{shell, snapshot_banner, trail};
+use crate::{shell, shell_sub, snapshot_banner, trail};
 use worker::Env;
+
+/// Where a repo file can be read in full — for result artifacts the dashboard
+/// cannot render itself.
+const REPO_BLOB: &str = "https://github.com/felix-andreas/orakel/blob/main";
 
 // ---------------------------------------------------------------------------
 // /strategies
@@ -63,6 +79,11 @@ pub async fn index(env: &Env) -> String {
     // One expandable row per family: the family's own thesis line collapsed,
     // its variants (with the plain-English summary that IS the description)
     // revealed on click. Table over cards; expansion over navigation.
+    //
+    // The family NAME is a link to the family page; the rest of the row is the
+    // disclosure. An <a> is itself an activation target, so a click on it
+    // navigates and does NOT toggle the <details>, while a click anywhere else
+    // in the summary toggles and does not navigate. No JavaScript involved.
     let mut rows = String::from(
         "<div class=\"fhead\"><span>Family</span><span>What it does</span><span>Status</span><span>Predictions</span><span>vs market</span></div>",
     );
@@ -161,9 +182,11 @@ pub async fn index(env: &Env) -> String {
         // The family line must be plain English. FAMILY.md is written in the
         // firm's own vocabulary, so the description shown here is the REQUIRED
         // summary of the family's current strategy (its trialling/live variant,
-        // else its newest). FAMILY.md itself is one click away, in full.
+        // else its newest), falling back to the family's own plain-English
+        // opener. FAMILY.md itself is one click away, in full.
         let what = if family_line.is_empty() {
-            first_paragraph(&fam_doc.text)
+            let (opener, _) = plain_english(&fam_doc.text);
+            clip(&opener, 130)
         } else {
             family_line.clone()
         };
@@ -182,7 +205,7 @@ pub async fn index(env: &Env) -> String {
         };
 
         rows.push_str(&format!(
-            "<details class=\"frow\"{open}><summary><span class=\"fname\">{family}<span class=\"fvar-when\">{nvar}</span></span><span class=\"fsum\">{what}</span><span class=\"fnum\">{status}</span><span class=\"fnum\">{npred}</span><span class=\"fnum\">{imp}</span></summary><div class=\"fvariants\">{vars}<p class=\"note\"><a class=\"link\" href=\"/strategies/{family}\">The family's full thesis, cross-strategy lessons and scoring →</a></p></div></details>",
+            "<details class=\"frow\"{open}><summary><span class=\"fname\"><a class=\"flink\" href=\"/strategies/{family}\">{family}</a><span class=\"fvar-when\">{nvar}</span></span><span class=\"fsum\">{what}</span><span class=\"fnum\">{status}</span><span class=\"fnum\">{npred}</span><span class=\"fnum\">{imp}</span></summary><div class=\"fvariants\">{vars}</div></details>",
             open = if active { " open" } else { "" },
             family = esc(family),
             nvar = render::count(mine.len(), "strategy"),
@@ -200,7 +223,7 @@ pub async fn index(env: &Env) -> String {
         stats = stats,
         table = section_foot(
             "Families",
-            "click a family to see the strategies inside it",
+            "click a family's name to open it, anywhere else on the row to see the strategies inside",
             "",
             &format!("<div class=\"ftable\">{rows}</div>"),
             "<span class=\"mono\">strategies/&lt;family&gt;/&lt;variant&gt;/strategy.toml</span><span>improvement = how much better than the market, per scored prediction</span>"
@@ -217,40 +240,19 @@ pub async fn index(env: &Env) -> String {
     .await
 }
 
-/// First non-heading paragraph of a markdown file, collapsed to one line and
-/// clipped — used as a family's one-line description.
-fn first_paragraph(src: &str) -> String {
-    let mut buf = String::new();
-    for line in src.lines() {
-        let l = line.trim();
-        if l.is_empty() {
-            if !buf.is_empty() {
-                break;
-            }
-            continue;
-        }
-        if l.starts_with('#') {
-            continue;
-        }
-        if !buf.is_empty() {
-            buf.push(' ');
-        }
-        buf.push_str(l);
-    }
-    // The subtitle is plain text: drop the markdown syntax that would
-    // otherwise show up literally (**bold**, `code`, [text](link)).
-    let buf = buf
+// ---------------------------------------------------------------------------
+// Plain-English text helpers
+// ---------------------------------------------------------------------------
+
+/// Markdown syntax stripped, for text displayed as plain prose (**bold**,
+/// `code` and [text](link) would otherwise show up literally).
+fn plain_text(src: &str) -> String {
+    let flat = src
         .replace("**", "")
         .replace('`', "")
         .replace('*', "")
         .replace('_', "");
-    let buf = strip_links(&buf);
-    let clipped: String = buf.chars().take(130).collect();
-    if buf.chars().count() > 130 {
-        format!("{}…", clipped.trim_end())
-    } else {
-        clipped
-    }
+    strip_links(&flat)
 }
 
 /// `[text](href)` → `text`.
@@ -269,21 +271,160 @@ fn strip_links(src: &str) -> String {
     out
 }
 
+fn clip(src: &str, max: usize) -> String {
+    let clipped: String = src.chars().take(max).collect();
+    if src.chars().count() > max {
+        format!("{}…", clipped.trim_end())
+    } else {
+        clipped
+    }
+}
+
+/// Split a FAMILY.md into (plain-English lede, the rest of the document).
+///
+/// Every FAMILY.md opens with a `> **In plain English:** …` blockquote — the
+/// one paragraph a reader with no prior knowledge can start from (PRINCIPLES:
+/// self-contained, no jargon). It is the family page's lede, so it is lifted
+/// OUT of the document rather than printed twice.
+fn plain_english(src: &str) -> (String, String) {
+    const MARK: &str = "**In plain English:**";
+    let mut lede = String::new();
+    let mut rest = String::new();
+    let mut taking = false;
+    for line in src.lines() {
+        let t = line.trim_start();
+        if !taking && t.starts_with('>') && t.contains(MARK) {
+            taking = true;
+        }
+        if taking {
+            if t.starts_with('>') {
+                let body = t.trim_start_matches('>').trim();
+                let body = body.strip_prefix(MARK).unwrap_or(body).trim();
+                if !body.is_empty() {
+                    if !lede.is_empty() {
+                        lede.push(' ');
+                    }
+                    lede.push_str(body);
+                }
+                continue;
+            }
+            taking = false;
+            if line.trim().is_empty() {
+                continue; // the blank line the blockquote left behind
+            }
+        }
+        rest.push_str(line);
+        rest.push('\n');
+    }
+    (plain_text(&lede), rest)
+}
+
+/// The plain-English description of a thing, with the typographic prominence it
+/// deserves: it is the most important text on the page, above every number.
+/// `missing_html` is what to say when the repo has not got one yet.
+fn lede(text: &str, missing_html: &str) -> String {
+    if text.trim().is_empty() {
+        format!("<p class=\"lede lede-missing\">{missing_html}</p>")
+    } else {
+        format!("<p class=\"lede\">{}</p>", esc(text.trim()))
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Tabs
+// ---------------------------------------------------------------------------
+
+/// A tab that has something to show. `key` is the `?tab=` value; "" is the
+/// default tab and carries no query parameter.
+struct Tab {
+    key: &'static str,
+    label: &'static str,
+    /// Shown small beside the label; "" for none.
+    count: String,
+}
+
+fn tab(key: &'static str, label: &'static str) -> Tab {
+    Tab { key, label, count: String::new() }
+}
+
+fn tab_n(key: &'static str, label: &'static str, n: usize) -> Tab {
+    Tab { key, label, count: n.to_string() }
+}
+
+/// The tab actually being shown: the requested one when it exists, else the
+/// default. An unknown `?tab=` therefore lands on the page, never on an error.
+fn active_tab<'a>(tabs: &'a [Tab], want: &Option<String>) -> &'a str {
+    let want = want.as_deref().unwrap_or("");
+    tabs.iter()
+        .find(|t| t.key == want)
+        .map(|t| t.key)
+        .unwrap_or("")
+}
+
+/// A tab's label, for the breadcrumb ("" for the default tab, which the
+/// breadcrumb does not name — the page itself is the overview).
+fn tab_label<'a>(tabs: &'a [Tab], key: &str) -> &'a str {
+    if key.is_empty() {
+        return "";
+    }
+    tabs.iter()
+        .find(|t| t.key == key)
+        .map(|t| t.label)
+        .unwrap_or("")
+}
+
+fn tabbar(base: &str, tabs: &[Tab], active: &str) -> String {
+    let entries: Vec<(&str, &str, String)> = tabs
+        .iter()
+        .map(|t| (t.key, t.label, t.count.clone()))
+        .collect();
+    render::tabbar(base, &entries, active)
+}
+
+/// Which tab now holds the document an old `?doc=<rel>` link pointed at, and
+/// the anchor within it (the results tab can hold several documents).
+pub fn doc_target(rel: &str) -> (String, String) {
+    if rel == "STRATEGY.md" {
+        ("how-it-works".to_string(), String::new())
+    } else if rel.starts_with("memory/") {
+        ("logs".to_string(), String::new())
+    } else if let Some(name) = rel.strip_prefix("results/") {
+        ("results".to_string(), anchor(name))
+    } else {
+        (String::new(), String::new())
+    }
+}
+
+/// A file name → an HTML id: `backtest-2026-07-23.md` → `backtest-2026-07-23`.
+fn anchor(name: &str) -> String {
+    let stem = name.strip_suffix(".md").unwrap_or(name);
+    stem.chars()
+        .map(|c| if c.is_ascii_alphanumeric() { c } else { '-' })
+        .collect()
+}
+
 // ---------------------------------------------------------------------------
 // /strategies/<family>
 // ---------------------------------------------------------------------------
 
-pub async fn family(env: &Env, family: &str) -> String {
-    let crumbs = trail(&[
-        ("Research", ""),
-        ("Strategies", "/strategies"),
-        (family, ""),
-    ]);
+pub async fn family(env: &Env, family: &str, want_tab: Option<String>) -> String {
+    let page = format!("/strategies/{family}");
+    let crumbs_for = |leaf: &str| -> Vec<render::Crumb> {
+        let mut parts: Vec<(&str, &str)> = vec![("Research", ""), ("Strategies", "/strategies")];
+        if leaf.is_empty() {
+            parts.push((family, ""));
+        } else {
+            parts.push((family, page.as_str()));
+            parts.push((leaf, ""));
+        }
+        trail(&parts)
+    };
+
     if !data::safe_segment(family) {
         return shell(
             env,
             "/strategies",
-            crumbs,
+            crumbs_for(""),
             true,
             &render::empty_state("Unknown family", ""),
         )
@@ -294,7 +435,9 @@ pub async fn family(env: &Env, family: &str) -> String {
     let (paths, tree_live) = data::tree(env).await;
     let preds = data::text(env, "predictions/predictions.csv").await;
     let scores = data::text(env, "predictions/scores.csv").await;
-    let mut all_live = fam_doc.live && tree_live && preds.live && scores.live;
+    let detail = data::text(env, "predictions/scores_detail.csv").await;
+    let mut all_live =
+        fam_doc.live && tree_live && preds.live && scores.live && detail.live;
 
     if fam_doc.is_empty() {
         let body = section(
@@ -306,35 +449,57 @@ pub async fn family(env: &Env, family: &str) -> String {
                 "<div>No such family in the repo. <a class=\"link\" href=\"/strategies\">Back to strategies</a>.</div>",
             ),
         );
-        return shell(env, "/strategies", crumbs, all_live, &body).await;
+        return shell(env, "/strategies", crumbs_for(""), all_live, &body).await;
     }
 
     let p = Table::parse(&preds.text);
     let s = Table::parse(&scores.text);
+    let d = Table::parse(&detail.text);
     let variants: Vec<(String, String)> = data::variants(&paths)
         .into_iter()
         .filter(|(f, _)| f == family)
         .collect();
-
-    let mut metas: Vec<data::VariantMeta> = Vec::new();
-    for (_, v) in &variants {
-        let f = data::text(env, &format!("strategies/{family}/{v}/strategy.toml")).await;
-        all_live &= f.live;
-        metas.push(data::parse_variant_meta(family, v, &f.text));
-    }
 
     let fam_rows: Vec<&Vec<String>> = p
         .rows
         .iter()
         .filter(|row| p.cell(row, "family") == family)
         .collect();
+    let scoring_rows: Vec<&Vec<String>> = s
+        .rows
+        .iter()
+        .filter(|row| {
+            (s.cell(row, "level") == "family" && s.cell(row, "key") == family)
+                || (s.cell(row, "level") == "variant"
+                    && s.cell(row, "key").starts_with(&format!("{family}/")))
+        })
+        .collect();
+
+    let (fam_lede, fam_rest) = plain_english(&fam_doc.text);
+    let fam_prose = markdown_body(&fam_rest);
+
+    // --- which tabs have something in them --------------------------------
+    let mut tabs: Vec<Tab> = vec![tab("", "Overview")];
+    if !fam_prose.trim().is_empty() {
+        tabs.push(tab("how-it-works", "How it works"));
+    }
+    if !fam_rows.is_empty() || !scoring_rows.is_empty() {
+        tabs.push(tab_n("predictions", "Predictions", fam_rows.len()));
+    }
+    let active = active_tab(&tabs, &want_tab).to_string();
+    let bar = tabbar(&page, &tabs, &active);
+    let crumbs = crumbs_for(tab_label(&tabs, &active));
+
     let fam_score = s
         .rows
         .iter()
         .find(|row| s.cell(row, "level") == "family" && s.cell(row, "key") == family);
-
     let stats = stat_line(&[
-        (fmt_int(variants.len() as i64), "strategies".to_string(), ""),
+        (
+            fmt_int(variants.len() as i64),
+            if variants.len() == 1 { "strategy" } else { "strategies" }.to_string(),
+            "",
+        ),
         (
             fmt_int(fam_rows.len() as i64),
             "predictions".to_string(),
@@ -360,123 +525,147 @@ pub async fn family(env: &Env, family: &str) -> String {
         ),
     ]);
 
-    let mut variant_items = String::new();
-    for m in &metas {
-        let n = p
-            .rows
-            .iter()
-            .filter(|row| p.cell(row, "family") == family && p.cell(row, "variant") == m.variant)
-            .count();
-        let when = if m.status == "retired" && !m.retired_on.is_empty() {
-            format!("dropped {} · {} predictions", m.retired_on, n)
-        } else if m.status == "trial" && !m.review_due.is_empty() {
-            format!("review due {} · {} predictions", m.review_due, n)
-        } else {
-            format!("created {} · {} predictions", m.created, n)
-        };
-        variant_items.push_str(&item(
-            &m.href(),
-            &esc(&m.variant),
-            &format!(
-                "<span class=\"item-summary\">{}</span>{}",
-                esc(&m.summary),
-                esc(&when)
-            ),
-            &render::status_badge(&m.status),
-        ));
-    }
-
-    let scoring_rows: Vec<&Vec<String>> = s
-        .rows
-        .iter()
-        .filter(|row| {
-            (s.cell(row, "level") == "family" && s.cell(row, "key") == family)
-                || (s.cell(row, "level") == "variant"
-                    && s.cell(row, "key").starts_with(&format!("{family}/")))
-        })
-        .collect();
-
-    let scoring = if scoring_rows.is_empty() {
-        section(
-            "Scoring",
-            "aggregates for this family",
+    // --- the active tab's content -----------------------------------------
+    let content = match active.as_str() {
+        "how-it-works" => section_foot(
             "",
-            &render::empty_state("Nothing scored yet", ""),
-        )
-    } else {
-        let body: Vec<Vec<String>> = scoring_rows
-            .iter()
-            .map(|row| {
-                let imp = s.num(row, "mean_improvement");
-                vec![
-                    esc(s.cell(row, "level")),
-                    esc(s.cell(row, "key")),
-                    s.cell(row, "n").to_string(),
-                    badge(&fmt_signed(imp), if imp > 0.0 { "ok" } else { "bad" }),
-                    format!("{:.4}", s.num(row, "mean_brier")),
-                    format!("{:.4}", s.num(row, "mean_market_brier")),
-                    format!("{:.4}", s.num(row, "mean_logloss")),
-                ]
-            })
-            .collect();
-        section(
-            "Scoring",
-            "aggregates for this family and its variants",
-            &badge(&render::count(scoring_rows.len(), "row"), ""),
-            &table(
-                &[
-                    ("Level", ""),
-                    ("Key", ""),
-                    ("n", "num"),
-                    ("Improvement", "num"),
-                    ("Brier", "num"),
-                    ("Market Brier", "num"),
-                    ("Log loss", "num"),
-                ],
-                &body,
+            "",
+            "",
+            &format!("<div class=\"prose\">{fam_prose}</div>"),
+            &format!(
+                "<span class=\"mono\">strategies/{family}/FAMILY.md</span><span>written for the firm — the plain-English version opens <a href=\"{page}\">Overview</a></span>"
             ),
-        )
+        ),
+        "predictions" => {
+            let scoring = if scoring_rows.is_empty() {
+                String::new()
+            } else {
+                let body: Vec<Vec<String>> = scoring_rows
+                    .iter()
+                    .map(|row| {
+                        let imp = s.num(row, "mean_improvement");
+                        let key = s.cell(row, "key");
+                        vec![
+                            esc(s.cell(row, "level")),
+                            format!("<a href=\"/strategies/{0}\">{0}</a>", esc(key)),
+                            s.cell(row, "n").to_string(),
+                            badge(&fmt_signed(imp), if imp > 0.0 { "ok" } else { "bad" }),
+                            format!("{:.4}", s.num(row, "mean_brier")),
+                            format!("{:.4}", s.num(row, "mean_market_brier")),
+                            format!("{:.4}", s.num(row, "mean_logloss")),
+                        ]
+                    })
+                    .collect();
+                section(
+                    "Scoring",
+                    "the family and each strategy in it — lower Brier is better, improvement is the gap to the market",
+                    &badge(&render::count(scoring_rows.len(), "row"), ""),
+                    &table(
+                        &[
+                            ("Level", ""),
+                            ("Key", ""),
+                            ("n", "num"),
+                            ("Improvement", "num"),
+                            ("Brier", "num"),
+                            ("Market Brier", "num"),
+                            ("Log loss", "num"),
+                        ],
+                        &body,
+                    ),
+                )
+            };
+            format!("{scoring}{}", prediction_table(&p, &d, &fam_rows, true))
+        }
+        // Overview
+        _ => {
+            let mut metas: Vec<data::VariantMeta> = Vec::new();
+            for (_, v) in &variants {
+                let f = data::text(env, &format!("strategies/{family}/{v}/strategy.toml")).await;
+                all_live &= f.live;
+                metas.push(data::parse_variant_meta(family, v, &f.text));
+            }
+            let mut variant_items = String::new();
+            for m in &metas {
+                let n = p
+                    .rows
+                    .iter()
+                    .filter(|row| {
+                        p.cell(row, "family") == family && p.cell(row, "variant") == m.variant
+                    })
+                    .count();
+                let when = if m.status == "retired" && !m.retired_on.is_empty() {
+                    format!("dropped {} · {} predictions", m.retired_on, n)
+                } else if m.status == "trial" && !m.review_due.is_empty() {
+                    format!("review due {} · {} predictions", m.review_due, n)
+                } else {
+                    format!("created {} · {} predictions", m.created, n)
+                };
+                variant_items.push_str(&item(
+                    &m.href(),
+                    &esc(&m.variant),
+                    &format!(
+                        "<span class=\"item-summary\">{}</span>{}",
+                        esc(&m.summary),
+                        esc(&when)
+                    ),
+                    &render::status_badge(&m.status),
+                ));
+            }
+            format!(
+                "{lede}{variants}",
+                lede = lede(
+                    &fam_lede,
+                    &format!(
+                        "No plain-English description yet — <span class=\"mono\">strategies/{family}/FAMILY.md</span> does not open with its required <span class=\"mono\">&gt; **In plain English:**</span> paragraph."
+                    ),
+                ),
+                variants = section(
+                    "Strategies in this family",
+                    "each one is a separate experiment with its own clock",
+                    &badge(&render::count(variants.len(), "variant"), ""),
+                    &items(&variant_items),
+                ),
+            )
+        }
     };
 
     let body = format!(
-        "{banner}{stats}<div class=\"grid-main\">{thesis}{variants}</div>{scoring}",
+        "{banner}{stats}{content}",
         banner = if all_live { String::new() } else { snapshot_banner() },
         stats = stats,
-        thesis = section_foot(
-            "The idea in full",
-            "what this family trades, and who is on the other side",
-            "",
-            &format!("<div class=\"prose\">{}</div>", markdown_body(&fam_doc.text)),
-            &format!("<span class=\"mono\">strategies/{family}/FAMILY.md</span><a href=\"/predictions\">Predictions →</a>")
-        ),
-        variants = section(
-            "Strategies in this family",
-            "each one is a separate experiment with its own clock",
-            &badge(&render::count(variants.len(), "variant"), ""),
-            &items(&variant_items),
-        ),
-        scoring = scoring,
+        content = content,
     );
 
-    shell(env, "/strategies", crumbs, all_live, &body).await
+    shell_sub(env, "/strategies", crumbs, all_live, &bar, &body).await
 }
 
 // ---------------------------------------------------------------------------
 // /strategies/<family>/<variant>
 // ---------------------------------------------------------------------------
 
-pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<String>) -> String {
-    let crumbs = trail(&[
-        ("Research", ""),
-        ("Strategies", "/strategies"),
-        (family, &format!("/strategies/{family}")),
-        (variant, ""),
-    ]);
+pub async fn variant(env: &Env, family: &str, variant: &str, want_tab: Option<String>) -> String {
+    let page = format!("/strategies/{family}/{variant}");
+    let fam_href = format!("/strategies/{family}");
+    let crumbs_for = |leaf: &str| -> Vec<render::Crumb> {
+        let mut parts: Vec<(&str, &str)> = vec![
+            ("Research", ""),
+            ("Strategies", "/strategies"),
+            (family, fam_href.as_str()),
+        ];
+        if leaf.is_empty() {
+            parts.push((variant, ""));
+        } else {
+            parts.push((variant, page.as_str()));
+            parts.push((leaf, ""));
+        }
+        trail(&parts)
+    };
+
     if !data::safe_segment(family) || !data::safe_segment(variant) {
         return shell(
             env,
             "/strategies",
-            crumbs,
+            crumbs_for(""),
             true,
             &render::empty_state("Unknown variant", ""),
         )
@@ -484,27 +673,15 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
     }
     let base = format!("strategies/{family}/{variant}");
 
-    // ?doc=<relative path> renders one of the variant's markdown documents.
-    if let Some(rel) = doc_path {
-        return variant_doc(env, family, variant, &base, &rel).await;
-    }
-
-    let strategy_md = data::text(env, &format!("{base}/STRATEGY.md")).await;
     let toml_doc = data::text(env, &format!("{base}/strategy.toml")).await;
-    let worklog = data::text(env, &format!("{base}/memory/WORKLOG.md")).await;
     let (paths, tree_live) = data::tree(env).await;
     let preds = data::text(env, "predictions/predictions.csv").await;
     let scores = data::text(env, "predictions/scores.csv").await;
     let detail = data::text(env, "predictions/scores_detail.csv").await;
-    let mut all_live = strategy_md.live
-        && toml_doc.live
-        && worklog.live
-        && tree_live
-        && preds.live
-        && scores.live
-        && detail.live;
+    let mut all_live = toml_doc.live && tree_live && preds.live && scores.live && detail.live;
 
-    if strategy_md.is_empty() && toml_doc.is_empty() {
+    let has_strategy_md = paths.iter().any(|path| *path == format!("{base}/STRATEGY.md"));
+    if toml_doc.is_empty() && !has_strategy_md {
         let body = section(
             "Variant not found",
             &base,
@@ -514,7 +691,7 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
                 "<div>No such variant in the repo. <a class=\"link\" href=\"/strategies\">Back to strategies</a>.</div>",
             ),
         );
-        return shell(env, "/strategies", crumbs, all_live, &body).await;
+        return shell(env, "/strategies", crumbs_for(""), all_live, &body).await;
     }
 
     let m = data::parse_variant_meta(family, variant, &toml_doc.text);
@@ -537,32 +714,44 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
         .rows
         .iter()
         .find(|row| s.cell(row, "level") == "variant" && s.cell(row, "key") == key);
-
     let status = m.status.clone();
+
+    // --- which tabs have something in them --------------------------------
+    // Decided from the repo's FILE LISTING, not by reading the files: the tab
+    // being shown costs a fetch, the tabs merely offered cost nothing.
+    let results = data::files_in(&paths, &format!("{base}/results"), ".md");
+    let logs: Vec<String> = ["memory/WORKLOG.md", "memory/MEMORY.md"]
+        .iter()
+        .map(|rel| format!("{base}/{rel}"))
+        .filter(|path| paths.iter().any(|p| p == path))
+        .collect();
+
+    let mut tabs: Vec<Tab> = vec![tab("", "Overview")];
+    if has_strategy_md {
+        tabs.push(tab("how-it-works", "How it works"));
+    }
+    if !results.is_empty() {
+        tabs.push(tab_n("results", "Results", results.len()));
+    }
+    if !rows.is_empty() {
+        tabs.push(tab_n("predictions", "Predictions", rows.len()));
+    }
+    if !logs.is_empty() {
+        tabs.push(tab("logs", "Logs"));
+    }
+    let active = active_tab(&tabs, &want_tab).to_string();
+    let bar = tabbar(&page, &tabs, &active);
+    let crumbs = crumbs_for(tab_label(&tabs, &active));
+
     let ahead = scored
         .iter()
         .filter(|row| d.num(row, "improvement") > 0.0)
         .count();
-
-    // The plain-English summary is the description of this strategy — first
-    // thing on the page, above every number and before the runbook prose.
-    let summary_html = if m.summary.is_empty() {
-        format!(
-            "<p class=\"lede lede-missing\">No plain-English summary yet — <span class=\"mono\">{base}/strategy.toml</span> is missing its required <span class=\"mono\">summary</span> field.</p>"
-        )
-    } else {
-        format!("<p class=\"lede\">{}</p>", esc(&m.summary))
-    };
-
     let stats = stat_line(&[
         (
             render::status_badge(&status),
             match status.as_str() {
-                "trial" => format!(
-                    "on slot {} since {}",
-                    m.slot.unwrap_or(0),
-                    m.trial_started
-                ),
+                "trial" => format!("on slot {} since {}", m.slot.unwrap_or(0), m.trial_started),
                 "retired" => format!("dropped {}", m.retired_on),
                 _ => format!("created {}", m.created),
             },
@@ -600,290 +789,315 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
         ),
     ]);
 
-    // --- facts + documents (side panel) ---
-    let mut facts = String::new();
-    facts.push_str(&render::row("Status", &render::status_badge(&status)));
-    facts.push_str(&render::row("Created", &esc(&m.created)));
-    if !m.supersedes.is_empty() {
-        facts.push_str(&render::row(
-            "Replaces",
-            &format!(
-                "<a href=\"/strategies/{family}/{0}\">{0}</a>",
-                esc(&m.supersedes)
-            ),
-        ));
-    }
-    facts.push_str(&render::row(
-        "Family",
-        &format!("<a href=\"/strategies/{0}\">{0}</a>", esc(family)),
-    ));
-    if !m.trial_started.is_empty() {
-        facts.push_str(&render::row("Trial started", &esc(&m.trial_started)));
-        facts.push_str(&render::row("Review due", &esc(&m.review_due)));
-    }
-    if !m.labels.is_empty() {
-        facts.push_str(&render::row("Labels", &chip_row(&m.labels)));
-    }
-    if !m.retire_reason.is_empty() {
-        facts.push_str(&format!(
-            "<div class=\"row row-block\"><span class=\"k\">Why it was dropped</span><span class=\"v\">{}</span></div>",
-            esc(&m.retire_reason)
-        ));
-    }
-    if !m.success_guideline.is_empty() {
-        facts.push_str(&format!(
-            "<div class=\"row row-block\"><span class=\"k\">What would make it a success</span><span class=\"v\">{}</span></div>",
-            esc(&m.success_guideline)
-        ));
-    }
-
-    // Documents: results/*.md, memory, applications — linked, not inlined.
-    let results = data::files_in(&paths, &format!("{base}/results"), ".md");
-    let mut doc_links = String::new();
-    for r in &results {
-        let name = r.rsplit('/').next().unwrap_or(r);
-        doc_links.push_str(&format!(
-            "<li><a href=\"/strategies/{family}/{variant}?doc=results/{0}\">{icon} {0}</a></li>",
-            esc(name),
-            icon = icon("book")
-        ));
-    }
-    for (label, rel) in [
-        ("STRATEGY.md", "STRATEGY.md"),
-        ("memory/MEMORY.md", "memory/MEMORY.md"),
-        ("memory/WORKLOG.md", "memory/WORKLOG.md"),
-    ] {
-        doc_links.push_str(&format!(
-            "<li><a href=\"/strategies/{family}/{variant}?doc={rel}\">{icon} {label}</a></li>",
-            icon = icon("book")
-        ));
-    }
-
-    let side = format!(
-        "{}{}",
-        section(
-            "Facts",
-            "status, trial clock and labels as recorded in the repo",
-            &render::status_badge(&status),
-            &render::rows(&facts),
-        ),
-        section(
-            "Documents",
-            "the variant's own write-ups",
-            &badge(&render::count(results.len() + 3, "document"), ""),
-            &format!("<ul class=\"link-list\">{doc_links}</ul>"),
-        )
-    );
-
-    // --- applications ---
-    let app_paths = data::files_in(&paths, &format!("{base}/applications"), ".toml");
-    let mut app_rows: Vec<Vec<String>> = Vec::new();
-    for path in app_paths.iter().take(24) {
-        let f = data::text(env, path).await;
-        all_live &= f.live;
-        let t = data::toml_of(&f.text);
-        let name = path.rsplit('/').next().unwrap_or(path);
-        let slug = data::tstr(&t, "market_slug");
-        let legs = data::arr_at(&t, &["legs"]).len();
-        let active = data::tbool(&t, "active");
-        app_rows.push(vec![
-            format!("<span class=\"mono\">{}</span>", esc(name)),
-            if slug.is_empty() {
-                "<span class=\"muted\">—</span>".to_string()
-            } else {
-                format!("<a href=\"/markets/{0}\">{0}</a>", esc(slug))
-            },
-            esc(data::tstr(&t, "added")),
-            match active {
-                Some(true) => badge("active", "ok"),
-                Some(false) => badge("inactive", ""),
-                None => "<span class=\"muted\">—</span>".to_string(),
-            },
-            if legs > 0 {
-                fmt_int(legs as i64)
-            } else {
-                "<span class=\"muted\">—</span>".to_string()
-            },
-            format!(
-                "<span class=\"muted\">{}</span>",
-                esc(data::str_at(&t, &["params", "asset"]))
-            ),
-            format!(
-                "<span class=\"muted\">{}</span>",
-                esc(data::str_at(&t, &["params", "tier"]))
-            ),
-        ]);
-    }
-    let applications = if app_rows.is_empty() {
-        section(
-            "Applications",
-            "the markets this variant is pointed at",
-            "",
-            &render::empty_state(
-                "No applications",
-                "<div>Nothing under <span class=\"mono\">applications/</span> yet.</div>",
-            ),
-        )
-    } else {
-        section(
-            "Applications",
-            "the boards and markets this variant is pointed at",
-            &badge(&render::count(app_paths.len(), "file"), ""),
-            &table(
-                &[
-                    ("File", ""),
-                    ("Market", ""),
-                    ("Added", ""),
-                    ("Active", ""),
-                    ("Legs", "num"),
-                    ("Asset", ""),
-                    ("Tier", ""),
-                ],
-                &app_rows,
-            ),
-        )
-    };
-
-    // --- this variant's predictions ---
-    let pred_panel = if rows.is_empty() {
-        section(
-            "Predictions",
-            "rows logged by this variant",
-            "",
-            &render::empty_state("Nothing logged yet", ""),
-        )
-    } else {
-        let body: Vec<Vec<String>> = rows
-            .iter()
-            .rev()
-            .map(|row| {
-                let slug = p.cell(row, "market_slug");
-                let ts = p.cell(row, "timestamp");
-                let outcome = p.cell(row, "outcome");
-                let score = d.rows.iter().find(|sr| {
-                    d.cell(sr, "market_slug") == slug
-                        && d.cell(sr, "outcome") == outcome
-                        && d.cell(sr, "timestamp") == ts
-                });
-                let ours = p.num(row, "prediction");
-                let mkt = p.num(row, "market_price");
-                vec![
-                    format!("<span class=\"mono\">{}</span>", esc(&fmt_ts(ts))),
-                    format!("<a href=\"/markets/{0}\">{0}</a>", esc(slug)),
-                    esc(outcome),
-                    fmt_prob(ours),
-                    fmt_prob(mkt),
-                    fmt_signed(mkt - ours),
-                    match score {
-                        Some(sr) => {
-                            let v = d.num(sr, "improvement");
-                            badge(&fmt_signed(v), if v > 0.0 { "ok" } else { "bad" })
-                        }
-                        None => "<span class=\"muted\">open</span>".to_string(),
+    // --- the active tab's content -----------------------------------------
+    let content = match active.as_str() {
+        "how-it-works" => {
+            let f = data::text(env, &format!("{base}/STRATEGY.md")).await;
+            all_live &= f.live;
+            section_foot(
+                "",
+                "",
+                "",
+                &format!("<div class=\"prose\">{}</div>", markdown_body(&f.text)),
+                &format!(
+                    "<span class=\"mono\">{base}/STRATEGY.md</span><span>the runbook: method, gates, and what would kill it</span>"
+                ),
+            )
+        }
+        "results" => {
+            let mut out = String::new();
+            for path in &results {
+                let name = path.rsplit('/').next().unwrap_or(path);
+                let f = data::text(env, path).await;
+                all_live &= f.live;
+                // These documents keep their own `# ` title: it is distinctive
+                // ("Metals backtest — gates 0/1/2 …"), it repeats no breadcrumb,
+                // and rendered as prose it outranks the h2s beneath it — which
+                // a 14px section heading would not, with two write-ups stacked.
+                out.push_str(&format!(
+                    "<div id=\"{id}\">{sec}</div>",
+                    id = anchor(name),
+                    sec = section_foot(
+                        "",
+                        "",
+                        "",
+                        &format!(
+                            "<div class=\"prose prose-wide\">{}</div>",
+                            render::markdown(&f.text)
+                        ),
+                        &format!("<span class=\"mono\">{}</span>", esc(path)),
+                    ),
+                ));
+            }
+            // Everything else the results folder holds: the numbers the
+            // write-ups were generated from. The dashboard cannot render those,
+            // so it links to the file itself rather than pretending otherwise.
+            let artifacts: Vec<String> = data::files_in(&paths, &format!("{base}/results"), "")
+                .into_iter()
+                .filter(|path| !path.ends_with(".md"))
+                .collect();
+            if !artifacts.is_empty() {
+                let mut list = String::new();
+                for path in &artifacts {
+                    let name = path.rsplit('/').next().unwrap_or(path);
+                    list.push_str(&format!(
+                        "<li><a href=\"{REPO_BLOB}/{path}\" target=\"_blank\" rel=\"noreferrer\">{icon} {name}</a></li>",
+                        path = esc(path),
+                        name = esc(name),
+                        icon = icon("external"),
+                    ));
+                }
+                out.push_str(&section(
+                    "The numbers behind them",
+                    "artifacts these write-ups were generated from, in the repo",
+                    &badge(&render::count(artifacts.len(), "file"), ""),
+                    &format!("<ul class=\"link-list\">{list}</ul>"),
+                ));
+            }
+            out
+        }
+        "predictions" => prediction_table(&p, &d, &rows, false),
+        "logs" => {
+            let mut out = String::new();
+            for path in &logs {
+                let f = data::text(env, path).await;
+                all_live &= f.live;
+                let worklog = path.ends_with("WORKLOG.md");
+                out.push_str(&section_foot(
+                    if worklog { "Worklog" } else { "Memory" },
+                    if worklog {
+                        "what this strategy's agents did, run by run"
+                    } else {
+                        "what they know now — carried into the next run"
                     },
-                    format!("<span class=\"mono\">{}</span>", esc(p.cell(row, "model"))),
-                ]
-            })
-            .collect();
-        section(
-            "Predictions",
-            "rows logged by this variant, newest first",
-            &badge(&render::count(rows.len(), "row"), ""),
-            &table_scroll(
-                &[
-                    ("Logged", ""),
-                    ("Market", ""),
-                    ("Outcome", ""),
-                    ("Ours", "num"),
-                    ("Market", "num"),
-                    ("Edge", "num"),
-                    ("Improvement", ""),
-                    ("Model", ""),
-                ],
-                &body,
-            ),
-        )
-    };
+                    "",
+                    &format!(
+                        "<div class=\"prose prose-wide\">{}</div>",
+                        markdown_body(&f.text)
+                    ),
+                    &format!("<span class=\"mono\">{}</span>", esc(path)),
+                ));
+            }
+            out
+        }
+        // Overview
+        _ => {
+            let mut facts = String::new();
+            facts.push_str(&render::row("Status", &render::status_badge(&status)));
+            facts.push_str(&render::row("Created", &esc(&m.created)));
+            if !m.supersedes.is_empty() {
+                facts.push_str(&render::row(
+                    "Replaces",
+                    &format!(
+                        "<a href=\"/strategies/{family}/{0}\">{0}</a>",
+                        esc(&m.supersedes)
+                    ),
+                ));
+            }
+            facts.push_str(&render::row(
+                "Family",
+                &format!("<a href=\"/strategies/{0}\">{0}</a>", esc(family)),
+            ));
+            if !m.trial_started.is_empty() {
+                facts.push_str(&render::row("Trial started", &esc(&m.trial_started)));
+                facts.push_str(&render::row("Review due", &esc(&m.review_due)));
+            }
+            if !m.labels.is_empty() {
+                facts.push_str(&render::row("Labels", &chip_row(&m.labels)));
+            }
+            if !m.retire_reason.is_empty() {
+                facts.push_str(&format!(
+                    "<div class=\"row row-block\"><span class=\"k\">Why it was dropped</span><span class=\"v\">{}</span></div>",
+                    esc(&m.retire_reason)
+                ));
+            }
+            if !m.success_guideline.is_empty() {
+                facts.push_str(&format!(
+                    "<div class=\"row row-block\"><span class=\"k\">What would make it a success</span><span class=\"v\">{}</span></div>",
+                    esc(&m.success_guideline)
+                ));
+            }
 
-    let worklog_panel = if worklog.is_empty() {
-        String::new()
-    } else {
-        doc(
-            "Worklog",
-            &esc(&format!("{base}/memory/WORKLOG.md")),
-            &format!(
-                "<div class=\"prose prose-wide\">{}</div>",
-                markdown_body(&worklog.text)
-            ),
-            false,
-        )
+            let app_paths = data::files_in(&paths, &format!("{base}/applications"), ".toml");
+            let mut app_rows: Vec<Vec<String>> = Vec::new();
+            for path in app_paths.iter().take(24) {
+                let f = data::text(env, path).await;
+                all_live &= f.live;
+                let t = data::toml_of(&f.text);
+                let name = path.rsplit('/').next().unwrap_or(path);
+                let slug = data::tstr(&t, "market_slug");
+                let legs = data::arr_at(&t, &["legs"]).len();
+                let is_active = data::tbool(&t, "active");
+                app_rows.push(vec![
+                    format!("<span class=\"mono\">{}</span>", esc(name)),
+                    if slug.is_empty() {
+                        "<span class=\"muted\">—</span>".to_string()
+                    } else {
+                        format!("<a href=\"/markets/{0}\">{0}</a>", esc(slug))
+                    },
+                    esc(data::tstr(&t, "added")),
+                    match is_active {
+                        Some(true) => badge("active", "ok"),
+                        Some(false) => badge("inactive", ""),
+                        None => "<span class=\"muted\">—</span>".to_string(),
+                    },
+                    if legs > 0 {
+                        fmt_int(legs as i64)
+                    } else {
+                        "<span class=\"muted\">—</span>".to_string()
+                    },
+                    format!(
+                        "<span class=\"muted\">{}</span>",
+                        esc(data::str_at(&t, &["params", "asset"]))
+                    ),
+                    format!(
+                        "<span class=\"muted\">{}</span>",
+                        esc(data::str_at(&t, &["params", "tier"]))
+                    ),
+                ]);
+            }
+            let applications = if app_rows.is_empty() {
+                section(
+                    "Applications",
+                    "the markets this strategy is pointed at",
+                    "",
+                    &render::empty_state(
+                        "No applications",
+                        "<div>Nothing under <span class=\"mono\">applications/</span> yet — this strategy is not pointed at any market.</div>",
+                    ),
+                )
+            } else {
+                section(
+                    "Applications",
+                    "the boards and markets this strategy is pointed at",
+                    &badge(&render::count(app_paths.len(), "file"), ""),
+                    &table(
+                        &[
+                            ("File", ""),
+                            ("Market", ""),
+                            ("Added", ""),
+                            ("Active", ""),
+                            ("Legs", "num"),
+                            ("Asset", ""),
+                            ("Tier", ""),
+                        ],
+                        &app_rows,
+                    ),
+                )
+            };
+
+            // The explainer is the description of this strategy: the single
+            // most important text on the page, above every number and before
+            // any prose written for the firm. `summary` is the one-liner used
+            // in tables; this is the version a reader can start from cold.
+            //
+            // It gets a reading measure, which leaves the right-hand third of
+            // the row free — so the facts list, the densest thing on the tab,
+            // goes there instead of into empty space, and the applications
+            // table gets the full width its seven columns need.
+            format!(
+                "<div class=\"grid-main\"><div>{lede}</div>{facts}</div>{applications}",
+                lede = lede(
+                    if m.explainer.is_empty() { &m.summary } else { &m.explainer },
+                    &format!(
+                        "No plain-English explainer yet — <span class=\"mono\">{base}/strategy.toml</span> is missing its required <span class=\"mono\">explainer</span> field."
+                    ),
+                ),
+                facts = section(
+                    "Facts",
+                    "status, trial clock and labels as recorded in the repo",
+                    "",
+                    &render::rows(&facts),
+                ),
+                applications = applications,
+            )
+        }
     };
 
     let body = format!(
-        "{banner}{summary}{stats}<div class=\"grid-main\">{thesis}{side}</div>{applications}{preds}{worklog}",
+        "{banner}{stats}{content}",
         banner = if all_live { String::new() } else { snapshot_banner() },
-        summary = summary_html,
         stats = stats,
-        thesis = section_foot(
-            "How it works",
-            "the runbook: method, gates, and what would kill it",
-            "",
-            &format!("<div class=\"prose\">{}</div>", markdown_body(&strategy_md.text)),
-            &format!("<span class=\"mono\">{base}/STRATEGY.md</span><a href=\"/strategies/{family}\">Family →</a>")
-        ),
-        side = format!("<div class=\"stack\">{side}</div>"),
-        applications = applications,
-        preds = pred_panel,
-        worklog = worklog_panel,
+        content = content,
     );
 
-    shell(env, "/strategies", crumbs, all_live, &body).await
+    shell_sub(env, "/strategies", crumbs, all_live, &bar, &body).await
 }
 
-/// `?doc=` view: one markdown document belonging to a variant.
-async fn variant_doc(env: &Env, family: &str, variant: &str, base: &str, rel: &str) -> String {
-    let ok = data::safe_path(rel)
-        && rel.ends_with(".md")
-        && (rel.starts_with("results/") || rel.starts_with("memory/") || rel == "STRATEGY.md");
-    let crumbs = trail(&[
-        ("Research", ""),
-        ("Strategies", "/strategies"),
-        (family, &format!("/strategies/{family}")),
-        (variant, &format!("/strategies/{family}/{variant}")),
-        (rel, ""),
-    ]);
-    if !ok {
-        return shell(
-            env,
-            "/strategies",
-            crumbs,
-            true,
-            &render::empty_state("Not a document of this variant", ""),
-        )
-        .await;
-    }
+// ---------------------------------------------------------------------------
+// Shared: the prediction log of one strategy or one family
+// ---------------------------------------------------------------------------
 
-    let f = data::text(env, &format!("{base}/{rel}")).await;
-    let body = if f.is_empty() {
-        section(
-            rel,
-            &format!("{base}/{rel}"),
+/// Prediction rows, newest first, with the score where the market has resolved.
+/// `with_variant` adds the strategy column (a family spans several).
+fn prediction_table(p: &Table, d: &Table, rows: &[&Vec<String>], with_variant: bool) -> String {
+    if rows.is_empty() {
+        return section(
+            "Predictions",
+            "rows logged against this family",
             "",
-            &render::empty_state("Not found", ""),
-        )
-    } else {
-        section_foot(
-            &render::md_title(&f.text).unwrap_or_else(|| rel.to_string()),
-            &format!("{base}/{rel}"),
-            "",
-            &format!(
-                "<div class=\"prose prose-wide\">{}</div>",
-                markdown_body(&f.text)
-            ),
-            &format!(
-                "<span class=\"mono\">{base}/{rel}</span><a href=\"/strategies/{family}/{variant}\">← back to {variant}</a>"
-            )
-        )
-    };
-    shell(env, "/strategies", crumbs, f.live, &body).await
+            &render::empty_state("Nothing logged yet", ""),
+        );
+    }
+    let body: Vec<Vec<String>> = rows
+        .iter()
+        .rev()
+        .map(|row| {
+            let slug = p.cell(row, "market_slug");
+            let ts = p.cell(row, "timestamp");
+            let outcome = p.cell(row, "outcome");
+            let score = d.rows.iter().find(|sr| {
+                d.cell(sr, "market_slug") == slug
+                    && d.cell(sr, "outcome") == outcome
+                    && d.cell(sr, "timestamp") == ts
+            });
+            let ours = p.num(row, "prediction");
+            let mkt = p.num(row, "market_price");
+            let mut cells = vec![format!("<span class=\"mono\">{}</span>", esc(&fmt_ts(ts)))];
+            if with_variant {
+                cells.push(format!(
+                    "<a href=\"/strategies/{0}/{1}\">{1}</a>",
+                    esc(p.cell(row, "family")),
+                    esc(p.cell(row, "variant"))
+                ));
+            }
+            cells.extend([
+                format!("<a href=\"/markets/{0}\">{0}</a>", esc(slug)),
+                esc(outcome),
+                fmt_prob(ours),
+                fmt_prob(mkt),
+                fmt_signed(mkt - ours),
+                match score {
+                    Some(sr) => {
+                        let v = d.num(sr, "improvement");
+                        badge(&fmt_signed(v), if v > 0.0 { "ok" } else { "bad" })
+                    }
+                    None => "<span class=\"muted\">open</span>".to_string(),
+                },
+                format!("<span class=\"mono\">{}</span>", esc(p.cell(row, "model"))),
+            ]);
+            cells
+        })
+        .collect();
+
+    let mut head: Vec<(&str, &str)> = vec![("Logged", "")];
+    if with_variant {
+        head.push(("Strategy", ""));
+    }
+    head.extend([
+        ("Market", ""),
+        ("Outcome", ""),
+        ("Ours", "num"),
+        ("Market", "num"),
+        ("Edge", "num"),
+        ("Improvement", ""),
+        ("Model", ""),
+    ]);
+
+    section(
+        "Predictions",
+        "every row logged, newest first — ours against the market at the time",
+        &badge(&render::count(rows.len(), "row"), ""),
+        &table_scroll(&head, &body),
+    )
 }

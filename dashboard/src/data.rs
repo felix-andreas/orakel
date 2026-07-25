@@ -184,14 +184,17 @@ pub fn variants(paths: &[String]) -> Vec<(String, String)> {
     out
 }
 
-/// Everything `strategy.toml` declares about one variant. `summary` is the
-/// REQUIRED plain-English sentence (strategies/README.md) and is the primary
-/// description everywhere a strategy appears — the dashboard never shows a
-/// variant by name alone when it can show what the variant does.
+/// Everything `strategy.toml` declares about one variant. Two REQUIRED
+/// plain-English fields (strategies/README.md), and the dashboard never shows a
+/// variant by name alone when it can show what the variant does:
+///   `summary`   one line — the description in tables, lists and index rows.
+///   `explainer` 4–8 sentences a smart outsider can read cold — the lede on the
+///               variant's own page, where there is room for the whole idea.
 pub struct VariantMeta {
     pub family: String,
     pub variant: String,
     pub summary: String,
+    pub explainer: String,
     pub status: String,
     pub created: String,
     pub supersedes: String,
@@ -219,6 +222,7 @@ pub fn parse_variant_meta(family: &str, variant: &str, src: &str) -> VariantMeta
         family: family.to_string(),
         variant: variant.to_string(),
         summary: tstr(&t, "summary").to_string(),
+        explainer: tstr(&t, "explainer").trim().to_string(),
         status: tstr(&t, "status").to_string(),
         created: tstr(&t, "created").to_string(),
         supersedes: tstr(&t, "supersedes").to_string(),

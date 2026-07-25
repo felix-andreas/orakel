@@ -281,7 +281,7 @@ a {
 
 .wordmark {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.375rem;
   font-size: var(--fs-lg);
   font-weight: 650;
@@ -289,11 +289,13 @@ a {
   text-decoration: none;
 }
 
-.wordmark small {
-  font-size: var(--fs-xs);
-  font-weight: 400;
-  color: var(--fg-subtle);
-  letter-spacing: 0;
+/* The sea-shell mark, at about the wordmark's cap height. It is inlined SVG
+   drawn in currentColor, so it follows the theme — src/favicon.svg has to
+   hard-code its colour instead, having nothing to inherit from. */
+.wordmark .mark {
+  width: 1.05em;
+  height: 1.05em;
+  flex: none;
 }
 
 /* The top bar's copy of the wordmark. It exists for exactly one state — mobile
@@ -660,6 +662,81 @@ a {
   background: var(--bad);
 }
 
+/* ---- the secondary bar: one detail page's tabs ---- */
+
+/* A second band under the top bar, sticky to it, on the same gutters — a
+   sibling of the top bar, not something inside the content. It is deliberately
+   SUBORDINATE: three quarters the height, smaller type, and it carries links
+   only. The active tab is marked by weight plus a rule under it; the others
+   stay at body-secondary contrast, because "inactive" is never signalled by
+   making text harder to read (PRINCIPLES).
+
+   The bar scrolls sideways when the tabs do not fit — five tabs at 375px — so
+   the PAGE never does. */
+.subbar {
+  position: sticky;
+  top: var(--topbar-h);
+  z-index: 19;
+  height: 2.25rem;
+  flex: none;
+  padding: 0 var(--pad-page);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.subbar::-webkit-scrollbar {
+  display: none;
+}
+
+.subbar-in {
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+  height: 100%;
+  width: max-content;
+  min-width: 100%;
+}
+
+.subbar a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0 0.5rem;
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+
+.subbar a:hover {
+  color: var(--fg);
+  background: var(--hover);
+}
+
+.subbar a[aria-current="page"] {
+  color: var(--fg);
+  font-weight: 650;
+  border-bottom-color: var(--fg);
+}
+
+.subbar a:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+/* how many rows/documents that tab holds — the count is the point, not chrome */
+.tab-n {
+  font-size: var(--fs-2xs);
+  color: var(--fg-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
 .content {
   flex: 1;
   width: 100%;
@@ -815,16 +892,21 @@ a {
   color: var(--bad);
 }
 
-/* The plain-English sentence that describes a thing. It is the description —
-   it goes above the numbers and above the internal prose, never instead of
-   them (PRINCIPLES.md: plain English, no jargon). */
+/* The plain-English paragraph that describes a thing (a strategy's `explainer`,
+   a family's "In plain English" opener). It is THE description: it goes above
+   the numbers and above the prose written for the firm, never instead of them
+   (PRINCIPLES.md: plain English, no jargon, self-contained).
+
+   Set larger than body and to a ~72-character measure — it is several
+   sentences long and the one paragraph on the page that has to be read rather
+   than scanned, so it gets a reading measure, not the column's full width. */
 .lede {
   margin: 0;
   font-size: var(--fs-lg);
-  line-height: 1.5;
+  line-height: 1.6;
   font-weight: 450;
   letter-spacing: -0.01em;
-  max-width: 58rem;
+  max-width: 72ch;
   color: var(--fg);
 }
 
@@ -1210,9 +1292,25 @@ td.bar-cell {
 .fname {
   display: flex;
   align-items: baseline;
-  gap: 0.375rem;
+  flex-wrap: wrap;
+  gap: 0 0.375rem;
   font-weight: 600;
   min-width: 0;
+}
+
+/* The family's name is a link to the family page; the rest of the row is the
+   disclosure that reveals its strategies. Both are wanted, so both are here —
+   the browser gives the click to the anchor when it is the target, and to the
+   <summary> otherwise. */
+.flink {
+  text-decoration: none;
+  color: var(--fg);
+  white-space: nowrap; /* a long family name keeps its line; the count wraps */
+}
+
+.flink:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .fname::before {
@@ -1820,6 +1918,11 @@ select:hover {
   max-width: 46rem;
   font-size: var(--fs-md);
   line-height: 1.6;
+  /* Worklogs quote hostnames, API paths and slugs, none of which have a break
+     opportunity in them. Without this a single 50-character token pushes the
+     WHOLE PAGE sideways at 375px — the document is what should wrap, never the
+     layout. (Blocks with their own scroll — pre, table — are unaffected.) */
+  overflow-wrap: break-word;
 }
 
 .prose-wide {

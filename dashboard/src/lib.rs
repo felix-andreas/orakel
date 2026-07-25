@@ -100,15 +100,28 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .get_async("/strategies", |_, ctx| async move {
             Response::from_html(strategies::index(&ctx.env).await)
         })
-        .get_async("/strategies/:family", |_, ctx| async move {
+        .get_async("/strategies/:family", |req, ctx| async move {
             let family = ctx.param("family").cloned().unwrap_or_default();
-            Response::from_html(strategies::family(&ctx.env, &family).await)
+            let tab = query(&req, "tab");
+            Response::from_html(strategies::family(&ctx.env, &family, tab).await)
         })
         .get_async("/strategies/:family/:variant", |req, ctx| async move {
             let family = ctx.param("family").cloned().unwrap_or_default();
             let variant = ctx.param("variant").cloned().unwrap_or_default();
-            let doc = query(&req, "doc");
-            Response::from_html(strategies::variant(&ctx.env, &family, &variant, doc).await)
+            // Legacy deep link: `?doc=<path>` rendered one of the variant's
+            // documents on its own page. Those documents now live in tabs, so
+            // the old address redirects to the tab that holds the document
+            // (and to its anchor, when the tab holds several).
+            if let Some(rel) = query(&req, "doc") {
+                let (tab, anchor) = strategies::doc_target(&rel);
+                let mut url = req.url()?;
+                let q = if tab.is_empty() { None } else { Some(format!("tab={tab}")) };
+                url.set_query(q.as_deref());
+                url.set_fragment(if anchor.is_empty() { None } else { Some(&anchor) });
+                return Response::redirect(url);
+            }
+            let tab = query(&req, "tab");
+            Response::from_html(strategies::variant(&ctx.env, &family, &variant, tab).await)
         })
         .get_async("/ideas", |_, ctx| async move {
             Response::from_html(firm::ideas(&ctx.env).await)
@@ -217,8 +230,21 @@ pub async fn freshness(env: &Env, live: bool) -> Freshness {
 
 /// Standard page: breadcrumbs + body, with the freshness resolved.
 pub async fn shell(env: &Env, active: &str, crumbs: Vec<Crumb>, live: bool, body: &str) -> String {
+    shell_sub(env, active, crumbs, live, "", body).await
+}
+
+/// Same, plus a secondary bar under the top bar — the detail page's own tabs
+/// (`render::tabbar`). `subbar` is already-safe HTML.
+pub async fn shell_sub(
+    env: &Env,
+    active: &str,
+    crumbs: Vec<Crumb>,
+    live: bool,
+    subbar: &str,
+    body: &str,
+) -> String {
     let fresh = freshness(env, live).await;
-    render::layout(active, &crumbs, body, &fresh)
+    render::layout(active, &crumbs, subbar, body, &fresh)
 }
 
 /// Shown at the top of a page whose data came from the build-time pack.
