@@ -41,9 +41,13 @@ pub async fn index(env: &Env) -> String {
         (
             fmt_int(count_status("trial") as i64),
             "in trial".to_string(),
-            "warn",
+            if count_status("trial") > 0 { "warn" } else { "" },
         ),
-        (fmt_int(count_status("live") as i64), "live".to_string(), "ok"),
+        (
+            fmt_int(count_status("live") as i64),
+            "live".to_string(),
+            if count_status("live") > 0 { "ok" } else { "" },
+        ),
         (
             fmt_int(count_status("retired") as i64),
             "dropped".to_string(),
@@ -60,12 +64,19 @@ pub async fn index(env: &Env) -> String {
     // its variants (with the plain-English summary that IS the description)
     // revealed on click. Table over cards; expansion over navigation.
     let mut rows = String::from(
-        "<div class=\"fhead\"><span>Family</span><span>What it does</span><span>Status</span><span>Predictions</span><span>Beats market by</span></div>",
+        "<div class=\"fhead\"><span>Family</span><span>What it does</span><span>Status</span><span>Predictions</span><span>vs market</span></div>",
     );
     for family in &families {
         let fam_doc = data::text(env, &format!("strategies/{family}/FAMILY.md")).await;
         all_live &= fam_doc.live;
         let mine: Vec<&data::VariantMeta> = metas.iter().filter(|m| &m.family == family).collect();
+        // Resolved below; a variant row repeats nothing the family row said.
+        let family_line = mine
+            .iter()
+            .find(|m| m.status == "trial" || m.status == "live")
+            .or_else(|| mine.iter().max_by(|a, b| a.created.cmp(&b.created)))
+            .map(|m| m.summary.clone())
+            .unwrap_or_default();
         let n_pred = p
             .rows
             .iter()
@@ -125,12 +136,17 @@ pub async fn index(env: &Env) -> String {
             } else {
                 format!("created {}", m.created)
             };
+            let summary_cell = if m.summary == family_line {
+                String::new() // already said on the family row
+            } else {
+                esc(&m.summary)
+            };
             vars.push_str(&format!(
                 "<div class=\"fvar\"><span class=\"fvar-name\"><a href=\"{href}\">{name}</a><span class=\"fvar-when\">{when}</span></span><span class=\"fsum\">{summary}</span><span class=\"fnum\">{status}</span><span class=\"fnum\">{n}{scored_sub}</span><span class=\"fnum\">{vimp}</span></div>",
                 href = esc(&m.href()),
                 name = esc(&m.variant),
                 when = esc(&when),
-                summary = esc(&m.summary),
+                summary = summary_cell,
                 status = render::status_badge(&m.status),
                 n = n,
                 scored_sub = if scored > 0 {
@@ -146,13 +162,10 @@ pub async fn index(env: &Env) -> String {
         // firm's own vocabulary, so the description shown here is the REQUIRED
         // summary of the family's current strategy (its trialling/live variant,
         // else its newest). FAMILY.md itself is one click away, in full.
-        let describing = mine
-            .iter()
-            .find(|m| m.status == "trial" || m.status == "live")
-            .or_else(|| mine.iter().max_by(|a, b| a.created.cmp(&b.created)));
-        let what = match describing.filter(|m| !m.summary.is_empty()) {
-            Some(m) => m.summary.clone(),
-            None => first_paragraph(&fam_doc.text),
+        let what = if family_line.is_empty() {
+            first_paragraph(&fam_doc.text)
+        } else {
+            family_line.clone()
         };
         let status_cell = if mine.is_empty() {
             "<span class=\"muted\">—</span>".to_string()
@@ -186,9 +199,9 @@ pub async fn index(env: &Env) -> String {
         banner = if all_live { String::new() } else { snapshot_banner() },
         stats = stats,
         table = panel_foot(
-            "Strategies",
-            "click a family to see its strategies",
-            &badge(&render::count(metas.len(), "strategy"), ""),
+            "Families",
+            "click a family to see the strategies inside it",
+            "",
             &format!("<div class=\"ftable\">{rows}</div>"),
             "<span class=\"mono\">strategies/&lt;family&gt;/&lt;variant&gt;/strategy.toml</span><span>improvement = how much better than the market, per scored prediction</span>",
             true,

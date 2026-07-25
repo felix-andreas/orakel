@@ -1180,17 +1180,24 @@ td.bar-cell {
   font-variant-numeric: tabular-nums;
 }
 
+/* Narrow screens: one column, stacked — name, then what it does, then status.
+   The two numeric columns drop out; they are one tap away on the detail page. */
 @media (max-width: 900px) {
   .fhead {
     display: none;
   }
   .frow > summary,
   .fvar {
-    grid-template-columns: minmax(0, 1fr) 4.5rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
   }
-  .frow > summary > :nth-child(n + 3),
+  .frow > summary > :nth-child(n + 4),
   .fvar > :nth-child(n + 4) {
     display: none;
+  }
+  .frow > summary > :nth-child(3),
+  .fvar > :nth-child(3) {
+    text-align: left;
   }
 }
 
@@ -1390,26 +1397,27 @@ a.item:hover {
   text-underline-offset: 2px;
 }
 
-/* the disclosure that holds the raw, internal version */
-details.doc-plain {
+/* The disclosure holding the raw, internal version. Two classes so it beats
+   `details.doc`, which is declared later in this file. */
+details.doc.doc-plain {
   border: 0;
   background: none;
   margin-top: 0.25rem;
 }
 
-details.doc-plain > summary {
+details.doc.doc-plain > summary {
   padding: 0.125rem 0;
   font-size: var(--fs-xs);
   font-weight: 400;
   color: var(--fg-subtle);
 }
 
-details.doc-plain > summary:hover {
+details.doc.doc-plain > summary:hover {
   background: none;
   color: var(--fg);
 }
 
-details.doc-plain > .doc-body {
+details.doc.doc-plain > .doc-body {
   padding: 0.5rem 0 0;
   border-top: 0;
 }
