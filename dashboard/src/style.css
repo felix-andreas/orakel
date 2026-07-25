@@ -84,6 +84,7 @@
     monospace;
 
   --sidebar-w: 240px;
+  --topbar-h: 3rem; /* the one header band — the mobile nav overlay hangs off it */
   color-scheme: light;
 }
 
@@ -231,14 +232,15 @@ a {
   background: var(--bg-sunken);
 }
 
-/* Same 3rem band as the top bar, so the wordmark and the theme toggle sit on
-   one visual header row across the sidebar/main seam. */
+/* Same band height as the top bar, so the wordmark and the theme toggle sit on
+   one visual header row across the sidebar/main seam. Below 900px this row is
+   gone entirely and the top bar is the only band (see the responsive block). */
 .sidebar-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  height: 3rem;
+  height: var(--topbar-h);
   flex: none;
   margin: 0 -0.5rem 0.5rem -0.75rem;
   padding: 0 0.75rem;
@@ -262,7 +264,16 @@ a {
   letter-spacing: 0;
 }
 
-/* burger (mobile only) — CSS-only via the #nav-toggle checkbox */
+/* The top bar's copy of the wordmark. It exists for exactly one state — mobile
+   with the menu open, where it takes the breadcrumb's slot — and is display:none
+   (so out of the accessibility tree too) everywhere else. */
+.wordmark-bar {
+  display: none;
+}
+
+/* burger (mobile only) — CSS-only via the #nav-toggle checkbox. It lives in the
+   top bar, next to the theme toggle, since below 900px that bar is the only
+   header there is. */
 .nav-toggle {
   position: absolute;
   width: 1px;
@@ -288,7 +299,7 @@ a {
   color: var(--fg);
 }
 
-.nav-toggle:focus-visible ~ .sidebar .burger {
+.nav-toggle:focus-visible ~ .main .burger {
   outline: 2px solid var(--ring);
   outline-offset: 1px;
 }
@@ -397,7 +408,7 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  height: 3rem;
+  height: var(--topbar-h);
   padding: 0 1.5rem;
   border-bottom: 1px solid var(--border);
   background: color-mix(in srgb, var(--bg) 88%, transparent);
@@ -1786,30 +1797,63 @@ select:hover {
 
 /* ============================ responsive ============================ */
 
+/* Below the sidebar breakpoint there is ONE header band, not two. The sidebar
+   used to keep its own wordmark row here and the page's top bar sat directly
+   under it: same visual weight twice, ~73px of chrome for nothing, on the axis
+   where space is scarcest. So the sidebar stops being a band — it becomes just
+   the nav, hanging off the bar as an overlay — and the top bar carries the lot:
+   breadcrumb, freshness, theme toggle, burger. Opening the menu swaps the
+   breadcrumb for the wordmark, because navigation has replaced the page's
+   context and the app's name is what belongs in that slot. */
 @media (max-width: 900px) {
   .shell {
     grid-template-columns: minmax(0, 1fr);
   }
   .sidebar {
-    position: sticky;
-    top: 0;
+    position: fixed;
+    top: var(--topbar-h);
+    left: 0;
+    right: 0;
     z-index: 30;
+    display: none; /* menu closed: no second band at all */
     height: auto;
-    gap: 0;
+    max-height: calc(100vh - var(--topbar-h));
+    max-height: calc(100dvh - var(--topbar-h));
     border-right: none;
     border-bottom: 1px solid var(--border);
     background: var(--bg);
+    box-shadow: var(--shadow);
     padding: 0.5rem 0.75rem;
+  }
+  .nav-toggle:checked ~ .sidebar {
+    display: flex;
+  }
+  /* the wordmark row is the second band — it only exists on desktop */
+  .sidebar-top {
+    display: none;
   }
   .burger {
     display: inline-flex;
   }
   .nav {
-    display: none;
-    padding: 0.5rem 0 0.25rem;
-    max-height: 70vh;
+    padding: 0;
   }
-  .nav-toggle:checked ~ .sidebar .nav {
+  /* The bar is tighter than the desktop one and the breadcrumb IS the title, so
+     the ancestor hops give up their width first (ellipsised, still present and
+     still clickable) and the leaf stays readable. Without this a deep route
+     reads "r…" at 375px. */
+  .crumbs a {
+    min-width: 2rem; /* an ellipsised hop is still a tap target */
+    flex-shrink: 10000; /* "take it from here" — before the leaf gives up a pixel */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* the bar's left slot: breadcrumb closed, wordmark open */
+  .nav-toggle:checked ~ .main .crumbs {
+    display: none;
+  }
+  .nav-toggle:checked ~ .main .wordmark-bar {
     display: flex;
   }
   .topbar {

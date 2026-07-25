@@ -239,6 +239,14 @@ pub struct Freshness {
 /// The full page: sidebar (collapsible groups, localStorage-persisted), top bar
 /// (breadcrumbs + theme toggle + freshness), content, footer.
 /// `active` is the current route path; `body` is already-safe HTML.
+///
+/// One header band, always. On desktop the wordmark sits in the sidebar's own
+/// 3rem row, level with the top bar across the seam. Below 900px the sidebar
+/// stops being a band at all — the burger moves into the top bar, which then
+/// carries everything, and the nav drops out of it as an overlay. The bar's
+/// left slot is the breadcrumb while the menu is closed and the wordmark while
+/// it is open (`.wordmark-bar`), because navigation has replaced the page's
+/// context and the app's name is what belongs there.
 pub fn layout(active: &str, crumbs: &[Crumb], body: &str, fresh: &Freshness) -> String {
     // --- sidebar ---
     let mut nav = String::new();
@@ -323,16 +331,17 @@ pub fn layout(active: &str, crumbs: &[Crumb], body: &str, fresh: &Freshness) -> 
   <aside class="sidebar">
     <div class="sidebar-top">
       <a class="wordmark" href="/">orakel<small>dashboard</small></a>
-      <label class="burger" for="nav-toggle" aria-label="Toggle navigation">{burger}</label>
     </div>
     <nav class="nav" id="nav">{nav}</nav>
   </aside>
   <div class="main">
     <div class="topbar">
+      <a class="wordmark wordmark-bar" href="/">orakel<small>dashboard</small></a>
       <nav class="crumbs" aria-label="Breadcrumb">{crumb_html}</nav>
       <div class="topbar-right">
         <span class="updated" title="Data freshness"><span class="{dot}"></span>{source} · {stamp}</span>
         <button type="button" class="icon-btn" id="theme-toggle" aria-label="Switch colour theme"><span class="sun">{sun}</span><span class="moon">{moon}</span></button>
+        <label class="burger" for="nav-toggle" aria-label="Toggle navigation">{burger}</label>
       </div>
     </div>
     <main class="content">

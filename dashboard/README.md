@@ -35,6 +35,13 @@ There is **no page title**: the breadcrumb in the top bar is the title. The top 
 carries only things that do something — breadcrumbs, a light/dark toggle (persisted in
 `localStorage`, respected by the charts) and the data-freshness stamp.
 
+Below 900px that top bar is the **only** header. The sidebar stops being a band: its
+wordmark row is dropped, the burger joins the theme toggle on the right of the bar, and
+the nav opens as an overlay hanging off it (`position: fixed`, so opening the menu never
+pushes the page). With the menu open the breadcrumb hands its slot to the `orakel`
+wordmark — navigation has replaced the page's context, so the app's name is what belongs
+there. One band, 48px, in every state; the content starts at 64px instead of 137px.
+
 ## Layout language
 
 Four bands, in this order, and nothing else:
