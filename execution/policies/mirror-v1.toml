@@ -1,0 +1,29 @@
+name = "mirror"
+version = 1
+created = "2026-07-25"
+character = "Trade every signal with any edge, flat stake, hold to resolution. The naive baseline that the disciplined policies must beat."
+
+[combine]
+method = "best-improvement"   # best-improvement | precision-weighted | single:<family>/<variant>
+
+[entry]
+min_edge = 0.01               # |p - executable price|
+sides = ["buy", "sell"]
+delay_hours = 0
+require_book = false          # accepts synthetic fills
+min_spread_ok = 1.00          # no spread gate
+min_depth_usd = 0.0           # no depth gate
+respect_venue_epsilon = false # deliberately reckless: shows what the screen is worth
+
+[sizing]
+method = "flat"
+stake_usd = 10.0
+max_per_market_usd = 100.0
+
+[exit]
+rule = "hold-to-resolution"
+
+[costs]
+assumed_spread = 0.03
+max_book_fraction = 1.0
+fee_bps = 0

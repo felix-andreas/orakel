@@ -1,0 +1,31 @@
+name = "anchor"
+version = 1
+created = "2026-07-25"
+character = "Kelly with capacity realism: hard depth cap and per-market exposure limits. What the book will actually absorb."
+
+[combine]
+method = "best-improvement"
+
+[entry]
+min_edge = 0.05
+sides = ["buy", "sell"]
+delay_hours = 0
+require_book = true
+min_spread_ok = 0.05
+min_depth_usd = 200.0
+respect_venue_epsilon = true
+
+[sizing]
+method = "fractional-kelly"
+kelly_fraction = 0.25
+bankroll_usd = 1000.0
+max_bankroll_fraction = 0.03
+max_per_market_usd = 50.0
+
+[exit]
+rule = "hold-to-resolution"
+
+[costs]
+assumed_spread = 0.03
+max_book_fraction = 0.15
+fee_bps = 0

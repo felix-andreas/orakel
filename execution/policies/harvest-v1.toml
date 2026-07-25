@@ -1,0 +1,33 @@
+name = "harvest"
+version = 1
+created = "2026-07-25"
+character = "Fade, but exit once 60% of the edge has closed instead of holding to resolution. Frees capital early; tests whether patience is actually being paid for."
+
+[combine]
+method = "best-improvement"
+
+[entry]
+min_edge = 0.05
+sides = ["sell"]
+delay_hours = 0
+require_book = true
+min_spread_ok = 0.05
+min_depth_usd = 200.0
+respect_venue_epsilon = true
+
+[sizing]
+method = "fractional-kelly"
+kelly_fraction = 0.25
+bankroll_usd = 1000.0
+max_bankroll_fraction = 0.03
+max_per_market_usd = 50.0
+
+[exit]
+rule = "take-profit"
+close_fraction = 0.60         # exit when price has moved 60% toward our probability
+else_hold_to_resolution = true
+
+[costs]
+assumed_spread = 0.03
+max_book_fraction = 0.15
+fee_bps = 0

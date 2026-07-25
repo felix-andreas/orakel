@@ -1,0 +1,31 @@
+name = "patient"
+version = 1
+created = "2026-07-25"
+character = "Fade with entry delayed 24h on frozen inputs. Tests the wing-drift finding that one-way lottery flow makes sell fills BETTER with delay (+7.7c -> +10.0c)."
+
+[combine]
+method = "best-improvement"
+
+[entry]
+min_edge = 0.05
+sides = ["sell"]
+delay_hours = 24
+require_book = true
+min_spread_ok = 0.05
+min_depth_usd = 200.0
+respect_venue_epsilon = true
+
+[sizing]
+method = "fractional-kelly"
+kelly_fraction = 0.25
+bankroll_usd = 1000.0
+max_bankroll_fraction = 0.03
+max_per_market_usd = 50.0
+
+[exit]
+rule = "hold-to-resolution"
+
+[costs]
+assumed_spread = 0.03
+max_book_fraction = 0.15
+fee_bps = 0

@@ -1,0 +1,29 @@
+name = "gate"
+version = 1
+created = "2026-07-25"
+character = "Mirror plus discipline only — edge, spread, depth and venue-epsilon gates, still flat stakes. Isolates how much of the value is filtering rather than cleverness."
+
+[combine]
+method = "best-improvement"
+
+[entry]
+min_edge = 0.05
+sides = ["buy", "sell"]
+delay_hours = 0
+require_book = true
+min_spread_ok = 0.05
+min_depth_usd = 100.0
+respect_venue_epsilon = true
+
+[sizing]
+method = "flat"
+stake_usd = 10.0
+max_per_market_usd = 100.0
+
+[exit]
+rule = "hold-to-resolution"
+
+[costs]
+assumed_spread = 0.03
+max_book_fraction = 0.25
+fee_bps = 0
