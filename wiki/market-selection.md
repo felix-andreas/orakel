@@ -48,6 +48,20 @@ can beat the marginal trader. Distilled from poly's scored runs (2026-07).
   2026-07-24: crowd σ 0.015 via GHCN-M+ERSST replication vs any ERA5-transfer floor of
   ~0.038.) Ask first: *who is the sharpest agent already in this market, and what data
   are they running?*
+- **Glanceable within-window state.** The sibling of the screen above, and it kills
+  nowcasts the same way: before modelling how a partly-realised window will finish, ask
+  whether an ordinary trader can simply *look* at the state — an app, a live page, a
+  daily list. If yes, your model must beat observation, not ignorance, and it loses.
+  (Netflix weekly Top-10 probe, 2026-07-25: the whole information set a forecaster can
+  use — previous week's global views plus 94-country ranks — publishes *before* the
+  market opens, and no official data lands again until the resolving print, which looks
+  ideal. But subscribers see the in-app daily Top 10 all week. A decay model fitted on
+  264 weeks of Netflix's own TSVs picked the winner 23% / 42% of the time on shows /
+  films against the Thursday market's 77% / 83%. Filed nowhere, killed in research.)
+  The corollary is where to look instead: markets whose within-window state is **hidden
+  from the amateur too** — a count that must be assembled, an estimate with error bars,
+  an ordering over many public objects — so the competition is modelling skill rather
+  than who bothered to look.
 
 ## The test
 
