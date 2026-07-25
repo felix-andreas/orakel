@@ -28,7 +28,7 @@ execution = "opus-5, effort xhigh/high"
 
 [research]
 slots_total = 5
-slots_active = 3
+slots_active = 2
 
 [[research.slot]]
 id = 1
@@ -42,17 +42,12 @@ variant = "arena-rank/favourite-shrinkage"
 trial_started = "2026-07-25"
 trial_review_due = "2026-08-04"
 
-[[research.slot]]
-id = 3
-variant = "series-shape/bo3-derivatives"
-trial_started = "2026-07-25"
-trial_review_due = "2026-08-04"
 
 
 [strategies]
 live = []    # promoted variants, e.g. ["barrier-touch/gbm"]
-trial = ["barrier-touch/ladder-rv", "arena-rank/favourite-shrinkage", "series-shape/bo3-derivatives"]
-retired = ["temp-truncation/runningmax", "climate-nowcast/gistemp-era5", "arena-rank/satellites"] # folders stay; post-mortems in results/
+trial = ["barrier-touch/ladder-rv", "arena-rank/favourite-shrinkage"]
+retired = ["temp-truncation/runningmax", "climate-nowcast/gistemp-era5", "arena-rank/satellites", "series-shape/bo3-derivatives"] # folders stay; post-mortems in results/
 
 [roles]
 active = ["ceo", "market-researcher"]
