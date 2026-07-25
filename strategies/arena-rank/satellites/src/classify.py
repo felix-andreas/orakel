@@ -31,11 +31,12 @@ PATH2SLICE = {
     "agent": "agent",
 }
 
+# order matters: "second-highest" contains "highest", so the compound forms are tested first
 ORDINAL = [
-    (r"highest[- ]ranked|highest arena (?:rank|score)|highest rank\b", 1),
-    (r"second[- ]highest", 2),
-    (r"third[- ]highest", 3),
     (r"fourth[- ]highest", 4),
+    (r"third[- ]highest", 3),
+    (r"second[- ]highest", 2),
+    (r"highest[- ]ranked|highest arena (?:rank|score)|highest rank\b", 1),
 ]
 
 
