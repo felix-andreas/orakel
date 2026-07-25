@@ -1,6 +1,6 @@
 family = "arena-rank"
 variant = "satellites"
-status = "trial"
+status = "retired"
 created = "2026-07-25"
 supersedes = ""
 labels = ["class:relative-value", "class:order-statistics", "data:lmarena", "anchor:deep-board", "family-type:multi-board-cohort", "screen:no-sharp-incumbent"]
@@ -10,3 +10,7 @@ slot = 2
 started = "2026-07-25"
 review_due = "2026-08-04"
 success_guideline = "backtest gates from the idea pass on prior monthly cohorts; then paired Brier beating market on satellite boards; July cohort resolves 2026-07-31 12:00 ET = first live scoring"
+
+[retirement]
+date = "2026-07-25"
+reason = "Day-1 backtest killed the founding thesis: gate 2 (market-already-sharp) — satellite log-loss market 0.504 vs model 1.244, model better in 1/10 cohort-months; gate 3 portfolio/correlation effect calibrated to zero. Root cause: published CIs describe LATENT skill, but the market resolves on the PRINTED rank, which is far more persistent (realised sd 1.23 vs published CI +/-5.9). Superseded by arena-rank/favourite-shrinkage, which carries the mechanism that DID survive."

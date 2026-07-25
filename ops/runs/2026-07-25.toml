@@ -43,3 +43,17 @@ all_slots_ran = true
 csv_appended_rows = 51
 pushed = true
 notes = "108 prediction rows, 21 scored. Both slots active. arena-rank day-1 report lands after run close -> handle at next run. Dashboard git pages still on embedded fallback (no PAT). Execution/backtest engine remains the largest unbuilt component."
+
+# --- addendum (post-close): slot-2 day-1 report landed ---
+[[step]]
+role = "researcher"
+slot = 2
+variant = "arena-rank/satellites"
+status = "ok"
+predictions = 0
+note = "day-1 (opus-5 max): founding thesis KILLED on gate 2 (market-already-sharp) + gate 3 (portfolio effect ~0); gate 0 47/47 exact via Wayback vintages; surviving mechanism = favourite-longshot shrinkage (+0.111 LL OOS, t=2.63, 9/10 months; T-7d t=7.49, 10/10). Escalated."
+
+[[step]]
+role = "ceo"
+status = "ok"
+note = "escalation decided: satellites retired, arena-rank/favourite-shrinkage created (supersedes), slot clock NOT reset, day-3 fundable-band kill test pre-registered; dead mechanism's rows deliberately not logged; published-ci-vs-printed graduated to wiki"

@@ -1,7 +1,7 @@
 ---
 date: 2026-07-25
 slug: arena-rank-satellites
-status: trialing # -> strategies/arena-rank/satellites (slot 2, 2026-07-25)
+status: trialing # thesis KILLED day 1; surviving mechanism -> strategies/arena-rank/favourite-shrinkage (slot 2)
 example_markets:
   [
     "which-company-has-the-third-best-ai-model-end-of-july",

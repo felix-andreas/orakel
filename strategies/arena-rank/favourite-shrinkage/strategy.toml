@@ -1,0 +1,12 @@
+family = "arena-rank"
+variant = "favourite-shrinkage"
+status = "trial"
+created = "2026-07-25"
+supersedes = "satellites"
+labels = ["class:favourite-longshot", "class:distribution-shrinkage", "data:lmarena", "family-type:multi-board-cohort", "screen:no-sharp-incumbent"]
+
+[trial]
+slot = 2
+started = "2026-07-25"           # inherits the slot; clock NOT reset (day 1 already spent)
+review_due = "2026-08-04"
+success_guideline = "PRE-REGISTERED KILL TEST (day 3, 2026-07-27): the favourite-longshot gain must concentrate in a FUNDABLE band (favourite priced 0.60-0.90). If the edge exists only on 0.93-0.99 favourites, return on locked capital after spread is too thin to justify a slot -> retire. Then: paired Brier beating market on forward rows; the 2026-07-31 cohort resolution is the first live scoring."

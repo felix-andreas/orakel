@@ -38,15 +38,15 @@ trial_review_due = "2026-08-02"
 
 [[research.slot]]
 id = 2
-variant = "arena-rank/satellites"
+variant = "arena-rank/favourite-shrinkage"
 trial_started = "2026-07-25"
 trial_review_due = "2026-08-04"
 
 
 [strategies]
 live = []    # promoted variants, e.g. ["barrier-touch/gbm"]
-trial = ["barrier-touch/ladder-rv", "arena-rank/satellites"]
-retired = ["temp-truncation/runningmax", "climate-nowcast/gistemp-era5"] # folders stay; post-mortems in results/
+trial = ["barrier-touch/ladder-rv", "arena-rank/favourite-shrinkage"]
+retired = ["temp-truncation/runningmax", "climate-nowcast/gistemp-era5", "arena-rank/satellites"] # folders stay; post-mortems in results/
 
 [roles]
 active = ["ceo", "market-researcher"]

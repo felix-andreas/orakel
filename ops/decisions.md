@@ -5,6 +5,32 @@ who decided**. Newest first.
 
 ---
 
+## 2026-07-25 — arena-rank: thesis killed, mechanism kept (variant split)
+
+`arena-rank/satellites` day-1 falsification killed its founding thesis on gate 2: the
+anchor-calibrated order-statistic simulation lost to the satellite crowds (log-loss
+1.244 vs 0.504, better in 1/10 cohort-months), and the portfolio-correlation effect
+calibrated to zero. Root cause is now a wiki rule: the leaderboard publishes CIs about
+LATENT skill (±5.9) while the market resolves on the PRINTED rank, whose realised 7-day
+sd is 1.23 — using published bars as σ over-disperses and fades favourites.
+
+But one mechanism survived with better statistics than the original claim: the crowds
+are **underconfident in their own favourite** (+9.2pp vs de-vigged price at T−7d, se
+1.9pp, t=4.77, 9/10 months), and sharpening their distribution gains +0.111 log-loss
+OOS (t=+2.63; at T−7d t=+7.49, 10/10 months).
+
+Decision per our taxonomy (different approach → new variant, not a version bump):
+retire `satellites` with its post-mortem, create `arena-rank/favourite-shrinkage`
+(`supersedes = "satellites"`) carrying only the surviving evidence. The slot clock is
+NOT reset — day 1 is spent. **A kill test is pre-registered for day 3**: the
+favourite-longshot gain must concentrate in a fundable 0.60–0.90 band; if it exists only
+on 0.93–0.99 favourites, return on locked capital after spread cannot justify a slot and
+the variant retires. The retired simulation's forward prediction rows were deliberately
+NOT logged — we do not put a dead mechanism's calls into the track record; day 2
+produces shrinkage-based rows for the same cohort, still ahead of the 07-31 resolution.
+
+---
+
 ## 2026-07-24 — Model routing: Opus 5 everywhere (Felix)
 
 Opus 5 released; Felix directs: use it wherever Fable was used, at **max** effort, and
