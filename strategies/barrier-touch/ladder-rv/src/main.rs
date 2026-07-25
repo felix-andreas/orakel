@@ -372,7 +372,20 @@ fn board_period(slug: &str, asset: Asset) -> Result<(i64, i64)> {
         let y: i32 = toks[i + 4].parse()?;
         let mon = NaiveDate::from_ymd_opt(y, m, d).context("weekly date")?;
         anyhow::ensure!(mon.weekday() == Weekday::Mon, "week-of date {mon} not a Monday");
-        return Ok((ts(mon, 0, 0), ts(mon + Duration::days(4), 20, 0)));
+        // The weekly window follows the asset's own session clock, not a calendar week.
+        // Equity weeklies run Mon 00:00Z (RTH filter applies) -> Fri 20:00Z (16:00 ET).
+        // WTI/metals weeklies run on the CME/COMEX clock: the Monday session opens
+        // Sunday 22:00Z (6pm ET) and the week ends Friday 21:00Z (5pm ET) — Gamma's
+        // endDate confirms 21:00Z on these boards. Holidays inside the week are handled
+        // by SessionCal, which simply has no minutes for them.
+        return Ok(match asset.class() {
+            Class::Equity => (ts(mon, 0, 0), ts(mon + Duration::days(4), 20, 0)),
+            Class::Wti => (
+                ts(mon - Duration::days(1), 22, 0),
+                ts(mon + Duration::days(4), 21, 0),
+            ),
+            Class::Crypto => (ts(mon, 0, 0), ts(mon + Duration::days(5), 0, 0)),
+        });
     }
     if let Some(i) = toks.iter().position(|t| *t == "in") {
         let m = month_num(toks[i + 1]).context("monthly month")?;
@@ -909,7 +922,7 @@ fn cmd_analyze(data: &Path) -> Result<()> {
     println!("loading candles...");
     let db = CandleDb::load(
         data,
-        &["BTCUSDT", "ETHUSDT", "USOILSPOT", "SPY", "NVDA", "WTIU6", "XAUUSD", "XAGUSD"],
+        &["BTCUSDT", "ETHUSDT", "USOILSPOT", "SPY", "NVDA", "WTIU6", "WTIV6", "XAUUSD", "XAGUSD"],
     );
     let iv = load_iv(data);
 
@@ -1548,7 +1561,7 @@ fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
         .collect();
     let db = CandleDb::load(
         data,
-        &["BTCUSDT", "ETHUSDT", "USOILSPOT", "SPY", "NVDA", "WTIU6", "XAUUSD", "XAGUSD"],
+        &["BTCUSDT", "ETHUSDT", "USOILSPOT", "SPY", "NVDA", "WTIU6", "WTIV6", "XAUUSD", "XAGUSD"],
     );
     let iv = load_iv(data);
     let mut pred_rows = vec![

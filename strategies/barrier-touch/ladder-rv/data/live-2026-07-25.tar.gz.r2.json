@@ -1,0 +1,11 @@
+{
+  "key": "blobs/77c8aba5b7fb2886a9be798b10aa9b19ce6ae6d7d3c09bd3b6c8dc98c4129dc3",
+  "sha256": "77c8aba5b7fb2886a9be798b10aa9b19ce6ae6d7d3c09bd3b6c8dc98c4129dc3",
+  "bytes": 100285,
+  "content_type": "application/gzip",
+  "original_name": "live-2026-07-25.tar.gz",
+  "source_url": "gamma-api.polymarket.com/events + clob.polymarket.com/book",
+  "note": "ladder-rv live snapshot 2026-07-25 01:29Z: Gamma events + books for 9 boards (WTI/gold/silver July monthlies + BTC July + the 5 NEW week-of-Jul-27 boards WTI/gold/silver/SPY/NVDA) and model rows (121 raw with two-sided quotes, 51 handoff). The 5 new weekly boards listed 07-24 22:0xZ and quote 0.020/0.980 placeholders on every leg - excluded from handoff, a 0.50 mid off a 96c spread is not a market price. Spot U6 90.46 / XAU 4053.34 / XAG 58.20 / SPY 738.87 / NVDA 206.95 / BTC 64032. OVX 68.0 VIX 18.58 GVZ 24.33 VXSLV 48.05.",
+  "fetched_at": "2026-07-25T01:36:23Z",
+  "bucket": "orakel"
+}

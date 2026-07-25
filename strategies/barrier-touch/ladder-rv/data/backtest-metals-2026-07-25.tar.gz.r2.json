@@ -1,0 +1,11 @@
+{
+  "key": "blobs/2ecbbd6bc050fe089fcd7ddd21443e65388b2b696421edbebeb1b63a517b2722",
+  "sha256": "2ecbbd6bc050fe089fcd7ddd21443e65388b2b696421edbebeb1b63a517b2722",
+  "bytes": 1916919,
+  "content_type": "application/gzip",
+  "original_name": "backtest-metals-2026-07-25.tar.gz",
+  "source_url": "gamma-api.polymarket.com/events + clob.polymarket.com/prices-history + benchmarks.pyth.network + cdn.cboe.com + deribit.com",
+  "note": "ladder-rv day-3 metals backtest inputs+outputs: legs.csv (916 legs / 58 boards incl 31 resolved metals boards and the WTI+metals WEEKLY family discovered today), Gamma events, clob60 price history (569 new legs), gate0/gate1_open/gate2_checkpoints/gate2_trades/gate1b CSVs from 'ladderrv analyze', vol anchors. Gate0 756/760 overall, metals 440/441. Candles are in candles-2026-07-25.tar.gz (XAUUSD/XAGUSD backfilled to 2026-04-01, WTIV6 added).",
+  "fetched_at": "2026-07-25T01:35:43Z",
+  "bucket": "orakel"
+}

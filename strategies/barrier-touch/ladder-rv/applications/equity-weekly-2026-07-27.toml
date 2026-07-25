@@ -1,0 +1,37 @@
+# Board-level application covering the SPY + NVDA weekly boards for the week of
+# 2026-07-27 (successors to the week-of-Jul-20 boards that resolved 2026-07-24 20:00Z).
+market_slug = "will-spy-hit-week-of-july-27-2026"
+market_slug_secondary = "will-nvda-hit-week-of-july-27-2026"
+condition_id = ""
+added = "2026-07-25"
+active = false               # LISTED BUT NOT PREDICTABLE YET — no book, see note
+
+[params]
+tier = "weekly"
+window_start = 2026-07-27T00:00:00Z    # RTH filter applies (13:30-20:00Z weekdays)
+window_end = 2026-07-31T20:00:00Z
+session = "Pyth RTH 13:30-20:00Z weekdays only; pre/post-market does not qualify"
+
+[params.spy]
+asset = "spy"
+pyth_symbol = "Equity.US.SPY/USD"
+iv_source = "VIX"            # 18.58% on 2026-07-24; RV14d 12.6%; spot 738.87
+[params.nvda]
+asset = "nvda"
+pyth_symbol = "Equity.US.NVDA/USD"
+iv_source = "none (RV14d 38.6% only) — wider internal spread required"
+
+# NOTE (2026-07-25 01:29Z): both boards listed 2026-07-24 22:00Z with NO REAL BOOK —
+# every leg quotes 0.020 / 0.980. No prediction rows emitted. Re-read Monday 2026-07-27.
+#
+# Standing method constraint (unchanged, re-confirmed by the day-3 backtest): the model
+# does NOT beat market Brier on equity ladders (window-open Brier spy 0.1175 vs market
+# 0.0884; nvda 0.1249 vs 0.1052) -> predict only wing legs where q_rv and q_iv agree
+# near 0 against 3c+ mids; do not run the full ladder, do not trade the middle.
+# Equity weekly books were $3-20 top-of-book on the Jul-20 board -> predictions yes,
+# trades no, unless depth improves materially.
+#
+# Scored result from the predecessor board (week-of-Jul-20, resolved 2026-07-24 20:00Z):
+# all 20 handed-off SPY/NVDA rows resolved NO; model Brier 0.00002 vs market 0.00090.
+# Every leg we predicted was a deep wing, so this confirms wing overpricing, not
+# mid-ladder calibration.

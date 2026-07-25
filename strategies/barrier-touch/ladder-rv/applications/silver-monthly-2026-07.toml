@@ -3,7 +3,7 @@
 market_slug = "what-price-will-xagusd-hit-in-july-2026"
 condition_id = ""
 added = "2026-07-24"
-active = true                # PREDICTION-ONLY: no trade edge found; books thin
+active = true                # PREDICTION-ONLY confirmed by the day-3 metals backtest
 
 [params]
 asset = "silver"
@@ -15,6 +15,16 @@ window_end = 2026-07-31T21:00:00Z     # last session close; Gamma endDate Aug 1 
 iv_source = "VXSLV (CBOE silver vol index, daily close)"  # 49.5% on 2026-07-23; RV14d 41.9%
 fallback_feed = "COMEX Silver Futures (SI) daily high/low if Pyth outage (per market rules)"
 note = """
+DAY-3 UPDATE (2026-07-25): the metals backtest (results/metals-backtest-2026-07-25.md,
+210 resolved silver legs over 15 boards) does NOT earn silver trades. Gate-0 209/210, but
+the Brier margin is inside the noise (window-open 0.1903 vs market 0.1962; checkpoint
+0.1174 vs 0.1204) and the delayed sell sim is +2.95c/trade with se 3.87c (n=96, 0.76sigma)
+- not distinguishable from zero. This is an UNDERPOWERED result, not a negative one:
+silver is simply the noisiest metal (RV14d 41%, VXSLV 48%). Revisit after more
+resolutions. Gold, tested identically on the same run, DID earn trades.
+
+Original day-2 assessment below, kept for the record.
+
 Very volatile July: touched BOTH >$62 (H58/H60/H62 resolved YES) and <$56 (L56 YES) —
 wide realized range, VXSLV 49.5%. At 2026-07-24 01:26Z the model finds NO tradeable sell
 edge in the fundable zone: near-money legs q_rv ~= mid (L54 .326 vs .325) or ABOVE

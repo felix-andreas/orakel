@@ -1,0 +1,34 @@
+# Board-level application covering BOTH metals weekly boards (gold + silver) for the
+# week of 2026-07-27. WIDEN day-3 (2026-07-25). Same feeds/session model as the metals
+# monthlies; requires the day-3 board_period fix (Class::Wti weekly window).
+market_slug = "will-xauusd-hit-week-of-july-27-2026"
+market_slug_secondary = "will-xagusd-hit-week-of-july-27-2026"
+condition_id = ""
+added = "2026-07-25"
+active = false               # LISTED BUT NOT PREDICTABLE YET — no book, see note
+
+[params]
+tier = "weekly"
+window_start = 2026-07-26T22:00:00Z    # Monday COMEX session opens 6pm ET Sunday
+window_end = 2026-07-31T21:00:00Z      # Friday 5pm ET; Gamma endDate confirms 21:00Z
+session = "6pm ET Sun -> 5pm ET Fri, daily 5-6pm ET break == WTI 22:00Z->21:00Z model"
+fallback_feed = "COMEX GC / SI daily high-low if Pyth outage (per market rules)"
+
+[params.gold]
+asset = "gold"
+pyth_symbol = "Metal.XAU/USD"
+iv_source = "GVZ"            # 24.33% on 2026-07-24; RV14d 20.7%; spot 4053.34
+[params.silver]
+asset = "silver"
+pyth_symbol = "Metal.XAG/USD"
+iv_source = "VXSLV"          # 48.05% on 2026-07-24; RV14d 41.2%; spot 58.20
+
+[gates]
+gate0 = "gold 42/42 and silver 42/42 across the week-of-july-6/13/20 boards, reproduced from the XAUUSD/XAGUSD archive — weekly window fix validated on both metals"
+backtest = "metals earned trades day-3 (see results/metals-backtest-2026-07-25.md): GOLD tradeable, SILVER prediction-only"
+
+# NOTE (2026-07-25 01:29Z): both boards listed 2026-07-24 22:02Z with NO REAL BOOK —
+# every leg quotes 0.020 / 0.980. No prediction rows emitted (a 0.50 mid off a 96c
+# spread is not a market price). Re-read Monday 2026-07-27.
+# When the book fills in: GOLD legs may be traded (sell-only, tier rules as usual);
+# SILVER legs stay prediction-only until its own edge separates from zero.

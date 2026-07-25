@@ -1,11 +1,11 @@
 {
-  "key": "blobs/77c924e69854742a27f4c9159af1bc65b58f1cbc78eac08d0c56797ef5e96ef5",
-  "sha256": "77c924e69854742a27f4c9159af1bc65b58f1cbc78eac08d0c56797ef5e96ef5",
-  "bytes": 15395624,
+  "key": "blobs/5f2ab8e88aa06cea8a026f56fbcb82f0122b6a86158446545c7085f0f1379022",
+  "sha256": "5f2ab8e88aa06cea8a026f56fbcb82f0122b6a86158446545c7085f0f1379022",
+  "bytes": 18382731,
   "content_type": "application/gzip",
   "original_name": "candles-2026-07-25.tar.gz",
-  "source_url": "benchmarks.pyth.network (Metal.XAU|XAG/USD, Commodities.WTIU6|USOILSPOT, Equity.US.SPY|NVDA via TV-shim; BTC|ETH via data-api.binance.vision) + cdn.cboe.com (OVX/VIX/GVZ/VXSLV) + deribit.com (DVOL)",
-  "note": "ladder-rv daily resolution-feed archive thru 2026-07-25 ~01:15Z: 1-min candles 8 keys + OVX/VIX/GVZ/VXSLV/DVOL. 2026-07-24 now COMPLETE (was partial at capture): WTIU6/XAUUSD/XAGUSD full 00:00-21:00Z session, SPY/NVDA full RTH 392 candles - this is the resolution record for the week-of-Jul-20 SPY/NVDA weeklies that settled Fri 20:00Z. 07-25 Sat: crypto only (equity/WTI/metals closed, s=ok n=0).",
-  "fetched_at": "2026-07-25T01:17:57Z",
+  "source_url": "benchmarks.pyth.network (Metal.XAU|XAG/USD, Commodities.WTIU6|WTIV6|USOILSPOT, Equity.US.SPY|NVDA via TV-shim; BTC|ETH via data-api.binance.vision) + cdn.cboe.com (OVX/VIX/GVZ/VXSLV) + deribit.com (DVOL)",
+  "note": "ladder-rv daily resolution-feed archive thru 2026-07-25 ~01:15Z, 9 keys. SUPERSEDES the earlier same-day freeze (which lacked the metals backfill and WTIV6). 2026-07-24 COMPLETE for all keys (was partial at capture): WTIU6/XAUUSD/XAGUSD full 00:00-21:00Z session, SPY/NVDA full 392-candle RTH - this is the resolution record for the week-of-Jul-20 SPY/NVDA weeklies settled Fri 20:00Z. NEW: XAUUSD/XAGUSD backfilled to 2026-04-01 (metals backtest); WTIV6=CLV6 archived from 2026-06-25 (delisting insurance + the Aug-monthly roll: CLU6 is active thru the Aug 17 session, CLV6 from Aug 18; CLU6 LTD 2026-08-20 then its Pyth feed is deleted). 07-25 Sat: crypto only.",
+  "fetched_at": "2026-07-25T01:36:11Z",
   "bucket": "orakel"
 }

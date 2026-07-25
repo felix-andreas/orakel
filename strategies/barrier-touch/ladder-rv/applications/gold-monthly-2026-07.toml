@@ -4,7 +4,7 @@
 market_slug = "what-price-will-xauusd-hit-in-july-2026"
 condition_id = ""            # board = Gamma event; per-leg condition_ids below
 added = "2026-07-24"
-active = true                # PREDICTION-ONLY: no trade edge found (see note); books thin
+active = true                # TRADEABLE as of day-3 (metals backtest earned gold); no signal today
 
 [params]
 asset = "gold"
@@ -16,6 +16,18 @@ window_end = 2026-07-31T21:00:00Z     # last session close; Gamma endDate Aug 1 
 iv_source = "GVZ (CBOE gold vol index, daily close)"  # 25.1% on 2026-07-23; RV14d 21.2%
 fallback_feed = "COMEX Gold Futures (GC) daily high/low if Pyth outage (per market rules)"
 note = """
+DAY-3 UPDATE (2026-07-25): gold is no longer prediction-only. The metals backtest
+(results/metals-backtest-2026-07-25.md, 231 resolved gold legs over 16 boards) shows the
+model BEATS market Brier on gold by the widest margin of any asset (window-open 0.1192 vs
+market 0.1381; checkpoint 0.0761 vs 0.0827), gate-0 231/231, and the delayed-exec sell sim
+returns +7.13c/trade (se 2.61c, n=174, 86% win). Gold now earns trades under the standard
+sell-only rules. Capacity, not edge, is the binding constraint: top-of-book here is $0-20.
+NO SELL SIGNAL ON THIS BOARD TODAY - with 6 days left every fundable leg sits within ~2c
+of the model (H4300 q .043 vs mid .045; L3900 q .186 vs .194; L3800 q .027 vs .025).
+Earning the right to trade an asset is not the same as having a trade.
+
+Original day-2 assessment below, kept for the record.
+
 Applicability PASSES structurally (feed mirrored, fundable 3-50c legs, two-sided books).
 BUT at 2026-07-24 01:26Z the driftless-GBM+RV model finds NO tradeable sell edge in the
 fundable zone: q_rv sits AT or ABOVE the market mid (H4300 q_rv .058 vs mid .043;

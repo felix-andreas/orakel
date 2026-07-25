@@ -1,0 +1,36 @@
+# Board-level application. WIDEN day-3 (2026-07-25): the WTI/metals **weekly** ladder
+# family was discovered today — same feeds, same session model, 1-week resolution.
+# Requires the day-3 board_period fix (weekly windows now follow the asset's session
+# clock: Sun 22:00Z -> Fri 21:00Z for Class::Wti, not Mon 00:00Z -> Fri 20:00Z).
+market_slug = "will-wti-hit-week-of-july-27-2026"
+condition_id = ""            # board = Gamma event; per-leg condition_ids added once a book exists
+added = "2026-07-25"
+active = false               # LISTED BUT NOT TRADEABLE/PREDICTABLE YET — see note
+
+[params]
+asset = "wti"
+tier = "weekly"
+resolution_feed = "Pyth active-month CL futures"
+pyth_symbol = "Commodities.WTIU6/USD"  # CLU6 is active for every session of this window
+window_start = 2026-07-26T22:00:00Z    # Monday session opens 6pm ET Sunday
+window_end = 2026-07-31T21:00:00Z      # Friday 5pm ET; Gamma endDate confirms 21:00Z
+session = "22:00Z prior day -> 21:00Z, business days (EDT)"
+iv_source = "OVX (CBOE daily close)"   # 68.0% on 2026-07-24; RV14d 51.7%
+roll = """
+NO ROLL inside this window. CLU6 last trading day = 2026-08-20 (3 business days before
+Aug 25, which is a business day); the next contract becomes active at the start of the
+3rd-from-last session, i.e. the session for Tue 2026-08-18 (opens 2026-08-17 22:00Z).
+So CLU6 is the active month for every session Jul 1 .. Aug 17. Verified against the
+board's own fine print and CME CL specs.
+"""
+
+[gates]
+gate0 = "14/14 on will-wti-hit-week-of-july-20-2026 and 14/14 on week-of-july-13, both reproduced from our OWN WTIU6 contract archive (not the USOILSPOT proxy) — the weekly window fix and the contract archive are both validated"
+
+# NOTE (2026-07-25 01:29Z): the board listed 2026-07-24 22:02Z and has NO REAL BOOK yet —
+# every leg quotes 0.020 / 0.980 (placeholder market-maker quotes). A 0.50 "midpoint" off
+# a 96c spread is not a market price, so NO prediction rows are emitted for this board:
+# recording them would inject fake market baselines into scoring. Applicability is
+# otherwise satisfied (feed mirrored, gate-0 clean, ladder structure standard).
+# ACTION day-4 (Monday 2026-07-27): re-read the book; onboard the fundable 3-50c legs
+# with two-sided quotes and start predicting. Weekend book quality is the gate here.
