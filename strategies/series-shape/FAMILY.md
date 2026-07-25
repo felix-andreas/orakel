@@ -17,9 +17,33 @@ the error amplifies 2.5–3.3×; and an *independent* "goes the distance" premiu
 overpriced in 8/8 cohort-months, t=−5.16, present even in months where the moneyline bias
 was ≈0).
 
+**That mechanism is false, and the family is empty as of day 1.** Everything above is the
+founding hypothesis, kept for the record; see the post-mortem below before reviving it.
+
 Variants:
 
-- [`bo3-derivatives/`](bo3-derivatives/) — handicap and totals legs of BO3 esports series
-  (trial, slot 3, started 2026-07-25).
+- [`bo3-derivatives/`](bo3-derivatives/) — handicap and totals legs of BO3 esports series.
+  Slot 3, started **and retired** 2026-07-25.
+  [Post-mortem](bo3-derivatives/results/backtest-2026-07-25.md).
 
-Cross-variant lessons: (none yet)
+## Cross-variant lessons
+
+1. **The "thin derivative next to a deep moneyline" setup is not itself an edge.** On the
+   BO3 legs that have a real book, Polymarket *is* the sharp line: median |Polymarket −
+   Pinnacle| = **1.08pp** on the map handicap, **−0.13pp mean on ≤2c-spread books**, and
+   the market→realised gap on 1,110 resolved live-book series is **0.0pp ± 1.5pp**. Book
+   thinness relative to a sibling market is not evidence that the thin book is wrong.
+2. **A pooled mean over Polymarket midpoints is a mean over *quotes*, and some quotes are
+   not prices.** A leg with no resting orders reports a ~0.50 midpoint (mean of a 1c bid
+   and a 99c ask). 23% of these handicap legs never moved pre-match; 85% were under $5k.
+   Pooling them fabricated a +14pp "edge" in a family whose true edge is zero. **Any future
+   variant in this family must decompose its headline number by pre-match price *movement*,
+   not just by volume, before the number means anything.**
+3. **Series format must be read off the LEGS.** A BO5 map handicap is also "wins 2 or more
+   maps"; only handicap-margin 2 ∧ totals-threshold 3 identifies a BO3. Title parsing
+   imports 1,597 BO5/BO7 series and breaks the `HC_cover ⇔ win ∧ Under` identity
+   mechanically (99.9% → 97.2%).
+4. **Sports claims now have a cheap external falsifier — use it on day 1.** Pinnacle's
+   guest arcadia API and the Smarkets v3 exchange API both serve full pre-match lines
+   read-only with no account (endpoints in `bo3-derivatives/memory/MEMORY.md`). Any future
+   series-shape variant should be priced against them before a slot is spent, not after.

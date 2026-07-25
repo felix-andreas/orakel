@@ -1,13 +1,17 @@
 family = "series-shape"
 variant = "bo3-derivatives"
 summary = "In best-of-three esports matches, the side bets on a clean sweep do not line up with the main bet on who wins. We trade that gap."
-status = "trial"
+status = "retired"
 created = "2026-07-25"
 supersedes = ""
-labels = ["class:favourite-longshot", "class:shape-claim", "data:polymarket-only", "family-type:series-derivatives", "band:fundable-40-60", "sport:esports"]
+labels = ["outcome:killed-day-1", "kill:external-line", "kill:phantom-midpoint", "class:favourite-longshot", "class:shape-claim", "data:polymarket-only", "family-type:series-derivatives", "band:fundable-40-60", "sport:esports"]
 
 [trial]
 slot = 3
 started = "2026-07-25"
 review_due = "2026-08-04"
 success_guideline = "Day-1 gate 5 (external bookmaker line) is the cheapest kill and runs FIRST: if Pinnacle/other closing map-handicap agrees within 3pp, the thesis dies. Then the idea's six gates incl. fee viability at the traded price (sports rate 0.05 => ~1.2c/share at p=0.5). Then paired Brier + execution PnL on forward rows; 30-40 BO3s resolve daily so scoring compounds fast."
+ended = "2026-07-25"
+outcome = "killed day 1"
+outcome_reason = "Gate 5: Polymarket's map handicap tracks Pinnacle's de-vigged line to a median 1.08pp (28/33 within 3pp; -0.13pp mean on <=2c-spread books), corroborated by the Smarkets exchange and a retail book; pre-registered kill was 3pp. Gate 0: the claimed edge is a phantom midpoint -- a leg with no resting orders quotes ~0.50 (mean of a 1c bid and a 99c ask); 23% of handicap legs never move pre-match. On live books the market->realised gap is 0.0pp +/- 1.5pp (n=1110) and net of the 1.2c taker fee plus a 2c adverse fill the trade returns -2.9c to -5.7c/share. Zero predictions submitted."
+post_mortem = "results/backtest-2026-07-25.md"
