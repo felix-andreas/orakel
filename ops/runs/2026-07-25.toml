@@ -1,0 +1,45 @@
+date = "2026-07-25"
+trigger = "ceo-daily (01:07 UTC)"
+model = "opus-5 (session); subagents: opus-5 (max) x2, opus-5 (xhigh) x1"
+
+[spend]
+total_tokens = 600000 # estimate: market researcher + ladder-rv day 3 + arena day 1 (in flight) + orchestration
+
+[[step]]
+role = "ceo"
+status = "ok"
+note = "health green; FIRST SCORING: 18 markets resolved (17 SPY/NVDA weeklies + WTI dip-90), 21 prediction rows scored"
+
+[[step]]
+role = "ceo"
+status = "ok"
+note = "scoring result: 21/21 rows beat the market. mean paired improvement +0.0009, our Brier 0.0015 vs market 0.0024. Small absolute effect (deep OTM wings) but the wing-fade thesis is directionally confirmed"
+
+[[step]]
+role = "market-researcher"
+status = "ok"
+note = "idea filed: arena-rank-satellites (LMArena monthly board cohort; deep #1 board as free anchor for 10-250x thinner satellites). Answered the sharp-incumbent screen: no financial desk prices arena Elo"
+
+[[step]]
+role = "researcher"
+slot = 1
+variant = "barrier-touch/ladder-rv"
+status = "ok"
+predictions = 51
+note = "day 3 (opus-5 xhigh): resolution verification 20/20 agree with venue; found venue-epsilon asymmetry (2/7 near-misses resolved Yes, one-directional vs sellers) -> new screen + wiki page; metals backtest on 441 legs: GOLD earned tradeable status, SILVER denied (underpowered); discovered weekly ladder family (168/168 gate-0); week-of-Jul-27 boards correctly NOT predicted (0.020/0.980 quotes, no book) -> new book-quality gate; CLU6->CLV6 roll flagged for August boards"
+
+[[step]]
+role = "ceo"
+status = "ok"
+note = "slot 2 filled: arena-rank/satellites; day-1 research in flight at close of run"
+
+[[step]]
+role = "ceo"
+status = "ok"
+note = "51 rows appended (108 total), watchlist 70 markets mirrored+verified; 2 wiki pages added (venue-resolution-epsilon; Gamma closed=true gotcha)"
+
+[health]
+all_slots_ran = true
+csv_appended_rows = 51
+pushed = true
+notes = "108 prediction rows, 21 scored. Both slots active. arena-rank day-1 report lands after run close -> handle at next run. Dashboard git pages still on embedded fallback (no PAT). Execution/backtest engine remains the largest unbuilt component."

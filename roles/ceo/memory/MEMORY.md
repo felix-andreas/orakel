@@ -4,27 +4,21 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 
 ## Short-term (current run / immediate)
 
-- **Run 2026-07-24 DONE (first automatic daily; manifest ops/runs/2026-07-24.toml).**
-  ladder-rv day 2 (opus): 39 rows (57 total), metals prediction-only, buys stay
-  disabled (rescue experiment negative), 5 sell signals. gistemp-era5: created AND
-  killed same day (crowd runs GISTEMP primary inputs, σ 0.015 vs proxy floor 0.038)
-  — 2 more wiki lessons. Slot 1 active (ladder-rv day 3 tomorrow), slot 2 free,
-  backlog empty. Watchlist 40 markets, mirrored+verified. Snapshot worker healthy.
-- **Next run (2026-07-25, Saturday) checklist:** (1) SCORE: 20 rows resolved Fri
-  20:00Z (SPY/NVDA weeklies incl. day-1+day-2 rows) → resolutions.csv from Pyth
-  candles via ladderrv pipeline → run scoring/ → FIRST TRACK RECORD → paired-Brier
-  numbers into the summary; (2) ladder-rv day 3 (opus): discover week-of-Jul-27 +
-  August boards (listed Fri evening), new rows, metals backtest; (3) market
-  researcher: new idea (backlog empty; keep applying proxy-vs-primary + speed
-  screens); (4) weekend window is 02:00-08:00 German — run is INSIDE it (03:07), fine.
-- Dashboard: git pages still on embedded fallback — GITHUB_DASHBOARD_TOKEN not yet
-  provided by Felix; /snapshots is live from R2. ETag/KV layer discussed, awaiting
-  Felix's verdict.
-- Trades flagged by ladder-rv day 2 (paper, sell-only, all tier B): WTI ↓80 @18.5c
-  (best, $1.1k book), ↑110 @8.1c, ↑100 @37c, ↑105 @17c, ↓75 @6c. Execution layer
-  still unbuilt — backtest engine + policies remain the biggest missing component;
-  raise with Felix when slots stabilize.
-
+- **2026-07-25 run DONE** (ops/runs/2026-07-25.toml). FIRST SCORING: 21 rows, **21/21
+  beat the market**, mean paired improvement +0.0009 (Brier 0.0015 vs 0.0024). Caveat
+  to keep repeating: OTM wings that didn't touch = easy sample, one week, one regime.
+  The real tests are the WTI/gold/silver July boards (Jul-31) and PnL after spread.
+- Slots: 1 = ladder-rv (day 3 done, 51 rows, gold now tradeable, silver prediction-only),
+  2 = arena-rank/satellites (filled today; **day-1 report arrives after run close —
+  read it FIRST next run**, accept/kill, and check its data-availability verdict).
+- 108 prediction rows; watchlist 70 markets mirrored. Wiki now 8 pages (added
+  venue-resolution-epsilon today).
+- **Next run checklist:** (1) arena-rank day-1 verdict; (2) ladder-rv day 4 — re-read
+  week-of-Jul-27 books Monday (they were 0.020/0.980 dead), August monthlies list soon
+  and SPAN THE CLU6->CLV6 ROLL (spread +$4.78, resolving series gaps ~5% mid-board —
+  driftless GBM would misprice both wings; this needs a method fix before predicting
+  August); (3) market researcher daily idea; (4) Jul-31: WTI+gold+silver+BTC July
+  boards resolve = ~51 rows scored, the real trial evidence.
 ## Medium-term (bootstrap phase)
 
 - Ramp plan: 1–2 slots until a full day runs clean, then scale toward 5.

@@ -42,3 +42,15 @@ sell signals. 20 rows resolve 20:00Z today -> tomorrow scores the first track
 record. Manifest: ops/runs/2026-07-24.toml.
 
 ---
+## 2026-07-25 — daily run (first scoring)
+
+Model: opus-5. FIRST TRACK RECORD: 18 markets resolved, 21 rows scored, 21/21 beat the
+market (mean paired improvement +0.0009; our Brier 0.0015 vs market 0.0024) — small
+absolute effect on deep OTM wings, thesis directionally confirmed. ladder-rv day 3
+(opus-5 xhigh): 51 rows, resolution verification 20/20 vs venue, venue-epsilon
+asymmetry discovered -> wiki + method screen, metals backtest (gold earned, silver
+denied), weekly board family found, empty-book boards correctly skipped. Market
+researcher (opus-5 max) filed arena-rank-satellites; slot 2 filled, day-1 research in
+flight at close. Manifest: ops/runs/2026-07-25.toml.
+
+---
