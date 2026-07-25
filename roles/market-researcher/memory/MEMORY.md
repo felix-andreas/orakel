@@ -110,6 +110,16 @@ _Keep under ~150 lines. Prune every run._
 - Inherited from poly: edge lives in sim-tractable, thin-to-mid, structurally quirky,
   fast-resolving markets — see `/wiki/market-selection.md`. Deep books are efficient;
   calibrated recurring crowds are efficient at window-open.
+- **Classify every idea LEVEL vs SHAPE before filing, and say which in the file.**
+  Level = "we estimate the truth better" — died twice (runningmax, gistemp). Shape = "the
+  crowd's own distribution is mis-allocated" — survived twice (ladder-rv wings,
+  favourite-shrinkage) and is what the 2026-07-25 esports idea is. A shape claim needs no
+  data-source edge, so it passes the proxy-vs-primary and glanceable-state screens *by
+  construction*; its risk is entirely execution cost + regime stability. Corollary
+  (2026-07-25): the deep leg of a bundle is the free anchor, and any bias in it is
+  **amplified** in coherently-priced derivative legs whenever the derivative is a convex
+  function of the anchor — and those derivative legs usually sit in the fundable band
+  while the anchor does not.
 - Idea-shaping heuristics that produced filed ideas: (1) take a wiki caveat that says
   "X is itself a strategy-shaped idea" and find the category where X's preconditions are
   strongest; (2) post-kill: sort mispricings by what reveals them — public print → bot

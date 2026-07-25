@@ -4,6 +4,53 @@ One dated entry per run. Name the exact model id that did the work.
 
 ---
 
+## 2026-07-25 (run 2) — extra cycle after the arena kill; esports series-shape idea filed
+
+Model: **opus-5 (xhigh)**. Felix requested a second cycle on the day
+`arena-rank/satellites` was falsified and rebadged as `arena-rank/favourite-shrinkage`.
+
+- Onboarded on the four screens that now gate idea quality, incl. the new
+  `wiki/reference/published-ci-vs-printed.md`, and on my own post-mortem
+  (`strategies/arena-rank/satellites/results/backtest-2026-07-25.md`). Two corrections
+  internalised: verify the *exact resolving object* and state how; classify the claim
+  **level vs shape** before filing. Both are now standing memory entries.
+- Fresh scan: 2,000 open events by `volume24hr`. Filtered to multi-leg, fast-resolving,
+  non-weather/non-crypto-ladder/non-arena families. Rejected on the spot: company
+  market-cap ranking boards (glanceable resolution variable). Parked with reasons:
+  non-US central-bank decision boards (rates-desk incumbent), US primary-election winner
+  boards (good, but election-calendar cadence). Pursued: **esports BO3 bundles**.
+- Built the resolved universe from scratch: **16,959 resolved esports events**
+  (Dec-2025 → Jul-2026) via date-windowed offset paging — plain offset paging hard-caps
+  at 2,000 and `/events/keyset` ignores `cursor` (the param is `after_cursor`). Yielded
+  **6,710 BO3 triples** (`moneyline` + `map_handicap` + `totals`) with known outcomes;
+  the three legs are arithmetically consistent in **6,705/6,710** (99.93%).
+- Fetched per-leg CLOB history (6,374/6,375 tokens non-empty) and the taker tape for 300
+  events. Headline measurements at T−1h: moneyline favourite 0.727→**0.788**; handicap
+  0.531→**0.683**; Over-2.5 overpriced in **8/8 cohort-months** (−9.0pp, se 1.75,
+  t=−5.16) including the months where the moneyline bias was ≈0. Convex transfer: a
+  +5.6pp moneyline error becomes a **+13.8pp** handicap error in the 0.80–0.90 band.
+- Ran the kill-screens *before* filing, not after: speed screen (handicap mid moves
+  0.519→0.537 across the whole 24h pre-match window vs a 0.683 realised rate — no print
+  to race); delayed execution (T−6h signal, T−15m fill, +2c adverse = **+14.7c**, se 2.0);
+  midpoint-vs-tape (taker BUY VWAP only +0.68c above mid, so the mid is executable);
+  selection-artifact guard (reproduces on a **disjoint** low-derivative-volume sample:
+  ML +7.0pp, Over −10.0pp); incumbent test by tournament tier (bias is *larger* on
+  tier-1 — fan money, not information).
+- Quantified the cost stack properly: Polymarket's **taker fee = shares × rate × p(1−p)**,
+  sports rate 0.05 ⇒ ~1.2c/share in the fundable band, makers free. Graduated to
+  `wiki/recipes/polymarket-api.md` along with the pagination facts and `sportsMarketType`
+  typing — both are cross-strategy, not idea-specific.
+- Filed `ideas/2026-07-25-esports-series-shape-2.md` (backlog): explicit **shape** claim,
+  all four screens answered upfront with evidence, three live example markets with
+  today's book numbers, six gates with numeric kill thresholds, and a pre-registered live
+  stop. Honest open item recorded as gate 5: I could **not** read an external bookmaker
+  line from this box (hltv.org 403 through the proxy, the-odds-api needs a paid key), and
+  that is the cheapest way to kill the whole thesis.
+- Standing caution written into the idea: an edge this large on 1c-spread books should
+  not exist, so gate 0 is an artifact hunt, not a confirmation.
+
+---
+
 ## 2026-07-25 — Netflix killed in research; arena-rank-satellites filed
 
 Model: **opus-5 (max)** — claude-opus-5. First run under the 2026-07-24 routing change
