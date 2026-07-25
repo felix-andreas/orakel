@@ -1,0 +1,267 @@
+{
+  "built_by": "engine/src/bin/build-orakel-live.rs",
+  "conventions": {
+    "book_selection": "latest snapshot with ts <= prediction time, at most 24h stale; never a later snapshot",
+    "depth": "USD notional resting within 5c of the touch, per side",
+    "resolved_date": "bare date from resolutions.csv; the engine reads it as 12:00 UTC (scoring's convention)"
+  },
+  "engine_version": "0.1.0",
+  "inputs": [
+    {
+      "file": "predictions/predictions.csv",
+      "rows": 108,
+      "sha256": "61018c9d6e2c16d93e780c7b39c48217f3be4a8cf0e2319b4f6f12348972ce49"
+    },
+    {
+      "file": "predictions/resolutions.csv",
+      "rows": 18,
+      "sha256": "6fcd83a8d42554e183086392cf8eb4f0547963cdaa3112cd41ef6383da87b635"
+    }
+  ],
+  "output_rows": 21,
+  "predictions_without_resolution": 87,
+  "r2_bucket": "orakel",
+  "r2_snapshot_prefix": "snapshots/books/",
+  "rows_with_real_book": 3,
+  "signal_set": "orakel-live",
+  "snapshots_available": [
+    {
+      "key": "snapshots/books/2026-07-23/10.json.gz",
+      "sha256": "a742fde9343122f6320a75e7dc266062460538c164588d2c55bce73287ab6a0b",
+      "ts": "2026-07-23T10:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-23/11.json.gz",
+      "sha256": "31b582b2497d576abad90c42121483cca68d32c199bc098fad32ad66211d5563",
+      "ts": "2026-07-23T11:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-23/12.json.gz",
+      "sha256": "bd2b3926ca76533489628187c79b72fbf1acd4edcad4f03258ee8bf3369dcef8",
+      "ts": "2026-07-23T12:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-23/13.json.gz",
+      "sha256": "4eaa2ad3a211cc053ba6f0d43df91c093d91d09104da9bfe42d5dcdb34589253",
+      "ts": "2026-07-23T13:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-23/14.json.gz",
+      "sha256": "a14bcc933ef2e63a6f35c45491e09ad4c43db6b78c6e9ce7937c024dd1eb4b82",
+      "ts": "2026-07-23T14:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-23/15.json.gz",
+      "sha256": "44e90033ce8e4c8a6c9cea1cf0baec6ab5b794f0ca2eac0155fd526a393cc5bd",
+      "ts": "2026-07-23T15:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-23/16.json.gz",
+      "sha256": "919268a03fb68b5bc25687a78695a67139cd5ccacc3bbb0c552237f72c02f630",
+      "ts": "2026-07-23T16:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-23/17.json.gz",
+      "sha256": "35ae109f8170c737fe2987cdbc692e6c34af125cc8cb924d9a848667fe521eb0",
+      "ts": "2026-07-23T17:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-23/18.json.gz",
+      "sha256": "5a172fbf855ade172b3922629bf87c123a6a36b5d0db91834b45c8b0a59a7487",
+      "ts": "2026-07-23T18:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-23/19.json.gz",
+      "sha256": "4500c61f86e3372f64b7ff66b6e6cd76871418a57b269cfa4252d5efb82f898a",
+      "ts": "2026-07-23T19:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-23/20.json.gz",
+      "sha256": "b8274635bbd12f9dd6e1c0844de0f667ea62e734a108b687558a59eff38d340b",
+      "ts": "2026-07-23T20:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-23/21.json.gz",
+      "sha256": "7eae4e2186ce4fb3bff956e12c6941832435a9fa557e59e059eb198107e6237a",
+      "ts": "2026-07-23T21:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-23/22.json.gz",
+      "sha256": "220bf2492349ddb1babae4244ecc0f90ade1efe0f6cfcec3c6e66153d1d1f94c",
+      "ts": "2026-07-23T22:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-23/23.json.gz",
+      "sha256": "13664380057ccc6a4dabb4e4b063cf10a7f00b7ad2dcd2563a95c0159384f12d",
+      "ts": "2026-07-23T23:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/00.json.gz",
+      "sha256": "7e0020fc534ce07a593ca6edf9419a53ad7d1dc51082fc52e41f94ad937d5d13",
+      "ts": "2026-07-24T00:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/01.json.gz",
+      "sha256": "e128faa4d5a9d68cd80dc47d6cae56fc1e5f706e54a0eb2095f3f7ad3b01a38f",
+      "ts": "2026-07-24T01:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/02.json.gz",
+      "sha256": "60408222faa7521e7e805cf0d13b9e4c6be3cddb4aaa3be2bc97f0fa1ba1091e",
+      "ts": "2026-07-24T02:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/03.json.gz",
+      "sha256": "8488dee93d01bd95347d7bbbd796b9b0eba10c0519101882470f6bdd6bf72079",
+      "ts": "2026-07-24T03:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/04.json.gz",
+      "sha256": "ca1c7e80ada1f325bd4bcaf5c102236dc8426dafaea62421aedf247d53366769",
+      "ts": "2026-07-24T04:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/05.json.gz",
+      "sha256": "ba0349cddefba49e33fae196a3ee52a3d2aef37536c94cb064f86e9564450556",
+      "ts": "2026-07-24T05:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/06.json.gz",
+      "sha256": "9b0a79eb3e48d3c651165663bd081714b63977a2643350b3de18d87416a4db16",
+      "ts": "2026-07-24T06:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/07.json.gz",
+      "sha256": "4cc10bb34c853df57ad6caded8b6855c0f33fc74c805da02cb54a5f6cc93a53e",
+      "ts": "2026-07-24T07:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/08.json.gz",
+      "sha256": "92bc6ba17b8f491e2e22b5a1562a9d0a67da45eed7d9bdde92255f43f01e3024",
+      "ts": "2026-07-24T08:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/09.json.gz",
+      "sha256": "100e3f296f31ef1ee64e2d2d6efc7cf25da80777d6340c992cfe7d9863a4c7ea",
+      "ts": "2026-07-24T09:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/10.json.gz",
+      "sha256": "57118bb810686d7feaedac8b74f5f93f027a5ad928db72c073502a96cb913706",
+      "ts": "2026-07-24T10:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/11.json.gz",
+      "sha256": "4688a4fa12e5ef9144f5d0605903806a5091762ddbb8e6346555389b875a3f1c",
+      "ts": "2026-07-24T11:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/12.json.gz",
+      "sha256": "4ea7372c161d3398cc2fbae23d2988a9e44cc53574017429afa98da5fbadc340",
+      "ts": "2026-07-24T12:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/13.json.gz",
+      "sha256": "b1aba7ba4fd73817a2bedcdd3e6053edf7e399c997c21d972f6bff08a2e59925",
+      "ts": "2026-07-24T13:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/14.json.gz",
+      "sha256": "b92f811cfaff5158dd26d2a4ddf694a5f2b8bce7fa4dc1c4bab8e87338e58111",
+      "ts": "2026-07-24T14:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/15.json.gz",
+      "sha256": "e87392c49c6380183823c843111bd6cd08bf4b82e8269ce4b3dde9d69ffc4556",
+      "ts": "2026-07-24T15:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/16.json.gz",
+      "sha256": "e201c2c0706591150e656fd57d9b24e18f6af5431c14ef5bd3c23e3827090c4a",
+      "ts": "2026-07-24T16:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/17.json.gz",
+      "sha256": "0c171fb50a193a85347951f75a22642181526026d012256613841a18332cad1f",
+      "ts": "2026-07-24T17:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/18.json.gz",
+      "sha256": "e6b0114e47357184983f80a88bc441816a72d28e666c7b895ef19f1f6aaf9bc4",
+      "ts": "2026-07-24T18:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/19.json.gz",
+      "sha256": "c233d978ce91bdd826cfbc7a18ac6712226cd17eb60cc451b5b60943dd8da0e6",
+      "ts": "2026-07-24T19:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/20.json.gz",
+      "sha256": "9e119c060fab721f0d5031caec396ff54e6907641e7194ffb2bfb0ff14198615",
+      "ts": "2026-07-24T20:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/21.json.gz",
+      "sha256": "162c4ee12bbf322e02993ed74778fc884fee0244926245410b68ef456703c1fa",
+      "ts": "2026-07-24T21:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/22.json.gz",
+      "sha256": "26b8755da2812ed1a51d6cbbdff23bd3a955c68ce6e36d10338b8379e96c3b60",
+      "ts": "2026-07-24T22:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-24/23.json.gz",
+      "sha256": "beb04855d347b369ae86d157d629acd874a5f2c2cb3c0e1df679ed533233e413",
+      "ts": "2026-07-24T23:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-25/00.json.gz",
+      "sha256": "0624469dd552744ae01491837a9f6071d9ffed4e39276750851151ab2da60858",
+      "ts": "2026-07-25T00:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-25/01.json.gz",
+      "sha256": "5fd5c2169b4c7ccdc4e25134aee3e94bd40d5130bcdc4f23601d705bacf5a366",
+      "ts": "2026-07-25T01:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-25/02.json.gz",
+      "sha256": "5a3a7fad045e23aef44617d4691edebee09c186696f957f84558b68175adc728",
+      "ts": "2026-07-25T02:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-25/03.json.gz",
+      "sha256": "0e482bf81447ba77d31b31b6a4e8a03a421e6b77b4b40c97044f17a99f69514b",
+      "ts": "2026-07-25T03:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-25/04.json.gz",
+      "sha256": "8e5ff2ffd36dd58919bf8be664df92d9bf948c9ec70183ea050b9e5c303f5376",
+      "ts": "2026-07-25T04:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-25/05.json.gz",
+      "sha256": "b6681ad150f5e51f4294136cb08a4e341d17911474fbe16b3467ae9a95361009",
+      "ts": "2026-07-25T05:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-25/06.json.gz",
+      "sha256": "cbaf6ee91ab9a1308b3940bec9983f54f7e62c697724633ef7ee5c5ef238dd76",
+      "ts": "2026-07-25T06:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-25/07.json.gz",
+      "sha256": "f92d7b978cb593e76641d0e425a9bf0d997c4c5eba667a1a8dd26bd7c03f73a8",
+      "ts": "2026-07-25T07:07:54Z"
+    },
+    {
+      "key": "snapshots/books/2026-07-25/08.json.gz",
+      "sha256": "64e0fda27df8d19b32bd92ed53737490f4f51ae577999e7d3fb109f883743af6",
+      "ts": "2026-07-25T08:07:54Z"
+    }
+  ],
+  "snapshots_used_for_books": [
+    "snapshots/books/2026-07-24/01.json.gz"
+  ]
+}

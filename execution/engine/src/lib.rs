@@ -36,7 +36,12 @@ pub fn r6(v: f64) -> f64 {
     if !v.is_finite() {
         return v;
     }
-    (v * 1e6).round() / 1e6
+    let r = (v * 1e6).round() / 1e6;
+    if r == 0.0 {
+        0.0 // normalize -0.0, which would print as "-0.00"
+    } else {
+        r
+    }
 }
 
 /// Format a float with at most 6 decimal places, trailing zeros trimmed.

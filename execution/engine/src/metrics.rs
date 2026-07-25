@@ -29,6 +29,7 @@ pub struct SimResult {
     pub span_days: f64,
     pub bankroll_usd: f64,
     pub assumed_spread: f64,
+    pub entry_delay_hours: f64,
     pub counts: Counts,
     pub metrics: Metrics,
     pub by_variant: Vec<Group>,
@@ -149,6 +150,7 @@ pub fn build(signals: &[Signal], policy: &Policy, counts: Counts, trades: Vec<Tr
         span_days: if trades.is_empty() { 0.0 } else { r6((t1 - t0) as f64 / 86_400.0) },
         bankroll_usd: bankroll,
         assumed_spread: policy.costs.assumed_spread,
+        entry_delay_hours: policy.entry.delay_hours,
         counts,
         metrics,
         by_variant: group_by(&trades, |t| t.variant.clone()),
@@ -309,6 +311,12 @@ fn notes(
             ));
         }
     }
+    if policy.entry.require_book && m.synthetic_fill_share.unwrap_or(0.0) > 0.0 {
+        n.push(format!(
+            "require_book = true was asked for, but {:.0}% of the trades taken filled against a book the engine had to synthesize. The engine reads require_book as \"price it honestly and flag it\", not \"refuse it\" — under the strict reading this policy would have taken 0 trades on the synthetic rows. This is the single most consequential interpretive choice in the engine; see engine/README.md.",
+            m.synthetic_fill_share.unwrap_or(0.0) * 100.0
+        ));
+    }
     if c.epsilon_unavailable > 0 {
         n.push(format!(
             "respect_venue_epsilon is on but UNAPPLIED to {} of the sells taken: no signal set carries the barrier-to-running-extreme distance, so the screen could not run. Counted, not silently passed.",
@@ -350,6 +358,12 @@ fn notes(
             ));
         }
     }
+    if m.take_profit_exits > 0 && m.synthetic_fill_share.unwrap_or(0.0) > 0.0 {
+        n.push(format!(
+            "{} of the exits were taken in the market rather than at settlement, and they were priced off a synthetic quote. An early-exit policy pays the spread twice, so this is the most spread-sensitive result in the matrix — it is the first number a real book would revise.",
+            m.take_profit_exits
+        ));
+    }
     if let Some(t) = m.t_stat {
         if t.abs() < 2.0 {
             n.push(format!(
@@ -357,6 +371,9 @@ fn notes(
             ));
         }
     }
+    n.push(
+        "repeated signals on one market share a single outcome, so the per-trade standard error above is optimistic: collapse the trades on a leg to one observation before believing the t-stat.".to_string(),
+    );
     n
 }
 

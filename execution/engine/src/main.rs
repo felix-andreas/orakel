@@ -435,6 +435,7 @@ fn write_summary_md(
         s.push('\n');
 
         s.push_str(&contrasts(rows));
+        s.push_str(&reading(rows));
         s.push_str(&cannot_tell(rows));
     }
 
@@ -557,34 +558,197 @@ fn contrasts(rows: &[SimResult]) -> String {
     s
 }
 
-fn cannot_tell(rows: &[SimResult]) -> String {
-    let mut s = String::from("### What this sample cannot tell us\n\n");
-    let mut seen: Vec<String> = Vec::new();
-    for r in rows {
-        for n in &r.notes {
-            let line = format!("`{}`: {n}", r.policy);
-            if !seen.contains(&line) {
-                seen.push(line);
-            }
+/// A short, mechanical reading of the matrix: the facts a human would extract
+/// first, generated from the numbers so they can never drift from them.
+fn reading(rows: &[SimResult]) -> String {
+    let find = |name: &str| rows.iter().find(|r| r.policy == name);
+    let mut s = String::from("### The short reading\n\n");
+    let powered: Vec<&SimResult> =
+        rows.iter().filter(|r| r.metrics.n >= MIN_N_FOR_A_WINNER).collect();
+    if powered.is_empty() {
+        s.push_str(
+            "Nothing here is powered enough to read. The engine reports the counts and stops.\n\n",
+        );
+        return s;
+    }
+
+    // 1. The two metrics disagree, and that is the point of DESIGN.md §3.
+    let by_cents = powered
+        .iter()
+        .max_by(|a, b| cmpf(a.metrics.cents_per_trade, b.metrics.cents_per_trade))
+        .unwrap();
+    let by_ann = powered
+        .iter()
+        .max_by(|a, b| {
+            cmpf(
+                a.metrics.annualized_return_on_locked_capital,
+                b.metrics.annualized_return_on_locked_capital,
+            )
+        })
+        .unwrap();
+    if by_cents.policy == by_ann.policy {
+        s.push_str(&format!(
+            "- `{}` leads on both cents/trade ({}) and annROLC ({}) — the two metrics agree here, which they need not.\n",
+            by_ann.policy,
+            md(by_ann.metrics.cents_per_trade, 2),
+            pct(by_ann.metrics.annualized_return_on_locked_capital),
+        ));
+    } else {
+        s.push_str(&format!(
+            "- **The two metrics disagree, exactly as DESIGN.md §3 predicts.** Highest cents/trade is `{}` ({} on {} trades, {} days held); highest annualized return on locked capital is `{}` ({} on {} trades, {} days held). The capital-lockup rule, not the headline cents, is what separates them.\n",
+            by_cents.policy,
+            md(by_cents.metrics.cents_per_trade, 2),
+            by_cents.metrics.n,
+            md(by_cents.metrics.mean_hold_days, 2),
+            by_ann.policy,
+            pct(by_ann.metrics.annualized_return_on_locked_capital),
+            by_ann.metrics.n,
+            md(by_ann.metrics.mean_hold_days, 2),
+        ));
+    }
+
+    // 2. Buys vs sells on the widest two-sided policy that traded both.
+    if let Some(r) = rows.iter().find(|r| {
+        engine::metrics::group(&r.by_side, "buy").is_some()
+            && engine::metrics::group(&r.by_side, "sell").is_some()
+    }) {
+        let b = engine::metrics::group(&r.by_side, "buy").unwrap();
+        let sell = engine::metrics::group(&r.by_side, "sell").unwrap();
+        s.push_str(&format!(
+            "- **Sides.** On `{}`, sells earned {} c/trade (n = {}, annROLC {}) against {} c/trade for buys (n = {}, annROLC {}).\n",
+            r.policy,
+            md(sell.cents_per_trade, 2),
+            sell.n,
+            pct(sell.annualized_return_on_locked_capital),
+            md(b.cents_per_trade, 2),
+            b.n,
+            pct(b.annualized_return_on_locked_capital),
+        ));
+    }
+
+    // 3. The delayed policy's sample is not the same sample.
+    if let Some(p) = find("patient") {
+        let c = &p.counts;
+        if c.delay_unavailable > 0 {
+            let frac = c.delay_unavailable_token_won as f64 / c.delay_unavailable as f64;
+            s.push_str(&format!(
+                "- **`patient` is not measured on the same sample as `fade`.** {} signals had no observation {}h later and were dropped; {:.0}% of those sit on markets that resolved in the token's favour — i.e. the dropped rows are enriched in the sell side's losses. Its {} number is therefore an upper bound, and the honest comparison to `fade` does not exist in this data.\n",
+                c.delay_unavailable,
+                p.entry_delay_hours,
+                frac * 100.0,
+                pct(p.metrics.annualized_return_on_locked_capital),
+            ));
         }
     }
-    // Collapse notes that are identical across policies into one bullet.
-    let mut bodies: BTreeMap<String, Vec<String>> = BTreeMap::new();
-    for r in rows {
-        for n in &r.notes {
-            bodies.entry(n.clone()).or_default().push(r.policy.clone());
-        }
+
+    // 4. Capacity: which policies the stated bankroll could not fund.
+    let over: Vec<String> = rows
+        .iter()
+        .filter(|r| r.metrics.max_capital_efficiency.unwrap_or(0.0) > 1.0)
+        .map(|r| {
+            format!("{} ({:.0}%)", r.policy, r.metrics.max_capital_efficiency.unwrap() * 100.0)
+        })
+        .collect();
+    if !over.is_empty() {
+        s.push_str(&format!(
+            "- **Capacity.** Peak deployment exceeded the stated bankroll for {}. Dollar PnL across policies is therefore not comparable; the rates are.\n",
+            over.join(", ")
+        ));
     }
-    let mut items: Vec<(String, Vec<String>)> = bodies.into_iter().collect();
-    items.sort_by(|a, b| b.1.len().cmp(&a.1.len()).then_with(|| a.0.cmp(&b.0)));
-    for (body, pols) in items {
-        let who = if pols.len() == rows.len() {
-            "all policies".to_string()
-        } else {
-            pols.join(", ")
-        };
-        s.push_str(&format!("- **{who}** — {body}\n"));
+
+    // 5. The fill quality caveat, with a number.
+    let synth: Vec<&SimResult> = rows
+        .iter()
+        .filter(|r| r.metrics.synthetic_fill_share.unwrap_or(0.0) >= 0.999 && r.metrics.n > 0)
+        .collect();
+    if synth.len() == powered.len() && !synth.is_empty() {
+        s.push_str(
+            "- **Every fill here is synthetic.** No row in this set carries a real book, so all of the above is priced at `mid ± assumed_spread/2`. Per DESIGN.md §4 these results are flagged, not celebrated: the ranking is a hypothesis about execution, not a measurement of it.\n",
+        );
     }
     s.push('\n');
     s
 }
+
+fn cmpf(a: Option<f64>, b: Option<f64>) -> std::cmp::Ordering {
+    a.unwrap_or(f64::MIN).partial_cmp(&b.unwrap_or(f64::MIN)).unwrap_or(std::cmp::Ordering::Equal)
+}
+
+/// Collapse notes that say the same thing with different numbers into one
+/// bullet, so the caveat list stays readable as policies multiply.
+fn cannot_tell(rows: &[SimResult]) -> String {
+    let mut s = String::from("### What this sample cannot tell us\n\n");
+    // Group by the note with every digit run masked, so "1161 of the trades ..."
+    // and "793 of the trades ..." land in the same bucket.
+    let mut groups: BTreeMap<String, Vec<(String, String)>> = BTreeMap::new();
+    let mut order: Vec<String> = Vec::new();
+    for r in rows {
+        for n in &r.notes {
+            let key = mask_digits(n);
+            if !groups.contains_key(&key) {
+                order.push(key.clone());
+            }
+            groups.entry(key).or_default().push((r.policy.clone(), n.clone()));
+        }
+    }
+    for key in order {
+        let entries = &groups[&key];
+        let identical = entries.iter().all(|(_, txt)| *txt == entries[0].1);
+        if identical {
+            let names = if entries.len() == rows.len() {
+                "all policies".to_string()
+            } else {
+                entries.iter().map(|(p, _)| p.clone()).collect::<Vec<_>>().join(", ")
+            };
+            s.push_str(&format!("- **{names}** — {}\n", entries[0].1));
+        } else {
+            // Show one policy's note in full, then the others by their number.
+            s.push_str(&format!("- **{}** — {}\n", entries[0].0, entries[0].1));
+            let rest: Vec<String> = entries[1..]
+                .iter()
+                .map(|(p, txt)| match first_number(txt) {
+                    Some(v) => format!("{p} {v}"),
+                    None => p.clone(),
+                })
+                .collect();
+            if !rest.is_empty() {
+                s.push_str(&format!("  - same for: {}\n", rest.join(", ")));
+            }
+        }
+    }
+    s.push('\n');
+    s
+}
+
+fn mask_digits(s: &str) -> String {
+    let mut out = String::new();
+    let mut in_num = false;
+    for c in s.chars() {
+        if c.is_ascii_digit() || (in_num && (c == '.' || c == ',')) {
+            if !in_num {
+                out.push('#');
+                in_num = true;
+            }
+        } else {
+            in_num = false;
+            out.push(c);
+        }
+    }
+    out
+}
+
+fn first_number(s: &str) -> Option<String> {
+    let mut cur = String::new();
+    for c in s.chars() {
+        if c.is_ascii_digit() || (!cur.is_empty() && (c == '.' || c == '%')) {
+            cur.push(c);
+            if c == '%' {
+                return Some(cur);
+            }
+        } else if !cur.is_empty() {
+            return Some(cur);
+        }
+    }
+    (!cur.is_empty()).then_some(cur)
+}
+

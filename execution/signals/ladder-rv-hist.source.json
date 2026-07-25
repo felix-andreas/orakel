@@ -1,0 +1,43 @@
+{
+  "built_by": "engine/src/bin/build-ladder-rv-hist.rs",
+  "checkpoints_on_touched_legs": 625,
+  "conventions": {
+    "book": "none: the archive stores CLOB price history, not books. Every row is synthetic_book=1.",
+    "p_market": "gate2_checkpoints.mid — CLOB midpoint at the checkpoint",
+    "p_model": "gate2_checkpoints.q_rv — the variant's RV-primary first-passage probability",
+    "resolved_date": "gate0.first_touch for touched legs, legs.we for untouched"
+  },
+  "engine_version": "0.1.0",
+  "inputs": [
+    {
+      "file": "legs.csv",
+      "rows": 916,
+      "sha256": "ab1589f2b9119e5d073ee18cb3648f77d0ef4650dd58480e4fe2f878736b5a92"
+    },
+    {
+      "file": "out/gate0.csv",
+      "rows": 760,
+      "sha256": "86d5a9378583babf705368b83297e755a08ccac2857ea89b4c130c50a92cf8f6"
+    },
+    {
+      "file": "out/gate2_checkpoints.csv",
+      "rows": 5927,
+      "sha256": "f7e1b362b3573dd7830920b3baa0621bc9d0d85a0e76aff5d95d9f986ce2d0a8"
+    }
+  ],
+  "output_rows": 5927,
+  "r2_manifest": {
+    "bucket": "orakel",
+    "bytes": 1916919,
+    "content_type": "application/gzip",
+    "fetched_at": "2026-07-25T01:35:43Z",
+    "key": "blobs/2ecbbd6bc050fe089fcd7ddd21443e65388b2b696421edbebeb1b63a517b2722",
+    "note": "ladder-rv day-3 metals backtest inputs+outputs: legs.csv (916 legs / 58 boards incl 31 resolved metals boards and the WTI+metals WEEKLY family discovered today), Gamma events, clob60 price history (569 new legs), gate0/gate1_open/gate2_checkpoints/gate2_trades/gate1b CSVs from 'ladderrv analyze', vol anchors. Gate0 756/760 overall, metals 440/441. Candles are in candles-2026-07-25.tar.gz (XAUUSD/XAGUSD backfilled to 2026-04-01, WTIV6 added).",
+    "original_name": "backtest-metals-2026-07-25.tar.gz",
+    "sha256": "2ecbbd6bc050fe089fcd7ddd21443e65388b2b696421edbebeb1b63a517b2722",
+    "source_url": "gamma-api.polymarket.com/events + clob.polymarket.com/prices-history + benchmarks.pyth.network + cdn.cboe.com + deribit.com"
+  },
+  "r2_manifest_path": "strategies/barrier-touch/ladder-rv/data/backtest-metals-2026-07-25.tar.gz.r2.json",
+  "signal_set": "ladder-rv-hist",
+  "skipped_rows": 0
+}

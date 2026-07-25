@@ -428,11 +428,20 @@ pub fn capital_per_share(side: Side, fill: f64) -> f64 {
 }
 
 /// Linear slippage: consuming the whole depth measured within `DEPTH_BAND` of
-/// the touch walks the price `DEPTH_BAND`. With no depth data there is nothing
-/// to walk and the assumed spread is the only cost.
+/// the touch walks the price by that band. The band is bounded by the room the
+/// price actually has — a 1c bid cannot slip 5c, it can only slip to zero — so
+/// depth measured on a wing is not punished with a move the book cannot make.
+/// With no depth data there is nothing to walk and the assumed spread is the
+/// only cost. (We cannot walk individual levels: the canonical signal schema
+/// carries aggregate depth, not the ladder.)
 fn apply_slippage(side: Side, touch: f64, stake: f64, depth: Option<f64>) -> f64 {
+    let room = match side {
+        Side::Buy => 1.0 - touch,
+        Side::Sell => touch,
+    };
+    let band = DEPTH_BAND.min(room.max(0.0));
     let slip = match depth {
-        Some(d) if d > 0.0 => DEPTH_BAND * (stake / d).min(1.0),
+        Some(d) if d > 0.0 => band * (stake / d).min(1.0),
         _ => 0.0,
     };
     match side {
