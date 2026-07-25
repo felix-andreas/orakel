@@ -11,13 +11,23 @@
 //! The primary metric is the paired improvement
 //! `improvement = market_brier - brier` — positive means we beat the market
 //! on that row, time-matched and therefore fair across horizons.
+//!
+//! **Calibration is not tradeability.** `market_price` is a CLOB midpoint, and
+//! a midpoint is the average of a bid and an ask: on a thin wing leg quoted
+//! 0.001 / 0.08 it reads 4c, and 4c is a number no counterparty ever offered.
+//! Beating such a price is a real forecasting result and is worth exactly
+//! nothing in cash. So if `fills.csv` is present (written by `tools/fillcheck`,
+//! which replays Polymarket's public trade feed), every scored row also carries
+//! the best price at which somebody demonstrably traded the side we wanted,
+//! and the aggregates report how many rows were reachable at all. Rows without
+//! fills data get `fillable = ""` — unknown, not false.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, NaiveDate, Utc};
 
-const DETAIL_HEADER: [&str; 15] = [
+const DETAIL_HEADER: [&str; 18] = [
     "timestamp",
     "market_slug",
     "outcome",
@@ -33,9 +43,12 @@ const DETAIL_HEADER: [&str; 15] = [
     "market_brier",
     "improvement",
     "logloss",
+    "best_price",
+    "fillable",
+    "exec_edge",
 ];
 
-const SCORES_HEADER: [&str; 7] = [
+const SCORES_HEADER: [&str; 10] = [
     "level",
     "key",
     "n",
@@ -43,6 +56,9 @@ const SCORES_HEADER: [&str; 7] = [
     "mean_brier",
     "mean_market_brier",
     "mean_logloss",
+    "n_known_fill",
+    "n_fillable",
+    "mean_exec_edge",
 ];
 
 /// Output order of aggregate levels in scores.csv.
@@ -67,6 +83,15 @@ struct Resolution {
     resolved_at: DateTime<Utc>,
 }
 
+/// What `tools/fillcheck` observed for one prediction row: the best price a
+/// counterparty was demonstrably reachable at on each side, in this row's
+/// outcome units. `None` means nobody traded that side at all — no fill was
+/// available at any price, which is a different statement from "a bad price".
+struct Fill {
+    best_bid: Option<f64>,
+    best_ask: Option<f64>,
+}
+
 struct ScoredRow {
     timestamp: String,
     market_slug: String,
@@ -83,6 +108,16 @@ struct ScoredRow {
     market_brier: f64,
     improvement: f64,
     logloss: f64,
+    /// Did `fillcheck` look at this row at all? False means unaudited, which
+    /// is not the same as "no counterparty".
+    audited: bool,
+    /// Best price a counterparty was observed at on the side we wanted.
+    /// `None` on an audited row means nobody traded that side at any price.
+    best_price: Option<f64>,
+    /// What the trade was worth per share at that price: the gap between the
+    /// best reachable price and our own probability, signed so positive always
+    /// means "the price available paid us".
+    exec_edge: Option<f64>,
 }
 
 struct AggRow {
@@ -93,6 +128,14 @@ struct AggRow {
     mean_brier: f64,
     mean_market_brier: f64,
     mean_logloss: f64,
+    /// Rows in this bucket that `fillcheck` audited at all.
+    n_known_fill: u64,
+    /// …of those, the ones where a counterparty was actually reachable at a
+    /// price at least as good as the one we were scored against.
+    n_fillable: u64,
+    /// Mean per-share edge over the fillable rows only — what the trade paid
+    /// when the trade existed. `NaN` when none did.
+    mean_exec_edge: f64,
 }
 
 struct RunStats {
@@ -162,6 +205,7 @@ fn run(dir: &Path) -> Result<RunStats, String> {
     let mut malformed = 0usize;
     let resolutions = load_resolutions(&dir.join("resolutions.csv"), &mut malformed)?;
     let predictions = load_predictions(&dir.join("predictions.csv"), &mut malformed)?;
+    let fills = load_fills(&dir.join("fills.csv"))?;
 
     let mut scored: Vec<ScoredRow> = Vec::new();
     let mut unresolved = 0usize;
@@ -182,6 +226,17 @@ fn run(dir: &Path) -> Result<RunStats, String> {
         let actual = if p.outcome == res.winning_outcome { 1.0 } else { 0.0 };
         let brier = (p.prediction - actual).powi(2);
         let market_brier = (p.market_price - actual).powi(2);
+
+        // We take the side the market is wrong about: our probability below
+        // the quote means we sell the outcome, above it means we buy. Whether
+        // that trade was worth anything is measured against the price a
+        // counterparty was actually observed at, not against the midpoint.
+        let selling = p.prediction <= p.market_price;
+        let fill = fills.get(&fill_key(&p.timestamp_raw, &p.market_slug, &p.outcome));
+        let best_price = fill.and_then(|f| if selling { f.best_bid } else { f.best_ask });
+        let exec_edge = best_price.map(|b| if selling { b - p.prediction } else { p.prediction - b });
+        let audited = fill.is_some();
+
         scored.push(ScoredRow {
             timestamp: p.timestamp_raw.clone(),
             market_slug: p.market_slug.clone(),
@@ -198,6 +253,9 @@ fn run(dir: &Path) -> Result<RunStats, String> {
             market_brier,
             improvement: market_brier - brier,
             logloss: logloss(p.prediction, actual),
+            audited,
+            best_price,
+            exec_edge,
         });
     }
 
@@ -297,6 +355,48 @@ fn load_resolutions(
         if !slug.is_empty() {
             map.insert(slug, res);
         }
+    }
+    Ok(map)
+}
+
+/// Join key for fills.csv. A prediction row is identified by when it was made,
+/// which market, and which outcome token — the same triple fillcheck emits.
+fn fill_key(timestamp: &str, slug: &str, outcome: &str) -> String {
+    format!("{timestamp}|{slug}|{}", outcome.to_ascii_lowercase())
+}
+
+/// Load `fills.csv` if `tools/fillcheck` has been run. Absent file is not an
+/// error: scoring still reports calibration, it just cannot say whether any of
+/// it was reachable.
+fn load_fills(path: &Path) -> Result<HashMap<String, Fill>, String> {
+    let mut map = HashMap::new();
+    let content = match std::fs::read_to_string(path) {
+        Ok(c) => c,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(map),
+        Err(e) => return Err(format!("cannot read {}: {e}", path.display())),
+    };
+    if content.trim().is_empty() {
+        return Ok(map);
+    }
+    let mut rdr = csv::ReaderBuilder::new().flexible(true).from_reader(content.as_bytes());
+    let headers = rdr
+        .headers()
+        .map_err(|e| format!("{}: {e}", path.display()))?
+        .clone();
+    let i_ts = col(&headers, "timestamp", path)?;
+    let i_slug = col(&headers, "market_slug", path)?;
+    let i_outcome = col(&headers, "outcome", path)?;
+    let i_bid = col(&headers, "bid_life", path)?;
+    let i_ask = col(&headers, "ask_life", path)?;
+
+    for rec in rdr.records().flatten() {
+        let field = |i: usize| rec.get(i).unwrap_or("").trim();
+        // An empty price means no counterparty was ever observed on that side.
+        let price = |i: usize| field(i).parse::<f64>().ok().filter(|v| v.is_finite());
+        map.insert(
+            fill_key(field(i_ts), field(i_slug), field(i_outcome)),
+            Fill { best_bid: price(i_bid), best_ask: price(i_ask) },
+        );
     }
     Ok(map)
 }
@@ -414,8 +514,21 @@ fn warn_skip(path: &Path, line: Option<u64>, msg: &str, malformed: &mut usize) {
 /// Aggregate scored rows at every level. Sorted by level (variant, family,
 /// model, status, horizon, overall), then mean_improvement descending.
 fn aggregate(rows: &[ScoredRow]) -> Vec<AggRow> {
-    // (level index, key) -> (n, sum_improvement, sum_brier, sum_market_brier, sum_logloss)
-    let mut acc: HashMap<(usize, String), (u64, f64, f64, f64, f64)> = HashMap::new();
+    /// Running sums for one bucket. Fill statistics count only the rows
+    /// fillcheck had an answer for, so an unaudited row never dilutes them.
+    #[derive(Default)]
+    struct Acc {
+        n: u64,
+        improvement: f64,
+        brier: f64,
+        market_brier: f64,
+        logloss: f64,
+        n_known_fill: u64,
+        n_fillable: u64,
+        exec_edge: f64,
+    }
+
+    let mut acc: HashMap<(usize, String), Acc> = HashMap::new();
     for r in rows {
         let keys = [
             (0usize, format!("{}/{}", r.family, r.variant)),
@@ -426,28 +539,44 @@ fn aggregate(rows: &[ScoredRow]) -> Vec<AggRow> {
             (5, "overall".to_string()),
         ];
         for k in keys {
-            let e = acc.entry(k).or_insert((0, 0.0, 0.0, 0.0, 0.0));
-            e.0 += 1;
-            e.1 += r.improvement;
-            e.2 += r.brier;
-            e.3 += r.market_brier;
-            e.4 += r.logloss;
+            let e = acc.entry(k).or_default();
+            e.n += 1;
+            e.improvement += r.improvement;
+            e.brier += r.brier;
+            e.market_brier += r.market_brier;
+            e.logloss += r.logloss;
+            if r.audited {
+                e.n_known_fill += 1;
+                // "Fillable" is the strict test: a counterparty existed at a
+                // price at least as good as the one we were scored against.
+                if r.best_price.is_some_and(|b| reached(b, r.market_price, r.prediction)) {
+                    e.n_fillable += 1;
+                    e.exec_edge += r.exec_edge.unwrap_or(0.0);
+                }
+            }
         }
     }
     let mut out: Vec<(usize, AggRow)> = acc
         .into_iter()
-        .map(|((lvl, key), (n, imp, b, mb, ll))| {
-            let nf = n as f64;
+        .map(|((lvl, key), a)| {
+            let nf = a.n as f64;
             (
                 lvl,
                 AggRow {
                     level: LEVEL_ORDER[lvl].to_string(),
                     key,
-                    n,
-                    mean_improvement: imp / nf,
-                    mean_brier: b / nf,
-                    mean_market_brier: mb / nf,
-                    mean_logloss: ll / nf,
+                    n: a.n,
+                    mean_improvement: a.improvement / nf,
+                    mean_brier: a.brier / nf,
+                    mean_market_brier: a.market_brier / nf,
+                    mean_logloss: a.logloss / nf,
+                    n_known_fill: a.n_known_fill,
+                    n_fillable: a.n_fillable,
+                    mean_exec_edge: if a.n_fillable > 0 {
+                        a.exec_edge / a.n_fillable as f64
+                    } else {
+                        f64::NAN
+                    },
                 },
             )
         })
@@ -462,6 +591,16 @@ fn aggregate(rows: &[ScoredRow]) -> Vec<AggRow> {
             .then_with(|| a.1.key.cmp(&b.1.key))
     });
     out.into_iter().map(|(_, r)| r).collect()
+}
+
+/// Did the observed price reach the one we were scored against? A seller
+/// needs a bid at or above the midpoint, a buyer an ask at or below it.
+fn reached(best: f64, market_price: f64, prediction: f64) -> bool {
+    if prediction <= market_price {
+        best >= market_price - 1e-9
+    } else {
+        best <= market_price + 1e-9
+    }
 }
 
 /// Format a float with at most 6 decimal places, trailing zeros trimmed —
@@ -494,6 +633,16 @@ fn write_detail(path: &Path, rows: &[ScoredRow]) -> Result<(), String> {
             &fmt_f(r.market_brier),
             &fmt_f(r.improvement),
             &fmt_f(r.logloss),
+            &r.best_price.map(fmt_f).unwrap_or_default(),
+            // Blank, not "false", when nobody audited this row.
+            &if r.audited {
+                r.best_price
+                    .is_some_and(|b| reached(b, r.market_price, r.prediction))
+                    .to_string()
+            } else {
+                String::new()
+            },
+            &r.exec_edge.map(fmt_f).unwrap_or_default(),
         ])
         .map_err(|e| format!("{}: {e}", path.display()))?;
     }
@@ -514,6 +663,9 @@ fn write_scores(path: &Path, rows: &[AggRow]) -> Result<(), String> {
             &fmt_f(r.mean_brier),
             &fmt_f(r.mean_market_brier),
             &fmt_f(r.mean_logloss),
+            &r.n_known_fill.to_string(),
+            &r.n_fillable.to_string(),
+            &if r.mean_exec_edge.is_finite() { fmt_f(r.mean_exec_edge) } else { String::new() },
         ])
         .map_err(|e| format!("{}: {e}", path.display()))?;
     }
@@ -536,17 +688,62 @@ fn print_summary(stats: &RunStats, dir: &Path) {
     );
     println!();
     println!(
-        "{:<8} {:<32} {:>5} {:>10} {:>11} {:>11} {:>10}",
-        "level", "key", "n", "mean_imp", "mean_brier", "mkt_brier", "logloss"
+        "{:<8} {:<32} {:>5} {:>10} {:>11} {:>11} {:>10} {:>10} {:>10}",
+        "level", "key", "n", "mean_imp", "mean_brier", "mkt_brier", "logloss", "fillable", "exec_edge"
     );
-    println!("{}", "-".repeat(93));
+    println!("{}", "-".repeat(115));
     for a in &stats.aggregates {
+        let fillable = if a.n_known_fill > 0 {
+            format!("{}/{}", a.n_fillable, a.n_known_fill)
+        } else {
+            "—".to_string()
+        };
+        let edge = if a.mean_exec_edge.is_finite() {
+            format!("{:+.4}", a.mean_exec_edge)
+        } else {
+            "—".to_string()
+        };
         println!(
-            "{:<8} {:<32} {:>5} {:>+10.4} {:>11.4} {:>11.4} {:>10.4}",
-            a.level, a.key, a.n, a.mean_improvement, a.mean_brier, a.mean_market_brier, a.mean_logloss
+            "{:<8} {:<32} {:>5} {:>+10.4} {:>11.4} {:>11.4} {:>10.4} {:>10} {:>10}",
+            a.level,
+            a.key,
+            a.n,
+            a.mean_improvement,
+            a.mean_brier,
+            a.mean_market_brier,
+            a.mean_logloss,
+            fillable,
+            edge
         );
     }
     println!();
+
+    // Beating the quote and being able to trade on it are separate claims, and
+    // the second one is the one that pays. Say it out loud whenever we know.
+    if let Some(o) = stats
+        .aggregates
+        .iter()
+        .find(|a| a.level == "overall" && a.n_known_fill > 0)
+    {
+        let pct = 100.0 * o.n_fillable as f64 / o.n_known_fill as f64;
+        println!(
+            "tradeability: {}/{} audited rows ({pct:.0}%) had a counterparty at or better than \
+             the price they were scored against.",
+            o.n_fillable, o.n_known_fill
+        );
+        if o.n_fillable == 0 {
+            println!("             none of this improvement was reachable. It is calibration, not money.");
+        } else if pct < 50.0 {
+            println!(
+                "             the rest was scored against a midpoint nobody offered — \
+                 see wiki/reference/midpoint-is-not-a-fill.md"
+            );
+        }
+        println!();
+    } else if stats.scored > 0 {
+        println!("tradeability: unknown — run tools/fillcheck to write predictions/fills.csv.");
+        println!();
+    }
     println!(
         "wrote {} and {}",
         dir.join("scores_detail.csv").display(),

@@ -14,6 +14,7 @@ overlaps, pruning stale pages. One concept per file.
 - [reference/sharp-line-screen.md](reference/sharp-line-screen.md) — if a bookmaker prices it, check their line FIRST; cheapest kill we have
 - [reference/checkpoint-artifact.md](reference/checkpoint-artifact.md) — an unpriced board manufactures edge; gate on leg-sum, and if your null model wins, audit the checkpoint
 - [reference/phantom-midpoints.md](reference/phantom-midpoints.md) — a dead book quotes 0.05/0.95 and the API calls it 0.51; pooling those fabricated +14pp of fake edge
+- [reference/midpoint-is-not-a-fill.md](reference/midpoint-is-not-a-fill.md) — our own first batch beat the market 21/21 and was reachable 2/21; always report the fillable count next to the Brier
 
 - [reference/favorite-longshot-bias.md](reference/favorite-longshot-bias.md) — tails rich, favorites shaved inside bucket families
 - [reference/recurring-crowd-calibration.md](reference/recurring-crowd-calibration.md) — cheap test: is this recurring market's crowd already calibrated?

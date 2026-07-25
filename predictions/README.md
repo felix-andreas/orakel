@@ -23,6 +23,26 @@ timestamp,market_slug,condition_id,outcome,token_id,family,variant,model,predict
 
 `edge = prediction − market_price` is derived, never stored.
 
+## fills.csv
+
+Written by `tools/fillcheck`, which replays Polymarket's public trade feed and asks, for
+every prediction row: **after we spoke, at what price did somebody demonstrably trade the
+side we wanted?**
+
+```
+timestamp,market_slug,outcome,mid,bid_1h,bid_24h,bid_life,ask_1h,ask_24h,ask_life,bid_notional_24h,ask_notional_24h,n_trades_after
+```
+
+An empty price field means no counterparty was observed on that side in that window —
+"nobody", not "zero". `scoring/` joins this file on `(timestamp, market_slug, outcome)`
+and reports `n_fillable` and `exec_edge` next to every Brier aggregate. It is a **lower
+bound**: a resting bid nobody hit leaves no trace in a trade feed.
+
+Why it exists: on the first scored batch, 21/21 rows beat the market and **2/21** had a
+counterparty at the price they were scored against
+(`wiki/reference/midpoint-is-not-a-fill.md`). Never quote a Brier improvement from this
+ledger without its fillable count.
+
 ### Book state (planned schema addition, 2026-07-25)
 
 `market_price` is a CLOB midpoint, and a midpoint from a book with no resting orders is
@@ -46,3 +66,8 @@ Appended by the CEO when a market resolves; then run `scoring/` and check trial 
 
 `scoring/` writes `scores.csv` (aggregates per variant / family / model / status + market
 baseline) and `scores_detail.csv` (per prediction). Generated — never hand-edit.
+
+Both carry tradeability columns when `fills.csv` is present: `n_known_fill` / `n_fillable`
+/ `mean_exec_edge` on aggregates, `best_price` / `fillable` / `exec_edge` per row.
+`exec_edge` is cents per share at the best price actually observed, and it — not
+`improvement` — is what a promotion decision turns on.

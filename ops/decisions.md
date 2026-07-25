@@ -5,6 +5,50 @@ who decided**. Newest first.
 
 ---
 
+## 2026-07-25 — Scoring reports tradeability next to calibration; the first batch was 2/21 fillable
+
+Our first scored batch was 21 predictions, all `barrier-touch/ladder-rv`, and all 21 beat the
+market on paired Brier. That headline was reported without checking the one thing that makes
+it mean anything: `market_price` is a CLOB **midpoint**, and a midpoint on a wing leg is the
+average of a near-zero bid and a fat ask. It is not necessarily a price anyone will give you.
+
+Built `tools/fillcheck` (Rust, `attohttpc` behind the agent proxy like `r2data`), which
+replays Polymarket's public trade feed for every market we predicted on and records the best
+price a counterparty was demonstrably reachable at on each side, in windows of 1h / 24h /
+life. `scoring/` now joins the result and prints `n_fillable` and `exec_edge` on every
+aggregate.
+
+The answer: **21/21 beat the market, 2/21 were reachable, 1/21 within the first hour.** The
+one liquid row (`will-wti-dip-to-90`, $34k volume) is the row where we had essentially no
+edge — 0.8263 against a market at 0.82 — and it contributed 11% of the batch's improvement.
+The other 89% sits in SPY/NVDA weekly wings where `will-spy-reach-760` was scored at a 2.55c
+midpoint against a best-ever bid of 0.12c.
+
+What changed, and why:
+
+- **`scoring/` will no longer print a Brier improvement without a fillable count beside it.**
+  Reporting calibration as if it were money is the single easiest way for this firm to fool
+  itself, and it already happened once.
+- **Promotion decisions turn on `exec_edge`, not `improvement`.** `ladder-rv`'s
+  `success_guideline` is amended; its 2026-08-02 review uses the executable number.
+- **Weekly equity ladders are demoted to research-only** for `ladder-rv` — still predicted
+  on, never counted in a headline without their own fill evidence. The monthly WTI/gold/
+  silver boards resolving 2026-07-31 are the trial's real evidence.
+- Durable rule: `wiki/reference/midpoint-is-not-a-fill.md`. Evidence:
+  `strategies/barrier-touch/ladder-rv/results/executable-price-audit-2026-07-25.md`.
+
+Honest limit, recorded so nobody over-reads it: `fillcheck` sees trades, not orders, so a
+resting bid nobody hit is invisible to it. 2/21 is a lower bound. The real fix is recording
+the book at prediction time (`bid`/`ask`/`depth_usd` columns, sourced from the snapshot
+worker), which is now the top infrastructure item.
+
+This independently corroborates the execution engine from the other direction: on
+`orakel-live` signals, seven of eight execution policies took zero trades. Two methods, one
+conclusion — this variant's demonstrated edge lives where the liquidity isn't. Decided by
+the CEO (claude-opus-5).
+
+---
+
 ## 2026-07-25 — Dashboard switched from build-time snapshot to live repo reads
 
 Felix provisioned `GITHUB_TOKEN` in the environment, so it was set as the `orakel-dashboard`

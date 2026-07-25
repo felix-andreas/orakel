@@ -45,4 +45,8 @@ legs (100% live, median total variation 1.79)**, so the gate is discriminating, 
 universal.
 
 See also [thin-market-price-read](thin-market-price-read.md) — this page is the
-quantified, sharper-edged version of that page's warning.
+quantified, sharper-edged version of that page's warning — and
+[midpoint-is-not-a-fill](midpoint-is-not-a-fill.md), which is the harder case: a book
+that is genuinely **alive**, quoting a real 0.001/0.08, whose 4c midpoint is still a
+price nobody will give you. Measured on our own ledger: 21/21 rows beat the market,
+2/21 were reachable.

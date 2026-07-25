@@ -10,9 +10,14 @@ Lottery tickets are reliably overpriced, and here that is measurable: across our
 bets priced between 2 and 5 cents paid out 0 times out of 58. We take the other side of
 those bets and wait for the month to end. The reason this can work at all is that we are
 not trying to predict oil — we only need to know that a $20 move in three weeks is rarer
-than its price implies, which is arithmetic rather than forecasting. The catch is cost:
-the exchange charges a fee and there is a gap between the buying and selling price, so we
-only trade the levels where the overpricing is big enough to survive both.
+than its price implies, which is arithmetic rather than forecasting. The catch is that
+being right is not the same as being paid: on our first 21 scored bets we were more
+accurate than the quoted price every single time, and on only 2 of them was there anyone
+willing to take the other side at that price. The quoted price on a far-out level is the
+midway point between a derisory bid and a greedy ask, and you can only sell at the bid.
+So the strategy is really about the handful of levels that are both mispriced and busy
+enough to trade — which, so far, means the monthly oil and metals boards, not the weekly
+share-price ones.
 """
 status = "trial"
 created = "2026-07-23"
@@ -23,4 +28,4 @@ labels = ["class:relative-value", "class:first-passage", "data:pyth", "data:opti
 slot = 1
 started = "2026-07-23"
 review_due = "2026-08-02"
-success_guideline = "≥15 scored predictions across ≥3 boards/assets, paired Brier beating market; gates from the idea's falsification sketch pass first, incl. t+24h delayed-execution sim"
+success_guideline = "≥15 scored predictions across ≥3 boards/assets with a positive mean exec_edge — the executable number, not the midpoint-based Brier (see results/executable-price-audit-2026-07-25.md: the first batch beat the market 21/21 and was fillable 2/21). Weekly equity ladders do not count toward the promotion case without their own fill evidence. Gates from the idea's falsification sketch pass first, incl. t+24h delayed-execution sim"

@@ -27,8 +27,13 @@ and build the firm's tooling. You are autonomous within [`CONSTITUTION.md`](../.
    on scored evidence (`scoring/`, backtests) → update `strategy.toml` status,
    `ops/state.toml`, `ops/decisions.md`. Free slots: fill from `ideas/` backlog (your
    pick, with reason).
-8. **Scoring.** If any market resolved: append `predictions/resolutions.csv`, run
-   `scoring/`, note headline movements.
+8. **Scoring.** If any market resolved: append `predictions/resolutions.csv`, then run
+   **`tools/fillcheck` first and `scoring/` second** — fillcheck writes
+   `predictions/fills.csv` and scoring joins it, so running scoring alone silently drops
+   the tradeability column. Note headline movements. **Never report a Brier improvement
+   without its fillable count**; the first batch beat the market 21/21 and was reachable
+   2/21 (`wiki/reference/midpoint-is-not-a-fill.md`). Calibration is the research
+   product; `exec_edge` is the business.
 9. **Dashboard.** Redeploy if dashboard code changed. Spot-check it renders current state.
 10. **Close.** Re-mirror the watchlist if new applications appeared; Write `ops/runs/<date>.toml` (steps, failures, token spend), update memory
    (prune!), worklog entry, commit + push.

@@ -87,6 +87,13 @@ environment) — but every trigger must fire inside the working window in
   `predictions/resolutions.csv` → Brier + log-loss per variant / family / model / status +
   a market baseline (market price at prediction time). Scoring is what makes knowledge
   compound; an unscored prediction is worthless as evidence.
+- **Tradeability** — [`tools/fillcheck/`](tools/fillcheck/) replays Polymarket's public
+  trade feed and writes `predictions/fills.csv`: the best price a counterparty was
+  demonstrably reachable at, per prediction row. Scoring joins it and reports
+  `n_fillable` / `exec_edge` beside every Brier number, because the two answer different
+  questions and only one of them is money — our first batch beat the market 21/21 and was
+  reachable 2/21 ([`wiki/reference/midpoint-is-not-a-fill.md`](wiki/reference/midpoint-is-not-a-fill.md)).
+  Run fillcheck **before** scoring; scoring alone silently drops the column.
 - **Execution policies** — [`execution/`](execution/) turns sets of predictions into
   paper-trades: versioned rule sets (edge threshold, sizing, liquidity respect, exit) with
   signal **combination folded in** (when multiple variants cover one market). Policies are
