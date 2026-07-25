@@ -19,6 +19,11 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
   10d) — the capital-lockup rule earning its keep. **On orakel-live, 7/8 policies take
   ZERO trades**: after a 3c spread our 21 scored predictions had <5c executable edge.
   Right 21/21 and untradeable are compatible; both now measured.
+- **FEES ARE REAL** (found+verified 2026-07-25): `shares × rate × p × (1−p)`, taker only,
+  entry AND exit, none at resolution; commodities+equities = finance 0.04, crypto 0.07,
+  sports 0.05 (was 0.03 pre-07-10). All 8 policies have v2 (fee-priced); v1 kept, marked
+  fee-free. Fees eat 8-25% of gross. Buys now LOSE outright (−0.22c) — vindicates
+  ladder-rv disabling them. harvest still #1 but its lead over sniper fell 74%.
 - **Playbook changed (step 3):** mirror the R2 watchlist from ACTIVE APPLICATIONS at run
   START, before spawning anyone. The old order (mirror after predictions) left 18/21
   signals bookless for execution sim.

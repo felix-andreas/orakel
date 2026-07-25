@@ -5,6 +5,33 @@ who decided**. Newest first.
 
 ---
 
+## 2026-07-25 — Venue fees found, verified, and priced into every policy (v2)
+
+The market researcher discovered Polymarket charges real taker fees, undocumented in our
+wiki: `fee = shares × rate × p × (1−p)`. The execution engine had `fee_bps = 0`
+everywhere, so the matrix I had just reported was too generous. Corrected same day.
+
+Verified three independent ways (not taken on the wiki's word): the published docs; each
+market's own `feeSchedule` on Gamma across 600 markets; and a fit against ~2,300 real
+executed fills, which additionally **ruled out** the plausible `min(p, 1−p)` form.
+Established facts: charged **per taker fill, on entry and on exit, never at resolution**
+(so a held position pays once, a round trip twice); **makers pay zero**; and — the piece
+nobody had right — **gold, silver, WTI, SPY and NVDA are `finance` at 0.04**, read off
+each market rather than guessed. Sports was 0.03 before 2026-07-10, which matters for
+any future sports backtest.
+
+Eight `-v2` policies were created rather than edited (DESIGN.md §5), and v1 re-runs
+bit-identical — the proof that fees are the only difference.
+
+**All three conclusions I reported survive**, with two changes worth stating: fees take
+8–25% of gross PnL; the sell/buy split sharpens from (+7.75c / +0.47c) to
+(**+7.20c / −0.22c**), i.e. the naive buy book is now an outright money-loser, which
+independently vindicates ladder-rv's decision to disable buys; and while `harvest` keeps
+the top rank, its lead over `sniper` collapses by 74% (213pp → 54pp) because it pays the
+fee twice. A ranking that survives is not the same as a conclusion that is unchanged.
+
+---
+
 ## 2026-07-25 — Execution layer built; watchlist mirroring moved to run start
 
 Built the execution simulator (`execution/`): eight named policies, two signal sets, the
