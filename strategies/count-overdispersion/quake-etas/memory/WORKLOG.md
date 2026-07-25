@@ -13,7 +13,7 @@ recommended** (`roles/ceo/inbox/2026-07-25-quake-etas-kill-recommendation.md`).
 uploaded to R2 before this commit):
 - USGS FDSN M4.5+, 1990-01-01 → 2026-07-25, chunked by year — **228,900 events** (62,162 at
   M≥5.0).
-- All **47** Polymarket earthquake-count ladder boards (both weekly series, discovered via
+- All **48** Polymarket earthquake-count ladder boards (both weekly series, discovered via
   `series_id` 11837 / 10844 plus paged `public-search`), **348 legs**, CLOB `prices-history`
   at fidelity 10 for every leg (0 empty), live books for the 3 open boards.
 - ComCat version history for **503** threshold-adjacent events. Note: the plain

@@ -11,3 +11,7 @@ slot = 3
 started = "2026-07-25"
 review_due = "2026-08-04"
 success_guideline = "Gate 3 decides the trial: after the 0.05 fee and the book gate, does tradeable edge remain in FUNDABLE legs (>=3c), or does it sit only in sub-3c wings that fees make unfundable? Then: does the ETAS simulation beat the crude benchmark that produced the +0.110 log-loss signal (se 0.046, n=22 - one bad month from noise)? Weekly cadence means fast scoring."
+
+# Day-1 outcome (2026-07-25, opus-5 max). status stays "trial" because promotion/discard is
+# the CEO's call; the recommendation is in roles/ceo/inbox/2026-07-25-quake-etas-kill-recommendation.md.
+day1_verdict = "FALSIFIED. The premise fails: de-vigged market implied Fano 1.362 on M6.5+ boards vs empirical 1.358 vs Poisson 1.001 - the crowd already prices the overdispersed distribution. Gate 3 net +0.0091/share (se 0.0340) in fundable >=3c legs vs a 3c/share threshold; gate 2 ETAS -0.070 log-loss vs the market (n=24, t=-1.14) vs a +0.110 threshold; gate 1 ETAS loses to the empirical marginal on 602 out-of-sample weeks. The idea's +0.110 headline reproduces only at a board-CREATION checkpoint (leg-sum 1.43-1.97), where plain Poisson also beats the market by +0.179. Gate 0 passes (M6.5+ 30/30)."
