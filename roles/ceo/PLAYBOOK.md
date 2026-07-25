@@ -33,6 +33,18 @@ and build the firm's tooling. You are autonomous within [`CONSTITUTION.md`](../.
 10. **Close.** Re-mirror the watchlist if new applications appeared; Write `ops/runs/<date>.toml` (steps, failures, token spend), update memory
    (prune!), worklog entry, commit + push.
 
+## Concurrency hygiene (subagents share this working tree)
+
+All subagents run in the CEO's container and edit **the same checkout**. Therefore:
+
+- **Never `git add -A` while agents are running.** Stage explicit paths you own
+  (`git add ops/ predictions/ roles/ceo/`). On 2026-07-25 a blanket `git add -A` swept a
+  dashboard agent's entire in-progress diff into an unrelated CEO commit — content
+  survived, but the history lied about who did what.
+- Pull with `--rebase` before every push; agents push constantly.
+- Give each agent an explicit "touch only <folder>" boundary in its prompt, and keep the
+  CEO's own writes to `ops/`, `predictions/`, `roles/ceo/`, `wiki/`, `execution/policies/`.
+
 ## Health checks (build and grow your own)
 
 You own a set of scripts/checks that verify the firm is actually running — seeded ideas:
