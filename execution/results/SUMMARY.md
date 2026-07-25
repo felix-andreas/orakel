@@ -149,7 +149,8 @@ The first nine columns are terminal and sum to `signals`; `ε n/a` and `depth n/
 
 ### The short reading
 
-Nothing here is powered enough to read. The engine reports the counts and stops.
+- **7 of 8 policies took no trades at all** (gate, kelly, anchor, fade, patient, sniper, harvest). For 6 of them the binding constraint was `min_edge`, which rejected up to 12 of the 21 signals in the set.
+- No policy here reaches n = 30, so nothing below the counts can be read. The engine stops.
 
 ### What this sample cannot tell us
 

@@ -31,6 +31,18 @@ execution/
 - `ladder-rv-hist` — the ladder-rv variant's resolved-leg checkpoints. One regime, but
   large enough to separate policies.
 
+## Running it
+
+```sh
+cd engine && cargo build --release && cargo test
+target/release/engine run --set all --policy all      # writes results/ + summary.csv + SUMMARY.md
+```
+
+The matrix lives in **[results/SUMMARY.md](results/SUMMARY.md)**. How the sets
+were built, and every interpretive call behind them:
+[signals/README.md](signals/README.md). Engine defaults and mechanics:
+[engine/README.md](engine/README.md).
+
 ## The number that decides
 
 Not cents per trade — **annualized return on locked capital**. Selling a 15c wing and

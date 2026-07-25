@@ -563,11 +563,39 @@ fn contrasts(rows: &[SimResult]) -> String {
 fn reading(rows: &[SimResult]) -> String {
     let find = |name: &str| rows.iter().find(|r| r.policy == name);
     let mut s = String::from("### The short reading\n\n");
+    // Facts about the *set* hold even when no policy is powered enough to rank.
+    let silent: Vec<&str> =
+        rows.iter().filter(|r| r.metrics.n == 0).map(|r| r.policy.as_str()).collect();
+    if !silent.is_empty() {
+        // Which gate stopped the most of them, and on how many signals.
+        let mut tally: BTreeMap<&str, (usize, usize)> = BTreeMap::new();
+        for r in rows.iter().filter(|r| r.metrics.n == 0) {
+            let (reason, n) = dominant_rejection(r);
+            let e = tally.entry(reason).or_insert((0, 0));
+            e.0 += 1;
+            e.1 = e.1.max(n);
+        }
+        let modal = tally.iter().max_by_key(|(_, (k, _))| *k);
+        s.push_str(&format!(
+            "- **{} of {} policies took no trades at all** ({}){}\n",
+            silent.len(),
+            rows.len(),
+            silent.join(", "),
+            match modal {
+                Some((reason, (k, n))) => format!(
+                    ". For {k} of them the binding constraint was `{reason}`, which rejected up to {n} of the {} signals in the set.",
+                    rows.first().map(|r| r.counts.signals).unwrap_or(0)
+                ),
+                None => ".".to_string(),
+            },
+        ));
+    }
+
     let powered: Vec<&SimResult> =
         rows.iter().filter(|r| r.metrics.n >= MIN_N_FOR_A_WINNER).collect();
     if powered.is_empty() {
         s.push_str(
-            "Nothing here is powered enough to read. The engine reports the counts and stops.\n\n",
+            "- No policy here reaches n = 30, so nothing below the counts can be read. The engine stops.\n\n",
         );
         return s;
     }
@@ -668,6 +696,24 @@ fn reading(rows: &[SimResult]) -> String {
     }
     s.push('\n');
     s
+}
+
+/// The rejection bucket that swallowed the most signals for one policy.
+fn dominant_rejection(r: &SimResult) -> (&'static str, usize) {
+    let c = &r.counts;
+    let buckets: [(&'static str, usize); 10] = [
+        ("no executable edge (our p sits inside the spread)", c.no_executable_edge),
+        ("min_edge", c.below_min_edge),
+        ("edge_percentile", c.below_edge_percentile),
+        ("sides", c.side_excluded),
+        ("min_spread_ok", c.spread_too_wide),
+        ("min_depth_usd", c.depth_too_thin),
+        ("unfundable depth", c.unfundable),
+        ("max_per_market_usd", c.market_cap_full),
+        ("no observation delay_hours later", c.delay_unavailable),
+        ("stake below the minimum ticket", c.stake_too_small),
+    ];
+    buckets.into_iter().max_by_key(|(_, n)| *n).unwrap_or(("—", 0))
 }
 
 fn cmpf(a: Option<f64>, b: Option<f64>) -> std::cmp::Ordering {
