@@ -80,7 +80,7 @@ test covers.
   Pinnacle/bet365 map-handicap line into Polymarket. Three pieces of evidence that they are
   not here in force:
   1. The **moneyline itself** — deep, 1c spreads, $33k–$81k median volume — is miscalibrated
-     by **+6.1pp** (favourite wins 78.8% vs mean price 72.7%, n=1,998 at T−1h).
+     by **+6.1pp** (favourite wins 78.8% vs mean price 72.7%, n=2,000 at T−1h).
   2. The bias is **larger on tier-1 events than on obscure qualifiers** — the opposite sign
      to an "informed money bridges the big games" story, and the signature of fan money:
 
@@ -140,7 +140,7 @@ P(fav match) = P(fav 2-0) + P(Over 2.5) · P(fav wins the decider)
 Three stacked distortions, measured at T−1h on 1,998 resolved series:
 
 **(A) Favourite-longshot bias on the moneyline (the level is tilted).**
-Favourite wins **78.8%** vs mean price **72.7%** (+6.1pp, se 0.9pp). This alone is the
+Favourite wins **78.8%** vs mean price **72.7%** (+6.1pp, se 0.9pp, n=2,000). This alone is the
 mechanism already running in `arena-rank/favourite-shrinkage` — we do not claim it as new.
 
 **(B) Convex transfer into the derivative legs (the new part).**
@@ -223,12 +223,12 @@ Makers pay nothing. Small relative to the measured edge, but it must be in every
 - Realised joint distribution (n=6,710): fav 2-0 **57.0%**, fav 2-1 20.2%, dog 2-1 12.5%,
   dog 2-0 10.3% → favourite wins 77.2%, series goes 3 maps 32.7%.
 - **Per-leg CLOB history: yes.** `prices-history?market=<tokenId>&startTs=<gameStartTime−129600>&fidelity=10`
-  returned a non-empty series for **6,374 / 6,375** tokens fetched. Checkpoint coverage:
+  returned a **non-empty** series for **6,375 / 6,375** tokens fetched (100%). Checkpoint coverage:
   T−15m 96%, T−1h 94%, T−6h 89%, T−24h 51% (books typically open ~40h before start).
 - **Full taker tape per leg** via `data-api /trades?market=<conditionId>` — used above for
   executed-price PnL, so the backtest never has to trust a midpoint.
 - **Tradeable subset** (fundable band 0.20–0.60 + real book): handicap **552 instances**
-  with `vol > $5k` ≈ **2.5/day**; totals **662 instances** with `vol > $2k` ≈ **3/day**.
+  with `vol > $5k` ≈ **2.5/day**; totals **676 instances** with `vol > $2k` ≈ **3/day**.
 - **Forward cadence: ~30–40 new full-structure BO3s resolve per day.** Fastest-scoring
   family the firm has looked at.
 - **Discovery recipe (new, non-obvious):** Gamma `/events?closed=true&tag_id=64` offset

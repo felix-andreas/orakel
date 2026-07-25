@@ -24,7 +24,7 @@ Model: **opus-5 (xhigh)**. Felix requested a second cycle on the day
   at 2,000 and `/events/keyset` ignores `cursor` (the param is `after_cursor`). Yielded
   **6,710 BO3 triples** (`moneyline` + `map_handicap` + `totals`) with known outcomes;
   the three legs are arithmetically consistent in **6,705/6,710** (99.93%).
-- Fetched per-leg CLOB history (6,374/6,375 tokens non-empty) and the taker tape for 300
+- Fetched per-leg CLOB history (6,375/6,375 tokens non-empty) and the taker tape for 300
   events. Headline measurements at T−1h: moneyline favourite 0.727→**0.788**; handicap
   0.531→**0.683**; Over-2.5 overpriced in **8/8 cohort-months** (−9.0pp, se 1.75,
   t=−5.16) including the months where the moneyline bias was ≈0. Convex transfer: a
