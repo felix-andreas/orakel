@@ -44,16 +44,21 @@ _Keep under ~150 lines. Prune every run._
   every checkpoint (Wed 0.65→won 0.75; Mon-frozen 0.92→won 0.97, n=102) but the bid side
   is empty (top-of-book $0–96) so the sell-the-field side is unexecutable; "Other" wins
   4.5%. Reusable if a daily rank feed ever becomes reachable.
-- **Arena/LMArena landscape** (2026-07-25): family = 104 events, **78 closed**; headline
-  monthly board runs $4.15M–$36.3M/instance (deep → efficient, select against), satellites
-  $30k–$655k (thin-to-mid, tradeable: real 0.4–2.6c spreads on 0.18–0.66 legs, not dust).
-  Leaderboard reachable read-only, server-rendered HTML (~2.7MB, `/leaderboard/text`),
-  rows parse as rank | rank-spread | model | org | score ±CI | Preliminary | votes.
-  Refreshes on a discrete ~weekly cadence (cache-busted fetch on Sat Jul 25 still served
-  "Jul 21, 2026", 7.43M votes, 378 models) — same vintage for everyone, no lagged-proxy
-  problem. **Wayback: 500 unique captures 2025-05-28 → 2026-01-28, ZERO after** — Feb–Jul
-  2026 instances are not vintage-reconstructable, and the leaderboard is recomputed
-  retroactively at each refresh, so today's table never resolved any past market.
+- **Esports landscape** (2026-07-25, measured): Polymarket lists ~30–40 full-structure
+  BO3s **per day** across cs2/val/lol/dota2/r6siege/sc2/mlbb; **6,710 resolved triples**
+  (moneyline + map_handicap + totals) Dec-2025 → Jul-2026, 99.93% arithmetically
+  consistent. Legs are typed by `sportsMarketType`; `gameStartTime` gives an exact
+  pre-match checkpoint. Moneyline books are deep (median $33k cs2 / $81k lol, 1c spread);
+  the derivative books are 5–20× thinner ($1.4k / $4.6k median) — that gap is the whole
+  idea. Realised: fav 2-0 57.0%, fav 2-1 20.2%, dog 2-1 12.5%, dog 2-0 10.3%. Bias is
+  **bigger on tier-1 events** (LEC/LPL/VCT/BLAST) than on obscure qualifiers — fan money,
+  not information. Taker-tape check: buying the underdog lost −18.3c/share over 4.43M
+  shares. Effect reproduces on a disjoint low-volume sample (ML +7.0pp, Over −10.0pp).
+- **Arena/LMArena** (2026-07-25): satellites idea killed; `favourite-shrinkage` runs in
+  slot 2. Facts that outlived it: Wayback DOES cover the whole family life once you
+  follow the `lmarena.ai` → `arena.ai` rebrand (8,132 captures of the new host); the
+  resolving slice is `text/overall-no-style-control`, NOT the default `/leaderboard/text`;
+  the column layout changed 3× so parse header-driven, never by index.
 - Scan tool `roles/market-researcher/tools/scan/` (Gamma /events → CSV + summary).
   20 pages ≈ 26.7k open market rows, ~1 min. Order `volume24hr` for "alive today".
   Series discovery: Gamma `/public-search?q=<text>&limit_per_type=50` finds all instances
@@ -70,6 +75,15 @@ _Keep under ~150 lines. Prune every run._
   EIA/AAA gas price; CDC counts. Box office is the best unprobed one: recurring weekly,
   no financial incumbent, but Thursday-previews→weekend multiplier is a hobbyist-modelled
   relationship, so run the calibration test before spending anything.
+- Scanned 2026-07-25 and parked with reasons (don't re-scan cold): **company market-cap
+  ranking boards** ($4.18M/$437k/$302k, 29 legs) — rejected, resolution variable is a live
+  stock price, glanceable + near-deterministic. **Non-US central-bank decision boards**
+  (BOJ $300k, Brazil $159k, ECB $141k; ~100 instances/yr) — parked, sharpest agent is a
+  rates desk pricing the local OIS curve and we can't read those curves free.
+  **US primary-election winner boards** (Aug 4/11/18 slates, 18–50 legs, $160k–$2.1M,
+  dozens resolved this cycle) — genuine future candidate, real fine print (runoff
+  triggers, Alaska top-4, advance-vs-win coherence); parked only because the cadence is
+  election-calendar-bound, not daily.
 - Weather city-dailies: bot-patrolled intraday (kill evidence) — only pre-day/forecast
   angles remain. "Hit Price" one-touch family: now trialing as barrier-touch/ladder-rv —
   don't re-propose.
@@ -81,6 +95,15 @@ _Keep under ~150 lines. Prune every run._
   or leg-sum unless filtered on `volumeNum > 0` and `price != 0.5`. Wayback CDX must be
   called over **https** (`http://` → 403 through the agent proxy). Python `urllib` gets
   403 from Gamma — shell out to `curl`.
+- Added to the wiki recipe 2026-07-25: Gamma **offset paging dies at offset 2000** and
+  returns the error as a 200-with-object (a list-assuming parser drops pages silently);
+  `/events/keyset`'s param is `after_cursor`, not `cursor`; the working deep-history
+  pattern is **date-windowed offset paging** (`end_date_min`/`end_date_max`). Also the
+  **taker-fee formula** `fee = shares × rate × p × (1−p)`, rate 0.05 sports / 0.07 crypto
+  / 0.04 politics-finance-tech / **0 geopolitics** — peaks at ~1.25c/share at p=0.50, so
+  it bites hardest exactly in the 3–50c fundable band. Makers pay nothing.
+- Binary sports markets: the two token midpoints sum to **1.0000** exactly, so there is no
+  overround at the mid and de-vigging is a no-op — the real cost is spread + taker fee.
 
 ## Long-term
 
