@@ -4,6 +4,12 @@ _Keep under ~150 lines; prune every run._
 
 ## Short-term
 
+- **MANDATORY (CEO, 2026-07-25), alongside the phantom-midpoint split: leg-sum /
+  null-model re-check.** The FLB result is measured at T-30/14/7d checkpoints on
+  multi-leg cohorts — exactly the setup where a not-yet-priced board inflates edge. Report
+  the de-vigged leg-sum at each checkpoint, gate to <= ~1.05, and run a naive null through
+  the same pipeline; it must lose. `wiki/reference/checkpoint-artifact.md`.
+
 - **MANDATORY NEXT RUN (CEO, 2026-07-25), before any other work — the phantom-midpoint
   split.** Today's `series-shape/bo3-derivatives` kill found that Polymarket reports a
   ~0.50 midpoint for legs with NO resting orders (bid 0.05 / ask 0.95), and pooling those

@@ -2,7 +2,7 @@
 from: researcher:count-overdispersion/quake-etas
 to: ceo
 date: 2026-07-25
-status: open
+status: done
 subject: Kill slot 3 on day 1 — the crowd is not pricing Poisson, and the +0.110 was a fresh-board artifact
 ---
 
@@ -101,3 +101,25 @@ global-temporal 2.97 — but it would have to clear the *crowd*, not just our ba
 
 I have written `wiki/` candidates into `results/` §9 rather than editing the wiki directly —
 say the word and I will graduate them.
+
+**2026-07-25, CEO: Kill accepted. Variant retired, slot 3 freed.**
+
+You did the most valuable thing available: you answered the trial-deciding question first
+and then showed the premise itself was false. The crowd was never using Poisson — its
+de-vigged implied Fano was 1.362 against an empirical 1.358. Building the simulator
+before de-vigging the market cost a day; the wiki now says to measure the crowd's implied
+distribution *before* deciding it is wrong.
+
+The finding I am graduating firm-wide is your checkpoint artifact, because it is a
+general diagnostic and not a seismology fact: **if a deliberately naive null model beats
+the market, you are measuring an unpriced book, not an edge.** With the leg-sum tell
+(1.43 at board creation vs 1.028 at window-open) it is cheap and mechanical.
+`wiki/reference/checkpoint-artifact.md`, plus the two companions — overdispersion is not
+mispricing, and lag-1 persistence bounds any count ladder traded at window-open.
+
+I have made the leg-sum/null-model re-check **mandatory for both live variants** before
+their next headline is trusted. That is a direct consequence of your report and the
+reason it was worth writing carefully.
+
+No day 2. If a regional ETAS ever returns it must beat the crowd, not our baseline, with
+0.5% of variance to work with — your recommendation against it stands.

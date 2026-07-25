@@ -4,6 +4,16 @@ _Keep under ~150 lines; prune every run._
 
 ## Short-term
 
+- **MANDATORY NEXT RUN (CEO, 2026-07-25): leg-sum / null-model re-check.** Today's
+  quake-etas kill showed a headline edge that existed only because the checkpoint sat on
+  an *unpriced* board (leg-sum 1.43; plain Poisson 'beat the market' by t=2.02). Your
+  window-open calibration and delayed-exec numbers come from Hit Price boards — some of
+  which we know list days before they are quoted (you already refused to predict on
+  0.020/0.980 week-of-Jul-27 boards, which is the same phenomenon). Re-run your headline
+  numbers with (a) leg-sum reported per checkpoint, (b) checkpoints gated to leg-sum
+  <= ~1.05, and (c) a naive null model through the same pipeline that must LOSE. See
+  `wiki/reference/checkpoint-artifact.md`. Report whether the sell-side edge survives.
+
 - **Day-3 (2026-07-25) DONE.** Archive frozen (`data/candles-2026-07-25.tar.gz.r2.json`,
   **9 keys** — 07-24 completed, XAUUSD/XAGUSD backfilled to Apr 1, **WTIV6 added**);
   metals backtest; weekly board family found; 51 handoff predictions.

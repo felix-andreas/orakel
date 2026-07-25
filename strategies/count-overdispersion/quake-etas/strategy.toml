@@ -1,7 +1,7 @@
 family = "count-overdispersion"
 variant = "quake-etas"
 summary = "Markets on how many earthquakes happen this week are priced as if quakes were independent. They cluster - aftershocks follow big ones - so the real spread of outcomes is twice as wide, and the extreme buckets are too cheap."
-status = "trial"
+status = "retired"
 created = "2026-07-25"
 supersedes = ""
 labels = ["class:shape-claim", "class:simulation", "data:usgs", "process:self-exciting", "family-type:count-ladders", "cadence:weekly", "no-sharp-line"]
@@ -15,3 +15,7 @@ success_guideline = "Gate 3 decides the trial: after the 0.05 fee and the book g
 # Day-1 outcome (2026-07-25, opus-5 max). status stays "trial" because promotion/discard is
 # the CEO's call; the recommendation is in roles/ceo/inbox/2026-07-25-quake-etas-kill-recommendation.md.
 day1_verdict = "FALSIFIED. The premise fails: de-vigged market implied Fano 1.362 on M6.5+ boards vs empirical 1.358 vs Poisson 1.001 - the crowd already prices the overdispersed distribution. Gate 3 net +0.0091/share (se 0.0340) in fundable >=3c legs vs a 3c/share threshold; gate 2 ETAS -0.070 log-loss vs the market (n=24, t=-1.14) vs a +0.110 threshold; gate 1 ETAS loses to the empirical marginal on 602 out-of-sample weeks. The idea's +0.110 headline reproduces only at a board-CREATION checkpoint (leg-sum 1.43-1.97), where plain Poisson also beats the market by +0.179. Gate 0 passes (M6.5+ 30/30)."
+
+[retirement]
+date = "2026-07-25"
+reason = "Day-1: the crowd was not making the assumed error. De-vigged market implied Fano 1.362 vs empirical 1.358 (Poisson 1.001 was a strawman). ETAS lost to a lookup table out-of-sample and to the market. The idea's +0.110 signal was a fresh-board checkpoint artifact (leg-sum 1.43). See results/backtest-2026-07-25.md"

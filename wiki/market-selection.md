@@ -71,8 +71,14 @@ Run the cheap screens first, in this order — each has killed a real trial in o
    prices this event, fetch their line. Minutes of work; killed a whole slot on 2026-07-25.
 2. **[Phantom-midpoint split](reference/phantom-midpoints.md)** — decompose the claimed
    edge by whether the book actually moves. If it lives in the dead half, there is no edge.
-3. **Speed screen** — how fast does the mispricing close? Minutes means bots own it.
-4. **[Proxy-vs-primary](reference/published-ci-vs-printed.md)** — can the crowd run the
+3. **[Leg-sum / null-model check](reference/checkpoint-artifact.md)** — is the board at
+   your checkpoint actually priced (leg-sum ~1.0), and does a deliberately naive null
+   model *lose*? If the null wins, you are measuring an unpriced book.
+4. **Implied-distribution check** — before building a simulator because "the crowd assumes
+   independence", de-vig and measure what the crowd's distribution actually is. The quake
+   ladders implied a Fano of 1.362 against an empirical 1.358: no error to exploit.
+5. **Speed screen** — how fast does the mispricing close? Minutes means bots own it.
+6. **[Proxy-vs-primary](reference/published-ci-vs-printed.md)** — can the crowd run the
    resolving source's own inputs? Then a proxy model is dominated before it is built.
 
 - **Objects a professional counterparty already prices or publishes.** The binding
