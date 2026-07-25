@@ -43,8 +43,11 @@ at 1−p: you receive p and must post 1−p as collateral until resolution.** So
   `pnl / (capital_locked × days_held) × 365`.
 
 Why this is the crux: "+10c per trade" is a *fine* number for selling a 15c wing (locks
-85c for 8 days → ~53% annualized) and a *terrible* one for buying a 97c favourite (+2c
-locks 97c for 6 days → ~13% annualized, before spread eats most of it). Cents-per-trade
+85c for 8 days → 11.8% over the hold, ~537% annualized) and a *much* weaker one for
+buying a 97c favourite (+2c locks 97c for 6 days → 2.1% over the hold, ~125% annualized
+before the spread, which on those books eats most of it). Corrected 2026-07-25: the
+first version of this paragraph mis-stated both figures by a factor of ten; the formula
+above is the authority and the engine implements it as written. Cents-per-trade
 flatters exactly the trades we should refuse. **Every policy result reports cents/trade,
 return on locked capital, and annualized return on locked capital together — and the
 third one is the one that decides.**
