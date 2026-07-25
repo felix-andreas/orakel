@@ -1,5 +1,8 @@
 family = ""
 variant = ""
+# REQUIRED: one sentence, plain English, no jargon - what the idea IS, for a smart
+# outsider. This is what the dashboard shows. Jargon belongs in STRATEGY.md, never here.
+summary = ""
 status = "trial"
 created = ""
 supersedes = ""
