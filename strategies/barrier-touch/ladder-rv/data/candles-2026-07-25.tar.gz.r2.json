@@ -1,0 +1,11 @@
+{
+  "key": "blobs/77c924e69854742a27f4c9159af1bc65b58f1cbc78eac08d0c56797ef5e96ef5",
+  "sha256": "77c924e69854742a27f4c9159af1bc65b58f1cbc78eac08d0c56797ef5e96ef5",
+  "bytes": 15395624,
+  "content_type": "application/gzip",
+  "original_name": "candles-2026-07-25.tar.gz",
+  "source_url": "benchmarks.pyth.network (Metal.XAU|XAG/USD, Commodities.WTIU6|USOILSPOT, Equity.US.SPY|NVDA via TV-shim; BTC|ETH via data-api.binance.vision) + cdn.cboe.com (OVX/VIX/GVZ/VXSLV) + deribit.com (DVOL)",
+  "note": "ladder-rv daily resolution-feed archive thru 2026-07-25 ~01:15Z: 1-min candles 8 keys + OVX/VIX/GVZ/VXSLV/DVOL. 2026-07-24 now COMPLETE (was partial at capture): WTIU6/XAUUSD/XAGUSD full 00:00-21:00Z session, SPY/NVDA full RTH 392 candles - this is the resolution record for the week-of-Jul-20 SPY/NVDA weeklies that settled Fri 20:00Z. 07-25 Sat: crypto only (equity/WTI/metals closed, s=ok n=0).",
+  "fetched_at": "2026-07-25T01:17:57Z",
+  "bucket": "orakel"
+}
