@@ -7,8 +7,8 @@
 
 use crate::data;
 use crate::render::{
-    self, badge, chip_row, doc, esc, fmt_int, icon, item, items, kpi, kpi_row, markdown,
-    markdown_body, panel, panel_flush, panel_foot, stat_line, table,
+    self, badge, chip_row, doc, esc, fmt_int, icon, item, items, markdown, markdown_body, panel,
+    panel_flush, panel_foot, stat_line, table,
 };
 use crate::snapshots;
 use crate::{shell, snapshot_banner, trail};
@@ -32,34 +32,33 @@ pub async fn state(env: &Env) -> String {
     let trial_s = data::str_list(&t, &["strategies", "trial"]);
     let retired_s = data::str_list(&t, &["strategies", "retired"]);
 
-    let kpis = kpi_row(&[
-        kpi("Phase", if phase.is_empty() { "—" } else { phase }, "settings", 1)
-            .delta(
-                if phase == "operating" { "operating" } else { "bootstrap" },
-                if phase == "operating" { "up" } else { "warn" },
-            )
-            .context("bootstrap → operating"),
-        kpi(
-            "Research slots",
-            &format!("{active}<small> / {total}</small>"),
-            "layers",
-            4,
-        )
-        .context("filled from the ideas backlog"),
-        kpi(
-            "Strategies",
-            &fmt_int((live_s.len() + trial_s.len() + retired_s.len()) as i64),
-            "flask",
-            2,
-        )
-        .delta(&format!("{} in trial", trial_s.len()), "warn")
-        .context(&format!(
-            "{} live · {} retired",
-            live_s.len(),
-            retired_s.len()
-        )),
-        kpi("State updated", if updated.is_empty() { "—" } else { updated }, "clock", 3)
-            .context("a change not recorded here didn't happen"),
+    let stats = stat_line(&[
+        (
+            esc(if phase.is_empty() { "—" } else { phase }),
+            "phase".to_string(),
+            if phase == "operating" { "ok" } else { "warn" },
+        ),
+        (
+            format!("{active} / {total}"),
+            "research slots in use".to_string(),
+            "",
+        ),
+        (
+            fmt_int(trial_s.len() as i64),
+            "strategies in trial".to_string(),
+            "warn",
+        ),
+        (fmt_int(live_s.len() as i64), "live".to_string(), "ok"),
+        (
+            fmt_int(retired_s.len() as i64),
+            "dropped".to_string(),
+            "",
+        ),
+        (
+            esc(if updated.is_empty() { "—" } else { updated }),
+            "state last updated".to_string(),
+            "",
+        ),
     ]);
 
     // --- research slots ---
@@ -176,9 +175,9 @@ pub async fn state(env: &Env) -> String {
     }
 
     let body = format!(
-        "{banner}{kpis}<div class=\"grid-main\">{slots}{strategies}</div><div class=\"grid-3\">{cadence}{models}{roles}</div><div class=\"grid-pair\">{secrets}{cf}</div>{note}",
+        "{banner}{stats}<div class=\"grid-main\">{slots}{strategies}</div><div class=\"grid-3\">{cadence}{models}{roles}</div><div class=\"grid-pair\">{secrets}{cf}</div>{note}",
         banner = if all_live { String::new() } else { snapshot_banner() },
-        kpis = kpis,
+        stats = stats,
         slots = panel_foot(
             "Research slots",
             "one trial variant per slot",
@@ -387,9 +386,9 @@ pub async fn inboxes(env: &Env) -> String {
     let body = format!(
         "{banner}{kpis}{panels}",
         banner = if all_live { String::new() } else { snapshot_banner() },
-        kpis = kpi_row(&[
-            kpi("Messages", &fmt_int(total as i64), "inbox", 1).context("across every role inbox"),
-            kpi("Inboxes", &fmt_int(role_count as i64), "layers", 4).context("one per role"),
+        kpis = stat_line(&[
+            (fmt_int(total as i64), "messages waiting".to_string(), ""),
+            (fmt_int(role_count as i64), "role inboxes".to_string(), ""),
         ]),
         panels = panels,
     );
@@ -494,13 +493,10 @@ pub async fn ideas(env: &Env) -> String {
     let body = format!(
         "{banner}{kpis}{panel}",
         banner = if all_live { String::new() } else { snapshot_banner() },
-        kpis = kpi_row(&[
-            kpi("Ideas filed", &fmt_int(files.len() as i64), "bulb", 3)
-                .context("one file per idea, newest first"),
-            kpi("Taken to trial", &fmt_int(trialing as i64), "flask", 1)
-                .context("promoted into a research slot"),
-            kpi("Screened out", &fmt_int(killed as i64), "check", 2)
-                .context("killed before or during trial"),
+        kpis = stat_line(&[
+            (fmt_int(files.len() as i64), "ideas filed".to_string(), ""),
+            (fmt_int(trialing as i64), "taken to trial".to_string(), "warn"),
+            (fmt_int(killed as i64), "screened out".to_string(), ""),
         ]),
         panel = panel_foot(
             "Backlog",
@@ -581,13 +577,9 @@ pub async fn wiki(env: &Env) -> String {
     let body = format!(
         "{banner}{kpis}<div class=\"grid-main\">{index_panel}{groups}</div>",
         banner = if all_live { String::new() } else { snapshot_banner() },
-        kpis = kpi_row(&[
-            kpi("Pages", &fmt_int(pages.len() as i64), "book", 1)
-                .context("durable, cross-strategy knowledge"),
-            kpi("Sections", &fmt_int(groups.len() as i64), "layers", 4)
-                .context("reference notes and recipes"),
-            kpi("Maintainer", "market researcher", "flask", 2)
-                .context("run-specific notes stay in memory"),
+        kpis = stat_line(&[
+            (fmt_int(pages.len() as i64), "pages".to_string(), ""),
+            (fmt_int(groups.len() as i64), "sections".to_string(), ""),
         ]),
         index_panel = panel_foot(
             "Index",
@@ -653,25 +645,25 @@ pub async fn snapshots(env: &Env) -> String {
         Some(l) => {
             let slugs = snapshots::market_slugs(&l.doc);
             let fresh = l.age_mins <= 120;
-            let kpis = kpi_row(&[
-                kpi(
-                    "Latest snapshot",
-                    &format!(
+            let kpis = stat_line(&[
+                (
+                    format!(
                         "<span class=\"mono\">{}</span>",
                         esc(l.key.trim_start_matches("snapshots/books/"))
                     ),
-                    "database",
-                    1,
-                )
-                .context("hourly at :07 UTC"),
-                kpi("Age", &format!("{}<small> min</small>", l.age_mins), "clock", 3)
-                    .delta(
-                        if fresh { "current" } else { "stale" },
-                        if fresh { "up" } else { "down" },
-                    )
-                    .context("since the top of that hour"),
-                kpi("Markets", &fmt_int(slugs.len() as i64), "list", 4)
-                    .context("watchlist order, mirrored to R2"),
+                    "latest snapshot".to_string(),
+                    "",
+                ),
+                (
+                    format!("{} min", l.age_mins),
+                    "old".to_string(),
+                    if fresh { "ok" } else { "bad" },
+                ),
+                (
+                    fmt_int(slugs.len() as i64),
+                    "markets watched".to_string(),
+                    "",
+                ),
             ]);
 
             let mut options = String::new();

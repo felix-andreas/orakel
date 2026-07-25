@@ -8,8 +8,8 @@
 
 use crate::data::{self, Table};
 use crate::render::{
-    self, badge, esc, fmt_int, fmt_prob, fmt_signed, fmt_ts, kpi, kpi_row, panel, panel_flush,
-    panel_foot, table, table_scroll,
+    self, badge, esc, fmt_int, fmt_prob, fmt_signed, fmt_ts, item, items, kpi, kpi_row, panel,
+    panel_flush, panel_foot, table, table_scroll,
 };
 use crate::{json_str, shell, snapshot_banner, trail};
 use worker::Env;
@@ -23,7 +23,10 @@ pub async fn page(env: &Env) -> String {
     let detail = data::text(env, "predictions/scores_detail.csv").await;
     let scores = data::text(env, "predictions/scores.csv").await;
     let resolutions = data::text(env, "predictions/resolutions.csv").await;
-    let all_live = preds.live && detail.live && scores.live && resolutions.live;
+    let (paths, tree_live) = data::tree(env).await;
+    let (metas, metas_live) = data::variant_metas(env, &paths).await;
+    let all_live =
+        preds.live && detail.live && scores.live && resolutions.live && tree_live && metas_live;
 
     let p = Table::parse(&preds.text);
     let d = Table::parse(&detail.text);
@@ -32,9 +35,10 @@ pub async fn page(env: &Env) -> String {
 
     let banner = if all_live { String::new() } else { snapshot_banner() };
     let body = format!(
-        "{banner}{kpis}{log}<div class=\"grid-pair\">{scoring}{res}</div>",
+        "{banner}{kpis}{who}{log}<div class=\"grid-pair\">{scoring}{res}</div>",
         kpis = kpi_strip(&p, &d, &s, &r),
-        log = log_panel(&p, &d, &r),
+        who = attribution(&p, &metas),
+        log = log_panel(&p, &d, &r, &metas),
         scoring = scoring_table(&s),
         res = resolutions_table(&r, &p),
     );
@@ -88,8 +92,45 @@ fn kpi_strip(p: &Table, d: &Table, s: &Table, r: &Table) -> String {
     ])
 }
 
+/// Who produced these rows. A slug and a variant name say nothing about what
+/// was claimed; the strategy's own plain-English summary does.
+fn attribution(p: &Table, metas: &[data::VariantMeta]) -> String {
+    let mut keys: Vec<String> = p
+        .rows
+        .iter()
+        .map(|row| format!("{}/{}", p.cell(row, "family"), p.cell(row, "variant")))
+        .collect();
+    keys.sort();
+    keys.dedup();
+    if keys.is_empty() {
+        return String::new();
+    }
+    let mut inner = String::new();
+    for key in &keys {
+        let n = p
+            .rows
+            .iter()
+            .filter(|row| format!("{}/{}", p.cell(row, "family"), p.cell(row, "variant")) == *key)
+            .count();
+        let m = metas.iter().find(|m| m.key() == *key);
+        inner.push_str(&item(
+            &m.map(|m| m.href()).unwrap_or_default(),
+            &esc(key),
+            &m.map(|m| format!("<span class=\"item-summary\">{}</span>", esc(&m.summary)))
+                .unwrap_or_default(),
+            &badge(&render::count(n, "row"), ""),
+        ));
+    }
+    panel(
+        "Where these predictions come from",
+        "the strategies that produced the rows below, in their own words",
+        "",
+        &items(&inner),
+    )
+}
+
 /// The log itself. Newest first; scores and resolutions joined on the row.
-fn log_panel(p: &Table, d: &Table, r: &Table) -> String {
+fn log_panel(p: &Table, d: &Table, r: &Table, metas: &[data::VariantMeta]) -> String {
     if p.rows.is_empty() {
         return panel(
             "Prediction log",
@@ -164,7 +205,7 @@ fn log_panel(p: &Table, d: &Table, r: &Table) -> String {
                     fmt_signed(mkt - ours)
                 ),
                 result,
-                strategy_links(p.cell(row, "family"), p.cell(row, "variant")),
+                strategy_links(p.cell(row, "family"), p.cell(row, "variant"), metas),
                 format!("<span class=\"mono\">{}</span>", esc(p.cell(row, "model"))),
             ]
         })
@@ -193,18 +234,25 @@ fn log_panel(p: &Table, d: &Table, r: &Table) -> String {
     )
 }
 
-/// family / variant as two separate links.
-fn strategy_links(family: &str, variant: &str) -> String {
+/// family / variant as two separate links, the variant carrying its
+/// plain-English summary as a hover title (no vertical cost in a dense table).
+fn strategy_links(family: &str, variant: &str, metas: &[data::VariantMeta]) -> String {
     if family.is_empty() {
         return String::new();
     }
     if variant.is_empty() {
         return format!("<a href=\"/strategies/{0}\">{0}</a>", esc(family));
     }
+    let title = metas
+        .iter()
+        .find(|m| m.family == family && m.variant == variant)
+        .map(|m| format!(" title=\"{}\"", esc(&m.summary)))
+        .unwrap_or_default();
     format!(
-        "<a href=\"/strategies/{0}\">{0}</a><span class=\"muted\">/</span><a href=\"/strategies/{0}/{1}\">{1}</a>",
+        "<a href=\"/strategies/{0}\">{0}</a><span class=\"muted\">/</span><a href=\"/strategies/{0}/{1}\"{2}>{1}</a>",
         esc(family),
-        esc(variant)
+        esc(variant),
+        title
     )
 }
 
@@ -337,7 +385,9 @@ pub async fn market(env: &Env, slug: &str) -> String {
     let preds = data::text(env, "predictions/predictions.csv").await;
     let detail = data::text(env, "predictions/scores_detail.csv").await;
     let resolutions = data::text(env, "predictions/resolutions.csv").await;
-    let all_live = preds.live && detail.live && resolutions.live;
+    let (paths, tree_live) = data::tree(env).await;
+    let (metas, metas_live) = data::variant_metas(env, &paths).await;
+    let all_live = preds.live && detail.live && resolutions.live && tree_live && metas_live;
 
     let p = Table::parse(&preds.text);
     let d = Table::parse(&detail.text);
@@ -417,7 +467,7 @@ pub async fn market(env: &Env, slug: &str) -> String {
         banner = if all_live { String::new() } else { snapshot_banner() },
         kpis = kpis,
         chart = market_chart(&p, &rows, slug),
-        facts = market_facts(&p, &r, &rows, first, latest, resolution, &family, &variant),
+        facts = market_facts(&p, &r, &rows, first, latest, resolution, &family, &variant, &metas),
         log = market_log(&p, &d, &rows, slug),
     );
 
@@ -506,11 +556,20 @@ fn market_facts(
     resolution: Option<&Vec<String>>,
     family: &str,
     variant: &str,
+    metas: &[data::VariantMeta],
 ) -> String {
     let cond = p.cell(latest, "condition_id");
     let token = p.cell(latest, "token_id");
     let mut inner = String::new();
-    inner.push_str(&render::row("Strategy", &strategy_links(family, variant)));
+    inner.push_str(&render::row("Strategy", &strategy_links(family, variant, metas)));
+    if let Some(m) = metas.iter().find(|m| m.family == family && m.variant == variant) {
+        if !m.summary.is_empty() {
+            inner.push_str(&format!(
+                "<div class=\"row row-block\"><span class=\"k\">What it claims</span><span class=\"v\">{}</span></div>",
+                esc(&m.summary)
+            ));
+        }
+    }
     inner.push_str(&render::row(
         "Status",
         &render::status_badge(p.cell(latest, "status")),

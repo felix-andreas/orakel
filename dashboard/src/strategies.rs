@@ -60,7 +60,7 @@ pub async fn index(env: &Env) -> String {
     // its variants (with the plain-English summary that IS the description)
     // revealed on click. Table over cards; expansion over navigation.
     let mut rows = String::from(
-        "<div class=\"fhead\"><span>Family</span><span>What it is</span><span>Strategies</span><span>Predictions</span><span>Improvement</span></div>",
+        "<div class=\"fhead\"><span>Family</span><span>What it does</span><span>Status</span><span>Predictions</span><span>Beats market by</span></div>",
     );
     for family in &families {
         let fam_doc = data::text(env, &format!("strategies/{family}/FAMILY.md")).await;
@@ -134,7 +134,7 @@ pub async fn index(env: &Env) -> String {
                 status = render::status_badge(&m.status),
                 n = n,
                 scored_sub = if scored > 0 {
-                    format!("<span class=\"fvar-when\"> {scored} scored</span>")
+                    format!("<div class=\"fvar-when\">{scored} scored</div>")
                 } else {
                     String::new()
                 },
@@ -142,12 +142,39 @@ pub async fn index(env: &Env) -> String {
             ));
         }
 
+        // The family line must be plain English. FAMILY.md is written in the
+        // firm's own vocabulary, so the description shown here is the REQUIRED
+        // summary of the family's current strategy (its trialling/live variant,
+        // else its newest). FAMILY.md itself is one click away, in full.
+        let describing = mine
+            .iter()
+            .find(|m| m.status == "trial" || m.status == "live")
+            .or_else(|| mine.iter().max_by(|a, b| a.created.cmp(&b.created)));
+        let what = match describing.filter(|m| !m.summary.is_empty()) {
+            Some(m) => m.summary.clone(),
+            None => first_paragraph(&fam_doc.text),
+        };
+        let status_cell = if mine.is_empty() {
+            "<span class=\"muted\">—</span>".to_string()
+        } else {
+            let n_trial = mine.iter().filter(|m| m.status == "trial").count();
+            let n_live = mine.iter().filter(|m| m.status == "live").count();
+            if n_live > 0 {
+                badge(&format!("{n_live} live"), "ok")
+            } else if n_trial > 0 {
+                badge(&format!("{n_trial} in trial"), "warn")
+            } else {
+                badge("dropped", "")
+            }
+        };
+
         rows.push_str(&format!(
-            "<details class=\"frow\"{open}><summary><span class=\"fname\">{family}</span><span class=\"fsum\">{thesis}</span><span class=\"fnum\">{nvar}</span><span class=\"fnum\">{npred}</span><span class=\"fnum\">{imp}</span></summary><div class=\"fvariants\">{vars}<p class=\"note\"><a class=\"link\" href=\"/strategies/{family}\">Family page: the full thesis, cross-variant lessons and scoring →</a></p></div></details>",
+            "<details class=\"frow\"{open}><summary><span class=\"fname\">{family}<span class=\"fvar-when\">{nvar}</span></span><span class=\"fsum\">{what}</span><span class=\"fnum\">{status}</span><span class=\"fnum\">{npred}</span><span class=\"fnum\">{imp}</span></summary><div class=\"fvariants\">{vars}<p class=\"note\"><a class=\"link\" href=\"/strategies/{family}\">The family's full thesis, cross-strategy lessons and scoring →</a></p></div></details>",
             open = if active { " open" } else { "" },
             family = esc(family),
-            thesis = esc(&first_paragraph(&fam_doc.text)),
-            nvar = mine.len(),
+            nvar = render::count(mine.len(), "strategy"),
+            what = esc(&what),
+            status = status_cell,
             npred = n_pred,
             imp = imp_cell,
             vars = vars,

@@ -95,9 +95,35 @@ pub async fn page(env: &Env) -> String {
     dates.sort();
     dates.dedup();
 
+    let stems: Vec<String> = runs.iter().map(|(stem, _)| stem.clone()).collect();
+    // (variant key, date, owning manifest stem) — each strategy change is
+    // reported by exactly one run.
+    let mut owners: Vec<(String, String, String)> = Vec::new();
+    for m in &metas {
+        for date in [m.created.clone(), m.retired_on.clone()] {
+            if date.is_empty() || owners.iter().any(|(k, dt, _)| *k == m.key() && *dt == date) {
+                continue;
+            }
+            let same_day: Vec<&(String, toml::Table)> = runs
+                .iter()
+                .filter(|(_, t)| data::tstr(t, "date") == date)
+                .collect();
+            let owner = same_day
+                .iter()
+                .find(|(_, t)| mentions_variant(t, &m.key()))
+                .map(|(stem, _)| stem.clone())
+                .or_else(|| same_day.first().map(|(stem, _)| stem.clone()));
+            if let Some(stem) = owner {
+                owners.push((m.key(), date, stem));
+            }
+        }
+    }
+
     let mut blocks = String::new();
     for (stem, t) in &runs {
-        blocks.push_str(&run_block(stem, t, &p, &r, &d, &metas, &ideas, &dates));
+        blocks.push_str(&run_block(
+            stem, t, &p, &r, &d, &metas, &ideas, &dates, &stems, &owners,
+        ));
     }
 
     let body = format!(
@@ -181,6 +207,8 @@ fn run_block(
     metas: &[VariantMeta],
     ideas: &[(String, String)],
     dates: &[String],
+    dates_all: &[String],
+    owners: &[(String, String, String)],
 ) -> String {
     let date = data::tstr(t, "date");
     let tokens = data::int_at(t, &["spend", "total_tokens"]).unwrap_or(0);
@@ -190,12 +218,20 @@ fn run_block(
     let notes = data::str_at(t, &["health", "notes"]);
 
     // ---- the story, assembled from dated repo facts ----
+    // Several runs can share a date, so a fact is only credited to THIS run
+    // when it can be tied to it: predictions by their run_id, strategy changes
+    // by the manifest that mentions the variant. Day-level facts with no run
+    // reference (idea files) go to the last run of the day.
+    let (_, idx) = run_key(stem);
+    let last_of_day = is_last_run_of_day(stem, dates_all);
     let mut lines: Vec<String> = Vec::new();
 
     let logged: Vec<&Vec<String>> = p
         .rows
         .iter()
-        .filter(|row| p.cell(row, "timestamp").starts_with(date))
+        .filter(|row| {
+            p.cell(row, "timestamp").starts_with(date) && run_id_index(p.cell(row, "run_id")) == idx
+        })
         .collect();
     if !logged.is_empty() {
         let mut by_variant: Vec<(String, usize)> = Vec::new();
@@ -206,14 +242,18 @@ fn run_block(
                 None => by_variant.push((key, 1)),
             }
         }
+        let many = by_variant.len() > 1;
         let which: Vec<String> = by_variant
             .iter()
-            .map(|(k, n)| format!("<a href=\"/strategies/{0}\">{0}</a> ({n})", esc(k)))
+            .map(|(k, n)| {
+                let count = if many { format!(" ({n})") } else { String::new() };
+                format!("<a href=\"/strategies/{0}\">{0}</a>{count}", esc(k))
+            })
             .collect();
         lines.push(format!(
             "Logged <b>{}</b> new predictions from {}.",
             logged.len(),
-            which.join(", ")
+            which.join(" and ")
         ));
     }
 
@@ -222,7 +262,7 @@ fn run_block(
         .iter()
         .filter(|row| {
             let rd = r.cell(row, "resolved_date");
-            !rd.is_empty() && next_run_after(rd, dates).as_deref() == Some(date)
+            !rd.is_empty() && next_run_after(rd, dates).as_deref() == Some(date) && last_of_day
         })
         .collect();
     if !settled.is_empty() {
@@ -244,9 +284,15 @@ fn run_block(
                 "<b>{}</b> markets we had predictions on settled.",
                 settled.len()
             ));
+        } else if ahead == scored.len() {
+            lines.push(format!(
+                "<b>{}</b> markets settled. All <b>{}</b> of our predictions on them beat the market's own price.",
+                settled.len(),
+                scored.len()
+            ));
         } else {
             lines.push(format!(
-                "<b>{}</b> markets settled, so {} of our predictions could be marked — <b>{}</b> of them beat the market's own price.",
+                "<b>{}</b> markets settled. Of the <b>{}</b> predictions they covered, <b>{}</b> beat the market's own price.",
                 settled.len(),
                 scored.len(),
                 ahead
@@ -254,27 +300,38 @@ fn run_block(
         }
     }
 
-    for m in metas.iter().filter(|m| m.created == date) {
+    // Started / dropped, merged when both happened on the same day so the
+    // strategy's sentence is never printed twice.
+    let owns = |key: &str, when: &str| {
+        owners
+            .iter()
+            .any(|(k, dt, st)| k == key && dt == when && st == stem)
+    };
+    for m in metas.iter().filter(|m| {
+        (m.created == date && owns(&m.key(), &m.created))
+            || (!m.retired_on.is_empty() && m.retired_on == date && owns(&m.key(), &m.retired_on))
+    }) {
+        let started = m.created == date && owns(&m.key(), &m.created);
+        let dropped =
+            !m.retired_on.is_empty() && m.retired_on == date && owns(&m.key(), &m.retired_on);
+        let verb = match (started, dropped) {
+            (true, true) => "Started and dropped",
+            (true, false) => "Started",
+            _ => "Dropped",
+        };
         lines.push(format!(
-            "Started a new strategy, <a href=\"{}\">{}</a>: {}",
-            esc(&m.href()),
-            esc(&m.key()),
-            esc(&m.summary)
-        ));
-    }
-    for m in metas
-        .iter()
-        .filter(|m| !m.retired_on.is_empty() && m.retired_on == date)
-    {
-        lines.push(format!(
-            "Dropped <a href=\"{}\">{}</a>: {}",
+            "{verb} <a href=\"{}\">{}</a>: {}",
             esc(&m.href()),
             esc(&m.key()),
             esc(&m.summary)
         ));
     }
 
-    let filed: Vec<&(String, String)> = ideas.iter().filter(|(dt, _)| dt == date).collect();
+    let filed: Vec<&(String, String)> = if last_of_day {
+        ideas.iter().filter(|(dt, _)| dt == date).collect()
+    } else {
+        Vec::new()
+    };
     if !filed.is_empty() {
         let names: Vec<String> = filed
             .iter()
@@ -288,9 +345,13 @@ fn run_block(
     }
 
     let story = if lines.is_empty() {
-        "<p class=\"run-story\">Maintenance only — no predictions, settlements or strategy changes on this day.</p>".to_string()
+        "<p class=\"run-story\">Maintenance only — no predictions, settlements or strategy changes recorded for this run.</p>".to_string()
     } else {
-        format!("<p class=\"run-story\">{}</p>", lines.join(" "))
+        lines
+            .iter()
+            .map(|l| format!("<p class=\"run-story\">{l}</p>"))
+            .collect::<Vec<_>>()
+            .join("")
     };
 
     // ---- subordinate: the CEO's own words, unedited ----
@@ -351,6 +412,43 @@ fn run_block(
         stem = esc(stem),
         detail = detail_html,
     )
+}
+
+/// `<date>[-N]` manifest stem → (date, run index within the day, 1-based).
+fn run_key(stem: &str) -> (String, u32) {
+    if stem.len() > 10 && stem.as_bytes()[10] == b'-' {
+        (stem[..10].to_string(), stem[11..].parse().unwrap_or(1))
+    } else {
+        (stem.to_string(), 1)
+    }
+}
+
+/// `2026-07-23/run2` → 2; anything without an explicit run number → 1.
+fn run_id_index(run_id: &str) -> u32 {
+    run_id
+        .rsplit('/')
+        .next()
+        .and_then(|tail| tail.strip_prefix("run"))
+        .and_then(|n| n.parse().ok())
+        .unwrap_or(1)
+}
+
+/// Is this the last manifest written for its date?
+fn is_last_run_of_day(stem: &str, stems: &[String]) -> bool {
+    let (date, idx) = run_key(stem);
+    !stems
+        .iter()
+        .any(|other| run_key(other).0 == date && run_key(other).1 > idx)
+}
+
+/// Does this manifest name the variant, in a step's `variant` field or note?
+fn mentions_variant(t: &toml::Table, key: &str) -> bool {
+    data::arr_at(t, &["step"]).iter().any(|s| {
+        s.get("variant").and_then(|v| v.as_str()) == Some(key)
+            || s.get("note")
+                .and_then(|v| v.as_str())
+                .is_some_and(|n| n.contains(key))
+    })
 }
 
 /// The first run date strictly after `date` — the run that could act on a
