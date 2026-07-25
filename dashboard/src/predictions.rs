@@ -146,7 +146,11 @@ fn log_panel(p: &Table, d: &Table, r: &Table) -> String {
             };
 
             vec![
-                format!("<span class=\"mono\">{}</span>", esc(&fmt_ts(ts))),
+                format!(
+                    "<span class=\"mono\">{}</span><span class=\"sub mono\">{}</span>",
+                    esc(&fmt_ts(ts)),
+                    esc(p.cell(row, "run_id"))
+                ),
                 format!(
                     "<a href=\"/markets/{0}\">{0}</a>",
                     esc(slug)
