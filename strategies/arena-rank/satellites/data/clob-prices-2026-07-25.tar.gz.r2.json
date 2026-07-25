@@ -1,0 +1,11 @@
+{
+  "key": "blobs/3f8d97ba621f070053e2cb3e31ce7bd3c6de808b23155762aed4ce44190c420c",
+  "sha256": "3f8d97ba621f070053e2cb3e31ce7bd3c6de808b23155762aed4ce44190c420c",
+  "bytes": 5881987,
+  "content_type": "application/gzip",
+  "original_name": "clob-prices-2026-07-25.tar.gz",
+  "source_url": "arena.ai + web.archive.org + gamma/clob/data-api polymarket",
+  "note": "arena-rank/satellites day-1 backtest freeze 2026-07-25",
+  "fetched_at": "2026-07-25T02:59:00Z",
+  "bucket": "orakel"
+}

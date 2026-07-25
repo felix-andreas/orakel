@@ -1,0 +1,25 @@
+# text_overall_nosc_2 - July 2026 cohort instance. Checks 2026-07-31 12:00 ET.
+market_slug = "which-company-has-second-best-ai-model-end-of-july"
+condition_id = ""   # one condition per leg; the board is a neg-risk group
+added = "2026-07-25"
+active = true
+
+# 10 resolved prior instances, the best-sampled satellite.
+# Favourite already 0.976 so sharpening adds little; kept for scoring density.
+
+[params]
+board_type = "text_overall_nosc_2"
+resolving_slice = "https://arena.ai/leaderboard/text/overall-no-style-control"
+style_control = false
+place = 2
+check_et = 2026-07-31T12:00:00
+method = "sharpen-devigged-market"   # p^alpha renormalised, clip [0.003, 0.995]
+alpha = 1.75
+
+[book]   # measured 2026-07-25
+favourite = "Anthropic"
+favourite_mid = 0.9755
+spread_c = 2.5
+depth_10c_usd = 10553
+leg_sum = 1.0185
+passes_book_gate = true   # spread <= 5c and depth >= $500

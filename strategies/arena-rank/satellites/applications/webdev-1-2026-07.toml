@@ -1,0 +1,27 @@
+# code_webdev_1 - July 2026 cohort instance. Checks 2026-07-31 12:00 ET.
+market_slug = "which-company-has-the-best-code-arena-webdev-ai-model-end-of-july-20260715140712903"
+condition_id = ""   # one condition per leg; the board is a neg-risk group
+added = "2026-07-25"
+active = false
+
+# INACTIVE ON BOOK QUALITY: favourite spread 5.5c (gate is <=5c) and depth within 10c is $454 (gate is >=$500).
+# Shows the largest apparent edge on the cohort - Moonshot mid 0.698 against a resolving table where kimi-k3 leads by 52 points - which is exactly the thin-market trap.
+# Also zero resolved instances.
+# Predicted for scoring, not tradeable.
+
+[params]
+board_type = "code_webdev_1"
+resolving_slice = "https://arena.ai/leaderboard/code/webdev"
+style_control = "n/a"
+place = 1
+check_et = 2026-07-31T12:00:00
+method = "sharpen-devigged-market"   # p^alpha renormalised, clip [0.003, 0.995]
+alpha = 1.75
+
+[book]   # measured 2026-07-25
+favourite = "Moonshot"
+favourite_mid = 0.6975
+spread_c = 5.5
+depth_10c_usd = 454
+leg_sum = 0.955
+passes_book_gate = false   # spread <= 5c and depth >= $500

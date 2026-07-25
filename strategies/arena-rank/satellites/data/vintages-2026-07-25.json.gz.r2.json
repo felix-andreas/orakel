@@ -1,0 +1,11 @@
+{
+  "key": "blobs/190a08a00ec2962714b157517338bba094991130e0379b926eb8146fc01038b6",
+  "sha256": "190a08a00ec2962714b157517338bba094991130e0379b926eb8146fc01038b6",
+  "bytes": 1994392,
+  "content_type": "application/gzip",
+  "original_name": "vintages-2026-07-25.json.gz",
+  "source_url": "arena.ai + web.archive.org + gamma/clob/data-api polymarket",
+  "note": "arena-rank/satellites day-1 backtest freeze 2026-07-25",
+  "fetched_at": "2026-07-25T02:59:01Z",
+  "bucket": "orakel"
+}

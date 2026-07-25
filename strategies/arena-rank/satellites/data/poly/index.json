@@ -1,0 +1,1232 @@
+[
+ {
+  "slug": "2-ai-lab-end-of-august-style-control-on-20260720231255330",
+  "title": "#2 AI Lab end of August? (Style Control On)",
+  "closed": false,
+  "volume": 7374.7546569999995,
+  "liquidity": 37564.57776,
+  "startDate": "2026-07-21T00:58:07.090006Z",
+  "endDate": "2026-08-31T23:59:00Z",
+  "n_markets": 32
+ },
+ {
+  "slug": "3-ai-lab-end-of-august-style-control-on-20260720231335327",
+  "title": "#3 AI Lab end of August? (Style Control On)",
+  "closed": false,
+  "volume": 1876.74,
+  "liquidity": 11201.04179,
+  "startDate": "2026-07-21T01:00:16.86026Z",
+  "endDate": "2026-08-31T23:59:00Z",
+  "n_markets": 32
+ },
+ {
+  "slug": "best-ai-model-on-april-10-style-control-off",
+  "title": "Best AI model on April 10? (Style Control Off)",
+  "closed": true,
+  "volume": 64800.659001000015,
+  "liquidity": null,
+  "startDate": "2026-04-02T22:08:23.258733Z",
+  "endDate": "2026-04-10T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "best-ai-model-on-april-17-style-control-off",
+  "title": "Best AI model on April 17? (Style Control Off)",
+  "closed": true,
+  "volume": 80972.503205,
+  "liquidity": null,
+  "startDate": "2026-04-09T21:26:43.918803Z",
+  "endDate": "2026-04-17T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "best-ai-model-on-april-24-style-control-off",
+  "title": "Best AI model on April 24? (Style Control Off)",
+  "closed": true,
+  "volume": 46408.549756,
+  "liquidity": null,
+  "startDate": "2026-04-20T21:43:19.074273Z",
+  "endDate": "2026-04-24T00:00:00Z",
+  "n_markets": 9
+ },
+ {
+  "slug": "best-ai-model-on-august-1-20260717010751015",
+  "title": "Best AI model on August 1?",
+  "closed": false,
+  "volume": 15942.581171000002,
+  "liquidity": 6890.87243,
+  "startDate": "2026-07-17T03:05:58.569732Z",
+  "endDate": "2026-08-01T23:59:00Z",
+  "n_markets": 4
+ },
+ {
+  "slug": "best-ai-model-on-july-25-20260717010053151",
+  "title": "Best AI model on July 25?",
+  "closed": false,
+  "volume": 4902.50952,
+  "liquidity": 4271.67882,
+  "startDate": "2026-07-17T03:05:18.711119Z",
+  "endDate": "2026-07-25T23:59:00Z",
+  "n_markets": 4
+ },
+ {
+  "slug": "best-ai-model-on-may-16-style-control-off",
+  "title": "Best AI model on May 16? (Style Control Off)",
+  "closed": true,
+  "volume": 33060.78412800001,
+  "liquidity": null,
+  "startDate": "2026-05-08T17:00:54.718412Z",
+  "endDate": "2026-05-16T00:00:00Z",
+  "n_markets": 9
+ },
+ {
+  "slug": "best-ai-model-on-may-30-style-control-off",
+  "title": "Best AI model on May 30? (Style Control Off)",
+  "closed": true,
+  "volume": 38961.16642500001,
+  "liquidity": null,
+  "startDate": "2026-05-22T17:38:14.610866Z",
+  "endDate": "2026-05-30T00:00:00Z",
+  "n_markets": 9
+ },
+ {
+  "slug": "best-ai-model-on-may-8-style-control-off",
+  "title": "Best AI model on May 8? (Style Control Off)",
+  "closed": true,
+  "volume": 45835.972536999994,
+  "liquidity": null,
+  "startDate": "2026-04-30T20:01:20.747033Z",
+  "endDate": "2026-05-08T00:00:00Z",
+  "n_markets": 9
+ },
+ {
+  "slug": "best-chinese-ai-company-end-of-april",
+  "title": "Best Chinese AI Company end of April?",
+  "closed": true,
+  "volume": 583017.2577249998,
+  "liquidity": null,
+  "startDate": "2026-04-02T22:04:37.739396Z",
+  "endDate": "2026-04-30T00:00:00Z",
+  "n_markets": 22
+ },
+ {
+  "slug": "best-chinese-ai-company-end-of-august-20260717004241592",
+  "title": "Best Chinese AI Company end of August?",
+  "closed": false,
+  "volume": 19037.58764,
+  "liquidity": 30337.16932,
+  "startDate": "2026-07-17T03:02:23.923074Z",
+  "endDate": "2026-08-31T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "best-chinese-ai-company-end-of-july",
+  "title": "Best Chinese AI Company end of July?",
+  "closed": false,
+  "volume": 655806.6323689999,
+  "liquidity": 119314.64505,
+  "startDate": "2026-06-04T19:28:12.79348Z",
+  "endDate": "2026-07-31T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "best-chinese-ai-company-end-of-june",
+  "title": "Best Chinese AI Company end of June?",
+  "closed": true,
+  "volume": 250152.49348099998,
+  "liquidity": null,
+  "startDate": "2026-05-26T22:44:44.062Z",
+  "endDate": "2026-06-30T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "best-chinese-ai-company-end-of-may",
+  "title": "Best Chinese AI Company end of May?",
+  "closed": true,
+  "volume": 389633.3879269999,
+  "liquidity": null,
+  "startDate": "2026-04-27T22:02:57.361075Z",
+  "endDate": "2026-05-31T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "best-chinese-ai-company-end-of-september-20260717140852824",
+  "title": "Best Chinese AI Company end of September?",
+  "closed": false,
+  "volume": 12249.470571999997,
+  "liquidity": 9906.36469,
+  "startDate": "2026-07-20T23:29:02.089796Z",
+  "endDate": "2026-09-30T23:59:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "chatbot-arena-how-high-will-ai-score-by-december-31",
+  "title": "Will any AI model reach ___ Overall Arena Score by December 31?",
+  "closed": false,
+  "volume": 118206.64040300001,
+  "liquidity": 18671.01105,
+  "startDate": "2026-01-02T18:29:51.475Z",
+  "endDate": "2026-12-31T00:00:00Z",
+  "n_markets": 9
+ },
+ {
+  "slug": "claude-mythos-arena-debut",
+  "title": "Claude Mythos: Coding Arena Debut?",
+  "closed": true,
+  "volume": 337714.64446,
+  "liquidity": null,
+  "startDate": "2026-06-09T01:18:00.134633Z",
+  "endDate": "2026-12-31T00:00:00Z",
+  "n_markets": 4
+ },
+ {
+  "slug": "claude-mythos-text-arena-debut",
+  "title": "Claude Mythos: Text Arena Debut?",
+  "closed": true,
+  "volume": 37127.197813,
+  "liquidity": null,
+  "startDate": "2026-06-10T15:28:16.595838Z",
+  "endDate": "2026-12-31T00:00:00Z",
+  "n_markets": 4
+ },
+ {
+  "slug": "second-best-chinese-ai-company-end-of-august-20260717141100971",
+  "title": "Second-Best Chinese AI Company end of August?",
+  "closed": false,
+  "volume": 11247.569166,
+  "liquidity": 17585.62953,
+  "startDate": "2026-07-21T00:42:01.600746Z",
+  "endDate": "2026-08-31T23:59:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "second-best-chinese-ai-company-end-of-september-20260722220234242",
+  "title": "Second-Best Chinese AI Company end of September?",
+  "closed": false,
+  "volume": null,
+  "liquidity": 123.8045,
+  "startDate": "2026-07-25T00:05:16.892533Z",
+  "endDate": "2026-09-30T23:59:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "second-best-code-arena-webdev-ai-lab-end-of-august-20260720215424125",
+  "title": "Second-best Code Arena WebDev AI Lab end of August?",
+  "closed": false,
+  "volume": 1802.878223,
+  "liquidity": 8118.93661,
+  "startDate": "2026-07-21T00:27:38.197142Z",
+  "endDate": "2026-08-31T23:59:00Z",
+  "n_markets": 30
+ },
+ {
+  "slug": "second-best-code-arena-webdev-ai-lab-end-of-september-20260722215814727",
+  "title": "Second-best Code Arena WebDev AI Lab end of September?",
+  "closed": false,
+  "volume": null,
+  "liquidity": 860.854,
+  "startDate": "2026-07-24T23:47:39.249795Z",
+  "endDate": "2026-09-30T23:59:00Z",
+  "n_markets": 30
+ },
+ {
+  "slug": "second-best-text-arena-math-ai-lab-end-of-august-20260720224944657",
+  "title": "Second-best Text Arena Math AI Lab end of August?",
+  "closed": false,
+  "volume": 802.206784,
+  "liquidity": 3589.26914,
+  "startDate": "2026-07-21T00:45:31.114342Z",
+  "endDate": "2026-08-31T23:59:00Z",
+  "n_markets": 34
+ },
+ {
+  "slug": "second-best-text-arena-math-ai-lab-end-of-september-20260722220754181",
+  "title": "Second-best Text Arena Math AI Lab end of September?",
+  "closed": false,
+  "volume": null,
+  "liquidity": 111.3784,
+  "startDate": "2026-07-25T00:20:54.979021Z",
+  "endDate": "2026-09-30T23:59:00Z",
+  "n_markets": 34
+ },
+ {
+  "slug": "third-best-chinese-ai-company-end-of-august-20260717141230386",
+  "title": "Third-Best Chinese AI Company end of August?",
+  "closed": false,
+  "volume": 5302.334651,
+  "liquidity": 5939.54148,
+  "startDate": "2026-07-21T00:40:03.082395Z",
+  "endDate": "2026-08-31T23:59:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "third-best-chinese-ai-company-end-of-september-20260722220502453",
+  "title": "Third-Best Chinese AI Company end of September?",
+  "closed": false,
+  "volume": null,
+  "liquidity": 61.7123,
+  "startDate": "2026-07-25T00:01:50.328559Z",
+  "endDate": "2026-09-30T23:59:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "third-best-code-arena-webdev-ai-lab-end-of-august-20260720220546729",
+  "title": "Third-best Code Arena WebDev AI Lab end of August?",
+  "closed": false,
+  "volume": 1523.828384,
+  "liquidity": 1984.6313,
+  "startDate": "2026-07-21T00:36:38.710812Z",
+  "endDate": "2026-08-31T23:59:00Z",
+  "n_markets": 30
+ },
+ {
+  "slug": "third-best-code-arena-webdev-ai-lab-end-of-september-20260722220024427",
+  "title": "Third-best Code Arena WebDev AI Lab end of September?",
+  "closed": false,
+  "volume": null,
+  "liquidity": 657.9225,
+  "startDate": "2026-07-24T23:50:24.652353Z",
+  "endDate": "2026-09-30T23:59:00Z",
+  "n_markets": 30
+ },
+ {
+  "slug": "third-best-text-arena-math-ai-lab-end-of-august-20260720230105162",
+  "title": "Third-best Text Arena Math AI Lab end of August?",
+  "closed": false,
+  "volume": 1309.121904,
+  "liquidity": 1883.7204,
+  "startDate": "2026-07-21T00:49:13.289305Z",
+  "endDate": "2026-08-31T23:59:00Z",
+  "n_markets": 34
+ },
+ {
+  "slug": "third-best-text-arena-math-ai-lab-end-of-september-20260722221057130",
+  "title": "Third-best Text Arena Math AI Lab end of September?",
+  "closed": false,
+  "volume": 38.8813,
+  "liquidity": 699.2055,
+  "startDate": "2026-07-24T23:58:42.209816Z",
+  "endDate": "2026-09-30T23:59:00Z",
+  "n_markets": 34
+ },
+ {
+  "slug": "top-ai-model-on-april-10-style-control-on",
+  "title": "Top AI model on April 10? (Style Control On)",
+  "closed": true,
+  "volume": 47533.502299,
+  "liquidity": null,
+  "startDate": "2026-04-02T22:11:19.361111Z",
+  "endDate": "2026-04-10T00:00:00Z",
+  "n_markets": 28
+ },
+ {
+  "slug": "top-ai-model-on-april-17-style-control-on",
+  "title": "Top AI model on April 17? (Style Control On)",
+  "closed": true,
+  "volume": 58711.57543099999,
+  "liquidity": null,
+  "startDate": "2026-04-09T21:30:08.325967Z",
+  "endDate": "2026-04-17T00:00:00Z",
+  "n_markets": 28
+ },
+ {
+  "slug": "top-ai-model-on-april-24-style-control-on",
+  "title": "Top AI model on April 24? (Style Control On)",
+  "closed": true,
+  "volume": 50043.27234100001,
+  "liquidity": null,
+  "startDate": "2026-04-20T21:43:03.824904Z",
+  "endDate": "2026-04-24T00:00:00Z",
+  "n_markets": 9
+ },
+ {
+  "slug": "which-company-has-1-ai-model-end-of-august-style-control-on-20260717021043100",
+  "title": "Which company has #1 AI model end of August? (Style Control On)",
+  "closed": false,
+  "volume": 9779.784726,
+  "liquidity": 67688.95842,
+  "startDate": "2026-07-17T03:14:02.860299Z",
+  "endDate": "2026-08-31T23:59:00Z",
+  "n_markets": 32
+ },
+ {
+  "slug": "which-company-has-1-ai-model-end-of-july-style-control-on",
+  "title": "Which company has #1 AI model end of July? (Style Control On)",
+  "closed": false,
+  "volume": 125436.543231,
+  "liquidity": 56977.89399,
+  "startDate": "2026-06-04T19:22:17.912868Z",
+  "endDate": "2026-07-31T00:00:00Z",
+  "n_markets": 26
+ },
+ {
+  "slug": "which-company-has-1-ai-model-end-of-september-style-control-on-20260717144218347",
+  "title": "Which company has #1 AI model end of September? (Style Control On)",
+  "closed": false,
+  "volume": 1037.93,
+  "liquidity": 11348.91728,
+  "startDate": "2026-07-21T00:34:15.013416Z",
+  "endDate": "2026-09-30T23:59:00Z",
+  "n_markets": 32
+ },
+ {
+  "slug": "which-company-has-best-ai-model-end-of-2026",
+  "title": "Which company has best AI model end of 2026?",
+  "closed": false,
+  "volume": 390892.491709,
+  "liquidity": 601660.83213,
+  "startDate": "2026-06-04T17:41:50.554402Z",
+  "endDate": "2026-12-31T00:00:00Z",
+  "n_markets": 26
+ },
+ {
+  "slug": "which-company-has-best-ai-model-end-of-april",
+  "title": "Which company has best AI model end of April?",
+  "closed": true,
+  "volume": 3818721.267844,
+  "liquidity": null,
+  "startDate": "2025-03-11T18:34:21.949531Z",
+  "endDate": "2025-04-30T12:00:00Z",
+  "n_markets": 12
+ },
+ {
+  "slug": "which-company-has-best-ai-model-end-of-august",
+  "title": "Which company has best AI model end of August?",
+  "closed": true,
+  "volume": 7499432.463134,
+  "liquidity": null,
+  "startDate": "2025-06-30T23:30:31.670084Z",
+  "endDate": "2025-08-31T06:00:00Z",
+  "n_markets": 12
+ },
+ {
+  "slug": "which-company-has-best-ai-model-end-of-august-20260717015626546",
+  "title": "Which company has best AI model end of August?",
+  "closed": false,
+  "volume": 300716.19083100004,
+  "liquidity": 837939.07322,
+  "startDate": "2026-07-17T03:11:35.274822Z",
+  "endDate": "2026-08-31T00:00:00Z",
+  "n_markets": 32
+ },
+ {
+  "slug": "which-company-has-best-ai-model-end-of-july",
+  "title": "Which company has best AI model end of July?",
+  "closed": true,
+  "volume": 6135141.018139,
+  "liquidity": null,
+  "startDate": "2025-05-27T20:02:36.603254Z",
+  "endDate": "2025-07-31T12:00:00Z",
+  "n_markets": 13
+ },
+ {
+  "slug": "which-company-has-best-ai-model-end-of-july-299",
+  "title": "Which company has best AI model end of July?",
+  "closed": false,
+  "volume": 7590269.87573901,
+  "liquidity": 2137749.62505,
+  "startDate": "2026-06-04T17:53:02.599108Z",
+  "endDate": "2026-07-31T00:00:00Z",
+  "n_markets": 26
+ },
+ {
+  "slug": "which-company-has-best-ai-model-end-of-june",
+  "title": "Which company has best AI model end of June?",
+  "closed": true,
+  "volume": 22324439.526967052,
+  "liquidity": null,
+  "startDate": "2025-10-10T21:52:53.412Z",
+  "endDate": "2026-06-30T00:00:00Z",
+  "n_markets": 19
+ },
+ {
+  "slug": "which-company-has-best-ai-model-end-of-march",
+  "title": "Which company has best AI model end of March?",
+  "closed": true,
+  "volume": 4240857.10237,
+  "liquidity": null,
+  "startDate": "2025-02-20T19:19:06.985219Z",
+  "endDate": "2025-03-31T12:00:00Z",
+  "n_markets": 15
+ },
+ {
+  "slug": "which-company-has-best-ai-model-end-of-may",
+  "title": "Which company has best AI model end of May?",
+  "closed": true,
+  "volume": 4571626.847348,
+  "liquidity": null,
+  "startDate": "2025-04-10T17:18:22.818908Z",
+  "endDate": "2025-05-31T12:00:00Z",
+  "n_markets": 13
+ },
+ {
+  "slug": "which-company-has-best-ai-model-end-of-november",
+  "title": "Which company has best AI model end of November?",
+  "closed": true,
+  "volume": 7481482.591445,
+  "liquidity": null,
+  "startDate": "2025-10-10T17:36:06.243042Z",
+  "endDate": "2025-11-30T00:00:00Z",
+  "n_markets": 15
+ },
+ {
+  "slug": "which-company-has-best-ai-model-end-of-october",
+  "title": "Which company has best AI model end of October?",
+  "closed": true,
+  "volume": 4657177.524101,
+  "liquidity": null,
+  "startDate": "2025-09-11T00:52:45.0698Z",
+  "endDate": "2025-10-31T00:00:00Z",
+  "n_markets": 23
+ },
+ {
+  "slug": "which-company-has-best-ai-model-end-of-september",
+  "title": "Which company has best AI model end of September?",
+  "closed": true,
+  "volume": 2917282.784156,
+  "liquidity": null,
+  "startDate": "2025-08-07T18:19:30.56281Z",
+  "endDate": "2025-09-30T00:00:00Z",
+  "n_markets": 15
+ },
+ {
+  "slug": "which-company-has-best-ai-model-on-february-28",
+  "title": "Which company has best AI model end of February?",
+  "closed": true,
+  "volume": 5579155.26077,
+  "liquidity": null,
+  "startDate": "2025-01-27T16:55:10.602685Z",
+  "endDate": "2025-02-28T12:00:00Z",
+  "n_markets": 12
+ },
+ {
+  "slug": "which-company-has-second-best-ai-model-end-of-december",
+  "title": "Which company has second best AI model end of December?",
+  "closed": true,
+  "volume": 1953152.183277,
+  "liquidity": null,
+  "startDate": "2025-10-10T17:36:06.245094Z",
+  "endDate": "2025-12-31T00:00:00Z",
+  "n_markets": 18
+ },
+ {
+  "slug": "which-company-has-second-best-ai-model-end-of-july",
+  "title": "Which company has second best AI model end of July?",
+  "closed": false,
+  "volume": 77413.919865,
+  "liquidity": 63145.86662,
+  "startDate": "2026-06-04T19:06:19.331712Z",
+  "endDate": "2026-07-31T00:00:00Z",
+  "n_markets": 26
+ },
+ {
+  "slug": "which-company-has-second-best-ai-model-end-of-june",
+  "title": "Which company has second best AI model end of June?",
+  "closed": true,
+  "volume": 700979.7354350005,
+  "liquidity": null,
+  "startDate": "2025-10-10T21:53:07.622Z",
+  "endDate": "2026-06-30T00:00:00Z",
+  "n_markets": 19
+ },
+ {
+  "slug": "which-company-has-second-best-ai-model-end-of-november",
+  "title": "Which company has second best AI model end of November?",
+  "closed": true,
+  "volume": 2618911.670667,
+  "liquidity": null,
+  "startDate": "2025-10-10T17:36:06.24006Z",
+  "endDate": "2025-11-30T00:00:00Z",
+  "n_markets": 15
+ },
+ {
+  "slug": "which-company-has-second-best-ai-model-end-of-october",
+  "title": "Which company has second best AI model end of October?",
+  "closed": true,
+  "volume": 897354.43671,
+  "liquidity": null,
+  "startDate": "2025-09-11T00:52:45.079579Z",
+  "endDate": "2025-10-31T00:00:00Z",
+  "n_markets": 23
+ },
+ {
+  "slug": "which-company-has-second-best-ai-model-end-of-september",
+  "title": "Which company has second best AI model end of September?",
+  "closed": true,
+  "volume": 354762.976582,
+  "liquidity": null,
+  "startDate": "2025-09-10T19:13:44.47017Z",
+  "endDate": "2025-09-30T00:00:00Z",
+  "n_markets": 23
+ },
+ {
+  "slug": "which-company-has-the-1-ai-model-end-of-april-style-control-on",
+  "title": "Which company has the #1 AI model end of April? (Style Control On)",
+  "closed": true,
+  "volume": 2002922.5219289993,
+  "liquidity": null,
+  "startDate": "2026-03-20T20:45:53.502416Z",
+  "endDate": "2026-04-30T00:00:00Z",
+  "n_markets": 27
+ },
+ {
+  "slug": "which-company-has-the-1-ai-model-end-of-february-style-control-on",
+  "title": "Which company has the #1 AI model end of February? (Style Control On)",
+  "closed": true,
+  "volume": 853618.857959,
+  "liquidity": null,
+  "startDate": "2026-01-27T23:19:33.453717Z",
+  "endDate": "2026-02-28T00:00:00Z",
+  "n_markets": 24
+ },
+ {
+  "slug": "which-company-has-the-1-ai-model-end-of-may-style-control-on",
+  "title": "Which company has the #1 AI model end of May? (Style Control On)",
+  "closed": true,
+  "volume": 809797.8120020002,
+  "liquidity": null,
+  "startDate": "2026-04-14T21:40:17.473879Z",
+  "endDate": "2026-05-31T00:00:00Z",
+  "n_markets": 29
+ },
+ {
+  "slug": "which-company-has-the-2-ai-model-end-of-april-style-control-on",
+  "title": "Which company has the #2 AI model end of April? (Style Control On)",
+  "closed": true,
+  "volume": 82044.86036,
+  "liquidity": null,
+  "startDate": "2026-03-20T20:48:01.251137Z",
+  "endDate": "2026-04-30T00:00:00Z",
+  "n_markets": 27
+ },
+ {
+  "slug": "which-company-has-the-2-ai-model-end-of-december-style-control-on",
+  "title": "Which company has the #2 AI model end of December? (Style Control On)",
+  "closed": true,
+  "volume": 178974.764917,
+  "liquidity": null,
+  "startDate": "2025-12-02T23:08:56.977934Z",
+  "endDate": "2025-12-31T00:00:00Z",
+  "n_markets": 23
+ },
+ {
+  "slug": "which-company-has-the-2-ai-model-end-of-february-style-control-on",
+  "title": "Which company has the #2 AI model end of February? (Style Control On)",
+  "closed": true,
+  "volume": 183830.263603,
+  "liquidity": null,
+  "startDate": "2026-01-27T23:19:34.505635Z",
+  "endDate": "2026-02-28T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "which-company-has-the-2-ai-model-end-of-january-style-control-on",
+  "title": "Which company has the #2 AI model end of January? (Style Control On)",
+  "closed": true,
+  "volume": 149347.707067,
+  "liquidity": null,
+  "startDate": "2025-12-02T23:08:57.023937Z",
+  "endDate": "2026-01-31T00:00:00Z",
+  "n_markets": 23
+ },
+ {
+  "slug": "which-company-has-the-2-ai-model-end-of-july-style-control-on",
+  "title": "Which company has the #2 AI model end of July? (Style Control On)",
+  "closed": false,
+  "volume": 64179.305431,
+  "liquidity": 32475.62578,
+  "startDate": "2026-06-04T19:18:22.642648Z",
+  "endDate": "2026-07-31T00:00:00Z",
+  "n_markets": 26
+ },
+ {
+  "slug": "which-company-has-the-2-ai-model-end-of-june-style-control-on",
+  "title": "Which company has the #2 AI model end of June? (Style Control On)",
+  "closed": true,
+  "volume": 34381.139407,
+  "liquidity": null,
+  "startDate": "2026-04-14T21:13:30.258Z",
+  "endDate": "2026-06-30T00:00:00Z",
+  "n_markets": 29
+ },
+ {
+  "slug": "which-company-has-the-2-ai-model-end-of-march-style-control-on",
+  "title": "Which company has the #2 AI model end of March? (Style Control On)",
+  "closed": true,
+  "volume": 590522.7875409996,
+  "liquidity": null,
+  "startDate": "2025-12-02T23:48:44.605788Z",
+  "endDate": "2026-03-31T00:00:00Z",
+  "n_markets": 23
+ },
+ {
+  "slug": "which-company-has-the-2-ai-model-end-of-may-style-control-on",
+  "title": "Which company has the #2 AI model end of May? (Style Control On)",
+  "closed": true,
+  "volume": 19677.989156,
+  "liquidity": null,
+  "startDate": "2026-04-14T21:26:39.794776Z",
+  "endDate": "2026-05-31T00:00:00Z",
+  "n_markets": 29
+ },
+ {
+  "slug": "which-company-has-the-3-ai-model-end-of-april-style-control-on",
+  "title": "Which company has the #3 AI model end of April? (Style Control On)",
+  "closed": true,
+  "volume": 137322.00292800003,
+  "liquidity": null,
+  "startDate": "2026-03-20T20:50:09.207214Z",
+  "endDate": "2026-04-30T00:00:00Z",
+  "n_markets": 27
+ },
+ {
+  "slug": "which-company-has-the-3-ai-model-end-of-december-style-control-on",
+  "title": "Which company has the #3 AI model end of December? (Style Control On)",
+  "closed": true,
+  "volume": 377814.569987,
+  "liquidity": null,
+  "startDate": "2025-12-02T23:48:44.618687Z",
+  "endDate": "2025-12-31T00:00:00Z",
+  "n_markets": 23
+ },
+ {
+  "slug": "which-company-has-the-3-ai-model-end-of-february-style-control-on",
+  "title": "Which company has the #3 AI model end of February? (Style Control On)",
+  "closed": true,
+  "volume": 209429.097811,
+  "liquidity": null,
+  "startDate": "2026-01-27T23:47:38.622633Z",
+  "endDate": "2026-02-28T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "which-company-has-the-3-ai-model-end-of-january-style-control-on",
+  "title": "Which company has the #3 AI model end of January? (Style Control On)",
+  "closed": true,
+  "volume": 143928.139271,
+  "liquidity": null,
+  "startDate": "2025-12-02T23:58:45.472561Z",
+  "endDate": "2026-01-31T00:00:00Z",
+  "n_markets": 23
+ },
+ {
+  "slug": "which-company-has-the-3-ai-model-end-of-july-style-control-on",
+  "title": "Which company has the #3 AI model end of July? (Style Control On)",
+  "closed": false,
+  "volume": 40871.646673,
+  "liquidity": 34902.06778,
+  "startDate": "2026-06-04T19:24:14.223719Z",
+  "endDate": "2026-07-31T00:00:00Z",
+  "n_markets": 26
+ },
+ {
+  "slug": "which-company-has-the-3-ai-model-end-of-june-style-control-on",
+  "title": "Which company has the #3 AI model end of June? (Style Control On)",
+  "closed": true,
+  "volume": 70394.34592899999,
+  "liquidity": null,
+  "startDate": "2026-04-27T22:12:11.207277Z",
+  "endDate": "2026-06-30T00:00:00Z",
+  "n_markets": 29
+ },
+ {
+  "slug": "which-company-has-the-3-ai-model-end-of-march-style-control-on",
+  "title": "Which company has the #3 AI model end of March? (Style Control On)",
+  "closed": true,
+  "volume": 428693.6920949999,
+  "liquidity": null,
+  "startDate": "2025-12-02T23:58:48.070118Z",
+  "endDate": "2026-03-31T00:00:00Z",
+  "n_markets": 23
+ },
+ {
+  "slug": "which-company-has-the-3-ai-model-end-of-may-style-control-on",
+  "title": "Which company has the #3 AI model end of May? (Style Control On)",
+  "closed": true,
+  "volume": 31294.701997,
+  "liquidity": null,
+  "startDate": "2026-04-14T21:22:40.617683Z",
+  "endDate": "2026-05-31T00:00:00Z",
+  "n_markets": 29
+ },
+ {
+  "slug": "which-company-has-the-best-ai-agent-end-of-august-20260716210246314",
+  "title": "Which company has the best AI Agent end of August?",
+  "closed": false,
+  "volume": 2477.998242,
+  "liquidity": 42004.596,
+  "startDate": "2026-07-20T23:08:18.122337Z",
+  "endDate": "2026-08-31T23:59:00Z",
+  "n_markets": 32
+ },
+ {
+  "slug": "which-company-has-the-best-ai-agent-end-of-july-20260626204312502",
+  "title": "Which company has the best AI Agent end of July?",
+  "closed": false,
+  "volume": 64822.128915999994,
+  "liquidity": 30977.41572,
+  "startDate": "2026-06-26T21:55:39.026336Z",
+  "endDate": "2026-07-31T23:59:00Z",
+  "n_markets": 29
+ },
+ {
+  "slug": "which-company-has-the-best-ai-agent-end-of-september-20260716211946456",
+  "title": "Which company has the best AI Agent end of September?",
+  "closed": false,
+  "volume": 5777.465188,
+  "liquidity": 40449.70762,
+  "startDate": "2026-07-20T23:10:41.991446Z",
+  "endDate": "2026-09-30T23:59:00Z",
+  "n_markets": 32
+ },
+ {
+  "slug": "which-company-has-the-best-ai-model-end-of-april",
+  "title": "Which company has the best AI model end of April?",
+  "closed": true,
+  "volume": 21090675.622953087,
+  "liquidity": null,
+  "startDate": "2026-03-20T20:23:51.939465Z",
+  "endDate": "2026-04-30T00:00:00Z",
+  "n_markets": 27
+ },
+ {
+  "slug": "which-company-has-the-best-ai-model-end-of-february",
+  "title": "Which company has the best AI model end of February?",
+  "closed": true,
+  "volume": 22455001.857654,
+  "liquidity": null,
+  "startDate": "2026-01-27T23:13:54.566203Z",
+  "endDate": "2026-02-28T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "which-company-has-the-best-ai-model-end-of-january",
+  "title": "Which company has the best AI model end of January?",
+  "closed": true,
+  "volume": 28966529.628048,
+  "liquidity": null,
+  "startDate": "2025-12-02T23:58:48.205884Z",
+  "endDate": "2026-01-31T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "which-company-has-the-best-ai-model-end-of-january-style-control-on",
+  "title": "Which company has the top AI model end of January? (Style Control On)",
+  "closed": true,
+  "volume": 1110119.770662,
+  "liquidity": null,
+  "startDate": "2025-12-02T22:59:25.479532Z",
+  "endDate": "2026-01-31T00:00:00Z",
+  "n_markets": 23
+ },
+ {
+  "slug": "which-company-has-the-best-ai-model-end-of-march-751",
+  "title": "Which company has the best AI model end of March?",
+  "closed": true,
+  "volume": 16222837.860438045,
+  "liquidity": null,
+  "startDate": "2025-12-02T23:58:48.217744Z",
+  "endDate": "2026-03-31T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "which-company-has-the-best-ai-model-end-of-may",
+  "title": "Which company has the best AI model end of May?",
+  "closed": true,
+  "volume": 11884167.444898019,
+  "liquidity": null,
+  "startDate": "2026-04-14T21:34:13.053378Z",
+  "endDate": "2026-05-31T00:00:00Z",
+  "n_markets": 29
+ },
+ {
+  "slug": "which-company-has-the-best-ai-model-end-of-september-20260717143435868",
+  "title": "Which company has the best AI model end of September?",
+  "closed": false,
+  "volume": 14819.052937,
+  "liquidity": 446310.91315,
+  "startDate": "2026-07-21T00:30:47.601594Z",
+  "endDate": "2026-09-30T23:59:00Z",
+  "n_markets": 32
+ },
+ {
+  "slug": "which-company-has-the-best-code-arena-webdev-ai-model-end-of-august-20260716213053775",
+  "title": "Which company has the best Code Arena WebDev AI model end of August?",
+  "closed": false,
+  "volume": 3932.6981439999995,
+  "liquidity": 39180.30281,
+  "startDate": "2026-07-17T03:00:05.94771Z",
+  "endDate": "2026-08-31T23:59:00Z",
+  "n_markets": 30
+ },
+ {
+  "slug": "which-company-has-the-best-code-arena-webdev-ai-model-end-of-july-20260715140712903",
+  "title": "Which company has the best Code Arena WebDev AI model end of July?",
+  "closed": false,
+  "volume": 31458.247503000002,
+  "liquidity": 29577.09648,
+  "startDate": "2026-07-16T01:41:36.658627Z",
+  "endDate": "2026-07-31T23:59:00Z",
+  "n_markets": 29
+ },
+ {
+  "slug": "which-company-has-the-best-code-arena-webdev-ai-model-end-of-september-20260717140116512",
+  "title": "Which company has the best Code Arena WebDev AI model end of September?",
+  "closed": false,
+  "volume": 533.26042,
+  "liquidity": 2307.51151,
+  "startDate": "2026-07-20T23:25:37.483272Z",
+  "endDate": "2026-09-30T23:59:00Z",
+  "n_markets": 30
+ },
+ {
+  "slug": "which-company-has-the-best-coding-ai-model-end-of-july",
+  "title": "Which company has the best Text Arena Coding AI model end of July?",
+  "closed": false,
+  "volume": 40316.962074,
+  "liquidity": 43506.50725,
+  "startDate": "2026-06-04T19:26:22.550005Z",
+  "endDate": "2026-07-31T00:00:00Z",
+  "n_markets": 26
+ },
+ {
+  "slug": "which-company-has-the-best-math-ai-model-end-of-july",
+  "title": "Which company has the best Text Arena Math AI model end of July?",
+  "closed": false,
+  "volume": 368585.750806,
+  "liquidity": 121148.76514,
+  "startDate": "2026-06-04T19:20:20.07559Z",
+  "endDate": "2026-07-31T00:00:00Z",
+  "n_markets": 26
+ },
+ {
+  "slug": "which-company-has-the-best-text-arena-math-ai-model-end-of-august-20260717012538240",
+  "title": "Which company has the best Text Arena Math AI model end of August?",
+  "closed": false,
+  "volume": 19662.705558999998,
+  "liquidity": 71379.32944,
+  "startDate": "2026-07-17T03:08:08.171754Z",
+  "endDate": "2026-08-31T00:00:00Z",
+  "n_markets": 34
+ },
+ {
+  "slug": "which-company-has-the-best-text-arena-math-ai-model-end-of-september-20260717142058419",
+  "title": "Which company has the best Text Arena Math AI model end of September?",
+  "closed": false,
+  "volume": 8075.002782,
+  "liquidity": 40871.4974,
+  "startDate": "2026-07-20T23:31:51.33531Z",
+  "endDate": "2026-09-30T23:59:00Z",
+  "n_markets": 34
+ },
+ {
+  "slug": "which-company-has-the-second-best-ai-model-end-of-april",
+  "title": "Which company has the second best AI model end of April?",
+  "closed": true,
+  "volume": 232011.774869,
+  "liquidity": null,
+  "startDate": "2026-03-20T20:29:50.575002Z",
+  "endDate": "2026-04-30T00:00:00Z",
+  "n_markets": 27
+ },
+ {
+  "slug": "which-company-has-the-second-best-ai-model-end-of-february",
+  "title": "Which company has the second best AI model end of February?",
+  "closed": true,
+  "volume": 981736.766408,
+  "liquidity": null,
+  "startDate": "2026-01-27T23:13:54.570039Z",
+  "endDate": "2026-02-28T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "which-company-has-the-second-best-ai-model-end-of-january",
+  "title": "Which company has the second best AI model end of January?",
+  "closed": true,
+  "volume": 735556.409424,
+  "liquidity": null,
+  "startDate": "2025-12-02T23:58:48.230335Z",
+  "endDate": "2026-01-31T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "which-company-has-the-second-best-ai-model-end-of-march",
+  "title": "Which company has the second best AI model end of March?",
+  "closed": true,
+  "volume": 1392609.844386001,
+  "liquidity": null,
+  "startDate": "2025-12-02T23:58:48.244168Z",
+  "endDate": "2026-03-31T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "which-company-has-the-second-best-ai-model-end-of-may",
+  "title": "Which company has the second best AI model end of May?",
+  "closed": true,
+  "volume": 271020.494979,
+  "liquidity": null,
+  "startDate": "2026-04-14T21:30:53.14355Z",
+  "endDate": "2026-05-31T00:00:00Z",
+  "n_markets": 29
+ },
+ {
+  "slug": "which-company-has-the-second-best-coding-ai-model-end-of-april",
+  "title": "Which company has the second best Coding AI model end of April?",
+  "closed": true,
+  "volume": 36413.292925999995,
+  "liquidity": null,
+  "startDate": "2026-04-02T21:53:01.558016Z",
+  "endDate": "2026-04-30T00:00:00Z",
+  "n_markets": 28
+ },
+ {
+  "slug": "which-company-has-the-second-best-coding-ai-model-end-of-june",
+  "title": "Which company has the second-best Coding AI model end of June?",
+  "closed": true,
+  "volume": 42633.692852,
+  "liquidity": null,
+  "startDate": "2026-05-26T22:41:41.176648Z",
+  "endDate": "2026-06-30T00:00:00Z",
+  "n_markets": 29
+ },
+ {
+  "slug": "which-company-has-the-second-best-coding-ai-model-end-of-may",
+  "title": "Which company has the second-best Coding AI model end of May?",
+  "closed": true,
+  "volume": 45548.764725,
+  "liquidity": null,
+  "startDate": "2026-04-27T22:10:19.77635Z",
+  "endDate": "2026-05-31T00:00:00Z",
+  "n_markets": 29
+ },
+ {
+  "slug": "which-company-has-the-second-best-math-ai-model-end-of-april",
+  "title": "Which company has the second best Math AI model end of April?",
+  "closed": true,
+  "volume": 13072.6814,
+  "liquidity": null,
+  "startDate": "2026-04-02T21:59:10.901832Z",
+  "endDate": "2026-04-30T00:00:00Z",
+  "n_markets": 28
+ },
+ {
+  "slug": "which-company-has-the-third-best-ai-model-end-of-april",
+  "title": "Which company has the third best AI model end of April?",
+  "closed": true,
+  "volume": 1071092.4846879996,
+  "liquidity": null,
+  "startDate": "2026-03-20T20:25:56.102041Z",
+  "endDate": "2026-04-30T00:00:00Z",
+  "n_markets": 27
+ },
+ {
+  "slug": "which-company-has-the-third-best-ai-model-end-of-december",
+  "title": "Which company has the third best AI model end of December?",
+  "closed": true,
+  "volume": 398871.710282,
+  "liquidity": null,
+  "startDate": "2025-12-02T23:58:48.254913Z",
+  "endDate": "2025-12-31T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "which-company-has-the-third-best-ai-model-end-of-february",
+  "title": "Which company has the third best AI model end of February?",
+  "closed": true,
+  "volume": 232964.653068,
+  "liquidity": null,
+  "startDate": "2026-01-27T23:19:34.503279Z",
+  "endDate": "2026-02-28T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "which-company-has-the-third-best-ai-model-end-of-january",
+  "title": "Which company has the third best AI model end of January?",
+  "closed": true,
+  "volume": 682270.805006,
+  "liquidity": null,
+  "startDate": "2025-12-02T23:58:48.265538Z",
+  "endDate": "2026-01-31T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "which-company-has-the-third-best-ai-model-end-of-july",
+  "title": "Which company has the third best AI model end of July?",
+  "closed": false,
+  "volume": 108836.17225700004,
+  "liquidity": 54964.31046,
+  "startDate": "2026-06-04T19:08:10.693697Z",
+  "endDate": "2026-07-31T00:00:00Z",
+  "n_markets": 26
+ },
+ {
+  "slug": "which-company-has-the-third-best-ai-model-end-of-june",
+  "title": "Which company has the third best AI model end of June?",
+  "closed": true,
+  "volume": 147685.204622,
+  "liquidity": null,
+  "startDate": "2026-04-14T21:10:08.510856Z",
+  "endDate": "2026-06-30T00:00:00Z",
+  "n_markets": 29
+ },
+ {
+  "slug": "which-company-has-the-third-best-ai-model-end-of-march",
+  "title": "Which company has the third best AI model end of March?",
+  "closed": true,
+  "volume": 543246.312805,
+  "liquidity": null,
+  "startDate": "2025-12-02T23:58:48.276315Z",
+  "endDate": "2026-03-31T00:00:00Z",
+  "n_markets": 25
+ },
+ {
+  "slug": "which-company-has-the-third-best-ai-model-end-of-may",
+  "title": "Which company has the third best AI model end of May?",
+  "closed": true,
+  "volume": 224151.83648400006,
+  "liquidity": null,
+  "startDate": "2026-04-14T21:36:50.828974Z",
+  "endDate": "2026-05-31T00:00:00Z",
+  "n_markets": 29
+ },
+ {
+  "slug": "which-company-has-the-top-ai-model-end-of-march-style-control-on",
+  "title": "Which company has the top AI model end of March? (Style Control On)",
+  "closed": true,
+  "volume": 1067525.7625660002,
+  "liquidity": null,
+  "startDate": "2025-12-02T23:08:56.947294Z",
+  "endDate": "2026-03-31T00:00:00Z",
+  "n_markets": 23
+ },
+ {
+  "slug": "which-company-has-top-ai-model-end-of-december-style-control-on",
+  "title": "Which company has top AI model end of December? (Style Control On)",
+  "closed": true,
+  "volume": 2371419.682101,
+  "liquidity": null,
+  "startDate": "2025-10-10T21:54:22.509041Z",
+  "endDate": "2025-12-31T00:00:00Z",
+  "n_markets": 18
+ },
+ {
+  "slug": "which-company-has-top-ai-model-end-of-june-style-control-on",
+  "title": "Which company has top AI model end of June? (Style Control On)",
+  "closed": true,
+  "volume": 2139353.8334849994,
+  "liquidity": null,
+  "startDate": "2025-10-10T21:53:01.004Z",
+  "endDate": "2026-06-30T00:00:00Z",
+  "n_markets": 19
+ },
+ {
+  "slug": "which-company-has-top-ai-model-end-of-november-style-control-on",
+  "title": "Which company has top AI model end of November? (Style Control On)",
+  "closed": true,
+  "volume": 923530.395413,
+  "liquidity": null,
+  "startDate": "2025-10-10T21:54:22.484411Z",
+  "endDate": "2025-11-30T00:00:00Z",
+  "n_markets": 18
+ },
+ {
+  "slug": "which-company-has-top-ai-model-end-of-october-style-control-on",
+  "title": "Which company has top AI model end of October? (Style Control On)",
+  "closed": true,
+  "volume": 1147541.429556,
+  "liquidity": null,
+  "startDate": "2025-09-11T00:52:45.066237Z",
+  "endDate": "2025-10-31T00:00:00Z",
+  "n_markets": 23
+ },
+ {
+  "slug": "which-company-has-top-ai-model-end-of-september",
+  "title": "Which company has top AI model end of September? (Style Control On)",
+  "closed": true,
+  "volume": 301630.886425,
+  "liquidity": null,
+  "startDate": "2025-09-11T00:40:17.536779Z",
+  "endDate": "2025-09-30T00:00:00Z",
+  "n_markets": 23
+ },
+ {
+  "slug": "which-companys-ai-will-first-hit-1500-on-chatbot-arena-by-june-30",
+  "title": "Which company's AI will first hit 1500 on Chatbot Arena by June 30?",
+  "closed": true,
+  "volume": 610974.896939,
+  "liquidity": null,
+  "startDate": "2025-10-14T12:46:48.245363Z",
+  "endDate": "2026-06-30T00:00:00Z",
+  "n_markets": 32
+ },
+ {
+  "slug": "which-companys-ai-will-first-hit-1550-on-chatbot-arena-in-2026",
+  "title": "Which company's AI will first hit 1550 on Chatbot Arena in 2026?",
+  "closed": false,
+  "volume": 109643.80963999998,
+  "liquidity": 22281.47327,
+  "startDate": "2026-02-13T21:45:31.807976Z",
+  "endDate": "2026-12-31T00:00:00Z",
+  "n_markets": 32
+ },
+ {
+  "slug": "will-a-chinese-company-have-the-best-ai-model-by-december-31",
+  "title": "Will a Chinese company have a top ___ AI model by December 31?",
+  "closed": false,
+  "volume": 102058.79164800006,
+  "liquidity": 36635.35186,
+  "startDate": "2026-04-02T21:57:52.592Z",
+  "endDate": "2026-12-31T00:00:00Z",
+  "n_markets": 4
+ },
+ {
+  "slug": "will-any-ai-model-reach-1500-on-chatbot-arena-by-dec-31",
+  "title": "Will any AI model reach 1500+ on Chatbot Arena by Dec 31?",
+  "closed": true,
+  "volume": 537360.25919,
+  "liquidity": null,
+  "startDate": "2025-10-14T20:40:31.931017Z",
+  "endDate": "2025-12-31T00:00:00Z",
+  "n_markets": 1
+ },
+ {
+  "slug": "will-any-ai-model-reach-coding-arena-score-by-december-31",
+  "title": "Will any AI model reach ___ Coding Arena Score by December 31?",
+  "closed": false,
+  "volume": 136420.80768800012,
+  "liquidity": 16243.02484,
+  "startDate": "2026-04-02T22:12:19.304228Z",
+  "endDate": "2026-12-31T00:00:00Z",
+  "n_markets": 3
+ },
+ {
+  "slug": "will-any-ai-model-reach-coding-arena-score-by-june-30",
+  "title": "Will any AI model reach ___ Coding Arena Score by June 30?",
+  "closed": true,
+  "volume": 15877.547225999995,
+  "liquidity": null,
+  "startDate": "2026-04-02T22:11:57.142075Z",
+  "endDate": "2026-06-30T00:00:00Z",
+  "n_markets": 3
+ },
+ {
+  "slug": "will-any-ai-model-reach-math-arena-score-by-december-31",
+  "title": "Will any AI model reach ___ Math Arena Score by December 31?",
+  "closed": false,
+  "volume": 75469.16419399994,
+  "liquidity": 12984.1714,
+  "startDate": "2026-04-02T22:10:16.791622Z",
+  "endDate": "2026-12-31T00:00:00Z",
+  "n_markets": 4
+ },
+ {
+  "slug": "will-any-ai-model-reach-math-arena-score-by-june-30",
+  "title": "Will any AI model reach ___ Math Arena Score by June 30?",
+  "closed": true,
+  "volume": 27787.521956,
+  "liquidity": null,
+  "startDate": "2026-04-02T22:09:51.082996Z",
+  "endDate": "2026-06-30T00:00:00Z",
+  "n_markets": 4
+ }
+]

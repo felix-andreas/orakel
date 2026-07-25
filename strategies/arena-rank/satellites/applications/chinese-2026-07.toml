@@ -1,0 +1,27 @@
+# text_overall_nosc_1_chinese - July 2026 cohort instance. Checks 2026-07-31 12:00 ET.
+market_slug = "best-chinese-ai-company-end-of-july"
+condition_id = ""   # one condition per leg; the board is a neg-risk group
+added = "2026-07-25"
+active = true
+
+# Highest fundable taker flow of the cohort ($38.8k in the 3-50c band over the board life), and the only satellite whose favourite is not already ~0.99.
+# Resolving table has Alibaba rank 11 (1476 +/-10, Preliminary) vs Moonshot rank 13 (1473 +/-10, Preliminary): a 3-point gap between two Preliminary rows, where empirical one-refresh persistence is 0.976-0.982.
+# Only 3 resolved prior instances.
+
+[params]
+board_type = "text_overall_nosc_1_chinese"
+resolving_slice = "https://arena.ai/leaderboard/text/overall-no-style-control"
+style_control = false
+place = 1
+restriction = "chinese"
+check_et = 2026-07-31T12:00:00
+method = "sharpen-devigged-market"   # p^alpha renormalised, clip [0.003, 0.995]
+alpha = 1.75
+
+[book]   # measured 2026-07-25
+favourite = "Alibaba"
+favourite_mid = 0.8275
+spread_c = 2.7
+depth_10c_usd = 12374
+leg_sum = 0.9785
+passes_book_gate = true   # spread <= 5c and depth >= $500

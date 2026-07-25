@@ -1,0 +1,11 @@
+{
+  "key": "blobs/a5a902c8a00716b1eec4a132ae52cb059ffff789cfe1d300990e192d43fd472d",
+  "sha256": "a5a902c8a00716b1eec4a132ae52cb059ffff789cfe1d300990e192d43fd472d",
+  "bytes": 1159388,
+  "content_type": "application/gzip",
+  "original_name": "poly-events-2026-07-25.tar.gz",
+  "source_url": "arena.ai + web.archive.org + gamma/clob/data-api polymarket",
+  "note": "arena-rank/satellites day-1 backtest freeze 2026-07-25",
+  "fetched_at": "2026-07-25T02:58:54Z",
+  "bucket": "orakel"
+}

@@ -1,0 +1,25 @@
+# text_overall_nosc_1 - July 2026 cohort instance. Checks 2026-07-31 12:00 ET.
+market_slug = "which-company-has-best-ai-model-end-of-july-299"
+condition_id = ""   # one condition per leg; the board is a neg-risk group
+added = "2026-07-25"
+active = false
+
+# INACTIVE BY DESIGN: this is the deep anchor board ($7.6M, 0.1c spread) used as the calibration reference, not as a signal.
+# Favourite at 0.992 leaves nothing.
+
+[params]
+board_type = "text_overall_nosc_1"
+resolving_slice = "https://arena.ai/leaderboard/text/overall-no-style-control"
+style_control = false
+place = 1
+check_et = 2026-07-31T12:00:00
+method = "sharpen-devigged-market"   # p^alpha renormalised, clip [0.003, 0.995]
+alpha = 1.75
+
+[book]   # measured 2026-07-25
+favourite = "Anthropic"
+favourite_mid = 0.9915
+spread_c = 0.1
+depth_10c_usd = 41270
+leg_sum = 0.995
+passes_book_gate = true   # spread <= 5c and depth >= $500

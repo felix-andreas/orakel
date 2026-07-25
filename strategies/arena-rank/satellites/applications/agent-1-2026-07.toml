@@ -1,0 +1,25 @@
+# agent_1 - July 2026 cohort instance. Checks 2026-07-31 12:00 ET.
+market_slug = "which-company-has-the-best-ai-agent-end-of-july-20260626204312502"
+condition_id = ""   # one condition per leg; the board is a neg-risk group
+added = "2026-07-25"
+active = false
+
+# INACTIVE: zero resolved instances, and the Agent slice was never parsed or validated on day 1 (no vintage series was built for it).
+# Predicted at the market for scoring only.
+
+[params]
+board_type = "agent_1"
+resolving_slice = "https://arena.ai/leaderboard/agent"
+style_control = "n/a"
+place = 1
+check_et = 2026-07-31T12:00:00
+method = "sharpen-devigged-market"   # p^alpha renormalised, clip [0.003, 0.995]
+alpha = 1.75
+
+[book]   # measured 2026-07-25
+favourite = "Anthropic"
+favourite_mid = 0.9735
+spread_c = 2.1
+depth_10c_usd = 8886
+leg_sum = 0.985
+passes_book_gate = true   # spread <= 5c and depth >= $500

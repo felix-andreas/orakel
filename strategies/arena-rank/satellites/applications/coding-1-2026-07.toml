@@ -1,0 +1,24 @@
+# text_coding_1 - July 2026 cohort instance. Checks 2026-07-31 12:00 ET.
+market_slug = "which-company-has-the-best-coding-ai-model-end-of-july"
+condition_id = ""   # one condition per leg; the board is a neg-risk group
+added = "2026-07-25"
+active = false
+
+# INACTIVE: no resolved instances of this board type, and fundable taker flow of about $390/month is below the ~$500 Gate-5 floor.
+
+[params]
+board_type = "text_coding_1"
+resolving_slice = "https://arena.ai/leaderboard/text/coding-no-style-control"
+style_control = false
+place = 1
+check_et = 2026-07-31T12:00:00
+method = "sharpen-devigged-market"   # p^alpha renormalised, clip [0.003, 0.995]
+alpha = 1.75
+
+[book]   # measured 2026-07-25
+favourite = "Anthropic"
+favourite_mid = 0.983
+spread_c = 2.8
+depth_10c_usd = 10680
+leg_sum = 1.015
+passes_book_gate = true   # spread <= 5c and depth >= $500

@@ -1,0 +1,11 @@
+{
+  "key": "blobs/a56ea8df251f5044e155b2d8a8234626d156f149482e60133a23ce537fbf8e5c",
+  "sha256": "a56ea8df251f5044e155b2d8a8234626d156f149482e60133a23ce537fbf8e5c",
+  "bytes": 320894,
+  "content_type": "application/gzip",
+  "original_name": "boards-2026-07-25.json.gz",
+  "source_url": "derived from Gamma events via src/classify.py",
+  "note": "arena-rank/satellites: classified board index, day-1 freeze",
+  "fetched_at": "2026-07-25T03:05:46Z",
+  "bucket": "orakel"
+}

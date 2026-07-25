@@ -1,0 +1,11 @@
+{
+  "key": "blobs/d37bc9785c78677e32f00e0671b5faacde1ba732a5129d06b7380fa138b37a7a",
+  "sha256": "d37bc9785c78677e32f00e0671b5faacde1ba732a5129d06b7380fa138b37a7a",
+  "bytes": 58692199,
+  "content_type": "application/gzip",
+  "original_name": "arena-wayback-captures-2026-07-25.tar.gz",
+  "source_url": "arena.ai + web.archive.org + gamma/clob/data-api polymarket",
+  "note": "arena-rank/satellites day-1 backtest freeze 2026-07-25",
+  "fetched_at": "2026-07-25T02:58:58Z",
+  "bucket": "orakel"
+}

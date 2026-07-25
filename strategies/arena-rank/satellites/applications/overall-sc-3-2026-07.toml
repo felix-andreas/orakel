@@ -1,0 +1,26 @@
+# text_overall_sc_3 - July 2026 cohort instance. Checks 2026-07-31 12:00 ET.
+market_slug = "which-company-has-the-3-ai-model-end-of-july-style-control-on"
+condition_id = ""   # one condition per leg; the board is a neg-risk group
+added = "2026-07-25"
+active = true
+
+# Style control ON board, so it resolves on text/overall - a DIFFERENT ordering from the nosc boards.
+# 7 resolved prior instances.
+# Leg sum 1.047 is the fattest overround on the cohort.
+
+[params]
+board_type = "text_overall_sc_3"
+resolving_slice = "https://arena.ai/leaderboard/text/overall"
+style_control = true
+place = 3
+check_et = 2026-07-31T12:00:00
+method = "sharpen-devigged-market"   # p^alpha renormalised, clip [0.003, 0.995]
+alpha = 1.75
+
+[book]   # measured 2026-07-25
+favourite = "Anthropic"
+favourite_mid = 0.951
+spread_c = 1.8
+depth_10c_usd = 7246
+leg_sum = 1.047
+passes_book_gate = true   # spread <= 5c and depth >= $500

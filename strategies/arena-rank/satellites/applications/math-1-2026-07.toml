@@ -1,0 +1,25 @@
+# text_math_1 - July 2026 cohort instance. Checks 2026-07-31 12:00 ET.
+market_slug = "which-company-has-the-best-math-ai-model-end-of-july"
+condition_id = ""   # one condition per leg; the board is a neg-risk group
+added = "2026-07-25"
+active = true
+
+# NO resolved instances of this board type (created 2026-07) - forward test only.
+# Book is excellent (0.9c spread, $25.9k depth, $24.3k fundable flow), which is why it is active despite having no backtest.
+
+[params]
+board_type = "text_math_1"
+resolving_slice = "https://arena.ai/leaderboard/text/math-no-style-control"
+style_control = false
+place = 1
+check_et = 2026-07-31T12:00:00
+method = "sharpen-devigged-market"   # p^alpha renormalised, clip [0.003, 0.995]
+alpha = 1.75
+
+[book]   # measured 2026-07-25
+favourite = "Anthropic"
+favourite_mid = 0.9455
+spread_c = 0.9
+depth_10c_usd = 25871
+leg_sum = 0.972
+passes_book_gate = true   # spread <= 5c and depth >= $500

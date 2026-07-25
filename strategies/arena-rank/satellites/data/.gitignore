@@ -3,3 +3,13 @@ poly/events/
 arena/
 *.tar.gz
 *.html
+*.json.gz
+books-*.json
+!books-*.json.r2.json
+entrants-*.json
+!entrants-*.json.r2.json
+vintages.json
+predictions_live.json
+gate*.json
+calibration.json
+poly/boards.json

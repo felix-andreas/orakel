@@ -1,0 +1,11 @@
+{
+  "key": "blobs/074c1444bd9d0b21ee870c66a0b8380dcca2bf86f55492b007daff6b5af7d214",
+  "sha256": "074c1444bd9d0b21ee870c66a0b8380dcca2bf86f55492b007daff6b5af7d214",
+  "bytes": 665803,
+  "content_type": "application/json",
+  "original_name": "books-2026-07-25.json",
+  "source_url": "arena.ai + web.archive.org + gamma/clob/data-api polymarket",
+  "note": "arena-rank/satellites day-1 backtest freeze 2026-07-25",
+  "fetched_at": "2026-07-25T02:59:02Z",
+  "bucket": "orakel"
+}

@@ -1,0 +1,11 @@
+{
+  "key": "blobs/dc7afc904367a363ed46d5186fb928bdabbbbbd22f1a86b6ece0bfbf00a7d356",
+  "sha256": "dc7afc904367a363ed46d5186fb928bdabbbbbd22f1a86b6ece0bfbf00a7d356",
+  "bytes": 4925,
+  "content_type": "application/json",
+  "original_name": "entrants-2026-07-25.json",
+  "source_url": "arena.ai + web.archive.org + gamma/clob/data-api polymarket",
+  "note": "arena-rank/satellites day-1 backtest freeze 2026-07-25",
+  "fetched_at": "2026-07-25T02:59:03Z",
+  "bucket": "orakel"
+}
