@@ -19,7 +19,7 @@
 
 use anyhow::{anyhow, bail, Context, Result};
 use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, TimeZone, Utc};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -581,6 +581,33 @@ mod gate3 {
             }
         }
 
+        // ---- 1b. the one-line version: the implied Fano factor of each distribution ----
+        println!("\n--- Implied Fano factor (var/mean) of the distribution each side is pricing ---");
+        println!("    (Poisson = 1.00 by definition; the thesis says the market should be at 1.00)");
+        for fam in ["M5.5+", "M6.5+"] {
+            let mut boards_seen: BTreeMap<String, Vec<&Row>> = BTreeMap::new();
+            for r in rows.iter().filter(|r| r.family == fam) { boards_seen.entry(r.board.clone()).or_default().push(r); }
+            let mut fanos = [Vec::new(), Vec::new(), Vec::new()];
+            for legs in boards_seen.values() {
+                for (k, get) in [0usize, 1, 2].iter().zip([
+                    (|r: &Row| r.mid_dv) as fn(&Row) -> f64,
+                    |r: &Row| r.model,
+                    |r: &Row| r.poisson]) {
+                    let (mut m1, mut m2) = (0.0, 0.0);
+                    for r in legs.iter() {
+                        // representative count of a bucket: exact legs -> lo; open legs -> lo + 0.5
+                        let x = if r.hi >= 9999 { r.lo as f64 + 0.5 } else if r.lo == 0 && r.hi > 0 { r.hi as f64 - 0.5 } else { r.lo as f64 };
+                        let p = get(r);
+                        m1 += p * x; m2 += p * x * x;
+                    }
+                    let v = m2 - m1 * m1;
+                    if m1 > 0.0 { fanos[*k].push(v / m1); }
+                }
+            }
+            println!("  {}  market(de-vig) {:.3}   empirical {:.3}   Poisson {:.3}   (n={} boards)",
+                fam, mean(&fanos[0]), mean(&fanos[1]), mean(&fanos[2]), fanos[0].len());
+        }
+
         // ---- 2. WHERE does the edge live: by de-vigged price bucket ----
         println!("\n--- Where does the model/market disagreement live?  (by market price) ---");
         println!("{:<14} {:>5} {:>9} {:>9} {:>9} {:>9} {:>9} {:>9}", "price band", "n", "mkt", "model", "realised", "raw edge", "fee@fill", "net EV");
@@ -805,7 +832,570 @@ mod models {
     }
 }
 
-// placeholder modules filled in later steps
-mod revfit { use super::*; pub fn run(_d: &Path) -> Result<()> { bail!("revfit not built yet") } }
-mod etas { use super::*; pub fn run(_d: &Path, _a: &[String]) -> Result<()> { bail!("etas not built yet") } }
+// =====================================================================================
+// MAGNITUDE-REVISION LAYER — the market resolves on the magnitudes USGS was *reporting*
+// ~24-48h after the window closed, not on today's final catalogue. Reconstructed from
+// ComCat origin products (each carries updateTime + its own magnitude).
+// =====================================================================================
+mod revfit {
+    use super::*;
+
+    /// (reported at event+lag) - (current preferred). Empirical, threshold-adjacent events.
+    pub fn deltas(dir: &Path, lag_h: f64) -> Vec<f64> {
+        let mut out = Vec::new();
+        let d = dir.join("raw/detail");
+        let rd = match fs::read_dir(&d) { Ok(r) => r, Err(_) => return out };
+        for e in rd.filter_map(|e| e.ok()) {
+            let txt = match fs::read_to_string(e.path()) { Ok(t) => t, Err(_) => continue };
+            let v: serde_json::Value = match serde_json::from_str(&txt) { Ok(v) => v, Err(_) => continue };
+            let props = match v.get("properties") { Some(p) => p, None => continue };
+            let final_mag = match props.get("mag").and_then(|x| x.as_f64()) { Some(m) => m, None => continue };
+            let t_ms = match props.get("time").and_then(|x| x.as_i64()) { Some(t) => t, None => continue };
+            let cutoff = t_ms + (lag_h * 3.6e6) as i64;
+            let origins = match props.get("products").and_then(|p| p.get("origin")).and_then(|o| o.as_array()) {
+                Some(o) => o, None => continue };
+            let mut best: Option<(f64, i64, f64)> = None; // (weight, updateTime, mag)
+            for o in origins {
+                let ut = o.get("updateTime").and_then(|x| x.as_i64()).unwrap_or(0);
+                if ut > cutoff { continue; }
+                let w = o.get("preferredWeight").and_then(|x| x.as_f64()).unwrap_or(0.0);
+                let m = o.get("properties").and_then(|p| p.get("magnitude"))
+                    .and_then(|x| x.as_str()).and_then(|s| s.parse::<f64>().ok());
+                let m = match m { Some(m) => m, None => continue };
+                if best.is_none() || (w, ut) > (best.unwrap().0, best.unwrap().1) { best = Some((w, ut, m)); }
+            }
+            if let Some((_, _, m)) = best { out.push(m - final_mag); }
+        }
+        out
+    }
+
+    pub fn run(dir: &Path) -> Result<()> {
+        println!("MAGNITUDE-REVISION LAYER — reported-at-resolution minus final magnitude\n");
+        for lag in [24.0f64, 48.0, 168.0] {
+            let d = deltas(dir, lag);
+            if d.is_empty() { println!("lag {}h: no data", lag); continue; }
+            let nz = d.iter().filter(|x| x.abs() > 0.001).count();
+            let mut a: Vec<f64> = d.clone();
+            a.sort_by(|x, y| x.partial_cmp(y).unwrap());
+            let big = d.iter().filter(|x| x.abs() >= 0.1).count();
+            let down = d.iter().filter(|x| **x < -0.001).count();
+            let up = d.iter().filter(|x| **x > 0.001).count();
+            println!("lag {:>4}h  n={}  mean {:+.4}  sd {:.4}  |d|>0 {:.1}%  |d|>=0.1 {:.1}%  (down {} / up {})  p05 {:+.2} p50 {:+.2} p95 {:+.2}",
+                lag, d.len(), mean(&d), sd(&d), 100.0*nz as f64/d.len() as f64,
+                100.0*big as f64/d.len() as f64, down, up,
+                a[a.len()/20], a[a.len()/2], a[a.len()*19/20]);
+        }
+        Ok(())
+    }
+}
+
+// =====================================================================================
+// ETAS — Epidemic-Type Aftershock Sequence, temporal, fitted to the GLOBAL catalogue.
+//   lambda(t) = mu + sum_{t_i<t} K * 10^{a(M_i-M0)} * (t - t_i + c)^{-p}
+//   magnitudes ~ Gutenberg-Richter above M0, binned to 0.1 as USGS reports them,
+//   then perturbed by the revision layer before thresholding.
+// Superposing many regional ETAS processes is not itself ETAS; a temporal fit to the
+// global catalogue is an aggregate approximation and is labelled as such.
+// =====================================================================================
+mod etas {
+    use super::*;
+
+    const M0: f64 = 5.0;
+    const DAY: f64 = 86400.0;
+
+    #[derive(Clone, Copy, Debug)]
+    pub struct P { pub mu: f64, pub k: f64, pub a: f64, pub c: f64, pub p: f64, pub b: f64 }
+
+    #[derive(Clone, Copy)]
+    pub struct Ev { pub t: f64, pub m: f64 } // t in days
+
+    // ---- fast PRNG (xoshiro256**) ----
+    pub struct Rng(u64, u64, u64, u64);
+    impl Rng {
+        pub fn new(seed: u64) -> Rng {
+            let mut s = seed.wrapping_add(0x9E3779B97F4A7C15);
+            let mut nxt = || {
+                s = s.wrapping_add(0x9E3779B97F4A7C15);
+                let mut z = s;
+                z = (z ^ (z >> 30)).wrapping_mul(0xBF58476D1CE4E5B9);
+                z = (z ^ (z >> 27)).wrapping_mul(0x94D049BB133111EB);
+                z ^ (z >> 31)
+            };
+            Rng(nxt(), nxt(), nxt(), nxt())
+        }
+        #[inline]
+        pub fn next_u64(&mut self) -> u64 {
+            let r = self.1.wrapping_mul(5).rotate_left(7).wrapping_mul(9);
+            let t = self.1 << 17;
+            self.2 ^= self.0; self.3 ^= self.1; self.1 ^= self.2; self.0 ^= self.3; self.2 ^= t;
+            self.3 = self.3.rotate_left(45);
+            r
+        }
+        #[inline]
+        pub fn f64(&mut self) -> f64 { (self.next_u64() >> 11) as f64 * (1.0 / 9007199254740992.0) }
+        #[inline]
+        pub fn open(&mut self) -> f64 { let u = self.f64(); if u <= 0.0 { 1e-17 } else { u } }
+        pub fn poisson(&mut self, lam: f64) -> u32 {
+            if lam <= 0.0 { return 0; }
+            if lam < 30.0 {
+                let l = (-lam).exp();
+                let (mut k, mut prod) = (0u32, self.f64());
+                while prod > l { k += 1; prod *= self.f64(); if k > 400 { break; } }
+                return k;
+            }
+            // normal approximation with continuity correction (only used for big background rates)
+            let z = {
+                let (u1, u2) = (self.open(), self.f64());
+                (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()
+            };
+            (lam + z * lam.sqrt() + 0.5).max(0.0) as u32
+        }
+    }
+
+    // ---- Omori kernel ----
+    /// integral of (s+c)^-p from 0 to x
+    #[inline]
+    fn gint(x: f64, c: f64, p: f64) -> f64 {
+        if x <= 0.0 { return 0.0; }
+        if (p - 1.0).abs() < 1e-8 { ((x + c) / c).ln() } else { ((x + c).powf(1.0 - p) - c.powf(1.0 - p)) / (1.0 - p) }
+    }
+    /// inverse of gint (draw an offspring time in (0, xmax] from the Omori density)
+    #[inline]
+    fn ginv(y: f64, c: f64, p: f64) -> f64 {
+        if (p - 1.0).abs() < 1e-8 { c * (y.exp() - 1.0) }
+        else { (y * (1.0 - p) + c.powf(1.0 - p)).powf(1.0 / (1.0 - p)) - c }
+    }
+
+    #[inline]
+    fn productivity(m: f64, pr: &P) -> f64 { pr.k * 10f64.powf(pr.a * (m - M0)) }
+
+    // ---- log-likelihood on [t0,t1], history truncated to `hist` days back ----
+    pub fn loglik(evs: &[Ev], t0: f64, t1: f64, pr: &P, hist: f64) -> f64 {
+        if pr.mu <= 0.0 || pr.k <= 0.0 || pr.c <= 1e-6 || pr.p <= 0.05 || pr.a < 0.0 || pr.a > 3.0 { return f64::NEG_INFINITY; }
+        let pr = *pr; let pr = &pr;
+        let i0 = evs.partition_point(|e| e.t < t0);
+        let i1 = evs.partition_point(|e| e.t <= t1);
+        let nt = 4usize;
+        let chunk = (i1 - i0).div_ceil(nt);
+        let ll: f64 = std::thread::scope(|sc| {
+            let hs: Vec<_> = (0..nt).map(|ci| {
+                let (lo, hi) = (i0 + ci * chunk, (i0 + (ci + 1) * chunk).min(i1));
+                sc.spawn(move || {
+                    let mut acc = 0.0;
+                    for j in lo..hi {
+                        let tj = evs[j].t;
+                        let mut lam = pr.mu;
+                        let mut i = j;
+                        while i > 0 {
+                            i -= 1;
+                            let dt = tj - evs[i].t;
+                            if dt > hist { break; }
+                            if dt <= 0.0 { continue; }
+                            lam += productivity(evs[i].m, pr) * (dt + pr.c).powf(-pr.p);
+                        }
+                        acc += lam.ln();
+                    }
+                    acc
+                })
+            }).collect();
+            hs.into_iter().map(|h| h.join().unwrap()).sum()
+        });
+        // compensator
+        let mut comp = pr.mu * (t1 - t0);
+        for e in evs.iter() {
+            if e.t >= t1 { break; }
+            let lo = (t0 - e.t).max(0.0);
+            let hi = t1 - e.t;
+            if hi <= 0.0 { continue; }
+            if lo > hist { continue; }
+            comp += productivity(e.m, pr) * (gint(hi.min(hist), pr.c, pr.p) - gint(lo, pr.c, pr.p));
+        }
+        ll - comp
+    }
+
+    fn pack(pr: &P) -> [f64; 5] { [pr.mu.ln(), pr.k.ln(), pr.a, pr.c.ln(), pr.p] }
+    fn unpack(x: &[f64], b: f64) -> P { P { mu: x[0].exp(), k: x[1].exp(), a: x[2], c: x[3].exp(), p: x[4], b } }
+
+    /// Nelder-Mead
+    pub fn fit(evs: &[Ev], t0: f64, t1: f64, start: P, hist: f64, iters: usize) -> P {
+        let n = 5;
+        let f = |x: &[f64]| -loglik(evs, t0, t1, &unpack(x, start.b), hist);
+        let mut simplex: Vec<Vec<f64>> = Vec::new();
+        let s0 = pack(&start);
+        simplex.push(s0.to_vec());
+        for i in 0..n {
+            let mut v = s0.to_vec();
+            v[i] += if i == 4 { 0.08 } else { 0.25 };
+            simplex.push(v);
+        }
+        let mut fv: Vec<f64> = simplex.iter().map(|x| f(x)).collect();
+        for _ in 0..iters {
+            let mut idx: Vec<usize> = (0..=n).collect();
+            idx.sort_by(|&a, &b| fv[a].partial_cmp(&fv[b]).unwrap());
+            let (best, worst, second) = (idx[0], idx[n], idx[n - 1]);
+            if (fv[worst] - fv[best]).abs() < 1e-7 { break; }
+            let mut cent = vec![0.0; n];
+            for &i in idx.iter().take(n) { for j in 0..n { cent[j] += simplex[i][j] / n as f64; } }
+            let refl: Vec<f64> = (0..n).map(|j| cent[j] + 1.0 * (cent[j] - simplex[worst][j])).collect();
+            let fr = f(&refl);
+            if fr < fv[best] {
+                let exp: Vec<f64> = (0..n).map(|j| cent[j] + 2.0 * (cent[j] - simplex[worst][j])).collect();
+                let fe = f(&exp);
+                if fe < fr { simplex[worst] = exp; fv[worst] = fe; } else { simplex[worst] = refl; fv[worst] = fr; }
+            } else if fr < fv[second] {
+                simplex[worst] = refl; fv[worst] = fr;
+            } else {
+                let con: Vec<f64> = (0..n).map(|j| cent[j] + 0.5 * (simplex[worst][j] - cent[j])).collect();
+                let fc = f(&con);
+                if fc < fv[worst] { simplex[worst] = con; fv[worst] = fc; }
+                else {
+                    for &i in idx.iter().skip(1) {
+                        let nv: Vec<f64> = (0..n).map(|j| simplex[best][j] + 0.5 * (simplex[i][j] - simplex[best][j])).collect();
+                        simplex[i] = nv; fv[i] = f(&simplex[i]);
+                    }
+                }
+            }
+        }
+        let bi = (0..=n).min_by(|&a, &b| fv[a].partial_cmp(&fv[b]).unwrap()).unwrap();
+        unpack(&simplex[bi], start.b)
+    }
+
+    /// Aki-Utsu b-value for magnitudes binned to `dm`.
+    pub fn bvalue(mags: &[f64], mc: f64, dm: f64) -> f64 {
+        let v: Vec<f64> = mags.iter().cloned().filter(|m| *m >= mc - 1e-9).collect();
+        std::f64::consts::E.log10() / (mean(&v) - (mc - dm / 2.0))
+    }
+
+    #[inline]
+    fn draw_mag(rng: &mut Rng, b: f64, mmax: f64) -> f64 {
+        // truncated Gutenberg-Richter on [M0, mmax], continuous
+        let beta = b * std::f64::consts::LN_10;
+        let umax = 1.0 - (-beta * (mmax - M0)).exp();
+        let u = rng.f64() * umax;
+        M0 - (1.0 - u).ln() / beta
+    }
+
+    /// Simulate ONE window and return the count of events whose *reported* magnitude
+    /// (0.1-binned, revision-perturbed) is >= `thr`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn sim_window(hist: &[Ev], w0: f64, w1: f64, pr: &P, rng: &mut Rng,
+                      rev: &[f64], mmax: f64, thr: f64, wbuf: &mut Vec<f64>, stack: &mut Vec<Ev>) -> i32 {
+        wbuf.clear(); stack.clear();
+        let mut count = 0i32;
+        let mut emit = |m: f64, rng: &mut Rng, count: &mut i32| {
+            let d = if rev.is_empty() { 0.0 } else { rev[(rng.next_u64() as usize) % rev.len()] };
+            // USGS reports to 0.1; the resolving vintage carries the revision delta
+            let rep = ((m + d) * 10.0).round() / 10.0;
+            if rep >= thr - 1e-9 { *count += 1; }
+        };
+        // 1. background
+        let nbg = rng.poisson(pr.mu * (w1 - w0));
+        for _ in 0..nbg {
+            let t = w0 + rng.f64() * (w1 - w0);
+            let m = draw_mag(rng, pr.b, mmax);
+            emit(m, rng, &mut count);
+            stack.push(Ev { t, m });
+        }
+        // 2. offspring of pre-window history: total expected count, then sample parents
+        let mut tot = 0.0;
+        wbuf.reserve(hist.len());
+        for e in hist {
+            let w = productivity(e.m, pr) * (gint(w1 - e.t, pr.c, pr.p) - gint(w0 - e.t, pr.c, pr.p));
+            tot += w;
+            wbuf.push(tot);
+        }
+        let nh = rng.poisson(tot);
+        for _ in 0..nh {
+            let u = rng.f64() * tot;
+            let i = wbuf.partition_point(|&x| x < u).min(hist.len() - 1);
+            let e = hist[i];
+            let (g0, g1) = (gint(w0 - e.t, pr.c, pr.p), gint(w1 - e.t, pr.c, pr.p));
+            let t = e.t + ginv(g0 + rng.f64() * (g1 - g0), pr.c, pr.p);
+            let m = draw_mag(rng, pr.b, mmax);
+            emit(m, rng, &mut count);
+            stack.push(Ev { t: t.clamp(w0, w1), m });
+        }
+        // 3. recursive offspring of everything born inside the window
+        let mut guard = 0;
+        while let Some(e) = stack.pop() {
+            guard += 1;
+            if guard > 200_000 { break; }
+            let lam = productivity(e.m, pr) * gint(w1 - e.t, pr.c, pr.p);
+            let n = rng.poisson(lam);
+            for _ in 0..n {
+                let t = e.t + ginv(rng.f64() * gint(w1 - e.t, pr.c, pr.p), pr.c, pr.p);
+                let m = draw_mag(rng, pr.b, mmax);
+                emit(m, rng, &mut count);
+                if t < w1 { stack.push(Ev { t, m }); }
+            }
+        }
+        count
+    }
+
+
+    // ---------- driver ----------
+
+    fn to_evs(cat: &[Quake], mc: f64) -> Vec<Ev> {
+        cat.iter().filter(|q| q.is_eq && q.mag >= mc - 1e-9)
+            .map(|q| Ev { t: q.t as f64 / DAY, m: q.mag }).collect()
+    }
+
+    pub fn run(dir: &Path, args: &[String]) -> Result<()> {
+        let sub = args.first().map(|s| s.as_str()).unwrap_or("fit");
+        let cat = load_catalogue(dir)?;
+        let evs = to_evs(&cat, M0);
+        let mags: Vec<f64> = evs.iter().map(|e| e.m).collect();
+        let b = bvalue(&mags, M0, 0.1);
+        let t_start = et_to_utc(1990, 1, 1, 0, 0) as f64 / DAY;
+        let oos = sub == "physics2015";
+        let t_fitend = et_to_utc(if oos {2015} else {2025}, if oos {1} else {12}, 1, 0, 0) as f64 / DAY;
+        let hist = 200.0;
+
+        println!("ETAS  M0={:.1}  catalogue {} events  b(Aki-Utsu, dm=0.1) = {:.4}", M0, evs.len(), b);
+        let start = P { mu: 3.0, k: 0.02, a: 0.9, c: 0.02, p: 1.1, b };
+        let t_fit0 = t_start + 220.0;
+        let cache = dir.join(if oos {"etas_mle_pre2015.json"} else {"etas_mle.json"});
+        let pr = if let Ok(t) = fs::read_to_string(&cache) {
+            let v: serde_json::Value = serde_json::from_str(&t)?;
+            eprintln!("(cached MLE)");
+            P { mu: jnum(&v,"mu"), k: jnum(&v,"k"), a: jnum(&v,"a"), c: jnum(&v,"c"), p: jnum(&v,"p"), b }
+        } else {
+            let pr = fit(&evs, t_fit0, t_fitend, start, hist, 400);
+            fs::write(&cache, format!("{{\"mu\":{},\"k\":{},\"a\":{},\"c\":{},\"p\":{},\"b\":{}}}", pr.mu,pr.k,pr.a,pr.c,pr.p,pr.b))?;
+            pr
+        };
+        let llv = loglik(&evs, t_fit0, t_fitend, &pr, hist);
+        // branching ratio: expected direct offspring of an M0 event, GR-averaged
+        let beta = b * std::f64::consts::LN_10;
+        let alpha = pr.a * std::f64::consts::LN_10;
+        let nbr = if beta > alpha { pr.k * gint(365.0, pr.c, pr.p) * beta / (beta - alpha) } else { f64::INFINITY };
+        let nbr7 = if beta > alpha { pr.k * gint(7.0, pr.c, pr.p) * beta / (beta - alpha) } else { f64::INFINITY };
+        println!("MLE (1990-08 .. {}): mu=", if oos {"2015-01-01"} else {"2025-12-01"});
+        println!("  mu={:.4}/day  K={:.5}  alpha={:.3}  c={:.5}d  p={:.4}  logL={:.1}",
+            pr.mu, pr.k, pr.a, pr.c, pr.p, llv);
+        println!("branching ratio over 365d n = {:.3};  over a 7d window n7 = {:.3} (subcritical => simulation stable)", nbr, nbr7);
+
+        // ---- posterior: finite-difference Hessian at the MLE -> MVN draws ----
+        let post = posterior(&evs, t_fit0, t_fitend, &pr, hist, 240);
+        println!("posterior: {} draws; mu {:.3}+-{:.3}  K {:.4}+-{:.4}  a {:.3}+-{:.3}  c {:.4}+-{:.4}  p {:.3}+-{:.3}",
+            post.len(),
+            mean(&post.iter().map(|p| p.mu).collect::<Vec<_>>()), sd(&post.iter().map(|p| p.mu).collect::<Vec<_>>()),
+            mean(&post.iter().map(|p| p.k).collect::<Vec<_>>()), sd(&post.iter().map(|p| p.k).collect::<Vec<_>>()),
+            mean(&post.iter().map(|p| p.a).collect::<Vec<_>>()), sd(&post.iter().map(|p| p.a).collect::<Vec<_>>()),
+            mean(&post.iter().map(|p| p.c).collect::<Vec<_>>()), sd(&post.iter().map(|p| p.c).collect::<Vec<_>>()),
+            mean(&post.iter().map(|p| p.p).collect::<Vec<_>>()), sd(&post.iter().map(|p| p.p).collect::<Vec<_>>()));
+
+        let rev = revfit::deltas(dir, 36.0);
+        println!("revision layer: {} sampled events, mean {:+.4}, sd {:.4}", rev.len(), mean(&rev), sd(&rev));
+
+        match sub {
+            "validate" => validate(&evs, &post, &rev),
+            "physics" | "physics2015" => physics(&evs, &post, &rev, dir),
+            "score" => score_boards(dir, &evs, &post, &rev),
+            _ => Ok(()),
+        }
+    }
+
+    fn posterior(evs: &[Ev], t0: f64, t1: f64, pr: &P, hist: f64, n: usize) -> Vec<P> {
+        let x0 = pack(pr);
+        let f = |x: &[f64]| loglik(evs, t0, t1, &unpack(x, pr.b), hist);
+        let f0 = f(&x0);
+        let h = [0.02, 0.02, 0.01, 0.03, 0.005];
+        // diagonal curvature only (the full 5x5 needs 40 extra likelihood evals and the
+        // off-diagonals do not change the conclusion at this effect size)
+        let mut sdv = [0.0f64; 5];
+        for i in 0..5 {
+            let (mut xp, mut xm) = (x0, x0);
+            xp[i] += h[i]; xm[i] -= h[i];
+            let d2 = (f(&xp) - 2.0 * f0 + f(&xm)) / (h[i] * h[i]);
+            sdv[i] = if d2 < 0.0 { (-1.0 / d2).sqrt() } else { 0.0 };
+        }
+        let mut rng = Rng::new(20260725);
+        (0..n).map(|_| {
+            let mut x = x0;
+            for i in 0..5 {
+                let (u1, u2) = (rng.open(), rng.f64());
+                let z = (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos();
+                x[i] += z * sdv[i];
+            }
+            unpack(&x, pr.b)
+        }).collect()
+    }
+
+    /// Does the fitted process reproduce the observed weekly count moments?
+    fn validate(evs: &[Ev], post: &[P], rev: &[f64]) -> Result<()> {
+        println!("\n--- VALIDATION: simulated vs observed weekly count moments ---");
+        let mut rng = Rng::new(7);
+        let (mut wb, mut st) = (Vec::new(), Vec::new());
+        for thr in [5.5f64, 6.5] {
+            let mut counts: Vec<f64> = Vec::new();
+            // start each simulated week from a real historical state
+            let t_lo = et_to_utc(2015, 1, 1, 0, 0) as f64 / DAY;
+            let t_hi = et_to_utc(2025, 12, 1, 0, 0) as f64 / DAY;
+            for i in 0..40_000 {
+                let w0 = t_lo + rng.f64() * (t_hi - t_lo);
+                let lo = evs.partition_point(|e| e.t < w0 - 200.0);
+                let hi = evs.partition_point(|e| e.t < w0);
+                let p = post[i % post.len()];
+                counts.push(sim_window(&evs[lo..hi], w0, w0 + 7.0, &p, &mut rng, rev, 9.5, thr, &mut wb, &mut st) as f64);
+            }
+            let m = mean(&counts); let v = sd(&counts).powi(2);
+            println!("M{:.1}+ simulated: mean {:.3}  var {:.3}  Fano {:.2}   (n=40,000 weeks)", thr, m, v, v / m);
+        }
+        Ok(())
+    }
+
+    /// GATE 1 — on the physics alone, out-of-sample: does ETAS beat the empirical marginal?
+    fn physics(evs: &[Ev], post: &[P], rev: &[f64], dir: &Path) -> Result<()> {
+        println!("\n--- GATE 1: predictive log-loss on the catalogue itself, 2015-2026, weekly ---");
+        let cat = load_catalogue(dir)?;
+        let mut rng = Rng::new(11);
+        let (mut wb, mut st) = (Vec::new(), Vec::new());
+        for thr in [5.5f64, 6.5] {
+            let ts = times_above(&cat, thr, true);
+            let mut t = et_to_utc(2015, 1, 5, 0, 0);
+            let tend = Utc::now().timestamp() - 7 * 86400;
+            let (mut ll_etas, mut ll_emp, mut ll_poi, mut ll_nb) = (vec![], vec![], vec![], vec![]);
+            // static models fitted on 1990..2015 only
+            let train = empirical_counts(&ts, 7.0, et_to_utc(2015, 1, 1, 0, 0), et_to_utc(1990, 1, 1, 0, 0));
+            let tf: Vec<f64> = train.iter().map(|&x| x as f64).collect();
+            let (mt, vt) = (mean(&tf), sd(&tf).powi(2));
+            let mut emp = vec![0.0f64; 80];
+            for &c in &train { if (c as usize) < 80 { emp[c as usize] += 1.0; } }
+            let tot: f64 = emp.iter().sum();
+            let emp: Vec<f64> = emp.iter().map(|x| (x + 0.5) / (tot + 40.0)).collect();
+            let mut poi = vec![0.0f64; 80];
+            { let mut p = (-mt).exp(); for n in 0..80 { poi[n] = p; p *= mt / (n as f64 + 1.0); } }
+            let mut nb = vec![0.0f64; 80];
+            { let r = mt * mt / (vt - mt).max(1e-6); let pp = r / (r + mt);
+              let mut cur = pp.powf(r);
+              for n in 0..80 { nb[n] = cur; cur *= (r + n as f64) / (n as f64 + 1.0) * (1.0 - pp); } }
+            while t < tend {
+                let w0 = t as f64 / DAY;
+                let actual = count_between(&ts, t, t + 7 * 86400) as usize;
+                let lo = evs.partition_point(|e| e.t < w0 - 200.0);
+                let hi = evs.partition_point(|e| e.t < w0);
+                let nsim = 4000;
+                let mut histgram = vec![0.0f64; 80];
+                for i in 0..nsim {
+                    let p = post[i % post.len()];
+                    let c = sim_window(&evs[lo..hi], w0, w0 + 7.0, &p, &mut rng, rev, 9.5, thr, &mut wb, &mut st) as usize;
+                    if c < 80 { histgram[c] += 1.0; }
+                }
+                let pe = (histgram[actual.min(79)] + 0.5) / (nsim as f64 + 40.0);
+                ll_etas.push(-pe.ln());
+                ll_emp.push(-emp[actual.min(79)].max(1e-9).ln());
+                ll_poi.push(-poi[actual.min(79)].max(1e-9).ln());
+                ll_nb.push(-nb[actual.min(79)].max(1e-9).ln());
+                t += 7 * 86400;
+            }
+            let d_emp: Vec<f64> = ll_emp.iter().zip(ll_etas.iter()).map(|(a, b)| a - b).collect();
+            println!("M{:.1}+  n={} weeks   ETAS {:.4}  empirical {:.4}  NB {:.4}  Poisson {:.4}",
+                thr, ll_etas.len(), mean(&ll_etas), mean(&ll_emp), mean(&ll_nb), mean(&ll_poi));
+            println!("       ETAS - empirical = {:+.4} log-loss (se {:.4}, t={:+.2}, ETAS wins {}/{})",
+                mean(&d_emp), se(&d_emp), mean(&d_emp) / se(&d_emp),
+                d_emp.iter().filter(|x| **x > 0.0).count(), d_emp.len());
+        }
+        Ok(())
+    }
+
+    /// GATE 2 — ETAS vs the market at window-open, out-of-sample, on the real boards.
+    fn score_boards(dir: &Path, evs: &[Ev], post: &[P], rev: &[f64]) -> Result<()> {
+        println!("\n--- GATE 2: ETAS vs the market at window-open (+6h), resolved boards ---");
+        let boards = load_boards(dir)?;
+        let cat = load_catalogue(dir)?;
+        let ts55 = times_above(&cat, 5.5, true);
+        let ts65 = times_above(&cat, 6.5, true);
+        let cat_from = et_to_utc(1990, 1, 1, 0, 0);
+        let mut rng = Rng::new(99);
+        let (mut wb, mut st) = (Vec::new(), Vec::new());
+        let mut per_fam: BTreeMap<String, (Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>)> = BTreeMap::new();
+        let mut rows: Vec<(String, String, f64, f64, f64, Vec<f64>, Vec<f64>, usize)> = Vec::new();
+
+        for b in &boards {
+            if !b.closed { continue; }
+            let w = match b.winner() { Some(w) => w, None => continue };
+            let ck = b.win_start + 6 * 3600;
+            let series: Vec<Vec<(i64, f64)>> = b.legs.iter().map(|l| load_series(dir, &b.slug, &l.token_yes)).collect();
+            let mids: Vec<Option<f64>> = series.iter().map(|s| price_at(s, ck, 12 * 3600)).collect();
+            if mids.iter().any(|x| x.is_none()) { continue; }
+            let dv = devig(&mids).unwrap();
+            let w0 = b.win_start as f64 / DAY;
+            let wlen = b.days();
+            let lo = evs.partition_point(|e| e.t < w0 - 200.0);
+            let hi = evs.partition_point(|e| e.t < w0);
+            let nsim = 200_000usize;
+            let mut hg = vec![0.0f64; 120];
+            for i in 0..nsim {
+                let p = post[i % post.len()];
+                let c = sim_window(&evs[lo..hi], w0, w0 + wlen, &p, &mut rng, rev, 9.5, b.threshold, &mut wb, &mut st) as usize;
+                if c < 120 { hg[c] += 1.0; }
+            }
+            let mut md = vec![0.0f64; b.legs.len()];
+            for (n, cnt) in hg.iter().enumerate() {
+                if let Some(i) = b.leg_of(n as i32) { md[i] += cnt; }
+            }
+            let s: f64 = md.iter().sum();
+            let md: Vec<f64> = md.iter().map(|x| (x + 0.5) / (s + 0.5 * b.legs.len() as f64)).collect();
+            let ts = if b.threshold < 6.0 { &ts55 } else { &ts65 };
+            let sample = empirical_counts(ts, wlen, b.win_start, cat_from);
+            let emp = lattice_dist(b, &sample);
+            let e = per_fam.entry(b.family()).or_insert((vec![], vec![], vec![], vec![]));
+            e.0.push(-dv[w].max(1e-6).ln());
+            e.1.push(-md[w].max(1e-6).ln());
+            e.2.push(-emp[w].max(1e-6).ln());
+            e.3.push(mids.iter().map(|x| x.unwrap()).sum::<f64>());
+            rows.push((b.family(), b.slug.clone(), -dv[w].ln(), -md[w].ln(), -emp[w].ln(), dv.clone(), md.clone(), w));
+        }
+        for (fam, (mk, et, em, ov)) in &per_fam {
+            let d1: Vec<f64> = mk.iter().zip(et.iter()).map(|(a, b)| a - b).collect();
+            let d2: Vec<f64> = mk.iter().zip(em.iter()).map(|(a, b)| a - b).collect();
+            println!("\n{}  n={} boards  (mean leg-sum {:.4})", fam, mk.len(), mean(ov));
+            println!("  market(de-vig) {:.4}   ETAS {:.4}   empirical {:.4}", mean(mk), mean(et), mean(em));
+            println!("  ETAS - market      = {:+.4}  (se {:.4}, t={:+.2}, ETAS wins {}/{})",
+                mean(&d1), se(&d1), mean(&d1) / se(&d1), d1.iter().filter(|x| **x > 0.0).count(), d1.len());
+            println!("  empirical - market = {:+.4}  (se {:.4}, t={:+.2})", mean(&d2), se(&d2), mean(&d2) / se(&d2));
+        }
+        // per-leg mean model vs market
+        println!("\n  per-leg mean de-vigged market price vs ETAS (M6.5+ lattice):");
+        let mut agg: BTreeMap<String, (f64, f64, f64, usize)> = BTreeMap::new();
+        for (fam, _s, _a, _b, _c, dv, md, w) in &rows {
+            if fam != "M6.5+" { continue; }
+            for (i, lbl) in ["0", "1", "2", "3", "4", "5", ">5"].iter().enumerate() {
+                if i >= dv.len() { break; }
+                let e = agg.entry(lbl.to_string()).or_insert((0.0, 0.0, 0.0, 0));
+                e.0 += dv[i]; e.1 += md[i]; e.3 += 1;
+                if *w == i { e.2 += 1.0; }
+            }
+        }
+        println!("  {:<6} {:>9} {:>9} {:>9}", "leg", "market", "ETAS", "realised");
+        for (k, (a, b, c, n)) in &agg {
+            println!("  {:<6} {:>9.4} {:>9.4} {:>9.4}", k, a / *n as f64, b / *n as f64, c / *n as f64);
+        }
+        // gate-3 style net PnL with the ETAS signal
+        println!("\n  GATE 3 with the ETAS signal (edge>3c, delayed fill +2c adverse, 0.05 taker fee):");
+        for (lo, hi, name) in [(0.0f64, 0.03f64, "wings <3c"), (0.03, 1.0, "fundable >=3c"), (0.0, 1.0, "all legs")] {
+            let mut pnl = Vec::new();
+            for (_fam, slug, _a, _b, _c, dv, md, w) in &rows {
+                let bd = boards.iter().find(|x| &x.slug == slug).unwrap();
+                for i in 0..dv.len() {
+                    let series = load_series(dir, slug, &bd.legs[i].token_yes);
+                    let mid = match price_at(&series, bd.win_start + 6 * 3600, 12 * 3600) { Some(m) => m, None => continue };
+                    if mid < lo || mid >= hi { continue; }
+                    let edge = md[i] - dv[i];
+                    if edge.abs() < 0.03 { continue; }
+                    let dirn = if edge > 0.0 { 1.0 } else { -1.0 };
+                    let fillmid = price_at(&series, bd.win_start + 30 * 3600, 12 * 3600).unwrap_or(mid);
+                    let px = (fillmid + dirn * 0.02).clamp(0.005, 0.995);
+                    let payoff = if i == *w { 1.0 } else { 0.0 };
+                    pnl.push(dirn * (payoff - px) - fee(px));
+                }
+            }
+            if pnl.is_empty() { println!("    {:<16} no trades", name); continue; }
+            println!("    {:<16} n={:>4}  net {:+.4}/share (se {:.4}) t={:+.2}", name, pnl.len(), mean(&pnl), se(&pnl), mean(&pnl) / se(&pnl));
+        }
+        Ok(())
+    }
+}
+
 mod live { use super::*; pub fn run(_d: &Path, _s: &str) -> Result<()> { bail!("live not built yet") } }

@@ -1,0 +1,28 @@
+# The M5.5+ weekly ladder — the *tradeable* instrument of this family (the M6.5+ ladder is
+# the clean one for gate 0, but five of its seven legs are sub-3c). Recorded because the
+# book quality is genuinely good and a future variant may want the instrument; the METHOD is
+# what failed, not the venue.
+market_slug = "how-many-5pt5-or-above-earthquakes-july-20-july-26-20260718184830018"
+condition_id = ""
+added = "2026-07-25"
+active = false               # method falsified; see results/backtest-2026-07-25.md
+
+[params]
+threshold_magnitude = 5.5
+window_start = 2026-07-20T04:00:00Z
+window_end   = 2026-07-27T03:59:59Z
+lattice = ["<=8", "9", "10", "11", "12", "13", "14", ">14"]
+lattice_note = "re-centred by Polymarket week to week: 3..>9 in April, <=5..>9 in June, <=8..>14 in July. Never assume a fixed lattice."
+resolution_source = "USGS Earthquake Hazards Program, minimum magnitude set to 5.5"
+fee_schedule = "{rate = 0.05, exponent = 1, takerOnly = true, rebateRate = 0.25} (weather_fees)"
+
+[gates]
+gate0 = """
+PARTIAL — 10/15 reproduced from today's catalogue; all five misses off by exactly one and
+all explained by magnitude revisions across the 5.5 threshold (1.66 events/week sit exactly
+at M5.5, 5.65/week within +-0.10; 29% of threshold-adjacent events carry a different reported
+magnitude at the resolving vintage). Not a pipeline bug — a vintage effect, modelled.
+"""
+book = "PASS — 8 legs, spreads 1.0-4.6c, $2,150-3,484 of resting book each, leg-sum 1.0635, taker volume $700-13,250/leg/week. 0/270 dead legs across the whole resolved family."
+gate2 = "FAIL — ETAS -0.063 log-loss vs the market at window-open (n=13, t=-0.22); empirical marginal -0.023"
+gate3 = "FAIL — no net edge in any price band after the 0.05 taker fee"

@@ -1,0 +1,11 @@
+{
+  "key": "blobs/c464725bb26eeb38f37a257af179187d5c58d1b7f2a868b87b40409eeb62ce68",
+  "sha256": "c464725bb26eeb38f37a257af179187d5c58d1b7f2a868b87b40409eeb62ce68",
+  "bytes": 43636433,
+  "content_type": "application/gzip",
+  "original_name": "quake-etas-data-2026-07-25.tar.gz",
+  "source_url": "earthquake.usgs.gov/fdsnws + gamma-api.polymarket.com + clob.polymarket.com",
+  "note": "quake-etas day-1 freeze 2026-07-25: USGS M4.5+ catalogue 1990-2026 (228,900 events, per-year CSVs + merged), Gamma event JSON for all 47 earthquake-count ladder boards, CLOB prices-history for all 348 legs (fidelity 10), live books for the 3 open boards, ComCat includesuperseded origin history for 503 threshold-adjacent events, fitted ETAS MLE caches, and all gate outputs (out_*.txt).",
+  "fetched_at": "2026-07-25T10:46:57Z",
+  "bucket": "orakel"
+}

@@ -1,0 +1,40 @@
+# The board the idea named as "the actual trade vehicle" — the first window-open entry a
+# forward trial would have taken (Mon 2026-07-27 00:00 ET). Documented, NOT traded.
+market_slug = "how-many-6pt5-or-above-earthquakes-july-27-august-2-20260723165219436"
+condition_id = ""            # board = Gamma event; per-leg condition_ids below
+added = "2026-07-25"
+active = false               # FAILS BOTH GATES — see [gates]
+
+[params]
+threshold_magnitude = 6.5
+window_start = 2026-07-27T04:00:00Z    # Mon 00:00 ET, EDT
+window_end   = 2026-08-03T03:59:59Z    # Sun 23:59 ET
+lattice = ["0", "1", "2", "3", "4", "5", ">5"]
+resolution_source = "USGS Earthquake Hazards Program (significant-earthquakes browse page)"
+resolution_vintage = "window close + ~24h (the description grants 24h for magnitude revisions)"
+fee_schedule = "{rate = 0.05, exponent = 1, takerOnly = true, rebateRate = 0.25} (weather_fees)"
+entry_rule = "window-open only; mid-window entry is a measured speed race (70% of the repricing lands within 1h of a quake)"
+
+[gates]
+gate0 = "PASS — 30/30 M6.5+ boards reproduced exactly from the USGS catalogue"
+book = """
+FAIL (2026-07-25 09:5xZ, board 2 days old, $465 volume). Spreads 3.0-23.0c, leg-sum of mids
+1.237, top-of-book $5-100. Monotonicity violation: leg `3` mid 0.145 quoted ABOVE leg `2`
+mid 0.101, and `>5` 0.115 above `5` 0.016, on a distribution that must decrease. This is a
+placeholder book, not a market — the same freshly-listed state barrier-touch/ladder-rv
+documented on 2026-07-25. No prediction rows: a de-vigged model scored against a 1.237
+leg-sum collects ln(1.237) = 0.21 of free log-loss and would inject a fake market baseline
+into scoring.
+"""
+fee = """
+Binding where the thesis lives. Only legs `0` (0.575) and `1` (0.260) are above the 3c floor;
+`2`,`3`,`4`,`5`,`>5` sit at 0.1-14.5c of which the settled comparable board quotes 0.1-3.1c.
+On the settled July 20-26 board FIVE of seven legs are sub-3c. The overdispersion signal on
+this ladder is structurally confined to unfundable legs.
+"""
+gate2 = "FAIL — ETAS is -0.070 log-loss vs the de-vigged market at window-open across 24 resolved M6.5+ boards (t=-1.14, wins 9/24); the gate needed +0.110 with t>=2"
+gate3 = "FAIL — net +0.0091/share (se 0.0340) in fundable >=3c legs; threshold was 3c/share"
+
+# NOTE: even with a perfect book this application would stay active = false. The model is
+# measured WORSE than the market at this exact checkpoint, so any prediction row would be a
+# knowingly-inferior forecast logged against the market baseline.
