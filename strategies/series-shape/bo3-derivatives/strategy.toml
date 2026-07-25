@@ -1,0 +1,12 @@
+family = "series-shape"
+variant = "bo3-derivatives"
+status = "trial"
+created = "2026-07-25"
+supersedes = ""
+labels = ["class:favourite-longshot", "class:shape-claim", "data:polymarket-only", "family-type:series-derivatives", "band:fundable-40-60", "sport:esports"]
+
+[trial]
+slot = 3
+started = "2026-07-25"
+review_due = "2026-08-04"
+success_guideline = "Day-1 gate 5 (external bookmaker line) is the cheapest kill and runs FIRST: if Pinnacle/other closing map-handicap agrees within 3pp, the thesis dies. Then the idea's six gates incl. fee viability at the traded price (sports rate 0.05 => ~1.2c/share at p=0.5). Then paired Brier + execution PnL on forward rows; 30-40 BO3s resolve daily so scoring compounds fast."

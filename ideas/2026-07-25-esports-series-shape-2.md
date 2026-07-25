@@ -1,7 +1,7 @@
 ---
 date: 2026-07-25
 slug: esports-series-shape
-status: backlog        # backlog | trialing | discarded-idea | promoted
+status: trialing # -> strategies/series-shape/bo3-derivatives (slot 3, 2026-07-25)        # backlog | trialing | discarded-idea | promoted
 example_markets: ["lol-vit-g2-2026-07-25", "cs2-tl1-g2-2026-07-25", "lol-tes-tt-2026-07-25"]
 model: opus-5 (xhigh)
 ---
