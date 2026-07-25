@@ -459,7 +459,9 @@ fn main() -> Result<()> {
         "gate0" => cmd_gate0(&dir),
         "revision" => cmd_revision(&dir, args.get(3).and_then(|x| x.parse().ok()).unwrap_or(400)),
         "gate3" => crate::gate3::run(&dir),
-        "models" => crate::models::run(&dir, args.get(3).and_then(|x| x.parse().ok()).unwrap_or(6)),
+        "models" => crate::models::run(&dir, args.get(3).and_then(|x| x.parse().ok()).unwrap_or(6),
+                                       args.get(4).map(|s| s.as_str()).unwrap_or("open")),
+        "ceiling" => crate::models::ceiling(&dir),
         "etas" => crate::etas::run(&dir, &args[3..]),
         "revfit" => crate::revfit::run(&dir),
         "live" => crate::live::run(&dir, args.get(3).map(|s| s.as_str()).unwrap_or("")),
@@ -678,7 +680,36 @@ mod models {
         out.iter().map(|x| x / s.max(1e-12)).collect()
     }
 
-    pub fn run(dir: &Path, ck_hours: i64) -> Result<()> {
+    /// How much of next week's count is predictable from the past at all?  This bounds
+    /// anything ETAS can win by conditioning on state.
+    pub fn ceiling(dir: &Path) -> Result<()> {
+        let cat = load_catalogue(dir)?;
+        println!("PREDICTABILITY CEILING — global weekly counts, 1990-2026\n");
+        for thr in [5.5f64, 6.5] {
+            let ts = times_above(&cat, thr, true);
+            let t0 = et_to_utc(1990, 1, 8, 0, 0);
+            let t1 = Utc::now().timestamp() - 7 * 86400;
+            let (mut prior, mut next) = (Vec::new(), Vec::new());
+            let mut t = t0;
+            while t < t1 {
+                prior.push(count_between(&ts, t - 7 * 86400, t) as f64);
+                next.push(count_between(&ts, t, t + 7 * 86400) as f64);
+                t += 7 * 86400; // non-overlapping
+            }
+            let mp = mean(&prior); let mn = mean(&next);
+            let cov: f64 = prior.iter().zip(next.iter()).map(|(a, b)| (a - mp) * (b - mn)).sum::<f64>() / (prior.len() - 1) as f64;
+            let r = cov / (sd(&prior) * sd(&next));
+            let vn: f64 = sd(&next).powi(2);
+            println!("M{:.1}+  n={} weeks  mean {:.3}  var {:.3}  Fano {:.2}  lag-1 corr {:+.3}  R^2 {:.4}",
+                thr, next.len(), mn, vn, vn / mn, r, r * r);
+            // how much of the OVERdispersion is week-to-week persistence vs within-week burst?
+            println!("     var explained by last week's count: {:.3} of {:.3}  -> residual Fano {:.2}",
+                r * r * vn, vn, (vn * (1.0 - r * r)) / mn);
+        }
+        Ok(())
+    }
+
+    pub fn run(dir: &Path, ck_hours: i64, anchor: &str) -> Result<()> {
         let boards = load_boards(dir)?;
         let cat = load_catalogue(dir)?;
         let ts55 = times_above(&cat, 5.5, true);
@@ -696,7 +727,7 @@ mod models {
         for b in &boards {
             if !b.closed { continue; }
             let w = match b.winner() { Some(w) => w, None => continue };
-            let ck = b.win_start + ck_hours * 3600;
+            let ck = if anchor == "create" { b.created + ck_hours * 3600 } else { b.win_start + ck_hours * 3600 };
             let series: Vec<Vec<(i64, f64)>> = b.legs.iter().map(|l| load_series(dir, &b.slug, &l.token_yes)).collect();
             let mids: Vec<Option<f64>> = series.iter().map(|s| price_at(s, ck, 12 * 3600)).collect();
             if mids.iter().any(|x| x.is_none()) { continue; }
