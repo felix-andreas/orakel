@@ -110,6 +110,9 @@ pub struct Counts {
     pub epsilon_unavailable: usize,
     /// Rows whose book had to be synthesized from the midpoint.
     pub book_synthetic: usize,
+    /// Trades whose asset had no `costs.asset_category` entry and were charged
+    /// the policy's `fee_rate_default`. Counted, never silently defaulted.
+    pub fee_rate_unmapped: usize,
 }
 
 /// A two-sided quote, real or synthesized from the midpoint.
@@ -300,10 +303,20 @@ pub fn simulate(signals: &[Signal], policy: &Policy) -> Result<SimResult, String
             Side::Buy => shares * (exit_price - fill),
             Side::Sell => shares * (fill - exit_price),
         };
-        let fee_rate = policy.costs.fee_bps / 10_000.0;
-        let mut fees = fee_rate * shares * fill;
+        // Fees are charged per *taker fill*, at that fill's price. Entering is
+        // always one fill. Exiting is a second fill only when we exit in the
+        // market: settling at resolution is a redemption, not a match, and the
+        // venue charges nothing for it. So a held position pays once and a
+        // round trip pays twice — which is the whole reason `harvest`'s ranking
+        // was suspect.
+        let (taker_rate, rate_mapped) = policy.costs.fee_rate_for(sig.asset_key());
+        let legacy = policy.costs.fee_bps / 10_000.0;
+        let mut fees = legacy * shares * fill + taker_fee(shares, taker_rate, fill);
         if exit_kind == ExitKind::TakeProfit {
-            fees += fee_rate * shares * exit_price;
+            fees += legacy * shares * exit_price + taker_fee(shares, taker_rate, exit_price);
+        }
+        if !rate_mapped {
+            counts.fee_rate_unmapped += 1;
         }
 
         open.push((exit_t, market, stake));
@@ -417,6 +430,38 @@ pub fn kelly_fraction(side: Side, p: f64, price: f64) -> f64 {
         }
     };
     f.clamp(0.0, 1.0)
+}
+
+/// Polymarket's published taker fee for **one fill**, in USDC:
+///
+/// ```text
+/// fee = shares × rate × p × (1 − p)
+/// ```
+///
+/// Verified 2026-07-25 against `docs.polymarket.com/trading/fees` ("fee =
+/// C × feeRate × p × (1 − p)", C = shares traded, p = price), against each
+/// market's own `feeSchedule` on the Gamma API, and by fitting real executed
+/// fills from the Data API. Makers pay nothing; every fill the engine simulates
+/// crosses the spread and is therefore a taker fill.
+///
+/// The fee peaks at p = 0.50 (1.25c/share at rate 0.05) and vanishes at both
+/// extremes. Because `p(1−p)` is invariant under `p → 1−p`, selling YES at `p`
+/// and buying NO at `1 − p` — the same trade, DESIGN.md §3 — cost the same, so
+/// it is correct to charge on the YES price whatever the side.
+///
+/// Venue rounding, from the same page: fees are rounded to 5 decimals and the
+/// smallest fee charged is 0.00001 USDC; anything below that rounds to zero.
+pub fn taker_fee(shares: f64, rate: f64, price: f64) -> f64 {
+    if !(shares > 0.0) || !(rate > 0.0) || !(0.0..=1.0).contains(&price) {
+        return 0.0;
+    }
+    let raw = shares * rate * price * (1.0 - price);
+    let rounded = (raw * 1e5).round() / 1e5;
+    if rounded < 1e-5 {
+        0.0
+    } else {
+        rounded
+    }
 }
 
 /// Capital committed per share (DESIGN.md §3).

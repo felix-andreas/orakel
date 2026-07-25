@@ -29,6 +29,9 @@ pub struct SimResult {
     pub span_days: f64,
     pub bankroll_usd: f64,
     pub assumed_spread: f64,
+    /// Exactly which fee model produced these numbers, spelled out so a result
+    /// can never be read without knowing whether fees were charged.
+    pub fee_model: String,
     pub entry_delay_hours: f64,
     pub counts: Counts,
     pub metrics: Metrics,
@@ -48,6 +51,16 @@ pub struct Metrics {
     pub n: usize,
     pub underpowered: bool,
     pub staked_usd: f64,
+    /// PnL **before** venue fees.
+    pub gross_pnl_usd: f64,
+    /// Total venue fees paid across every fill (entry, plus exit where the
+    /// position was closed in the market rather than at resolution).
+    pub fees_usd: f64,
+    /// `fees / |gross pnl|` — how much of the edge the venue took.
+    pub fee_share_of_gross: Option<f64>,
+    /// Mean fee per share, in cents. The number to compare against `assumed_spread`.
+    pub fee_cents_per_share: Option<f64>,
+    /// PnL **after** venue fees. This is the number every other metric uses.
     pub net_pnl_usd: f64,
     pub cents_per_trade: Option<f64>,
     pub cents_per_trade_se: Option<f64>,
@@ -76,6 +89,7 @@ pub struct Group {
     pub key: String,
     pub n: usize,
     pub net_pnl_usd: f64,
+    pub fees_usd: f64,
     pub cents_per_trade: Option<f64>,
     pub cents_per_trade_se: Option<f64>,
     pub hit_rate: Option<f64>,
@@ -104,6 +118,18 @@ pub fn build(signals: &[Signal], policy: &Policy, counts: Counts, trades: Vec<Tr
         n: trades.len(),
         underpowered: trades.len() < MIN_N_FOR_A_WINNER,
         staked_usd: r6(trades.iter().map(|t| t.capital_locked).sum()),
+        gross_pnl_usd: r6(trades.iter().map(|t| t.pnl + t.fees).sum()),
+        fees_usd: r6(trades.iter().map(|t| t.fees).sum()),
+        fee_share_of_gross: ratio(
+            trades.iter().map(|t| t.fees).sum(),
+            trades.iter().map(|t| t.pnl + t.fees).sum::<f64>().abs(),
+        ),
+        fee_cents_per_share: mean(
+            &trades
+                .iter()
+                .map(|t| if t.shares > 0.0 { 100.0 * t.fees / t.shares } else { 0.0 })
+                .collect::<Vec<_>>(),
+        ),
         net_pnl_usd: r6(trades.iter().map(|t| t.pnl).sum()),
         cents_per_trade: mean(&trades.iter().map(|t| t.cents_per_share()).collect::<Vec<_>>()),
         cents_per_trade_se: stderr(&trades.iter().map(|t| t.cents_per_share()).collect::<Vec<_>>()),
@@ -150,6 +176,7 @@ pub fn build(signals: &[Signal], policy: &Policy, counts: Counts, trades: Vec<Tr
         span_days: if trades.is_empty() { 0.0 } else { r6((t1 - t0) as f64 / 86_400.0) },
         bankroll_usd: bankroll,
         assumed_spread: policy.costs.assumed_spread,
+        fee_model: policy.costs.fee_model_label(),
         entry_delay_hours: policy.entry.delay_hours,
         counts,
         metrics,
@@ -260,6 +287,7 @@ fn group_by(trades: &[Trade], key: impl Fn(&Trade) -> String) -> Vec<Group> {
                 key: k,
                 n: ts.len(),
                 net_pnl_usd: r6(ts.iter().map(|t| t.pnl).sum()),
+                fees_usd: r6(ts.iter().map(|t| t.fees).sum()),
                 cents_per_trade: mean(&cents),
                 cents_per_trade_se: stderr(&cents),
                 hit_rate: mean(
@@ -300,6 +328,36 @@ fn notes(
         n.push(format!(
             "UNDERPOWERED: n = {} < {MIN_N_FOR_A_WINNER}. DESIGN.md §7 forbids calling this policy a winner or a loser.",
             m.n
+        ));
+    }
+    // Fees, first: a result that did not charge them is not comparable to one
+    // that did, and the reader must never have to check the policy file to
+    // find out which kind they are holding.
+    if m.n > 0 {
+        if policy.costs.fee_model == crate::policy::FeeModel::None && policy.costs.fee_bps <= 0.0 {
+            n.push(
+                "NO VENUE FEE IS CHARGED IN THIS RESULT. Polymarket has charged a taker fee since 2026-01-05 (shares x rate x p x (1-p), rate 0.04-0.07 by category), so every PnL figure below is too generous — most of all for policies that exit in the market and pay it twice. Compare against the same policy's fee-charging version before believing any of it."
+                    .to_string(),
+            );
+        } else {
+            n.push(format!(
+                "venue fees cost ${:.2} ({} of gross PnL, {:.2}c per share on average, vs a {:.0}c assumed spread). {} of the {} trades exited in the market and paid the fee twice; the rest settled at resolution, which the venue does not charge for.",
+                m.fees_usd,
+                match m.fee_share_of_gross {
+                    Some(f) => format!("{:.1}%", f * 100.0),
+                    None => "n/a".to_string(),
+                },
+                m.fee_cents_per_share.unwrap_or(0.0),
+                policy.costs.assumed_spread * 100.0,
+                m.take_profit_exits,
+                m.n,
+            ));
+        }
+    }
+    if c.fee_rate_unmapped > 0 {
+        n.push(format!(
+            "{} of the trades taken are on an asset with no costs.asset_category entry and were charged the policy's fee_rate_default ({:?}). Their fee is a guess, not the venue's schedule — map the asset.",
+            c.fee_rate_unmapped, policy.costs.fee_rate_default,
         ));
     }
     if let Some(s) = m.synthetic_fill_share {
@@ -360,7 +418,7 @@ fn notes(
     }
     if m.take_profit_exits > 0 && m.synthetic_fill_share.unwrap_or(0.0) > 0.0 {
         n.push(format!(
-            "{} of the exits were taken in the market rather than at settlement, and they were priced off a synthetic quote. An early-exit policy pays the spread twice, so this is the most spread-sensitive result in the matrix — it is the first number a real book would revise.",
+            "{} of the exits were taken in the market rather than at settlement, and they were priced off a synthetic quote. An early-exit policy pays the spread twice AND the venue's taker fee twice, so this is the most cost-sensitive result in the matrix — it is the first number a real book would revise.",
             m.take_profit_exits
         ));
     }

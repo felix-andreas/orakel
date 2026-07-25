@@ -529,3 +529,263 @@ fn fees_are_charged_on_traded_notional_only() {
     // shares = 11.7647; entry notional = 0.15 * 11.7647 = 1.7647; 1% = 0.017647
     assert!((r.metrics.net_pnl_usd - (1.764706 - 0.017647)).abs() < 1e-5, "pnl {}", r.metrics.net_pnl_usd);
 }
+
+// ============================================================ venue taker fees
+//
+// Polymarket charges takers `shares × rate × p × (1 − p)` USDC on every fill
+// (docs.polymarket.com/trading/fees, verified 2026-07-25 against each market's
+// own `feeSchedule` and against real executed fills). It is charged on entry,
+// and again on an exit taken in the market; settlement at resolution is a
+// redemption, not a match, and costs nothing. Every number below is worked out
+// by hand in the comment above it.
+
+/// A row with an explicit `asset`, so the per-category rate can be exercised.
+fn row_asset(
+    asset: &str,
+    t: &str,
+    token: &str,
+    p_model: f64,
+    p_market: f64,
+    bid: &str,
+    ask: &str,
+    resolved_outcome: &str,
+    resolved: &str,
+) -> String {
+    format!(
+        "s,{t},mkt-{token},0x{token},Yes,{token},fam,var,m,{p_model},{p_market},{bid},{ask},,,{resolved_outcome},{resolved},0,{asset}"
+    )
+}
+
+/// Costs block with the real fee model on. `ast` — the asset the `row` helper
+/// writes — is mapped to `category`.
+fn fee_costs(category: &str) -> String {
+    format!(
+        "assumed_spread = 0.03\nmax_book_fraction = 1.0\n\
+         fee_model = \"polymarket-taker\"\nfee_rate_default = 0.05\n\
+         [costs.fee_rate]\ncrypto = 0.07\nfinance = 0.04\nsports = 0.05\n\
+         [costs.asset_category]\nast = \"{category}\"\nbtc = \"crypto\"\nspy = \"finance\"\n"
+    )
+}
+
+/// **The published fee table, reproduced.** docs.polymarket.com/trading/fees
+/// tabulates the fee on 100 shares. If `taker_fee` disagrees with the venue's
+/// own table, `taker_fee` is wrong.
+#[test]
+fn taker_fee_reproduces_the_published_fee_table() {
+    // Crypto (0.07): $1.75 at p = 0.50, $0.63 at 0.10, $0.33 at 0.05, $0.07 at 0.01.
+    assert!((engine::taker_fee(100.0, 0.07, 0.50) - 1.75).abs() < 1e-9);
+    assert!((engine::taker_fee(100.0, 0.07, 0.10) - 0.63).abs() < 1e-9);
+    assert!((engine::taker_fee(100.0, 0.07, 0.05) - 0.3325).abs() < 1e-9);
+    assert!((engine::taker_fee(100.0, 0.07, 0.01) - 0.0693).abs() < 1e-9);
+    // Sports / economics / culture / weather / other (0.05): $1.25 at p = 0.50.
+    assert!((engine::taker_fee(100.0, 0.05, 0.50) - 1.25).abs() < 1e-9);
+    assert!((engine::taker_fee(100.0, 0.05, 0.40) - 1.20).abs() < 1e-9);
+    assert!((engine::taker_fee(100.0, 0.05, 0.10) - 0.45).abs() < 1e-9);
+    // Finance / politics / tech / mentions (0.04): $1.00 at p = 0.50.
+    assert!((engine::taker_fee(100.0, 0.04, 0.50) - 1.00).abs() < 1e-9);
+    assert!((engine::taker_fee(100.0, 0.04, 0.20) - 0.64).abs() < 1e-9);
+    // Geopolitics is fee-free at any price.
+    assert_eq!(engine::taker_fee(100.0, 0.0, 0.50), 0.0);
+}
+
+/// The fee is symmetric about 0.50 — selling YES at `p` *is* buying NO at
+/// `1 − p` (DESIGN.md §3), so the two must cost the same — peaks there, and
+/// vanishes at the boundaries. Venue rounding: 5dp, and anything under
+/// 0.00001 USDC is not charged.
+#[test]
+fn taker_fee_is_symmetric_peaks_at_a_half_and_rounds_like_the_venue() {
+    for p in [0.01, 0.10, 0.23, 0.40, 0.49] {
+        assert!(
+            (engine::taker_fee(37.0, 0.05, p) - engine::taker_fee(37.0, 0.05, 1.0 - p)).abs() < 1e-12,
+            "asymmetric at {p}"
+        );
+        assert!(engine::taker_fee(37.0, 0.05, p) < engine::taker_fee(37.0, 0.05, 0.50));
+    }
+    assert_eq!(engine::taker_fee(100.0, 0.05, 0.0), 0.0);
+    assert_eq!(engine::taker_fee(100.0, 0.05, 1.0), 0.0);
+    // 0.001 shares at 1c: 0.001 × 0.05 × 0.01 × 0.99 = 4.95e-7 -> rounds to zero.
+    assert_eq!(engine::taker_fee(0.001, 0.05, 0.01), 0.0);
+    // Nothing is charged when the model is off (rate 0) or the trade is empty.
+    assert_eq!(engine::taker_fee(0.0, 0.05, 0.5), 0.0);
+}
+
+/// **Hand-computed fee at p = 0.50** — the worst price on the curve.
+///
+/// Book 0.50 / 0.52, we think 0.40, flat $10, sports/economics rate 0.05,
+/// hold to resolution, market resolves **No** (our YES token loses ⇒ the wing
+/// seller keeps the premium).
+///
+/// - sell at the bid **0.50**; capital per share = 1 − 0.50 = **0.50**;
+///   shares = 10 / 0.50 = **20**.
+/// - gross pnl = 0.50 × 20 = **$10.00**.
+/// - fee = 20 × 0.05 × 0.50 × 0.50 = **$0.25** — i.e. **1.25c/share**, the
+///   published peak, against a 3c assumed spread.
+/// - net pnl = 10.00 − 0.25 = **$9.75**; cents/trade = 100 × 9.75 / 20 = **48.75c**.
+#[test]
+fn fee_at_a_half_is_hand_computable() {
+    let s = signals(&[row(
+        "2026-05-01T12:00:00Z", "tokH", 0.40, 0.51, "0.50", "0.52", "", "", "No",
+        "2026-05-09T12:00:00Z",
+    )]);
+    let r = simulate(&s, &pol("", "", "", &fee_costs("sports"))).unwrap();
+    let m = &r.metrics;
+    assert_eq!(m.n, 1);
+    assert!((m.gross_pnl_usd - 10.0).abs() < 1e-9, "gross {}", m.gross_pnl_usd);
+    assert!((m.fees_usd - 0.25).abs() < 1e-9, "fees {}", m.fees_usd);
+    assert!((m.net_pnl_usd - 9.75).abs() < 1e-9, "net {}", m.net_pnl_usd);
+    assert!((m.fee_cents_per_share.unwrap() - 1.25).abs() < 1e-9);
+    assert!((m.cents_per_trade.unwrap() - 48.75).abs() < 1e-6);
+    // ROLC uses the fee-bearing pnl over collateral only: 9.75 / 10.
+    assert!((m.return_on_locked_capital.unwrap() - 0.975).abs() < 1e-9);
+}
+
+/// **Hand-computed fee at p = 0.10** — deep in the fundable wing band.
+///
+/// Book 0.10 / 0.12, we think 0.02, flat **$9**, rate 0.05, resolves **No**.
+///
+/// - sell at **0.10**; capital per share = **0.90**; shares = 9 / 0.90 = **10**.
+/// - gross pnl = 0.10 × 10 = **$1.00**.
+/// - fee = 10 × 0.05 × 0.10 × 0.90 = **$0.045** = **0.45c/share**.
+/// - net pnl = **$0.955**; the fee is 4.5% of the gross edge.
+#[test]
+fn fee_at_a_tenth_is_hand_computable() {
+    let s = signals(&[row(
+        "2026-05-01T12:00:00Z", "tokT", 0.02, 0.11, "0.10", "0.12", "", "", "No",
+        "2026-05-09T12:00:00Z",
+    )]);
+    let sizing = "method = \"flat\"\nstake_usd = 9.0\nmax_per_market_usd = 1000.0";
+    let r = simulate(&s, &pol("", sizing, "", &fee_costs("sports"))).unwrap();
+    let m = &r.metrics;
+    assert_eq!(m.n, 1);
+    assert!((m.gross_pnl_usd - 1.0).abs() < 1e-9, "gross {}", m.gross_pnl_usd);
+    assert!((m.fees_usd - 0.045).abs() < 1e-9, "fees {}", m.fees_usd);
+    assert!((m.net_pnl_usd - 0.955).abs() < 1e-9, "net {}", m.net_pnl_usd);
+    assert!((m.fee_cents_per_share.unwrap() - 0.45).abs() < 1e-9);
+    assert!((m.fee_share_of_gross.unwrap() - 0.045).abs() < 1e-9);
+}
+
+/// **A round trip pays the fee twice; holding to resolution pays it once.**
+/// This is the whole reason an early-exit policy's ranking had to be re-checked.
+///
+/// Same entry both ways: sell at 0.50, shares = **20**, entry fee = **$0.25**.
+///
+/// *Held to resolution:* market resolves No ⇒ gross **$10.00**, fees **$0.25**
+/// (redemption is not a match), net **$9.75**.
+///
+/// *Taken in the market:* `close_fraction = 0.60` ⇒ target = 0.50 − 0.60 ×
+/// (0.50 − 0.40) = **0.44**; two days later the book is 0.42 / 0.44 and we buy
+/// the short back at the ask **0.44**.
+/// - gross = 20 × (0.50 − 0.44) = **$1.20**.
+/// - exit fee = 20 × 0.05 × 0.44 × 0.56 = **$0.2464**.
+/// - fees = 0.25 + 0.2464 = **$0.4964**; net = 1.20 − 0.4964 = **$0.7036**.
+///
+/// The exit alone costs 41% of the gross move it captured.
+#[test]
+fn a_round_trip_pays_the_fee_twice_and_settlement_pays_it_once() {
+    // The second row is only a price path: its own p sits inside its spread, so
+    // the policy will not open a position on it.
+    let s = signals(&[
+        row("2026-05-01T12:00:00Z", "tokR", 0.40, 0.51, "0.50", "0.52", "", "", "No", "2026-05-09T12:00:00Z"),
+        row("2026-05-03T12:00:00Z", "tokR", 0.43, 0.43, "0.42", "0.44", "", "", "No", "2026-05-09T12:00:00Z"),
+    ]);
+    let costs = fee_costs("sports");
+    let tp = pol("", "", "rule = \"take-profit\"\nclose_fraction = 0.60\nelse_hold_to_resolution = true", &costs);
+    let hold = pol("", "", "", &costs);
+
+    let a = simulate(&s, &tp).unwrap().metrics;
+    assert_eq!(a.n, 1);
+    assert_eq!(a.take_profit_exits, 1);
+    assert!((a.gross_pnl_usd - 1.20).abs() < 1e-9, "gross {}", a.gross_pnl_usd);
+    assert!((a.fees_usd - 0.4964).abs() < 1e-9, "fees {}", a.fees_usd);
+    assert!((a.net_pnl_usd - 0.7036).abs() < 1e-9, "net {}", a.net_pnl_usd);
+
+    let b = simulate(&s, &hold).unwrap().metrics;
+    assert_eq!(b.n, 1);
+    assert_eq!(b.take_profit_exits, 0);
+    assert!((b.fees_usd - 0.25).abs() < 1e-9, "fees {}", b.fees_usd);
+    assert!((b.net_pnl_usd - 9.75).abs() < 1e-9, "net {}", b.net_pnl_usd);
+
+    // The entry fee is identical, so the whole difference is the second fill.
+    assert!((a.fees_usd - b.fees_usd - 0.2464).abs() < 1e-9);
+    assert!(a.fees_usd > b.fees_usd * 1.9, "a round trip must cost roughly twice the entry");
+}
+
+/// The rate follows the market's category, not the policy: the identical trade
+/// costs 75% more on a crypto market than on a finance one (0.07 vs 0.04).
+#[test]
+fn the_rate_comes_from_the_assets_category() {
+    let mk = |asset: &str, token: &str| {
+        signals(&[row_asset(asset, "2026-05-01T12:00:00Z", token, 0.40, 0.51, "0.50", "0.52", "No", "2026-05-09T12:00:00Z")])
+    };
+    let p = pol("", "", "", &fee_costs("sports"));
+    // shares = 20 either way; crypto 20 × 0.07 × 0.25 = 0.35, finance = 0.20.
+    let c = simulate(&mk("btc", "tokX"), &p).unwrap().metrics;
+    let f = simulate(&mk("spy", "tokY"), &p).unwrap().metrics;
+    assert!((c.fees_usd - 0.35).abs() < 1e-9, "crypto fees {}", c.fees_usd);
+    assert!((f.fees_usd - 0.20).abs() < 1e-9, "finance fees {}", f.fees_usd);
+    assert!((c.net_pnl_usd - 9.65).abs() < 1e-9);
+    assert!((f.net_pnl_usd - 9.80).abs() < 1e-9);
+}
+
+/// An asset nobody mapped must never trade fee-free by accident: it is charged
+/// the declared fallback, counted, and named in the notes.
+#[test]
+fn an_unmapped_asset_is_charged_the_default_and_counted() {
+    let s = signals(&[row_asset(
+        "dogecoin", "2026-05-01T12:00:00Z", "tokU", 0.40, 0.51, "0.50", "0.52", "No",
+        "2026-05-09T12:00:00Z",
+    )]);
+    let r = simulate(&s, &pol("", "", "", &fee_costs("sports"))).unwrap();
+    assert_eq!(r.counts.fee_rate_unmapped, 1);
+    // fee_rate_default = 0.05 => 20 × 0.05 × 0.25 = 0.25
+    assert!((r.metrics.fees_usd - 0.25).abs() < 1e-9);
+    assert!(
+        r.notes.iter().any(|n| n.contains("no costs.asset_category entry")),
+        "{:?}",
+        r.notes
+    );
+}
+
+/// A policy with no fee model charges nothing — and is required to *say* so, so
+/// a v1 result can never be mistaken for a costed one.
+#[test]
+fn a_fee_free_policy_charges_nothing_and_admits_it() {
+    let s = signals(&[row(
+        "2026-05-01T12:00:00Z", "tokF", 0.40, 0.51, "0.50", "0.52", "", "", "No",
+        "2026-05-09T12:00:00Z",
+    )]);
+    let r = simulate(&s, &base()).unwrap();
+    assert_eq!(r.metrics.fees_usd, 0.0);
+    assert!((r.metrics.net_pnl_usd - r.metrics.gross_pnl_usd).abs() < 1e-12);
+    assert!((r.metrics.net_pnl_usd - 10.0).abs() < 1e-9);
+    assert!(r.fee_model.starts_with("none"), "{}", r.fee_model);
+    assert!(
+        r.notes.iter().any(|n| n.contains("NO VENUE FEE IS CHARGED")),
+        "a fee-free result must say so: {:?}",
+        r.notes
+    );
+}
+
+/// The fee model refuses to load half-specified, because a cost model that can
+/// silently charge nothing is the bug this version exists to fix.
+#[test]
+fn an_incomplete_fee_model_is_rejected() {
+    let head = "name = \"t\"\nversion = 2\n[entry]\nmin_edge = 0.01\nsides = [\"sell\"]\nmin_spread_ok = 1.0\nmin_depth_usd = 0.0\n[sizing]\nmethod = \"flat\"\nstake_usd = 10.0\nmax_per_market_usd = 100.0\n[exit]\nrule = \"hold-to-resolution\"\n[costs]\n";
+    let err = |c: &str| Policy::from_toml(&format!("{head}{c}")).unwrap_err();
+
+    assert!(err("fee_model = \"polymarket-taker\"\n").contains("[costs.fee_rate]"));
+    assert!(err("fee_model = \"polymarket-taker\"\n[costs.fee_rate]\ncrypto = 0.07\n")
+        .contains("fee_rate_default"));
+    assert!(err(
+        "fee_model = \"polymarket-taker\"\nfee_rate_default = 0.05\n[costs.fee_rate]\ncrypto = 0.07\n[costs.asset_category]\nbtc = \"cryptoo\"\n"
+    )
+    .contains("has no rate"));
+    assert!(err("fee_model = \"polymarket-taker\"\nfee_rate_default = 9.0\n[costs.fee_rate]\ncrypto = 0.07\n")
+        .contains("not a rate"));
+    assert!(err("[costs.fee_rate]\ncrypto = 7.0\n").contains("not a rate"));
+    // ...and a fully specified one loads.
+    assert!(Policy::from_toml(&format!(
+        "{head}fee_model = \"polymarket-taker\"\nfee_rate_default = 0.05\n[costs.fee_rate]\ncrypto = 0.07\n[costs.asset_category]\nbtc = \"crypto\"\n"
+    ))
+    .is_ok());
+}

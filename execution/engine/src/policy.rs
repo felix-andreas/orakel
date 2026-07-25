@@ -4,6 +4,8 @@
 //! policy typed into a text box. Policy files are authored by the CEO and are
 //! never edited in place — a change means a new version file (DESIGN.md §5).
 
+use std::collections::BTreeMap;
+
 use serde::Deserialize;
 
 /// Engine-side defaults for fields the policy files do not carry. They are
@@ -110,14 +112,49 @@ fn default_true() -> bool {
     true
 }
 
+/// How the venue's trading fee is charged (DESIGN.md §4.4).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum FeeModel {
+    /// No venue fee at all. What every `-v1` policy assumed — and it was wrong:
+    /// Polymarket has charged taker fees since 2026-01-05. Kept as the default
+    /// so the v1 files keep their exact original meaning and their results stay
+    /// attributable, and so a fee-free counterfactual remains expressible.
+    #[default]
+    None,
+    /// Polymarket's published taker fee, charged **per taker fill**:
+    /// `fee_usdc = shares × rate × p × (1 − p)` with `rate` set per market
+    /// category. See `taker_fee` in `sim.rs` for the implementation and
+    /// `wiki/recipes/polymarket-api.md` for the venue reference.
+    PolymarketTaker,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct Costs {
     #[serde(default = "default_spread")]
     pub assumed_spread: f64,
     #[serde(default = "default_book_fraction")]
     pub max_book_fraction: f64,
+    /// **Legacy.** A flat fee in basis points of the fill notional. No venue we
+    /// trade prices fees this way; it is retained only so the `-v1` policy files
+    /// (which all carry `fee_bps = 0`) keep their literal meaning rather than
+    /// having a field silently ignored. Charged *in addition* to `fee_model`.
     #[serde(default)]
     pub fee_bps: f64,
+    #[serde(default)]
+    pub fee_model: FeeModel,
+    /// Category → taker rate, e.g. `crypto = 0.07`. Read off the venue's own
+    /// `feeSchedule.rate`, not invented.
+    #[serde(default)]
+    pub fee_rate: BTreeMap<String, f64>,
+    /// Signal `asset` key → category name used in `fee_rate`.
+    #[serde(default)]
+    pub asset_category: BTreeMap<String, String>,
+    /// Rate applied to an asset with no `asset_category` entry. Mandatory under
+    /// `polymarket-taker`: an unmapped asset must never quietly trade fee-free.
+    /// Every trade priced at this fallback is counted (`fee_rate_unmapped`).
+    #[serde(default)]
+    pub fee_rate_default: Option<f64>,
 }
 
 impl Default for Costs {
@@ -126,6 +163,41 @@ impl Default for Costs {
             assumed_spread: default_spread(),
             max_book_fraction: default_book_fraction(),
             fee_bps: 0.0,
+            fee_model: FeeModel::None,
+            fee_rate: BTreeMap::new(),
+            asset_category: BTreeMap::new(),
+            fee_rate_default: None,
+        }
+    }
+}
+
+impl Costs {
+    /// The taker rate for one signal's asset, and whether it came from an
+    /// explicit mapping (`false` = the `fee_rate_default` fallback was used).
+    pub fn fee_rate_for(&self, asset: &str) -> (f64, bool) {
+        if self.fee_model == FeeModel::None {
+            return (0.0, true);
+        }
+        let key = asset.trim().to_ascii_lowercase();
+        if let Some(cat) = self.asset_category.get(&key) {
+            if let Some(rate) = self.fee_rate.get(cat.as_str()) {
+                return (*rate, true);
+            }
+        }
+        (self.fee_rate_default.unwrap_or(0.0), false)
+    }
+
+    /// Human-readable model name for the result JSON and the summary.
+    pub fn fee_model_label(&self) -> String {
+        match self.fee_model {
+            FeeModel::None if self.fee_bps > 0.0 => format!("none + {:.4} bps notional", self.fee_bps),
+            FeeModel::None => "none (fee-free — the venue's real taker fee is NOT modelled)".to_string(),
+            FeeModel::PolymarketTaker => {
+                let mut rates: Vec<String> =
+                    self.fee_rate.iter().map(|(c, r)| format!("{c} {r}")).collect();
+                rates.sort();
+                format!("polymarket-taker: shares x rate x p x (1-p) per fill [{}]", rates.join(", "))
+            }
         }
     }
 }
@@ -180,6 +252,49 @@ impl Policy {
         for s in &self.sides_normalized() {
             if s != "buy" && s != "sell" {
                 return Err(format!("unknown entry side '{s}'"));
+            }
+        }
+        self.validate_fees()
+    }
+
+    /// A fee model that can silently charge nothing is worse than no fee model
+    /// at all — that is the bug this whole version exists to fix. So the
+    /// `polymarket-taker` model refuses to load unless every rate it could
+    /// possibly need is declared.
+    fn validate_fees(&self) -> Result<(), String> {
+        let c = &self.costs;
+        if c.fee_bps < 0.0 {
+            return Err("costs.fee_bps must not be negative".to_string());
+        }
+        for (cat, rate) in &c.fee_rate {
+            if !(*rate >= 0.0 && *rate <= 1.0) {
+                return Err(format!("costs.fee_rate.{cat} = {rate} is not a rate in [0,1]"));
+            }
+        }
+        if c.fee_model == FeeModel::None {
+            return Ok(());
+        }
+        if c.fee_rate.is_empty() {
+            return Err(
+                "costs.fee_model = polymarket-taker needs a [costs.fee_rate] table".to_string()
+            );
+        }
+        match c.fee_rate_default {
+            None => {
+                return Err(
+                    "costs.fee_model = polymarket-taker needs costs.fee_rate_default, so an unmapped asset cannot trade fee-free by accident".to_string()
+                )
+            }
+            Some(r) if !(0.0..=1.0).contains(&r) => {
+                return Err(format!("costs.fee_rate_default = {r} is not a rate in [0,1]"))
+            }
+            Some(_) => {}
+        }
+        for (asset, cat) in &c.asset_category {
+            if !c.fee_rate.contains_key(cat) {
+                return Err(format!(
+                    "costs.asset_category.{asset} = '{cat}' has no rate in [costs.fee_rate]"
+                ));
             }
         }
         Ok(())

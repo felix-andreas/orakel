@@ -22,9 +22,9 @@ pub mod signal;
 pub mod sim;
 
 pub use metrics::{EquityPoint, Group, Metrics, SimResult};
-pub use policy::{Combine, Costs, Entry, Exit, Policy, Sizing};
+pub use policy::{Combine, Costs, Entry, Exit, FeeModel, Policy, Sizing};
 pub use signal::{parse_signals_csv, Signal, SIGNAL_HEADER};
-pub use sim::{simulate, Counts, ExitKind, Side, Trade};
+pub use sim::{simulate, taker_fee, Counts, ExitKind, Side, Trade};
 
 /// Engine version stamped into every result file, so a result can always be
 /// traced to the code that produced it.

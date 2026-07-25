@@ -19,17 +19,22 @@ use engine::{fmt_f, parse_signals_csv, simulate, Policy, SimResult};
 const POLICY_ORDER: [&str; 8] =
     ["mirror", "gate", "kelly", "anchor", "fade", "patient", "sniper", "harvest"];
 
-const SUMMARY_HEADER: [&str; 26] = [
+const SUMMARY_HEADER: [&str; 31] = [
     "signal_set",
     "policy",
     "policy_version",
+    "fee_model",
     "n_signals",
     "n_trades",
     "unfundable",
     "depth_unknown",
     "epsilon_unavailable",
     "delay_unavailable",
+    "fee_rate_unmapped",
     "staked_usd",
+    "gross_pnl_usd",
+    "fees_usd",
+    "fee_share_of_gross",
     "net_pnl_usd",
     "cents_per_trade",
     "cents_per_trade_se",
@@ -148,7 +153,10 @@ fn run(args: &[String], default_root: &Path) -> Result<(), String> {
             print_one(&res);
             let json = serde_json::to_string_pretty(&res)
                 .map_err(|e| format!("serializing {pol_name}: {e}"))?;
-            let path = out_dir.join(format!("{}.json", res.policy));
+            // Versioned filename: a policy's v1 and v2 results must coexist, or
+            // "keep v1 so old results stay attributable" (DESIGN.md §5) is a
+            // rule the engine itself breaks on the next run.
+            let path = out_dir.join(format!("{}-v{}.json", res.policy, res.policy_version));
             std::fs::write(&path, json + "\n")
                 .map_err(|e| format!("cannot write {}: {e}", path.display()))?;
         }
@@ -227,10 +235,12 @@ fn list_dir(dir: &Path, ext: &str) -> Result<Vec<PathBuf>, String> {
 fn print_one(r: &SimResult) {
     let m = &r.metrics;
     println!(
-        "   {:<8} n={:<5} pnl=${:<10} c/trade={:>8} +-{:<7} t={:>6} hit={:>6} annROLC={:>9} capeff={:>7}{}",
+        "   {:<8} v{} n={:<5} pnl=${:<10} fees=${:<9} c/trade={:>8} +-{:<7} t={:>6} hit={:>6} annROLC={:>9} capeff={:>7}{}",
         r.policy,
+        r.policy_version,
         m.n,
         fmt_f(m.net_pnl_usd),
+        fmt_f(m.fees_usd),
         opt(m.cents_per_trade),
         opt(m.cents_per_trade_se),
         opt(m.t_stat),
@@ -247,8 +257,11 @@ fn opt(v: Option<f64>) -> String {
 
 // ---------------------------------------------------------------- reporting
 
+/// `results/<set>/<policy>-v<version>.json`, grouped set → version → policies.
+type Matrix = BTreeMap<String, BTreeMap<u32, Vec<SimResult>>>;
+
 fn report(results_dir: &Path) -> Result<(), String> {
-    let mut by_set: BTreeMap<String, Vec<SimResult>> = BTreeMap::new();
+    let mut by_set: Matrix = BTreeMap::new();
     let rd = std::fs::read_dir(results_dir)
         .map_err(|e| format!("cannot read {}: {e}", results_dir.display()))?;
     for e in rd.flatten() {
@@ -261,11 +274,13 @@ fn report(results_dir: &Path) -> Result<(), String> {
                 .map_err(|e| format!("cannot read {}: {e}", p.display()))?;
             let r: SimResult = serde_json::from_str(&text)
                 .map_err(|e| format!("cannot parse {}: {e}", p.display()))?;
-            by_set.entry(set.clone()).or_default().push(r);
+            by_set.entry(set.clone()).or_default().entry(r.policy_version).or_default().push(r);
         }
     }
-    for v in by_set.values_mut() {
-        v.sort_by_key(|r| (order_of(&r.policy), r.policy.clone()));
+    for versions in by_set.values_mut() {
+        for v in versions.values_mut() {
+            v.sort_by_key(|r| (order_of(&r.policy), r.policy.clone()));
+        }
     }
 
     write_summary_csv(&results_dir.join("summary.csv"), &by_set)?;
@@ -278,28 +293,31 @@ fn report(results_dir: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn write_summary_csv(
-    path: &Path,
-    by_set: &BTreeMap<String, Vec<SimResult>>,
-) -> Result<(), String> {
+fn write_summary_csv(path: &Path, by_set: &Matrix) -> Result<(), String> {
     let mut w = csv::Writer::from_path(path)
         .map_err(|e| format!("cannot write {}: {e}", path.display()))?;
     w.write_record(SUMMARY_HEADER).map_err(|e| e.to_string())?;
-    for (set, rows) in by_set {
-        for r in rows {
+    for (set, versions) in by_set {
+        for rows in versions.values() {
+            for r in rows {
             let m = &r.metrics;
             let c = &r.counts;
             w.write_record([
                 set.as_str(),
                 r.policy.as_str(),
                 &r.policy_version.to_string(),
+                r.fee_model.as_str(),
                 &c.signals.to_string(),
                 &m.n.to_string(),
                 &c.unfundable.to_string(),
                 &c.depth_unknown.to_string(),
                 &c.epsilon_unavailable.to_string(),
                 &c.delay_unavailable.to_string(),
+                &c.fee_rate_unmapped.to_string(),
                 &fmt_f(m.staked_usd),
+                &fmt_f(m.gross_pnl_usd),
+                &fmt_f(m.fees_usd),
+                &optf(m.fee_share_of_gross),
                 &fmt_f(m.net_pnl_usd),
                 &optf(m.cents_per_trade),
                 &optf(m.cents_per_trade_se),
@@ -318,6 +336,7 @@ fn write_summary_csv(
                 if m.underpowered { "yes" } else { "no" },
             ])
             .map_err(|e| e.to_string())?;
+            }
         }
     }
     w.flush().map_err(|e| e.to_string())
@@ -341,10 +360,7 @@ fn pct(v: Option<f64>) -> String {
     }
 }
 
-fn write_summary_md(
-    path: &Path,
-    by_set: &BTreeMap<String, Vec<SimResult>>,
-) -> Result<(), String> {
+fn write_summary_md(path: &Path, by_set: &Matrix) -> Result<(), String> {
     let mut s = String::new();
     s.push_str("# Execution results — the matrix\n\n");
     s.push_str(
@@ -353,90 +369,37 @@ fn write_summary_md(
          (DESIGN.md §7). The deciding metric is **annualized return on locked capital** \
          (annROLC), not cents per trade — see DESIGN.md §3.\n\n",
     );
+    s.push_str(
+        "> **Read the version number before the numbers.** The `-v1` policies charge **no \
+         venue fee**, which is wrong: Polymarket has charged a taker fee since 2026-01-05. \
+         The `-v2` policies charge it. v1 rows are kept only so earlier reports stay \
+         attributable — **every conclusion should be read off v2.**\n\n",
+    );
 
-    for (set, rows) in by_set {
-        let (start, end) = rows
-            .first()
+    for (set, versions) in by_set {
+        let first = versions.values().flat_map(|v| v.iter()).next();
+        let (start, end) = first
             .map(|r| (r.set_date_start.clone(), r.set_date_end.clone()))
             .unwrap_or_default();
         s.push_str(&format!("## `{set}` — {start} .. {end}\n\n"));
-        if let Some(r) = rows.first() {
+        if let Some(r) = first {
             s.push_str(&format!(
                 "{} signals in the set. One regime; read every row below as conditional on this window.\n\n",
                 r.counts.signals
             ));
         }
 
-        s.push_str("### Headline\n\n");
-        s.push_str("| policy | n | c/trade | ± se | t | hit | hold d | ROLC | **annROLC** | cap.eff | net $ | maxDD $ | synth fills |\n");
-        s.push_str("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n");
-        for r in rows {
-            let m = &r.metrics;
-            s.push_str(&format!(
-                "| {}{} | {} | {} | {} | {} | {} | {} | {} | **{}** | {} | {} | {} | {} |\n",
-                r.policy,
-                if m.underpowered { " ⚠" } else { "" },
-                m.n,
-                md(m.cents_per_trade, 2),
-                md(m.cents_per_trade_se, 2),
-                md(m.t_stat, 2),
-                pct(m.hit_rate),
-                md(m.mean_hold_days, 2),
-                pct(m.return_on_locked_capital),
-                pct(m.annualized_return_on_locked_capital),
-                pct(m.capital_efficiency),
-                md(Some(m.net_pnl_usd), 2),
-                md(Some(m.max_drawdown_usd), 2),
-                pct(m.synthetic_fill_share),
-            ));
+        if versions.len() > 1 {
+            s.push_str(&fee_comparison(versions));
         }
-        s.push_str("\n⚠ = underpowered (n < 30). ROLC = return on locked capital.\n\n");
 
-        s.push_str("### Where the signals went\n\n");
-        s.push_str("| policy | signals | traded | no exec. edge | side | edge | %ile | spread | depth | unfundable | mkt cap | delay n/a | ε n/a | depth n/a |\n");
-        s.push_str("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n");
-        for r in rows {
-            let c = &r.counts;
-            s.push_str(&format!(
-                "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
-                r.policy,
-                c.signals,
-                c.traded,
-                c.no_executable_edge,
-                c.side_excluded,
-                c.below_min_edge,
-                c.below_edge_percentile,
-                c.spread_too_wide,
-                c.depth_too_thin,
-                c.unfundable,
-                c.market_cap_full,
-                c.delay_unavailable,
-                c.epsilon_unavailable,
-                c.depth_unknown,
-            ));
+        // Newest version first: the most correct cost model is the one a reader
+        // should hit before any superseded one.
+        for (ver, rows) in versions.iter().rev() {
+            let model = rows.first().map(|r| r.fee_model.clone()).unwrap_or_default();
+            s.push_str(&format!("### Policies `v{ver}` — fees: {model}\n\n"));
+            s.push_str(&version_block(rows, "####"));
         }
-        s.push_str("\nThe first nine columns are terminal and sum to `signals`; `ε n/a` and `depth n/a` are *reported, non-gating* — screens the data could not support, counted rather than silently passed.\n\n");
-
-        s.push_str("### Side and fill quality\n\n");
-        s.push_str("| policy | buys n | buys c/trade | sells n | sells c/trade | real-book n | real-book c/trade |\n");
-        s.push_str("|---|---:|---:|---:|---:|---:|---:|\n");
-        for r in rows {
-            let g = |v: &Vec<engine::Group>, k: &str| -> (String, String) {
-                match engine::metrics::group(v, k) {
-                    Some(x) => (x.n.to_string(), md(x.cents_per_trade, 2)),
-                    None => ("0".to_string(), "—".to_string()),
-                }
-            };
-            let (bn, bc) = g(&r.by_side, "buy");
-            let (sn, sc) = g(&r.by_side, "sell");
-            let (rn, rc) = g(&r.by_fill, "real-book");
-            s.push_str(&format!("| {} | {bn} | {bc} | {sn} | {sc} | {rn} | {rc} |\n", r.policy));
-        }
-        s.push('\n');
-
-        s.push_str(&contrasts(rows));
-        s.push_str(&reading(rows));
-        s.push_str(&cannot_tell(rows));
     }
 
     s.push_str("## Reading notes\n\n");
@@ -447,9 +410,17 @@ fn write_summary_md(
          flagged, not celebrated (DESIGN.md §4).\n",
     );
     s.push_str(
+        "- **Fees** are Polymarket's published taker fee, `shares × rate × p × (1 − p)` \
+         USDC per fill, charged on entry and again on an in-market exit, never at \
+         resolution (redemption is not a match). Rates are per category, read off each \
+         market's own `feeSchedule`: crypto 0.07, finance 0.04. See DESIGN.md §4.4.\n",
+    );
+    s.push_str(
         "- **annROLC** = `Σ pnl / Σ (capital_locked × days_held) × 365`, the formula in \
          DESIGN.md §3. It is a rate, not a fund return: multiply by `cap.eff` to see what \
-         the bankroll would actually have earned.\n",
+         the bankroll would actually have earned. Fees are inside `pnl`; `capital_locked` \
+         is collateral only, so v1→v2 moves the numerator and leaves the denominator \
+         alone.\n",
     );
     s.push_str(
         "- **cap.eff > 100%** means the stated bankroll could not have funded the policy; \
@@ -462,9 +433,299 @@ fn write_summary_md(
     std::fs::write(path, s).map_err(|e| format!("cannot write {}: {e}", path.display()))
 }
 
+/// One version's full block of tables. `h` is the heading level to emit at, so
+/// the same block can sit under a set (`###`) or under a version (`####`).
+fn version_block(rows: &[SimResult], h: &str) -> String {
+    let mut s = String::new();
+    s.push_str(&format!("{h} Headline\n\n"));
+    s.push_str("| policy | n | c/trade | ± se | t | hit | hold d | ROLC | **annROLC** | cap.eff | gross $ | fees $ | net $ | maxDD $ | synth fills |\n");
+    s.push_str("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n");
+    for r in rows {
+        let m = &r.metrics;
+        s.push_str(&format!(
+            "| {}{} | {} | {} | {} | {} | {} | {} | {} | **{}** | {} | {} | {} | {} | {} | {} |\n",
+            r.policy,
+            if m.underpowered { " ⚠" } else { "" },
+            m.n,
+            md(m.cents_per_trade, 2),
+            md(m.cents_per_trade_se, 2),
+            md(m.t_stat, 2),
+            pct(m.hit_rate),
+            md(m.mean_hold_days, 2),
+            pct(m.return_on_locked_capital),
+            pct(m.annualized_return_on_locked_capital),
+            pct(m.capital_efficiency),
+            md(Some(m.gross_pnl_usd), 2),
+            md(Some(m.fees_usd), 2),
+            md(Some(m.net_pnl_usd), 2),
+            md(Some(m.max_drawdown_usd), 2),
+            pct(m.synthetic_fill_share),
+        ));
+    }
+    s.push_str("\n⚠ = underpowered (n < 30). ROLC = return on locked capital. `net = gross − fees`.\n\n");
+
+    s.push_str(&format!("{h} Where the signals went\n\n"));
+    s.push_str("| policy | signals | traded | no exec. edge | side | edge | %ile | spread | depth | unfundable | mkt cap | delay n/a | ε n/a | depth n/a |\n");
+    s.push_str("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n");
+    for r in rows {
+        let c = &r.counts;
+        s.push_str(&format!(
+            "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
+            r.policy,
+            c.signals,
+            c.traded,
+            c.no_executable_edge,
+            c.side_excluded,
+            c.below_min_edge,
+            c.below_edge_percentile,
+            c.spread_too_wide,
+            c.depth_too_thin,
+            c.unfundable,
+            c.market_cap_full,
+            c.delay_unavailable,
+            c.epsilon_unavailable,
+            c.depth_unknown,
+        ));
+    }
+    s.push_str("\nThe first nine columns are terminal and sum to `signals`; `ε n/a` and `depth n/a` are *reported, non-gating* — screens the data could not support, counted rather than silently passed.\n\n");
+
+    s.push_str(&format!("{h} Side and fill quality\n\n"));
+    s.push_str("| policy | buys n | buys c/trade | sells n | sells c/trade | real-book n | real-book c/trade |\n");
+    s.push_str("|---|---:|---:|---:|---:|---:|---:|\n");
+    for r in rows {
+        let g = |v: &Vec<engine::Group>, k: &str| -> (String, String) {
+            match engine::metrics::group(v, k) {
+                Some(x) => (x.n.to_string(), md(x.cents_per_trade, 2)),
+                None => ("0".to_string(), "—".to_string()),
+            }
+        };
+        let (bn, bc) = g(&r.by_side, "buy");
+        let (sn, sc) = g(&r.by_side, "sell");
+        let (rn, rc) = g(&r.by_fill, "real-book");
+        s.push_str(&format!("| {} | {bn} | {bc} | {sn} | {sc} | {rn} | {rc} |\n", r.policy));
+    }
+    s.push('\n');
+
+    s.push_str(&contrasts(rows, h));
+    s.push_str(&reading(rows, h));
+    s.push_str(&cannot_tell(rows, h));
+    s
+}
+
+/// Policies ranked by annROLC, underpowered ones excluded (DESIGN.md §7).
+fn ranked(rows: &[SimResult]) -> Vec<&SimResult> {
+    let mut v: Vec<&SimResult> =
+        rows.iter().filter(|r| r.metrics.n >= MIN_N_FOR_A_WINNER).collect();
+    v.sort_by(|a, b| {
+        cmpf(
+            b.metrics.annualized_return_on_locked_capital,
+            a.metrics.annualized_return_on_locked_capital,
+        )
+    });
+    v
+}
+
+/// The before/after the cost model was fixed. Same signals, same gates, same
+/// sizing, same fills — the *only* difference between the two versions is that
+/// one charges the venue's real taker fee and the other charges nothing. Every
+/// sentence here is generated from the numbers so it cannot drift from them.
+fn fee_comparison(versions: &BTreeMap<u32, Vec<SimResult>>) -> String {
+    let (Some((&lo, old)), Some((&hi, new))) = (versions.iter().next(), versions.iter().last())
+    else {
+        return String::new();
+    };
+    if lo == hi {
+        return String::new();
+    }
+    let find = |rows: &[SimResult], name: &str| -> Option<usize> {
+        rows.iter().position(|r| r.policy == name)
+    };
+    let ann = |rows: &[SimResult], name: &str| -> Option<f64> {
+        find(rows, name)
+            .and_then(|i| rows[i].metrics.annualized_return_on_locked_capital)
+            .filter(|_| find(rows, name).map(|i| rows[i].metrics.n).unwrap_or(0) >= MIN_N_FOR_A_WINNER)
+    };
+
+    let mut s = format!("### Before and after fees — `v{lo}` (fee-free) → `v{hi}` (real fees)\n\n");
+    s.push_str(&format!(
+        "Identical selection, sizing, entry, exit and fills. The single difference is the \
+         cost model: `v{lo}` charged nothing, `v{hi}` charges Polymarket's published taker \
+         fee `shares × rate × p × (1 − p)` on every fill — entry always, exit only when the \
+         position is closed in the market. **This is the table that says which earlier \
+         conclusions survive.**\n\n"
+    ));
+
+    let rank_lo = ranked(old);
+    let rank_hi = ranked(new);
+    let rank_of = |r: &[&SimResult], name: &str| -> String {
+        match r.iter().position(|x| x.policy == name) {
+            Some(i) => format!("#{}", i + 1),
+            None => "—".to_string(),
+        }
+    };
+
+    s.push_str(&format!("| policy | n | annROLC v{lo} | annROLC v{hi} | Δ | rank v{lo} → v{hi} | c/trade v{lo} → v{hi} | fees $ | fees % of gross |\n"));
+    s.push_str("|---|---:|---:|---:|---:|:---:|---:|---:|---:|\n");
+    for r in new {
+        let Some(i) = find(old, &r.policy) else { continue };
+        let o = &old[i];
+        let (mo, mn) = (&o.metrics, &r.metrics);
+        let delta = match (
+            mo.annualized_return_on_locked_capital,
+            mn.annualized_return_on_locked_capital,
+        ) {
+            (Some(a), Some(b)) => format!("{:+.0} pp", (b - a) * 100.0),
+            _ => "—".to_string(),
+        };
+        s.push_str(&format!(
+            "| {}{} | {} | {} | {} | {} | {} → {} | {} → {} | {} | {} |\n",
+            r.policy,
+            if mn.underpowered { " ⚠" } else { "" },
+            mn.n,
+            pct(mo.annualized_return_on_locked_capital),
+            pct(mn.annualized_return_on_locked_capital),
+            delta,
+            rank_of(&rank_lo, &r.policy),
+            rank_of(&rank_hi, &r.policy),
+            md(mo.cents_per_trade, 2),
+            md(mn.cents_per_trade, 2),
+            md(Some(mn.fees_usd), 2),
+            pct(mn.fee_share_of_gross),
+        ));
+    }
+    s.push('\n');
+
+    if rank_hi.is_empty() {
+        s.push_str(&format!(
+            "No policy on this set reaches n = {MIN_N_FOR_A_WINNER}, so the engine ranks nothing here and the fee change cannot be read as a re-ranking (DESIGN.md §7).\n\n"
+        ));
+        return s;
+    }
+
+    let names = |v: &[&SimResult]| -> String {
+        v.iter().map(|r| r.policy.as_str()).collect::<Vec<_>>().join(" > ")
+    };
+    s.push_str(&format!("**Ranking by annROLC** (n ≥ {MIN_N_FOR_A_WINNER} only)\n\n"));
+    s.push_str(&format!("- before fees: {}\n", names(&rank_lo)));
+    s.push_str(&format!("- after fees: {}\n\n", names(&rank_hi)));
+
+    let moved: Vec<String> = rank_hi
+        .iter()
+        .enumerate()
+        .filter_map(|(i, r)| {
+            let was = rank_lo.iter().position(|x| x.policy == r.policy)?;
+            (was != i).then(|| format!("`{}` {}→{}", r.policy, was + 1, i + 1))
+        })
+        .collect();
+    match (rank_lo.first(), rank_hi.first()) {
+        (Some(a), Some(b)) if a.policy != b.policy => s.push_str(&format!(
+            "**The winner changes: `{}` loses the crown to `{}`.** {}\n\n",
+            a.policy,
+            b.policy,
+            if moved.is_empty() { String::new() } else { format!("Positions moved: {}.", moved.join(", ")) }
+        )),
+        (Some(a), Some(_)) => s.push_str(&format!(
+            "**`{}` keeps the top spot after fees.** {}\n\n",
+            a.policy,
+            if moved.is_empty() {
+                "No policy changed rank.".to_string()
+            } else {
+                format!("Below it, positions moved: {}.", moved.join(", "))
+            }
+        )),
+        _ => {}
+    }
+
+    // ---- the three conclusions the firm has already reported, re-checked.
+    s.push_str("**The conclusions on record, re-checked after fees**\n\n");
+
+    // (a) filtering is the biggest lever: mirror -> gate.
+    match (ann(old, "mirror"), ann(old, "gate"), ann(new, "mirror"), ann(new, "gate")) {
+        (Some(mo), Some(go), Some(mn), Some(gn)) if mo > 0.0 && mn > 0.0 => {
+            let (x_old, x_new) = (go / mo, gn / mn);
+            let verdict = if x_new >= 1.5 {
+                "**SURVIVES**"
+            } else if x_new > 1.0 {
+                "**WEAKENED**"
+            } else {
+                "**FAILS**"
+            };
+            s.push_str(&format!(
+                "- (a) *filtering is the biggest lever* — {verdict}. `mirror`→`gate` was {} → {} (×{x_old:.2}) fee-free; with fees it is {} → {} (×{x_new:.2}).\n",
+                pct(Some(mo)), pct(Some(go)), pct(Some(mn)), pct(Some(gn)),
+            ));
+        }
+        _ => s.push_str(
+            "- (a) *filtering is the biggest lever* — cannot be re-checked: `mirror` or `gate` is underpowered on this set.\n",
+        ),
+    }
+
+    // (b) sells replicate, buys do not — on the widest two-sided policy.
+    if let Some(i) = find(new, "mirror") {
+        let (o, n) = (&old[find(old, "mirror").unwrap_or(i)], &new[i]);
+        let g = |r: &SimResult, k: &str| engine::metrics::group(&r.by_side, k).and_then(|x| x.cents_per_trade);
+        match (g(o, "buy"), g(o, "sell"), g(n, "buy"), g(n, "sell")) {
+            (Some(bo), Some(so), Some(bn), Some(sn)) => {
+                let verdict = if sn > 0.0 && sn > bn {
+                    "**SURVIVES**"
+                } else if sn > bn {
+                    "**DIRECTION HOLDS, LEVEL DOES NOT** (sells no longer profitable)"
+                } else {
+                    "**FAILS**"
+                };
+                s.push_str(&format!(
+                    "- (b) *sells replicate, buys do not* — {verdict}. On `mirror`, sells {bo_s} → {sn_s} c/trade and buys {bb} → {bn_s} c/trade once the fee is charged.\n",
+                    bo_s = md(Some(so), 2),
+                    sn_s = md(Some(sn), 2),
+                    bb = md(Some(bo), 2),
+                    bn_s = md(Some(bn), 2),
+                ));
+            }
+            _ => s.push_str("- (b) *sells replicate, buys do not* — `mirror` did not trade both sides on this set.\n"),
+        }
+    }
+
+    // (c) the two metrics disagree: who leads each.
+    let lead = |v: &[&SimResult], by_cents: bool| -> Option<&SimResult> {
+        v.iter()
+            .copied()
+            .max_by(|a, b| {
+                if by_cents {
+                    cmpf(a.metrics.cents_per_trade, b.metrics.cents_per_trade)
+                } else {
+                    cmpf(
+                        a.metrics.annualized_return_on_locked_capital,
+                        b.metrics.annualized_return_on_locked_capital,
+                    )
+                }
+            })
+    };
+    match (lead(&rank_lo, true), lead(&rank_lo, false), lead(&rank_hi, true), lead(&rank_hi, false)) {
+        (Some(co), Some(ao), Some(cn), Some(an)) => {
+            let verdict = if co.policy == cn.policy && ao.policy == an.policy {
+                "**SURVIVES**"
+            } else {
+                "**CHANGES**"
+            };
+            s.push_str(&format!(
+                "- (c) *`{}` wins annROLC while `{}` wins cents/trade* — {verdict}. After fees the annROLC leader is **`{}`** ({}) and the cents/trade leader is **`{}`** ({}).\n",
+                ao.policy,
+                co.policy,
+                an.policy,
+                pct(an.metrics.annualized_return_on_locked_capital),
+                cn.policy,
+                md(cn.metrics.cents_per_trade, 2),
+            ));
+        }
+        _ => {}
+    }
+    s.push('\n');
+    s
+}
+
 /// The eight policies exist to answer six specific questions. Answer them with
 /// the numbers, and refuse to answer where the sample is too small.
-fn contrasts(rows: &[SimResult]) -> String {
+fn contrasts(rows: &[SimResult], h: &str) -> String {
     let find = |name: &str| rows.iter().find(|r| r.policy == name);
     let pairs: [(&str, &str, &str); 6] = [
         ("gate", "mirror", "is filtering alone worth anything?"),
@@ -474,7 +735,7 @@ fn contrasts(rows: &[SimResult]) -> String {
         ("patient", "fade", "does a 24h delay improve sell fills?"),
         ("harvest", "fade", "is patience actually paid for?"),
     ];
-    let mut s = String::from("### What separates the policies\n\n");
+    let mut s = format!("{h} What separates the policies\n\n");
     s.push_str("| contrast | question | n (a / b) | annROLC a → b | c/trade a → b | verdict |\n");
     s.push_str("|---|---|---|---|---|---|\n");
     for (a, b, q) in pairs {
@@ -560,9 +821,9 @@ fn contrasts(rows: &[SimResult]) -> String {
 
 /// A short, mechanical reading of the matrix: the facts a human would extract
 /// first, generated from the numbers so they can never drift from them.
-fn reading(rows: &[SimResult]) -> String {
+fn reading(rows: &[SimResult], h: &str) -> String {
     let find = |name: &str| rows.iter().find(|r| r.policy == name);
-    let mut s = String::from("### The short reading\n\n");
+    let mut s = format!("{h} The short reading\n\n");
     // Facts about the *set* hold even when no policy is powered enough to rank.
     let silent: Vec<&str> =
         rows.iter().filter(|r| r.metrics.n == 0).map(|r| r.policy.as_str()).collect();
@@ -722,8 +983,8 @@ fn cmpf(a: Option<f64>, b: Option<f64>) -> std::cmp::Ordering {
 
 /// Collapse notes that say the same thing with different numbers into one
 /// bullet, so the caveat list stays readable as policies multiply.
-fn cannot_tell(rows: &[SimResult]) -> String {
-    let mut s = String::from("### What this sample cannot tell us\n\n");
+fn cannot_tell(rows: &[SimResult], h: &str) -> String {
+    let mut s = format!("{h} What this sample cannot tell us\n\n");
     // Group by the note with every digit run masked, so "1161 of the trades ..."
     // and "793 of the trades ..." land in the same bucket.
     let mut groups: BTreeMap<String, Vec<(String, String)>> = BTreeMap::new();

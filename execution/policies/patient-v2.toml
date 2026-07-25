@@ -1,0 +1,71 @@
+name = "patient"
+version = 2
+created = "2026-07-25"
+character = "Fade with entry delayed 24h on frozen inputs. Tests the wing-drift finding that one-way lottery flow makes sell fills BETTER with delay (+7.7c -> +10.0c)."
+# v2 = v1 with the venue's real taker fee. Nothing else differs, so the
+# v1 -> v2 delta is the cost of the fee and nothing but the cost of the fee.
+
+[combine]
+method = "best-improvement"
+
+[entry]
+min_edge = 0.05
+sides = ["sell"]
+delay_hours = 24
+require_book = true
+min_spread_ok = 0.05
+min_depth_usd = 200.0
+respect_venue_epsilon = true
+
+[sizing]
+method = "fractional-kelly"
+kelly_fraction = 0.25
+bankroll_usd = 1000.0
+max_bankroll_fraction = 0.03
+max_per_market_usd = 50.0
+
+[exit]
+rule = "hold-to-resolution"
+
+[costs]
+assumed_spread = 0.03
+max_book_fraction = 0.15
+# ---------------------------------------------------------------- venue fees
+# Polymarket's published taker fee (docs.polymarket.com/trading/fees):
+#
+#     fee_usdc = shares x rate x p x (1 - p)      per taker fill
+#
+# Charged on entry, and again on an exit taken in the market; settlement at
+# resolution is a redemption, not a match, and is not charged. Makers pay
+# nothing, but every fill this engine simulates crosses the spread, so every
+# fill is a taker fill. v1 of this policy charged nothing at all, which was
+# wrong: fees have been live since 2026-01-05.
+fee_model = "polymarket-taker"
+fee_rate_default = 0.05       # the venue's "Other / General" rate; never silently free
+
+# Rates by category, verbatim from the venue's own `feeSchedule.rate`.
+[costs.fee_rate]
+crypto = 0.07
+sports = 0.05
+finance = 0.04
+politics = 0.04
+tech = 0.04
+mentions = 0.04
+economics = 0.05
+culture = 0.05
+weather = 0.05
+general = 0.05
+geopolitics = 0.0
+
+# Asset -> category. Verified 2026-07-25 by reading `feeType`/`feeSchedule` off
+# every asset's own markets: btc/eth are `crypto_fees_v2` (0.07); the metals,
+# WTI and the equity/index barriers are all `finance_prices_fees` (0.04) —
+# commodities are NOT a separate "economics" bucket on this venue.
+[costs.asset_category]
+btc = "crypto"
+eth = "crypto"
+gold = "finance"
+silver = "finance"
+wti = "finance"
+spy = "finance"
+nvda = "finance"
