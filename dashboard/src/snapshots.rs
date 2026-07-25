@@ -21,6 +21,9 @@ use worker::{Bucket, Cache, Date, Env, Headers, Response, Result};
 const BOOKS_PREFIX: &str = "snapshots/books/";
 /// Series responses cache TTL (Cache API), seconds.
 const SERIES_TTL_SECS: u32 = 300;
+/// How many UTC days back `market_series_json` scans (each day is one list
+/// call plus one get per stored hour, so this is the response-time knob).
+const SERIES_DAYS: u64 = 3;
 
 // ---------------------------------------------------------------------------
 // R2 access
@@ -140,6 +143,47 @@ pub async fn series_json(env: &Env, date: &str, slug: &str, req_url: &str) -> Re
     // slug/date are validated (no quotes/backslashes) — safe to embed.
     let body = format!(
         "{{\"label\":\"{slug} — midpoint, {date} (UTC)\",\"points\":[{}]}}",
+        points.join(",")
+    );
+
+    let headers = Headers::new();
+    headers.set("content-type", "application/json; charset=utf-8")?;
+    headers.set("cache-control", &format!("public, max-age={SERIES_TTL_SECS}"))?;
+    let mut resp = Response::ok(body)?.with_headers(headers);
+    if let Ok(clone) = resp.cloned() {
+        let _ = cache.put(req_url, clone).await;
+    }
+    Ok(resp)
+}
+
+/// GET /data/market-series/<slug>.json → the last `SERIES_DAYS` days of
+/// hourly midpoints for one market, for the /markets/<slug> chart. Same shape
+/// and cache policy as `series_json`; days with no objects cost one list call.
+pub async fn market_series_json(env: &Env, slug: &str, req_url: &str) -> Result<Response> {
+    if !valid_slug(slug) {
+        return Response::error("bad request", 400);
+    }
+
+    let cache = Cache::default();
+    if let Ok(Some(hit)) = cache.get(req_url, true).await {
+        return Ok(hit);
+    }
+
+    let bucket = env.bucket("ORAKEL")?;
+    let now_ms = Date::now().as_millis();
+    let mut points = Vec::new();
+    for back in (0..SERIES_DAYS).rev() {
+        let date = date_string(now_ms.saturating_sub(back * 86_400_000));
+        for key in day_keys(&bucket, &date).await {
+            let Some(t) = key_epoch_ms(&key) else { continue };
+            let Some(doc) = get_doc(&bucket, &key).await else { continue };
+            if let Some(v) = market_mid(&doc, slug) {
+                points.push(format!("{{\"t\":{t},\"v\":{v}}}"));
+            }
+        }
+    }
+    let body = format!(
+        "{{\"label\":\"{slug} — midpoint (hourly, UTC)\",\"points\":[{}]}}",
         points.join(",")
     );
 

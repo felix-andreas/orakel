@@ -34,6 +34,19 @@ let markets: serde_json::Value = reqwest::blocking::Client::new()
   `/public-search?q=<text>&limit_per_type=20` → `{events: [...], ...}` with `closed`
   flags. Much better than paging `/events` when you know the family's title words
   (e.g. `q=temperature+increase` returns 20+ monthly instances back to 2024).
+- **Deep history: offset paging hard-caps at `offset=2000`** (`{"error":"offset too large,
+  use /events/keyset for deeper pagination"}` — and it returns that as a *200 with a JSON
+  object*, so a `list`-assuming parser silently drops pages). `/events/keyset` ignores a
+  `cursor=` param; the documented name is **`after_cursor`**. The reliable pattern for a
+  whole-family harvest is **date-windowed offset paging**: weekly
+  `end_date_min` / `end_date_max` windows × `offset` 0,100,… until a short page
+  (16,959 resolved esports events over 7 months, 2026-07-25).
+- **Sports events are strongly typed** — don't parse titles. Each market carries
+  `sportsMarketType` (`moneyline`, `child_moneyline`, `totals`, `map_handicap`,
+  `round_handicap_game_N`, `kill_over_under_game`, …), plus `gameStartTime` (the exact
+  match start, essential for defining a pre-match checkpoint), `gameId`, and
+  `resolutionSource`. Verify semantics in `description` anyway — the leg's *meaning*
+  (which side is `outcomes[0]`) is only stated there.
 
 ## Prices — CLOB (keyed by outcome token id, not market)
 
@@ -57,6 +70,27 @@ GET https://data-api.polymarket.com/trades?market=<condition_id>&limit=500&offse
 
 Paginate for the full tape. Polymarket headline `volume` ≈ 2× taker notional from this
 endpoint (it counts shares, both sides). Sub-1-share fills may be omitted.
+
+## Taker fees — put them in every PnL line
+
+Polymarket charges a **taker-only** fee on most categories (makers pay nothing and share a
+rebate). Documented formula, confirmed against each market's `feeSchedule` field:
+
+```
+fee_usdc = shares × feeRate × p × (1 − p)
+```
+
+`feeRate` by category: **crypto 0.07 · sports 0.05 · economics/culture/weather/other 0.05 ·
+finance/politics/tech/mentions 0.04 · geopolitics 0 (fee-free)**. The dollar fee is
+symmetric about 0.50 and *peaks* there: sports costs **1.25c/share at p=0.50**, 1.20c at
+0.40, 0.45c at 0.10. Read it per market from `feeSchedule`
+(`{rate, exponent, takerOnly, rebateRate}`) + `feesEnabled` + `feeType`; `/fee-rate?token_id=`
+returns only the `base_fee` in bps.
+
+Consequences: (a) mid-priced legs are the *most* fee-expensive per share, so a 3–50c
+"fundable band" trade pays ~1.2c before spread; (b) resting limit orders (maker) avoid the
+fee entirely — worth modelling separately from a taker fill; (c) geopolitics markets are
+the only genuinely fee-free ones.
 
 ## Identity conventions
 

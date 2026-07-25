@@ -84,6 +84,23 @@ pub async fn repo_text(env: &Env, path: &str, embedded: &str) -> Fetched {
     }
 }
 
+/// Commit timestamp of `main`'s HEAD (RFC3339), for the "last updated"
+/// indicator. `None` ⇒ live reads unavailable; the caller falls back to the
+/// build stamp. Same 60s cache as every other read, so it costs one request a
+/// minute across the whole dashboard.
+pub async fn head_commit_date(env: &Env) -> Option<String> {
+    let tok = token(env)?;
+    let url = format!("https://api.github.com/repos/{REPO}/commits/{BRANCH}");
+    let (status, body) = gh_get(&url, &tok).await.ok()?;
+    if status != 200 {
+        return None;
+    }
+    let v: serde_json::Value = serde_json::from_str(&body).ok()?;
+    v["commit"]["committer"]["date"]
+        .as_str()
+        .map(str::to_string)
+}
+
 /// All blob paths of `main` via one recursive Trees API call.
 /// `None` ⇒ live listing unavailable (no token / fetch failed).
 pub async fn repo_tree(env: &Env) -> Option<Vec<String>> {

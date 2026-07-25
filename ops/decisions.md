@@ -5,6 +5,37 @@ who decided**. Newest first.
 
 ---
 
+## 2026-07-25 — Execution layer built; watchlist mirroring moved to run start
+
+Built the execution simulator (`execution/`): eight named policies, two signal sets, the
+capital-lockup accounting rule (annualized return on locked capital, not cents/trade),
+conservative fills (never at mid), and a refusal to name winners below n=30.
+
+First matrix (details in `execution/results/SUMMARY.md`) produced three findings:
+**(a)** filtering is the single biggest lever — `mirror`→`gate` roughly doubles
+annualized return on strictly fewer trades; **(b)** the sell-side house finding
+replicates independently (sells +7.75c/trade vs buys +0.47c on the naive policy);
+**(c)** the two headline metrics genuinely disagree — `sniper` wins cents/trade,
+`harvest` wins annualized return because it holds 3 days instead of 10 — which is the
+design's own argument reproduced on data.
+
+**And one sobering result: on our OWN live predictions, seven of eight policies take
+zero trades.** After a 3c spread our 21 scored predictions had under 5c of *executable*
+edge: they were 2–7c wings whose "edge" was measured against a midpoint that is not a
+tradeable price. Being right 21/21 and having nothing to trade are compatible states,
+and the firm now measures both.
+
+Operational change (CEO playbook step 3): the R2 watchlist is now rebuilt from **active
+applications at the START of every run**, not from predictions at the end. Root cause of
+the missing books: the watchlist grew 18→40 markets 26 minutes *after* the run that
+produced 18 of the 21 signals, so the hourly snapshot worker had never seen them. Fixing
+the order makes future signal sets book-complete at zero cost.
+
+Also corrected a 10× arithmetic error in DESIGN.md §3's worked example (the formula and
+the engine were always right; the prose was not) — caught by the implementing agent.
+
+---
+
 ## 2026-07-25 — arena-rank: thesis killed, mechanism kept (variant split)
 
 `arena-rank/satellites` day-1 falsification killed its founding thesis on gate 2: the

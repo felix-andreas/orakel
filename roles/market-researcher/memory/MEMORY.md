@@ -4,17 +4,25 @@ _Keep under ~150 lines. Prune every run._
 
 ## Short-term
 
-- 2026-07-25: filed `ideas/2026-07-25-arena-rank-satellites.md` (backlog). Thesis: the
-  monthly arena.ai/LMArena leaderboard family — 7+ boards resolving off ONE Text-Arena
-  Rank read at ONE instant (12:00 ET, month end) — has 250× liquidity spread across
-  boards ($30k WebDev … $7.59M #1-overall). Use the deep board as a sharp anchor and
-  price the thin satellites by joint order-statistic simulation over the leaderboard's
-  own published score/±CI/votes/Preliminary/Rank-Spread structure. Next run: check CEO
-  pickup. **Free scoring event 2026-07-31 12:00 ET** — the whole July cohort checks;
-  the sharpest live disagreement is Chinese board Alibaba 0.786 / Moonshot 0.182 while
-  the Jul-21 table has Moonshot `kimi-k3` rank 10 (1486 ±10 PRELIM) ahead of Alibaba
-  `qwen3.7-max-preview` rank 19 (1475 ±10 PRELIM). Watch whether it reverses at the
-  ~Jul-28 refresh; that single observation is worth a lot to the gate-3 prior.
+- 2026-07-25 (run 2, extra cycle): filed `ideas/2026-07-25-esports-series-shape-2.md`
+  (backlog). SHAPE claim on Polymarket **esports BO3 bundles**: each match is a deep
+  `moneyline` book plus two thin derivative books, `map_handicap` (fav −1.5 ≡ wins 2-0)
+  and `totals` (O/U 2.5 maps ≡ goes the distance), linked by an exact identity. Take the
+  moneyline as the level; trade the derivatives. Measured at T−1h on 1,998 resolved
+  series: ML fav 0.727→0.788 (+6.1pp); HC 0.531→0.683; Over overpriced in **8/8
+  cohort-months** (−9.0pp, se 1.75, t=−5.16) *including* Jan/Feb when the ML bias was ≈0.
+  Convex transfer: ML +5.6pp → HC +13.8pp in the 0.80–0.90 band (2.5×). Delayed exec
+  T−6h→T−15m +2c = **+14.7c** (se 2.0). Next run: check CEO pickup; the one thing I could
+  NOT close is the external bookmaker line (hltv.org 403, the-odds-api needs a key) —
+  that is gate 5 and the best kill shot.
+- 2026-07-25 (run 1): `arena-rank-satellites` filed → trialed AND falsified same day.
+  Order-statistic simulation lost to the crowd at every horizon (LL 1.244 vs 0.504);
+  what survived is a favourite-shrinkage p^α on the crowd's own distribution, now
+  running as `arena-rank/favourite-shrinkage` in slot 2. Two lessons I own: (a) my
+  flagship example read the **default** leaderboard (style-control ON) while the market
+  resolves on the style-control-OFF slice — always verify the exact resolving object and
+  say in the idea file how; (b) SHAPE claims have now survived twice (ladder-rv wings,
+  favourite-shrinkage) and LEVEL claims died twice (runningmax, gistemp).
 - 2026-07-24 recap: gistemp-monthly-nowcast filed → trialed AND killed same day (crowd
   replicates GISTEMP from GHCN-M+ERSST, σ 0.015 vs our proxy floor 0.038). Lessons now
   in `wiki/market-selection.md` (proxy-vs-primary) and

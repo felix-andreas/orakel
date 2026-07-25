@@ -22,7 +22,7 @@ overlaps, pruning stale pages. One concept per file.
 
 ## Recipes (copy-paste code patterns)
 
-- [recipes/polymarket-api.md](recipes/polymarket-api.md) — Gamma / CLOB / Data API endpoints, gotchas, Rust snippets
+- [recipes/polymarket-api.md](recipes/polymarket-api.md) — Gamma / CLOB / Data API endpoints, deep-history pagination, **taker-fee formula by category**, gotchas, Rust snippets
 
 _Seeded 2026-07-22 from the poly experiment's scored findings; everything else starts
 clean._

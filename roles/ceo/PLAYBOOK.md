@@ -9,20 +9,28 @@ and build the firm's tooling. You are autonomous within [`CONSTITUTION.md`](../.
    yesterday's run manifest exists — if a day silently failed, diagnose first.
 2. **Inbox.** Handle `roles/ceo/inbox/` (and check `roles/felix/inbox/` for unanswered
    items you owe him). Escalate what's Felix's to `roles/felix/inbox/`.
-3. **Market researcher.** Spawn it (model per routing policy). It returns today's idea →
+3. **Mirror the watchlist FIRST — before spawning anyone.** Rebuild
+   `config/watchlist.json` in R2 from the union of **active applications**
+   (`strategies/*/*/applications/*.toml`), not from yesterday's predictions. Reason
+   (execution engine, 2026-07-25): the watchlist used to be mirrored *after* the run that
+   produced predictions, so the snapshot worker had no book for the markets we had just
+   predicted on — 18 of our first 21 scored signals were unusable for execution
+   simulation. Any market a variant tracks must be snapshotted from the moment it is
+   onboarded, well before we predict on it.
+4. **Market researcher.** Spawn it (model per routing policy). It returns today's idea →
    `ideas/` backlog.
-4. **Research slots.** For each active slot, spawn its researcher (variant folder tells it
+5. **Research slots.** For each active slot, spawn its researcher (variant folder tells it
    everything). Collect predictions. Slots run in parallel; **you** append all CSV rows
    afterward (single writer).
-5. **Executors.** Same for each live variant.
-6. **Slot management.** Trials past `trial_review_due`: decide promote / discard / extend
+6. **Executors.** Same for each live variant.
+7. **Slot management.** Trials past `trial_review_due`: decide promote / discard / extend
    on scored evidence (`scoring/`, backtests) → update `strategy.toml` status,
    `ops/state.toml`, `ops/decisions.md`. Free slots: fill from `ideas/` backlog (your
    pick, with reason).
-7. **Scoring.** If any market resolved: append `predictions/resolutions.csv`, run
+8. **Scoring.** If any market resolved: append `predictions/resolutions.csv`, run
    `scoring/`, note headline movements.
-8. **Dashboard.** Redeploy if dashboard code changed. Spot-check it renders current state.
-9. **Close.** Write `ops/runs/<date>.toml` (steps, failures, token spend), update memory
+9. **Dashboard.** Redeploy if dashboard code changed. Spot-check it renders current state.
+10. **Close.** Re-mirror the watchlist if new applications appeared; Write `ops/runs/<date>.toml` (steps, failures, token spend), update memory
    (prune!), worklog entry, commit + push.
 
 ## Health checks (build and grow your own)

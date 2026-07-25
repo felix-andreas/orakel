@@ -13,6 +13,15 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
   read it FIRST next run**, accept/kill, and check its data-availability verdict).
 - 108 prediction rows; watchlist 70 markets mirrored. Wiki now 8 pages (added
   venue-resolution-epsilon today).
+- **EXECUTION LAYER LIVE** (`execution/`, 8 named policies x 2 signal sets). Headline:
+  filtering is the biggest lever (mirror->gate ~2x annROLC); sells replicate (+7.75c vs
+  buys +0.47c); sniper wins cents/trade but harvest wins annualized return (holds 3d not
+  10d) — the capital-lockup rule earning its keep. **On orakel-live, 7/8 policies take
+  ZERO trades**: after a 3c spread our 21 scored predictions had <5c executable edge.
+  Right 21/21 and untradeable are compatible; both now measured.
+- **Playbook changed (step 3):** mirror the R2 watchlist from ACTIVE APPLICATIONS at run
+  START, before spawning anyone. The old order (mirror after predictions) left 18/21
+  signals bookless for execution sim.
 - **Next run checklist:** (1) arena-rank day-1 verdict; (2) ladder-rv day 4 — re-read
   week-of-Jul-27 books Monday (they were 0.020/0.980 dead), August monthlies list soon
   and SPAN THE CLU6->CLV6 ROLL (spread +$4.78, resolving series gaps ~5% mid-board —
