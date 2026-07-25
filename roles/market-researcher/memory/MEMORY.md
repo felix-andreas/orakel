@@ -4,29 +4,34 @@ _Keep under ~150 lines. Prune every run._
 
 ## Short-term
 
-- 2026-07-25 (run 2, extra cycle): filed `ideas/2026-07-25-esports-series-shape-2.md`
-  (backlog). SHAPE claim on Polymarket **esports BO3 bundles**: each match is a deep
-  `moneyline` book plus two thin derivative books, `map_handicap` (fav −1.5 ≡ wins 2-0)
-  and `totals` (O/U 2.5 maps ≡ goes the distance), linked by an exact identity. Take the
-  moneyline as the level; trade the derivatives. Measured at T−1h on 1,998 resolved
-  series: ML fav 0.727→0.788 (+6.1pp); HC 0.531→0.683; Over overpriced in **8/8
-  cohort-months** (−9.0pp, se 1.75, t=−5.16) *including* Jan/Feb when the ML bias was ≈0.
-  Convex transfer: ML +5.6pp → HC +13.8pp in the 0.80–0.90 band (2.5×). Delayed exec
-  T−6h→T−15m +2c = **+14.7c** (se 2.0). Next run: check CEO pickup; the one thing I could
-  NOT close is the external bookmaker line (hltv.org 403, the-odds-api needs a key) —
-  that is gate 5 and the best kill shot.
-- 2026-07-25 (run 1): `arena-rank-satellites` filed → trialed AND falsified same day.
-  Order-statistic simulation lost to the crowd at every horizon (LL 1.244 vs 0.504);
-  what survived is a favourite-shrinkage p^α on the crowd's own distribution, now
-  running as `arena-rank/favourite-shrinkage` in slot 2. Two lessons I own: (a) my
-  flagship example read the **default** leaderboard (style-control ON) while the market
-  resolves on the style-control-OFF slice — always verify the exact resolving object and
-  say in the idea file how; (b) SHAPE claims have now survived twice (ladder-rv wings,
-  favourite-shrinkage) and LEVEL claims died twice (runningmax, gistemp).
-- 2026-07-24 recap: gistemp-monthly-nowcast filed → trialed AND killed same day (crowd
-  replicates GISTEMP from GHCN-M+ERSST, σ 0.015 vs our proxy floor 0.038). Lessons now
-  in `wiki/market-selection.md` (proxy-vs-primary) and
-  `wiki/reference/first-print-vintages.md`. Don't re-propose climate-index nowcasts.
+- 2026-07-25 (run 3, Felix brief: find SIMULATION edge). Filed
+  `ideas/2026-07-25-quake-ladder-overdispersion-3.md` (backlog) + a discarded-idea file
+  `ideas/2026-07-25-tennis-games-ladder-discarded.md` carrying three kills. **The lesson of
+  the whole cycle: the binding constraint is WHO ELSE IS HERE, not modelling skill.** Run
+  the two counterparty checks BEFORE any backtest — (1) bookmaker/exchange line
+  (Pinnacle guest API), (2) does a specialist publish the sim free (check page SOURCE).
+  Now in `wiki/market-selection.md`.
+- **Filed idea = weekly USGS seismicity count ladders, window-open only.** M5.5+ weekly
+  count over 1,385 wks: mean 9.46, var 47.83, **Fano 5.06** (Poisson=1) → 2.25× wider than
+  Poisson; both tails ~1.6× too cheap, middle up to 1.6× too rich. M6.5+ Fano 1.51.
+  Clustering: after M6.5+ next-day M5.5+ rate 2.68× baseline (n=1,208); after M7.0+ 3.77×
+  (n=396). Gate 0: **21/21 M6.5+ exact, 15/20 M5.5+ (every miss off by one)** — because
+  **2.01 events/week sit at EXACTLY M5.5** and magnitudes get revised ±0.1 post-hoc = one
+  whole bucket. Crowd calibrated on the favourite at open (0.364 vs Herfindahl 0.366) → it
+  is a pure SHAPE claim. Crude conditional model beats market **+0.110 LL at open (se
+  0.046, 17/22)** and ~0 mid-week. Mid-week is dead: after a qualifying quake the `0` leg
+  moves **−0.279 within 1h** of −0.398 total = 70% in the first hour (runningmax pattern).
+  Books: all 8 legs 1–4.9c spread, $2.3–4.4k liq. **0/314 dead legs** (phantom gate).
+- **KILLED, do not re-propose:** (a) **PGA top-5/10/20 boards** — DataGolf publishes the
+  whole live Monte Carlo as free JSON in page source; also 10/100 legs ≤5c. Same kill hits
+  **MLB playoff ladders** (FanGraphs free). (b) **Tennis 14-leg derivative ladder** —
+  Polymarket = Pinnacle to **+0.07pp** on ≤3c books (27/27 within 3pp). My −7.6pp headline
+  was the phantom artifact: DEAD legs −27.5pp vs LIVE −5.0pp, and it **inverted with
+  liquidity** ($0 vol −17.3pp → >$1k vol **+11.8pp**). (c) earthquake ladders *mid-window*
+  (speed race).
+- 2026-07-25 (run 2): filed `ideas/2026-07-25-esports-series-shape-2.md` — **trialed and
+  KILLED same day** by exactly these two screens (Pinnacle −0.13pp; live books +0.08pp).
+  My idea; the mistake was measuring before screening. Slot 3 retired.
 
 ## Medium-term
 
@@ -44,16 +49,11 @@ _Keep under ~150 lines. Prune every run._
   every checkpoint (Wed 0.65→won 0.75; Mon-frozen 0.92→won 0.97, n=102) but the bid side
   is empty (top-of-book $0–96) so the sell-the-field side is unexecutable; "Other" wins
   4.5%. Reusable if a daily rank feed ever becomes reachable.
-- **Esports landscape** (2026-07-25, measured): Polymarket lists ~30–40 full-structure
-  BO3s **per day** across cs2/val/lol/dota2/r6siege/sc2/mlbb; **6,710 resolved triples**
-  (moneyline + map_handicap + totals) Dec-2025 → Jul-2026, 99.93% arithmetically
-  consistent. Legs are typed by `sportsMarketType`; `gameStartTime` gives an exact
-  pre-match checkpoint. Moneyline books are deep (median $33k cs2 / $81k lol, 1c spread);
-  the derivative books are 5–20× thinner ($1.4k / $4.6k median) — that gap is the whole
-  idea. Realised: fav 2-0 57.0%, fav 2-1 20.2%, dog 2-1 12.5%, dog 2-0 10.3%. Bias is
-  **bigger on tier-1 events** (LEC/LPL/VCT/BLAST) than on obscure qualifiers — fan money,
-  not information. Taker-tape check: buying the underdog lost −18.3c/share over 4.43M
-  shares. Effect reproduces on a disjoint low-volume sample (ML +7.0pp, Over −10.0pp).
+- **Esports landscape** (2026-07-25, post-kill): ~30-40 BO3s/day, 6,710 resolved triples,
+  typed by `sportsMarketType`. The measured "+14pp sweep edge" was phantom midpoints; on
+  live books it was +0.08pp (se 0.58) and Pinnacle agreed with Polymarket to −0.13pp. Keep
+  the harvest recipe, discard the thesis. Same structure now confirmed in tennis.
+
 - **Arena/LMArena** (2026-07-25): satellites idea killed; `favourite-shrinkage` runs in
   slot 2. Facts that outlived it: Wayback DOES cover the whole family life once you
   follow the `lmarena.ai` → `arena.ai` rebrand (8,132 captures of the new host); the
@@ -128,6 +128,17 @@ _Keep under ~150 lines. Prune every run._
   not just something to avoid, it is a free sharp anchor whenever thin boards resolve off
   the *same object at the same instant*. Look for one-object/many-boards families and
   price the satellites from the anchor.
+- **Screen ordering, learned the hard way 2026-07-25 (run 3): counterparty checks come
+  BEFORE the backtest.** (1) Does a bookmaker/exchange price this object? (2) Does a
+  specialist publish the simulation free — check the PAGE SOURCE, not the UI. I ran a
+  three-hour tennis backtest and then killed it in ten minutes with Pinnacle. Corollary
+  (positive): simulation edge survives only where there is **no professional counterparty
+  at all**. That is now the first filter I apply to any candidate.
+- **Any "edge" measured off CLOB midpoints must be decomposed by book state before it is
+  believed.** Split by "did this price ever move?" and by leg volume; report the live-book
+  number as the headline. Two independent families (esports, tennis) produced double-digit
+  phantom edges that vanished or inverted. Earthquake ladders scored 0/314 dead legs, so
+  the gate discriminates — it does not kill everything.
 - The screen that has now killed three candidates in a row is one question: **does the
   crowd have an observation channel into the resolution variable that our pipeline
   lacks?** (GISTEMP: upstream inputs. Netflix: the in-app daily list. Weather dailies:

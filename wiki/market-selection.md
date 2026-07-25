@@ -75,6 +75,20 @@ Run the cheap screens first, in this order — each has killed a real trial in o
 4. **[Proxy-vs-primary](reference/published-ci-vs-printed.md)** — can the crowd run the
    resolving source's own inputs? Then a proxy model is dominated before it is built.
 
+- **Objects a professional counterparty already prices or publishes.** The binding
+  constraint on the 2026-07-25 simulation cycle was not modelling skill — it was *who else
+  is here*. Three of four candidates died to one question: **golf** (DataGolf ships its
+  complete live Monte Carlo — win/top5/top10/top20/cut per player — as free JSON **in the
+  page source**, so read the source, not the UI), **MLB season ladders** (FanGraphs
+  publishes free daily playoff odds from 20,000 sims), **tennis derivative ladders**
+  (Polymarket's totals ladder *is* the Pinnacle line to +0.07pp). Run these two checks
+  **before** the backtest, cheapest first: (1) does a bookmaker/exchange price this object
+  ([sharp-line-screen](reference/sharp-line-screen.md))? (2) does a specialist publish the
+  simulation free? A three-hour backtest run before them is three hours of manufactured
+  edge. The corollary is the positive selection rule: **simulation edge survives where
+  there is no professional counterparty at all** — global seismicity counts, obscure index
+  ladders, venue-specific bucket families.
+
 ## The test
 
 > Can a well-calibrated model, buildable from public data, know something this market's

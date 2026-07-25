@@ -4,6 +4,81 @@ One dated entry per run. Name the exact model id that did the work.
 
 ---
 
+## 2026-07-25 (run 3) — Felix brief: hunt SIMULATION edge. One idea filed, three candidates killed
+
+Model: **opus-5 (xhigh)**. Brief: find niche markets whose resolution variable is a
+path-dependent/combinatorial function we can simulate faster or more faithfully than anyone
+pricing it — closed form absent or wrong, cheap public inputs, legs of one simulation traded
+as separate books.
+
+- Onboarded on the four screens plus the two wiki pages that landed mid-run from the
+  `series-shape/bo3-derivatives` kill (`phantom-midpoints.md`, `sharp-line-screen.md`). Those
+  two pages changed the outcome of this cycle — see below.
+- Scanned 600 open events by `volume24hr` and censused multi-leg structures. Four candidates
+  worked up properly; **three died, and the survivor is the one nobody else prices.**
+
+**Candidate 1 — PGA Tour top-5/10/20 boards. KILLED on the incumbent screen.** Structurally
+ideal: four separate 100+-leg boards on one 4-round tournament, resolving on "top N
+*including ties*" — an order statistic over 156 correlated integer score paths with a cut, no
+closed form, and the standard Harville/Plackett-Luce map is known-biased. 24 tournaments × 3
+boards already resolved in 2026. Verified resolution against ESPN's free golf API for the 2026
+PGA Championship: **0 false YES, 0 wrongly-NO**; the 13 "missing" top-20 finishers were simply
+unlisted (boards carry ~100 of a 156 field and omit marquee names, so the "board sums to k"
+test is invalid). Killed because **`datagolf.com/live-model/pga-tour` ships the complete live
+Monte Carlo — win/top5/top10/top20/cut per player — as free JSON in the page source**. Same
+kill applies to MLB playoff ladders (FanGraphs). Book quality failed independently (10/100
+legs ≤5c).
+
+**Candidate 2 — weekly USGS seismicity count ladders. SURVIVED, scoped to window-open.**
+Filed as `ideas/2026-07-25-quake-ladder-overdispersion-3.md`. Built the physics from 47,534
+M5.0+ USGS events (2000–2026): weekly M5.5+ count has mean 9.458, variance 47.825 →
+**Fano 5.06**, i.e. **2.25× wider than Poisson**, with a clean U-shaped bucket error (both
+tails ~1.6× too cheap, middle up to 1.6× too rich) mapping directly onto the traded lattice.
+Clustering measured: after a M6.5+ the next-day M5.5+ rate is 2.68× baseline (n=1,208); after
+a M7.0+, 3.77× (n=396). **Gate 0 reproduced 21/21 M6.5+ boards exactly and 15/20 M5.5+ boards,
+every miss off by exactly one** — because 2.01 events/week sit at *exactly* M5.5 and
+magnitudes are revised ±0.1 post-hoc, which is one whole bucket (vintages are reconstructible
+from ComCat origin products; one event I checked went 5.2 → 5.4 → 5.3). Crowd is **calibrated
+on the favourite** at open (0.364 vs Herfindahl 0.366), so this is a pure shape claim. A crude
+conditional model beats the market by **+0.110 log-loss at open (se 0.046, 17/22 boards)** and
+by ~0 mid-week. **Mid-week is dead and I measured it**: after a qualifying quake lands, the `0`
+leg moves −0.279 within one hour of a −0.398 total move (70% in the first hour — the
+runningmax pattern), so the idea trades once at window-open and holds.
+
+**Candidate 3 — tennis 14-leg derivative ladder. KILLED, and it is the instructive one.**
+Filed as `ideas/2026-07-25-tennis-games-ladder-discarded.md`. Supply was the best I have seen
+(10,011 resolved 2026 tennis events, 5,602 full ladders, 101,101 legs, ~48/day). I wrote an
+exact point→game→set→match DP and showed a genuine structural result: holding the serve *gap*
+fixed and raising the serve *level*, the moneyline moves 4.2pp and P(3 sets) 1.4pp while
+**P(total games > 23.5) moves 20.9pp** — the market's deepest books are near-blind to the
+parameter that drives the totals ladder. I then measured a −7.6pp Over bias (n=1,676, t=6.4).
+**Both of the day's new wiki screens killed it:**
+  - *Sharp line*: Pinnacle lists tennis total games as a separate `(Games)` matchup. Across 27
+    matched lines on 13 live matches, Polymarket's mean deviation was **+0.32pp (se 0.12),
+    27/27 within 3pp; +0.07pp on ≤3c books**. The ladder *is* the Pinnacle line. What looked
+    like an untouched book ($27k depth inside 5c, $0 volume) was a mirrored sharp line.
+  - *Phantom midpoints*: my headline decomposed to **−27.46pp on dead legs vs −5.00pp on live
+    ones**, and **inverted with liquidity** ($0 volume −17.26pp → >$1k volume **+11.78pp**).
+    8.5% of legs never moved pre-match; the artifact concentrated in the 0.50–0.60 bucket
+    exactly because an empty book reports as ~0.50.
+  I ran the phantom gate on the earthquake family as a control: **0 / 314 dead legs, 100% live,
+  median total variation 1.79** — so the gate discriminates rather than killing everything,
+  which is what makes the filed idea's measurements trustworthy.
+
+- **Order-of-operations mistake I made and am recording**: I ran a three-hour tennis backtest
+  and *then* killed it in ten minutes with Pinnacle. The counterparty checks are the cheapest
+  kill available and must run first. Promoted to `wiki/market-selection.md` as a new SELECT
+  AGAINST bullet with the ordering, plus replication notes appended to
+  `wiki/reference/sharp-line-screen.md` (tennis, +0.07pp) and
+  `wiki/reference/phantom-midpoints.md` (tennis decomposition + the earthquake control).
+- Memory pruned to 147 lines: run-2 esports detail compressed to its post-kill residue, three
+  named do-not-re-propose entries added, two new long-term screening rules.
+- Honest open item on the filed idea: n=22 boards at t=2.4 is one bad month from noise, and if
+  the crowd is right on the tails too, the remaining edge sits in sub-3c legs that fees make
+  unfundable. Gate 3 is written to decide exactly that.
+
+---
+
 ## 2026-07-25 (run 2) — extra cycle after the arena kill; esports series-shape idea filed
 
 Model: **opus-5 (xhigh)**. Felix requested a second cycle on the day

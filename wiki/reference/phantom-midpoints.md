@@ -34,5 +34,15 @@ $5k volume. The claimed bias even *inverted with liquidity* — +6.5pp under $5k
 4. A market whose *whole family* is quoted 0.020/0.980 is not a cheap opportunity — it is
    an unlisted market (ladder-rv correctly refused to predict on such boards, 2026-07-25).
 
+**Reproduced on a second sport, same day** (tennis match-totals, n=1,683 resolved legs,
+market-researcher cycle 3): headline **−7.61pp**; DEAD legs (never moved pre-match)
+**−27.46pp**; near-flat −16.66pp; LIVE (total variation ≥2c) **−5.00pp**. By leg volume the
+"edge" **inverted**: $0 volume −17.26pp, $1–100 −7.99pp, $100–1k −4.36pp, **>$1k +11.78pp**.
+8.5% of legs never moved. The artifact concentrates in the 0.50–0.60 price bucket — the one
+that looks most fundable — because an empty book quotes ~0.05/0.95 and reports as ~0.50.
+Counter-example worth knowing: weekly USGS earthquake-count ladders scored **0 / 314 dead
+legs (100% live, median total variation 1.79)**, so the gate is discriminating, not
+universal.
+
 See also [thin-market-price-read](thin-market-price-read.md) — this page is the
 quantified, sharper-edged version of that page's warning.

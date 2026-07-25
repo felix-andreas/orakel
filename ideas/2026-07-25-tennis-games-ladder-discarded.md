@@ -5,6 +5,11 @@ status: discarded-idea
 killed_by: sharp-line screen (Pinnacle), confirmed by the phantom-midpoint decomposition
 example_markets: ["atp-bublik-halys-2026-07-25", "atp-assche-gaston-2026-07-25", "atp-blockx-darderi-2026-07-25"]
 model: opus-5 (xhigh)
+summary: >-
+  Tennis 14-leg derivative ladder looked like a 7.6pp edge; killed twice over. Pinnacle
+  prices the same total-games line to +0.07pp on tight books (27/27 within 3pp), and the
+  measured bias decomposed to -27pp on dead books vs -5pp on live ones, inverting with
+  liquidity. Also carries the golf/DataGolf and MLB/FanGraphs incumbent kills.
 ---
 
 # DISCARDED: tennis total-games ladder — and two other simulation candidates killed the same day

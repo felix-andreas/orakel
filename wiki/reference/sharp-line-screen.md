@@ -21,6 +21,16 @@ books with ≤2c spread, Polymarket's mean deviation was **−0.13pp (se 0.34)**
 De-vig yourself (normalisation *and* a power fit) rather than trusting anyone's
 pre-computed "fair" number, and match markets by their *semantics*, not their titles.
 
+**Replicated same day on tennis** (market-researcher cycle 3, 2026-07-25): Pinnacle lists
+tennis **total games** as a *separate matchup* from sets — participants carry a `(Games)`
+suffix (79 of 161 pre-match matchups). Across 27 matched total-games lines on 13 live
+matches, Polymarket's mean deviation was **+0.32pp (se 0.12), median |Δ| 0.36pp, 27/27
+inside 3pp**; on Polymarket books with spread ≤3c, **+0.07pp (se 0.13)**. A 14-leg
+derivative ladder that looked untouched — $27k of depth inside 5c on a leg with **$0**
+traded volume — turned out to be the Pinnacle line mirrored by a market maker. Deep
+resting orders with no taker volume are evidence of a *mirrored sharp line*, not of
+absent price discovery.
+
 ## How to use it
 
 - **Before a slot is spent**, not after: if the sharp line agrees with the venue within
