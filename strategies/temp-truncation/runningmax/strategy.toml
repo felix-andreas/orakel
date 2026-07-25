@@ -1,5 +1,6 @@
 family = "temp-truncation"
 variant = "runningmax"
+summary = "Bets on today's high temperature that are already impossible should collapse to zero. They do - but within three minutes, so bots take it, not us."
 status = "retired"
 created = "2026-07-23"
 supersedes = ""

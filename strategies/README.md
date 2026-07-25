@@ -25,6 +25,10 @@ are unique within their family (`barrier-touch/gbm`, `barrier-touch/gbm-v2`).
 ```toml
 family = "barrier-touch"
 variant = "gbm"
+# REQUIRED: one sentence, plain English, no jargon - what the idea IS, understandable by
+# a smart outsider. This is what the dashboard shows. Internal vocabulary belongs in
+# STRATEGY.md, never here.
+summary = "Bets on whether a price will ever touch a far-away level are priced too generously; we sell the far-fetched ones."
 status = "trial"          # trial | live | retired  (CEO owns transitions)
 created = "2026-07-25"
 supersedes = ""           # e.g. "gbm-v1" — the one piece of version lineage

@@ -1,5 +1,6 @@
 family = "climate-nowcast"
 variant = "gistemp-era5"
+summary = "Work out the monthly global-temperature figure early from weather data. The crowd already does this, and better."
 status = "retired"
 created = "2026-07-24"
 supersedes = ""

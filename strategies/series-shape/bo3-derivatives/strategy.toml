@@ -1,5 +1,6 @@
 family = "series-shape"
 variant = "bo3-derivatives"
+summary = "In best-of-three esports matches, the side bets on a clean sweep do not line up with the main bet on who wins. We trade that gap."
 status = "trial"
 created = "2026-07-25"
 supersedes = ""

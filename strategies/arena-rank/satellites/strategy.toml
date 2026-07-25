@@ -1,5 +1,6 @@
 family = "arena-rank"
 variant = "satellites"
+summary = "Price the small AI-leaderboard markets off the big, liquid one. The small ones turned out to be priced correctly already."
 status = "retired"
 created = "2026-07-25"
 supersedes = ""

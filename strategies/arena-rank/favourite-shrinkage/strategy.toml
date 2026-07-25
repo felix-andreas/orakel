@@ -1,5 +1,6 @@
 family = "arena-rank"
 variant = "favourite-shrinkage"
+summary = "On AI-leaderboard markets the crowd is less sure of its own favourite than it should be. We back the favourite slightly harder than the crowd does."
 status = "trial"
 created = "2026-07-25"
 supersedes = "satellites"

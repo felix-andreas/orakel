@@ -1,5 +1,6 @@
 family = "barrier-touch"
 variant = "ladder-rv"
+summary = "Bets on whether a price will ever touch some far-away level are priced too generously. We sell the far-fetched ones and hold to expiry."
 status = "trial"
 created = "2026-07-23"
 supersedes = ""
