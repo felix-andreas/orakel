@@ -226,7 +226,7 @@ pub async fn index(env: &Env) -> String {
             "click a family's name to open it, anywhere else on the row to see the strategies inside",
             "",
             &format!("<div class=\"ftable\">{rows}</div>"),
-            "<span class=\"mono\">strategies/&lt;family&gt;/&lt;variant&gt;/strategy.toml</span><span>improvement = how much better than the market, per scored prediction</span>"
+            "<span class=\"mono\">strategies/&lt;family&gt;/&lt;variant&gt;/strategy.toml</span><span>improvement = how much better than the market's quoted price, per scored prediction — being right is not the same as being able to trade on it, so open a strategy for its reachable count</span>"
         ),
     );
 
@@ -747,6 +747,14 @@ pub async fn variant(env: &Env, family: &str, variant: &str, want_tab: Option<St
         .iter()
         .filter(|row| d.num(row, "improvement") > 0.0)
         .count();
+    // Beating the quoted price and being able to trade on it are separate
+    // claims; "N beat the market" without "M of them were reachable" is the
+    // misleading half. See wiki/reference/midpoint-is-not-a-fill.md.
+    let fillable = var_score
+        .map(|row| (s.num(row, "n_known_fill"), s.num(row, "n_fillable")))
+        .filter(|(known, _)| *known > 0.0)
+        .map(|(_, fill)| format!(", {} reachable", fill as i64))
+        .unwrap_or_default();
     let stats = stat_line(&[
         (
             render::status_badge(&status),
@@ -763,7 +771,7 @@ pub async fn variant(env: &Env, family: &str, variant: &str, want_tab: Option<St
             if scored.is_empty() {
                 "scored".to_string()
             } else {
-                format!("scored, {ahead} beat the market")
+                format!("scored, {ahead} beat the market{fillable}")
             },
             "",
         ),

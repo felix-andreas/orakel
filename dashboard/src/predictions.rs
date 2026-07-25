@@ -65,7 +65,23 @@ fn kpi_strip(p: &Table, d: &Table, s: &Table, r: &Table) -> String {
     let overall = s.rows.iter().find(|row| s.cell(row, "level") == "overall");
     let mean_imp = overall.map(|row| s.num(row, "mean_improvement"));
 
-    stat_grid(&[
+    // Beating the quoted price and being able to trade on it are separate
+    // claims, and only the second one is money. `market_price` is a midpoint —
+    // the average of a bid and an ask — so on a thin leg it can be a number
+    // nobody ever offered. Never show the improvement without this beside it.
+    let (n_known, n_fill) = overall
+        .map(|row| (s.num(row, "n_known_fill"), s.num(row, "n_fillable")))
+        .unwrap_or((0.0, 0.0));
+    let reachable = (n_known > 0.0).then(|| {
+        stat(
+            &format!("{}/{}", n_fill as i64, n_known as i64),
+            "reachable at that price",
+        )
+        .tone(if n_fill * 2.0 >= n_known { "ok" } else { "bad" })
+        .context("a counterparty was actually observed there — the rest was scored against a midpoint nobody offered")
+    });
+
+    let mut stats = vec![
         stat(&fmt_int(p.rows.len() as i64), "rows logged")
             .context("append-only, one per market outcome per run"),
         stat(&fmt_int(markets.len() as i64), "markets")
@@ -84,8 +100,10 @@ fn kpi_strip(p: &Table, d: &Table, s: &Table, r: &Table) -> String {
             Some(_) => "bad",
             None => "",
         })
-        .context("market Brier minus our Brier"),
-    ])
+        .context("market Brier minus our Brier — calibration, not cash"),
+    ];
+    stats.extend(reachable);
+    stat_grid(&stats)
 }
 
 /// Who produced these rows. A slug and a variant name say nothing about what
