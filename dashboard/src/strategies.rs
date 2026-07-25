@@ -33,15 +33,25 @@ use worker::Env;
 /// cannot render itself.
 const REPO_BLOB: &str = "https://github.com/felix-andreas/orakel/blob/main";
 
+/// The three prediction CSVs every strategy page joins against. Read together.
+const PRED_CSVS: [&str; 3] = [
+    "predictions/predictions.csv",
+    "predictions/scores.csv",
+    "predictions/scores_detail.csv",
+];
+
 // ---------------------------------------------------------------------------
 // /strategies
 // ---------------------------------------------------------------------------
 
 pub async fn index(env: &Env) -> String {
-    let (paths, tree_live) = data::tree(env).await;
-    let preds = data::text(env, "predictions/predictions.csv").await;
-    let scores = data::text(env, "predictions/scores.csv").await;
-    let detail = data::text(env, "predictions/scores_detail.csv").await;
+    let ((paths, tree_live), csvs) = futures::join!(
+        data::tree(env),
+        data::read_all(env, PRED_CSVS.map(String::from))
+    );
+    let [preds, scores, detail]: [data::Doc; 3] = csvs
+        .try_into()
+        .unwrap_or_else(|_| unreachable!("read_all returns one Doc per path"));
     let (metas, metas_live) = data::variant_metas(env, &paths).await;
     let mut all_live = tree_live && preds.live && scores.live && detail.live && metas_live;
 
@@ -87,8 +97,13 @@ pub async fn index(env: &Env) -> String {
     let mut rows = String::from(
         "<div class=\"fhead\"><span>Family</span><span>What it does</span><span>Status</span><span>Predictions</span><span>vs market</span></div>",
     );
-    for family in &families {
-        let fam_doc = data::text(env, &format!("strategies/{family}/FAMILY.md")).await;
+    // Every family's FAMILY.md at once; the loop below only formats.
+    let fam_docs = data::read_all(
+        env,
+        families.iter().map(|f| format!("strategies/{f}/FAMILY.md")),
+    )
+    .await;
+    for (family, fam_doc) in families.iter().zip(&fam_docs) {
         all_live &= fam_doc.live;
         let mine: Vec<&data::VariantMeta> = metas.iter().filter(|m| &m.family == family).collect();
         // Resolved below; a variant row repeats nothing the family row said.
@@ -430,11 +445,15 @@ pub async fn family(env: &Env, family: &str, want_tab: Option<String>) -> String
         .await;
     }
 
-    let fam_doc = data::text(env, &format!("strategies/{family}/FAMILY.md")).await;
-    let (paths, tree_live) = data::tree(env).await;
-    let preds = data::text(env, "predictions/predictions.csv").await;
-    let scores = data::text(env, "predictions/scores.csv").await;
-    let detail = data::text(env, "predictions/scores_detail.csv").await;
+    let fam_path = format!("strategies/{family}/FAMILY.md");
+    let (fam_doc, (paths, tree_live), csvs) = futures::join!(
+        data::text(env, &fam_path),
+        data::tree(env),
+        data::read_all(env, PRED_CSVS.map(String::from))
+    );
+    let [preds, scores, detail]: [data::Doc; 3] = csvs
+        .try_into()
+        .unwrap_or_else(|_| unreachable!("read_all returns one Doc per path"));
     let mut all_live =
         fam_doc.live && tree_live && preds.live && scores.live && detail.live;
 
@@ -577,9 +596,15 @@ pub async fn family(env: &Env, family: &str, want_tab: Option<String>) -> String
         }
         // Overview
         _ => {
+            let docs = data::read_all(
+                env,
+                variants
+                    .iter()
+                    .map(|(_, v)| format!("strategies/{family}/{v}/strategy.toml")),
+            )
+            .await;
             let mut metas: Vec<data::VariantMeta> = Vec::new();
-            for (_, v) in &variants {
-                let f = data::text(env, &format!("strategies/{family}/{v}/strategy.toml")).await;
+            for ((_, v), f) in variants.iter().zip(&docs) {
                 all_live &= f.live;
                 metas.push(data::parse_variant_meta(family, v, &f.text));
             }
@@ -671,11 +696,15 @@ pub async fn variant(env: &Env, family: &str, variant: &str, want_tab: Option<St
     }
     let base = format!("strategies/{family}/{variant}");
 
-    let toml_doc = data::text(env, &format!("{base}/strategy.toml")).await;
-    let (paths, tree_live) = data::tree(env).await;
-    let preds = data::text(env, "predictions/predictions.csv").await;
-    let scores = data::text(env, "predictions/scores.csv").await;
-    let detail = data::text(env, "predictions/scores_detail.csv").await;
+    let toml_path = format!("{base}/strategy.toml");
+    let (toml_doc, (paths, tree_live), csvs) = futures::join!(
+        data::text(env, &toml_path),
+        data::tree(env),
+        data::read_all(env, PRED_CSVS.map(String::from))
+    );
+    let [preds, scores, detail]: [data::Doc; 3] = csvs
+        .try_into()
+        .unwrap_or_else(|_| unreachable!("read_all returns one Doc per path"));
     let mut all_live = toml_doc.live && tree_live && preds.live && scores.live && detail.live;
 
     let has_strategy_md = paths.iter().any(|path| *path == format!("{base}/STRATEGY.md"));
@@ -812,9 +841,9 @@ pub async fn variant(env: &Env, family: &str, variant: &str, want_tab: Option<St
         }
         "results" => {
             let mut out = String::new();
-            for path in &results {
+            let docs = data::read_all(env, results.iter().cloned()).await;
+            for (path, f) in results.iter().zip(&docs) {
                 let name = path.rsplit('/').next().unwrap_or(path);
-                let f = data::text(env, path).await;
                 all_live &= f.live;
                 // These documents keep their own `# ` title: it is distinctive
                 // ("Metals backtest — gates 0/1/2 …"), it repeats no breadcrumb,
@@ -865,8 +894,8 @@ pub async fn variant(env: &Env, family: &str, variant: &str, want_tab: Option<St
         "predictions" => prediction_table(&p, &d, &rows, false),
         "logs" => {
             let mut out = String::new();
-            for path in &logs {
-                let f = data::text(env, path).await;
+            let docs = data::read_all(env, logs.iter().cloned()).await;
+            for (path, f) in logs.iter().zip(&docs) {
                 all_live &= f.live;
                 let worklog = path.ends_with("WORKLOG.md");
                 out.push_str(&section_foot(
@@ -924,10 +953,13 @@ pub async fn variant(env: &Env, family: &str, variant: &str, want_tab: Option<St
                 ));
             }
 
-            let app_paths = data::files_in(&paths, &format!("{base}/applications"), ".toml");
+            let app_paths: Vec<String> = data::files_in(&paths, &format!("{base}/applications"), ".toml")
+                .into_iter()
+                .take(24)
+                .collect();
+            let app_docs = data::read_all(env, app_paths.iter().cloned()).await;
             let mut app_rows: Vec<Vec<String>> = Vec::new();
-            for path in app_paths.iter().take(24) {
-                let f = data::text(env, path).await;
+            for (path, f) in app_paths.iter().zip(&app_docs) {
                 all_live &= f.live;
                 let t = data::toml_of(&f.text);
                 let name = path.rsplit('/').next().unwrap_or(path);

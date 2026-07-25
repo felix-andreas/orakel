@@ -40,6 +40,23 @@ pub async fn text(env: &Env, path: &str) -> Doc {
     Doc { text: f.text, live: f.live }
 }
 
+/// Several repo files at once, in the order asked for.
+///
+/// Reads on one page are independent of each other — nothing in a run manifest
+/// decides which strategy TOML to fetch — so awaiting them one at a time turns
+/// N independent round trips into N sequential ones. Measured before this
+/// existed: the homepage's ~20 reads cost 0.87s warm and 2.9s on a cache miss,
+/// with latency scaling linearly in the number of reads.
+pub async fn read_all(env: &Env, paths: impl IntoIterator<Item = String>) -> Vec<Doc> {
+    futures::future::join_all(
+        paths
+            .into_iter()
+            .map(|p| async move { text(env, &p).await })
+            .collect::<Vec<_>>(),
+    )
+    .await
+}
+
 /// Every repo path. An unreadable listing yields no paths and `false`, so the
 /// page shows its error rather than an empty repo.
 pub async fn tree(env: &Env) -> (Vec<String>, bool) {
@@ -214,13 +231,23 @@ pub fn parse_variant_meta(family: &str, variant: &str, src: &str) -> VariantMeta
 /// Every variant in the repo, with its manifest read. Returns `live = false`
 /// if any manifest could not be read.
 pub async fn variant_metas(env: &Env, paths: &[String]) -> (Vec<VariantMeta>, bool) {
-    let mut out = Vec::new();
-    let mut live = true;
-    for (family, variant) in variants(paths) {
-        let f = text(env, &format!("strategies/{family}/{variant}/strategy.toml")).await;
-        live &= f.live;
-        out.push(parse_variant_meta(&family, &variant, &f.text));
-    }
+    let keys = variants(paths);
+    // One manifest per variant, all in flight at once. Awaited one at a time
+    // this was the single largest cost on most pages — every page needs the
+    // metas, and the reads have nothing to do with each other.
+    let docs = read_all(
+        env,
+        keys.iter()
+            .map(|(f, v)| format!("strategies/{f}/{v}/strategy.toml")),
+    )
+    .await;
+
+    let live = docs.iter().all(|d| d.live);
+    let out = keys
+        .iter()
+        .zip(&docs)
+        .map(|((family, variant), doc)| parse_variant_meta(family, variant, &doc.text))
+        .collect();
     (out, live)
 }
 

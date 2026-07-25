@@ -17,11 +17,53 @@
 //! A 404 is a *successful* answer ("that file does not exist" → empty text),
 //! not a failure.
 
-use worker::{Cache, Env, Fetch, Headers, Method, Request, RequestInit, Response, Result};
+use std::cell::RefCell;
+
+use worker::{Cache, Date, Env, Fetch, Headers, Method, Request, RequestInit, Response, Result};
 
 const REPO: &str = "felix-andreas/orakel";
 const BRANCH: &str = "main";
-const TTL_SECS: u32 = 60;
+
+/// How stale the answer to "which commit is `main` at?" may be. This is the
+/// dashboard's real freshness knob — everything else follows from it.
+const TTL_HEAD: u32 = 60;
+
+/// How long a file read may be cached. Content reads are pinned to a commit
+/// SHA, so their URLs are immutable and a long TTL is not a staleness
+/// trade-off: a new commit produces new URLs, and the old entries simply go
+/// unused. Before this, every entry expired on a 60-second clock whether or
+/// not anything had changed, so the first visitor each minute paid full price
+/// for the whole page (measured: 2.9s against 0.87s warm).
+const TTL_PINNED: u32 = 86_400;
+
+/// Which commit `main` is at, plus when it was made.
+#[derive(Clone)]
+pub struct Head {
+    pub sha: String,
+    pub date: String,
+}
+
+// The SHA lookup is memoised for the isolate, not just cached in the Cache
+// API, because every content read needs it first: a cache round trip per read
+// would double the marginal cost of a read (~33ms each, ~20 reads a page).
+// Staleness is bounded by TTL_HEAD exactly as before.
+thread_local! {
+    static HEAD_MEMO: RefCell<Option<(Head, f64)>> = const { RefCell::new(None) };
+}
+
+fn memo_get() -> Option<Head> {
+    let now = Date::now().as_millis() as f64;
+    HEAD_MEMO.with(|m| {
+        let m = m.borrow();
+        let (head, at) = m.as_ref()?;
+        (now - at < TTL_HEAD as f64 * 1000.0).then(|| head.clone())
+    })
+}
+
+fn memo_put(head: &Head) {
+    let now = Date::now().as_millis() as f64;
+    HEAD_MEMO.with(|m| *m.borrow_mut() = Some((head.clone(), now)));
+}
 
 pub struct Fetched {
     pub text: String,
@@ -65,14 +107,14 @@ fn token(env: &Env) -> Option<String> {
 /// unlike serving an old copy. Definitive answers (200/401/403/404) are never
 /// retried: repeating them is pointless and, for 403, actively hostile to the
 /// rate limit.
-async fn gh_get(url: &str, tok: &str) -> Result<(u16, String)> {
-    match gh_get_once(url, tok).await {
+async fn gh_get(url: &str, tok: &str, ttl: u32) -> Result<(u16, String)> {
+    match gh_get_once(url, tok, ttl).await {
         Ok((status, body)) if !(500..=599).contains(&status) => Ok((status, body)),
-        _ => gh_get_once(url, tok).await,
+        _ => gh_get_once(url, tok, ttl).await,
     }
 }
 
-async fn gh_get_once(url: &str, tok: &str) -> Result<(u16, String)> {
+async fn gh_get_once(url: &str, tok: &str, ttl: u32) -> Result<(u16, String)> {
     let cache = Cache::default();
     if let Ok(Some(mut hit)) = cache.get(url, true).await {
         let status = hit
@@ -102,7 +144,7 @@ async fn gh_get_once(url: &str, tok: &str) -> Result<(u16, String)> {
     if status == 200 || status == 404 {
         if let Ok(mut cacheable) = Response::ok(body.clone()) {
             let h = cacheable.headers_mut();
-            let _ = h.set("cache-control", &format!("public, max-age={TTL_SECS}"));
+            let _ = h.set("cache-control", &format!("public, max-age={ttl}"));
             let _ = h.set("x-orakel-upstream-status", &status.to_string());
             let _ = cache.put(url, cacheable).await; // cache failure ≠ error
         }
@@ -110,30 +152,19 @@ async fn gh_get_once(url: &str, tok: &str) -> Result<(u16, String)> {
     Ok((status, body))
 }
 
-/// A repo file at request time. A failed read yields empty text and
-/// `live: false` — the page renders the error, never a stale copy.
-pub async fn repo_text(env: &Env, path: &str) -> Fetched {
-    let dead = || Fetched { text: String::new(), live: false };
-    let Some(tok) = token(env) else { return dead() };
-    let url = format!("https://api.github.com/repos/{REPO}/contents/{path}?ref={BRANCH}");
-    match gh_get(&url, &tok).await {
-        Ok((200, body)) => Fetched { text: body, live: true },
-        // The repository answered and the file is not there. That is data.
-        Ok((404, _)) => Fetched { text: String::new(), live: true },
-        _ => dead(),
+/// Which commit `main` is at. Asked of GitHub at most once per `TTL_HEAD`
+/// seconds per isolate; every content read is then pinned to the SHA it
+/// returns. On failure this also carries the reason every other read on the
+/// page is failing.
+pub async fn head(env: &Env) -> std::result::Result<Head, String> {
+    if let Some(h) = memo_get() {
+        return Ok(h);
     }
-}
-
-/// Commit timestamp of `main`'s HEAD (RFC3339), for the "last updated"
-/// indicator — and, on failure, the reason every other read on the page is
-/// failing too. Same 60s cache as every other read, so it costs one request a
-/// minute across the whole dashboard.
-pub async fn head_commit_date(env: &Env) -> std::result::Result<String, String> {
     let Some(tok) = token(env) else {
         return Err(NO_TOKEN.to_string());
     };
     let url = format!("https://api.github.com/repos/{REPO}/commits/{BRANCH}");
-    let (status, body) = gh_get(&url, &tok)
+    let (status, body) = gh_get(&url, &tok, TTL_HEAD)
         .await
         .map_err(|_| UNREACHABLE.to_string())?;
     if status != 200 {
@@ -141,19 +172,53 @@ pub async fn head_commit_date(env: &Env) -> std::result::Result<String, String> 
     }
     let v: serde_json::Value = serde_json::from_str(&body)
         .map_err(|_| "GitHub returned a response the dashboard could not parse.".to_string())?;
-    v["commit"]["committer"]["date"]
-        .as_str()
-        .map(str::to_string)
-        .ok_or_else(|| "GitHub's commit response carried no timestamp.".to_string())
+    let head = Head {
+        sha: v["sha"]
+            .as_str()
+            .ok_or_else(|| "GitHub's commit response carried no SHA.".to_string())?
+            .to_string(),
+        date: v["commit"]["committer"]["date"]
+            .as_str()
+            .ok_or_else(|| "GitHub's commit response carried no timestamp.".to_string())?
+            .to_string(),
+    };
+    memo_put(&head);
+    Ok(head)
 }
 
-/// All blob paths of `main` via one recursive Trees API call.
-/// `None` ⇒ the listing could not be read. Callers render nothing plus the
-/// error banner rather than implying the repo is empty.
+/// A repo file at request time. A failed read yields empty text and
+/// `live: false` — the page renders the error, never a stale copy.
+pub async fn repo_text(env: &Env, path: &str) -> Fetched {
+    let dead = || Fetched { text: String::new(), live: false };
+    let (Some(tok), Ok(h)) = (token(env), head(env).await) else {
+        return dead();
+    };
+    // Pinned to the SHA, not to `main`: the URL then names one immutable blob,
+    // which is what lets it cache for a day instead of a minute.
+    let url = format!(
+        "https://api.github.com/repos/{REPO}/contents/{path}?ref={}",
+        h.sha
+    );
+    match gh_get(&url, &tok, TTL_PINNED).await {
+        Ok((200, body)) => Fetched { text: body, live: true },
+        // The repository answered and the file is not there. That is data.
+        Ok((404, _)) => Fetched { text: String::new(), live: true },
+        _ => dead(),
+    }
+}
+
+/// All blob paths via one recursive Trees API call, pinned to the same commit
+/// as every content read on the page — so a listing can never disagree with
+/// the files it points at. `None` ⇒ the listing could not be read; callers
+/// render nothing plus the error banner rather than implying an empty repo.
 pub async fn repo_tree(env: &Env) -> Option<Vec<String>> {
     let tok = token(env)?;
-    let url = format!("https://api.github.com/repos/{REPO}/git/trees/{BRANCH}?recursive=1");
-    let (status, body) = gh_get(&url, &tok).await.ok()?;
+    let h = head(env).await.ok()?;
+    let url = format!(
+        "https://api.github.com/repos/{REPO}/git/trees/{}?recursive=1",
+        h.sha
+    );
+    let (status, body) = gh_get(&url, &tok, TTL_PINNED).await.ok()?;
     if status != 200 {
         return None;
     }

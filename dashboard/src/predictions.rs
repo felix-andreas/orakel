@@ -19,11 +19,22 @@ use worker::Env;
 // ---------------------------------------------------------------------------
 
 pub async fn page(env: &Env) -> String {
-    let preds = data::text(env, "predictions/predictions.csv").await;
-    let detail = data::text(env, "predictions/scores_detail.csv").await;
-    let scores = data::text(env, "predictions/scores.csv").await;
-    let resolutions = data::text(env, "predictions/resolutions.csv").await;
-    let (paths, tree_live) = data::tree(env).await;
+    let (csvs, (paths, tree_live)) = futures::join!(
+        data::read_all(
+            env,
+            [
+                "predictions/predictions.csv",
+                "predictions/scores_detail.csv",
+                "predictions/scores.csv",
+                "predictions/resolutions.csv",
+            ]
+            .map(String::from)
+        ),
+        data::tree(env)
+    );
+    let [preds, detail, scores, resolutions]: [data::Doc; 4] = csvs
+        .try_into()
+        .unwrap_or_else(|_| unreachable!("read_all returns one Doc per path"));
     let (metas, metas_live) = data::variant_metas(env, &paths).await;
     let all_live =
         preds.live && detail.live && scores.live && resolutions.live && tree_live && metas_live;
@@ -394,10 +405,21 @@ pub async fn market(env: &Env, slug: &str) -> String {
         .await;
     }
 
-    let preds = data::text(env, "predictions/predictions.csv").await;
-    let detail = data::text(env, "predictions/scores_detail.csv").await;
-    let resolutions = data::text(env, "predictions/resolutions.csv").await;
-    let (paths, tree_live) = data::tree(env).await;
+    let (csvs, (paths, tree_live)) = futures::join!(
+        data::read_all(
+            env,
+            [
+                "predictions/predictions.csv",
+                "predictions/scores_detail.csv",
+                "predictions/resolutions.csv",
+            ]
+            .map(String::from)
+        ),
+        data::tree(env)
+    );
+    let [preds, detail, resolutions]: [data::Doc; 3] = csvs
+        .try_into()
+        .unwrap_or_else(|_| unreachable!("read_all returns one Doc per path"));
     let (metas, metas_live) = data::variant_metas(env, &paths).await;
     let all_live = preds.live && detail.live && resolutions.live && tree_live && metas_live;
 

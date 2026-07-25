@@ -5,6 +5,41 @@ who decided**. Newest first.
 
 ---
 
+## 2026-07-25 — Dashboard reads are pinned to a commit SHA and issued concurrently
+
+Felix: "it feels much slower now. it was fast before." He was right, and the first
+diagnosis was wrong. The cause was not the fallback removal — it was that the
+`GITHUB_TOKEN` worker secret landed **today**. Before that, `token(env)` returned `None`
+and every read short-circuited straight to the compiled-in pack: twenty in-memory string
+scans, zero I/O. The moment the token existed, those same twenty reads became twenty
+*sequential* HTTPS round trips.
+
+Measured before the fix: latency scaled linearly with the number of reads — `/decisions`
+(1 read) 0.24s, `/strategies` (~10) 0.62s, `/` (~20) 0.87s warm and **2.9s** whenever the
+60-second cache clock lapsed.
+
+Two changes, both in the read layer:
+
+1. **Pin content reads to a commit SHA.** `live::head()` resolves `main`'s SHA (memoised
+   per isolate for 60s — that TTL is now the dashboard's only freshness knob) and every
+   file and tree read goes to `?ref=<sha>`. The URL then names an immutable blob, so it
+   caches for a day instead of a minute. A push produces new URLs; old entries just go
+   unused. The every-60-seconds cliff is gone by construction, not by tuning.
+2. **Issue independent reads concurrently** (`data::read_all`, `futures::join!`). A page's
+   reads never decide each other — only the tree must land before we know which variant
+   and run manifests to fetch — so every page is two waves rather than N steps. The
+   per-variant and per-run loops were the worst offenders and are now single batches.
+
+Result: `/` **0.87s → 0.41s**, every other page 0.21–0.38s, and latency no longer scales
+with read count. All 17 routes verified 200 with correct content afterwards.
+
+Not done, deliberately: fetching the whole repo as one tarball, or mirroring it to R2 and
+reading through the binding. Both would shave another ~0.15s and both add a moving part;
+at 0.4s the page is no longer the bottleneck. Revisit only if the repo grows enough that
+the tree read itself gets slow. Decided by Felix, implemented by the CEO (claude-opus-5).
+
+---
+
 ## 2026-07-25 — Dashboard has no fallback copy of the repo: it reads `main` or shows an error
 
 The Worker compiled every renderable repo file into its own binary (~170 files, ~1.0 MiB)

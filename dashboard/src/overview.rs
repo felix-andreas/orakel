@@ -21,14 +21,34 @@ use crate::{json_str, shell, trail};
 use worker::Env;
 
 pub async fn page(env: &Env) -> String {
-    let preds = data::text(env, "predictions/predictions.csv").await;
-    let detail = data::text(env, "predictions/scores_detail.csv").await;
-    let scores = data::text(env, "predictions/scores.csv").await;
-    let resolutions = data::text(env, "predictions/resolutions.csv").await;
-    let state_doc = data::text(env, "ops/state.toml").await;
-    let exec_doc = data::text(env, "execution/results/summary.csv").await;
-    let (paths, tree_live) = data::tree(env).await;
-    let (metas, metas_live) = data::variant_metas(env, &paths).await;
+    // Wave 1: the fixed files and the tree, all at once — none of them decides
+    // what any other one is.
+    let (docs, (paths, tree_live)) = futures::join!(
+        data::read_all(
+            env,
+            [
+                "predictions/predictions.csv",
+                "predictions/scores_detail.csv",
+                "predictions/scores.csv",
+                "predictions/resolutions.csv",
+                "ops/state.toml",
+                "execution/results/summary.csv",
+            ]
+            .map(String::from)
+        ),
+        data::tree(env)
+    );
+    let [preds, detail, scores, resolutions, state_doc, exec_doc]: [data::Doc; 6] = docs
+        .try_into()
+        .unwrap_or_else(|_| unreachable!("read_all returns one Doc per path"));
+
+    // Wave 2: everything the tree told us to read — strategy manifests and run
+    // manifests together, since neither depends on the other.
+    let run_paths = data::run_paths(&paths);
+    let ((metas, metas_live), run_docs) = futures::join!(
+        data::variant_metas(env, &paths),
+        data::read_all(env, run_paths.iter().cloned())
+    );
     let mut all_live = preds.live
         && detail.live
         && scores.live
@@ -47,8 +67,7 @@ pub async fn page(env: &Env) -> String {
 
     // Run manifests, newest first — spend and the recent-runs strip.
     let mut runs: Vec<(String, toml::Table)> = Vec::new();
-    for path in data::run_paths(&paths) {
-        let doc = data::text(env, &path).await;
+    for (path, doc) in run_paths.iter().zip(&run_docs) {
         all_live &= doc.live;
         let stem = path
             .trim_start_matches("ops/runs/")

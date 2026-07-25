@@ -356,10 +356,10 @@ pub async fn inboxes(env: &Env) -> String {
         files.reverse(); // date-prefixed filenames → newest first
         let n = files.len();
         let mut inner = String::new();
-        for path in files {
-            let f = data::text(env, &path).await;
+        let docs = data::read_all(env, files.iter().cloned()).await;
+        for (path, f) in files.iter().zip(&docs) {
             all_live &= f.live;
-            let name = path.rsplit('/').next().unwrap_or(&path).to_string();
+            let name = path.rsplit('/').next().unwrap_or(path).to_string();
             inner.push_str(&message_doc(&name, &f.text));
         }
         if inner.is_empty() {
@@ -463,8 +463,8 @@ pub async fn ideas(env: &Env) -> String {
 
     let mut docs = String::new();
     let mut statuses: Vec<String> = Vec::new();
-    for path in &files {
-        let f = data::text(env, path).await;
+    let read = data::read_all(env, files.iter().cloned()).await;
+    for (path, f) in files.iter().zip(&read) {
         all_live &= f.live;
         let (fields, _) = render::split_frontmatter(&f.text);
         if let Some((_, v)) = fields.iter().find(|(k, _)| k == "status") {

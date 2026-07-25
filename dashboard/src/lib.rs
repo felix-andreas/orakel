@@ -221,7 +221,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
 /// source, so when a read fails the page is showing an incomplete picture and
 /// has to say so — `reason` carries what GitHub actually told us.
 pub async fn freshness(env: &Env, live: bool) -> Freshness {
-    let head = live::head_commit_date(env).await;
+    let head = live::head(env).await;
     let reason = match &head {
         Ok(_) if live => None,
         // HEAD is reachable but some read on this page was not: the cause is
@@ -234,7 +234,7 @@ pub async fn freshness(env: &Env, live: bool) -> Freshness {
     };
     Freshness {
         live: live && head.is_ok(),
-        stamp: render::fmt_ts(head.as_deref().unwrap_or(BUILD_TIMESTAMP)),
+        stamp: head.map(|h| render::fmt_ts(&h.date)).unwrap_or_default(),
         build: BUILD_TIMESTAMP.to_string(),
         reason,
     }

@@ -26,20 +26,38 @@ use crate::{shell, trail};
 use worker::Env;
 
 pub async fn page(env: &Env) -> String {
-    let (paths, tree_live) = data::tree(env).await;
-    let preds = data::text(env, "predictions/predictions.csv").await;
-    let resolutions = data::text(env, "predictions/resolutions.csv").await;
-    let detail = data::text(env, "predictions/scores_detail.csv").await;
+    let ((paths, tree_live), csvs) = futures::join!(
+        data::tree(env),
+        data::read_all(
+            env,
+            [
+                "predictions/predictions.csv",
+                "predictions/resolutions.csv",
+                "predictions/scores_detail.csv",
+            ]
+            .map(String::from)
+        )
+    );
+    let [preds, resolutions, detail]: [data::Doc; 3] = csvs
+        .try_into()
+        .unwrap_or_else(|_| unreachable!("read_all returns one Doc per path"));
     let (metas, metas_live) = data::variant_metas(env, &paths).await;
     let mut all_live = tree_live && preds.live && resolutions.live && detail.live && metas_live;
 
     // Idea files carry a frontmatter date; read them once for the story.
     let mut ideas: Vec<(String, String)> = Vec::new(); // (date, name)
-    for path in data::files_in(&paths, "ideas", ".md") {
-        if path.ends_with("README.md") {
-            continue;
-        }
-        let f = data::text(env, &path).await;
+    let idea_paths: Vec<String> = data::files_in(&paths, "ideas", ".md")
+        .into_iter()
+        .filter(|p| !p.ends_with("README.md"))
+        .collect();
+    let run_paths = data::run_paths(&paths);
+    // Ideas and run manifests are independent of each other and of everything
+    // already read, so both sets go out together.
+    let (idea_docs, run_docs) = futures::join!(
+        data::read_all(env, idea_paths.iter().cloned()),
+        data::read_all(env, run_paths.iter().cloned())
+    );
+    for (path, f) in idea_paths.iter().zip(&idea_docs) {
         all_live &= f.live;
         let (fields, _) = render::split_frontmatter(&f.text);
         let get = |k: &str| {
@@ -57,8 +75,7 @@ pub async fn page(env: &Env) -> String {
     }
 
     let mut runs: Vec<(String, toml::Table)> = Vec::new();
-    for path in data::run_paths(&paths) {
-        let doc = data::text(env, &path).await;
+    for (path, doc) in run_paths.iter().zip(&run_docs) {
         all_live &= doc.live;
         if doc.is_empty() {
             continue;

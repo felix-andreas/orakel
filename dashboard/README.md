@@ -97,10 +97,22 @@ title instead of being printed twice (`render::md_title` / `markdown_body`).
 
 - **GitHub API** (`src/live.rs`): file bodies via the Contents API
   (`Accept: application/vnd.github.raw+json`), all directory listings derived from ONE
-  recursive Trees API call, plus the HEAD commit date for the "last updated" stamp.
-  Responses are cached ~60s in the Workers Cache API keyed on the API URL (404s too).
-  Requires the `GITHUB_TOKEN` worker secret (fine-grained PAT, read-only *Contents* on
-  felix-andreas/orakel).
+  recursive Trees API call. Requires the `GITHUB_TOKEN` worker secret (fine-grained PAT,
+  read-only *Contents* on felix-andreas/orakel).
+- **Reads are pinned to a commit SHA, and issued concurrently.** Two properties carry the
+  page's speed, and both matter:
+  1. `live::head()` resolves which commit `main` is at (memoised per isolate for 60s —
+     that TTL *is* the dashboard's freshness knob). Every file and tree read then goes to
+     `?ref=<sha>`, so its URL names one immutable blob and can cache for a day. Before
+     this, every entry expired on a 60-second clock whether or not anything had changed,
+     so the first visitor each minute re-fetched the whole page from GitHub.
+  2. Independent reads go out together (`data::read_all` / `futures::join!`). A page's
+     reads do not decide each other — only the tree has to land before we know which
+     variant and run files to fetch — so it is two waves, not twenty steps.
+
+  Measured on `/` (~20 reads): **0.87s → 0.41s** warm, and the 2.9s cache-miss spike is
+  gone. Latency used to scale linearly with the number of reads; now it barely moves
+  (`/decisions`, 1 read, is 0.22s; `/`, 20 reads, is 0.41s).
 - **No fallback copy.** Until 2026-07-25 `build.rs` also concatenated every renderable
   repo file (~170 files, ~1.0 MiB) into the binary, and the Worker served that whenever
   GitHub was unreachable. It was removed: an outage then looked like a working dashboard

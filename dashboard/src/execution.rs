@@ -710,9 +710,14 @@ pub async fn equity_json(env: &Env, set: &str, version: u32) -> String {
         return "{\"series\":[]}".to_string();
     }
     let mut series: Vec<String> = Vec::new();
-    for (i, policy) in POLICIES.iter().enumerate() {
-        let path = format!("execution/results/{set}/{policy}-v{version}.json");
-        let f = data::text(env, &path).await;
+    let curves = data::read_all(
+        env,
+        POLICIES
+            .iter()
+            .map(|policy| format!("execution/results/{set}/{policy}-v{version}.json")),
+    )
+    .await;
+    for (i, (policy, f)) in POLICIES.iter().zip(&curves).enumerate() {
         if f.is_empty() {
             continue;
         }
