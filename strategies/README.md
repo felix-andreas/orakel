@@ -29,6 +29,15 @@ variant = "gbm"
 # a smart outsider. This is what the dashboard shows. Internal vocabulary belongs in
 # STRATEGY.md, never here.
 summary = "Bets on whether a price will ever touch a far-away level are priced too generously; we sell the far-fetched ones."
+# REQUIRED: a SELF-CONTAINED explanation, plain English, no jargon. A smart outsider with
+# no prior knowledge must be able to read this cold and understand (a) what the market is
+# and how it works, (b) what we do, and (c) WHY that should work - the motivation, not
+# just the claim. 4-8 sentences. State the honest catch too. This is what the dashboard
+# shows on the strategy page; jargon and internal detail belong in STRATEGY.md.
+explainer = """
+Polymarket runs bets like "will the price of oil ever touch $110 before the month ends?"
+... (see any live strategy.toml for a full example)
+"""
 status = "trial"          # trial | live | retired  (CEO owns transitions)
 created = "2026-07-25"
 supersedes = ""           # e.g. "gbm-v1" — the one piece of version lineage

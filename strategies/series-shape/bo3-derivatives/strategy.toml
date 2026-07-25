@@ -1,6 +1,17 @@
 family = "series-shape"
 variant = "bo3-derivatives"
 summary = "In best-of-three esports matches, the side bets on a clean sweep do not line up with the main bet on who wins. We trade that gap."
+explainer = """
+In esports, a best-of-three match carries a main bet on who wins plus side bets on
+whether it ends 2-0 or goes to a deciding third game. Those bets are logically linked — if
+you know how likely a team is to win, you know how likely a clean sweep is — and the side
+bets are traded far less than the main one, so they looked mispriced by up to 14
+percentage points. They were not. The apparent gap came from bets that nobody had placed
+any orders on: when a market is empty the exchange still reports a price of about 50
+cents, and averaging those invented numbers manufactured an edge that did not exist. On
+the bets that people were actually trading, the price matched a professional bookmaker's
+line to within one tenth of a percentage point.
+"""
 status = "retired"
 created = "2026-07-25"
 supersedes = ""

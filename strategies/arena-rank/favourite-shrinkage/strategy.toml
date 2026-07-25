@@ -1,6 +1,19 @@
 family = "arena-rank"
 variant = "favourite-shrinkage"
 summary = "On AI-leaderboard markets the crowd is less sure of its own favourite than it should be. We back the favourite slightly harder than the crowd does."
+explainer = """
+There is a public leaderboard that ranks AI models by how often people prefer their
+answers, and Polymarket runs monthly bets on it: which company holds the top spot, the
+second spot, the best coding model, and so on. One of those bets is large and heavily
+traded; the rest are ten to two hundred times smaller. On the small ones the crowd hedges
+— it prices the obvious leader at 93 cents when that leader actually wins about 99 times
+in 100. We do not try to predict the leaderboard better than anyone else; we take the
+crowd's own prices and push them further toward the favourite. The reason to expect this
+to hold is that these side bets are thin and traded on impressions, while the leaderboard
+itself barely moves from month to month — so the crowd's uncertainty is about the market,
+not about the world. The open question is whether it pays: buying something at 97 cents
+to win 3 more is a thin return on the money you tie up.
+"""
 status = "trial"
 created = "2026-07-25"
 supersedes = "satellites"

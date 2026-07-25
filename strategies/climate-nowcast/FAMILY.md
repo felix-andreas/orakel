@@ -1,5 +1,7 @@
 # climate-nowcast
 
+> **In plain English:** Bets that settle on a published climate figure — a monthly global temperature, a sea-ice minimum. The number is not known in advance, but the data that determines it is published as the month goes along.
+
 Nowcast the exact climate-index print a market resolves on, from higher-frequency
 upstream data the crowd doesn't systematically consume. The edge is a *data pipeline*,
 not structure: the resolving print (GISTEMP cell, NSIDC minimum, …) is predictable to

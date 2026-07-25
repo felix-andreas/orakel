@@ -1,6 +1,17 @@
 family = "climate-nowcast"
 variant = "gistemp-era5"
 summary = "Work out the monthly global-temperature figure early from weather data. The crowd already does this, and better."
+explainer = """
+NASA publishes a monthly figure for how much warmer the world was than its
+twentieth-century average, and Polymarket runs bets on which bucket that figure lands in.
+The figure is not a mystery on the day it appears — it is largely determined by weather
+data that European forecasters publish daily throughout the month. So we built a model
+that reconstructs the number early, and it worked: it predicted the eventual figure to
+within about 0.04 degrees. It still lost money on paper, because the people already
+trading these bets do something better — they rebuild NASA's number from NASA's own raw
+inputs and get within 0.015 degrees. The lesson was not that the model was bad. It was
+that we brought a good instrument to a contest where the other side had a better one.
+"""
 status = "retired"
 created = "2026-07-24"
 supersedes = ""

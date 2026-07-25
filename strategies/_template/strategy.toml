@@ -3,6 +3,11 @@ variant = ""
 # REQUIRED: one sentence, plain English, no jargon - what the idea IS, for a smart
 # outsider. This is what the dashboard shows. Jargon belongs in STRATEGY.md, never here.
 summary = ""
+# REQUIRED: self-contained, plain English, no jargon, reasonably motivated. A smart
+# outsider must understand what the market is, what we do, and why it should work,
+# without prior knowledge. 4-8 sentences; include the honest catch.
+explainer = """
+"""
 status = "trial"
 created = ""
 supersedes = ""

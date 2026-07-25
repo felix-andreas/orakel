@@ -1,6 +1,16 @@
 family = "temp-truncation"
 variant = "runningmax"
 summary = "Bets on today's high temperature that are already impossible should collapse to zero. They do - but within three minutes, so bots take it, not us."
+explainer = """
+Polymarket runs daily bets on the highest temperature in each of 49 cities, split into
+one-degree buckets. The clever part is that the answer is settled progressively: once the
+afternoon peak has passed, every bucket below it is already impossible and should be worth
+nothing. In practice those dead bets keep a few cents of value for a while, and the idea
+was to sell them. It failed for a simple reason: "a while" turned out to be nought to three
+minutes. Automated traders clear the stale prices almost immediately, and an agent that
+wakes up once a day cannot compete for money that disappears in the time it takes to read
+a thermometer.
+"""
 status = "retired"
 created = "2026-07-23"
 supersedes = ""

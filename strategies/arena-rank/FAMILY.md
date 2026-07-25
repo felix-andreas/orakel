@@ -1,5 +1,7 @@
 # arena-rank
 
+> **In plain English:** Bets on a public leaderboard that ranks AI models by how often people prefer their answers. One big market and several small ones are all settled by reading the same table at the same moment.
+
 Price Polymarket's monthly LMArena-ranking boards as **one latent object**: seven-plus
 boards (#1/#2/#3 overall, Math/Coding/WebDev sub-arenas, style-control, "best Chinese
 company") all resolve off a single reading of the arena Rank column at one instant. The

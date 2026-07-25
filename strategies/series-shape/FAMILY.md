@@ -1,5 +1,7 @@
 # series-shape
 
+> **In plain English:** Bets on a best-of-three match: who wins, and separately whether it ends in a clean sweep. The two must agree with each other, and one is traded far more than the other.
+
 Trade the **shape of a series-score distribution** using the deep moneyline as the level.
 Polymarket lists each best-of-N as a bundle on one event: a deep moneyline (1c spreads,
 $33k–$81k median) plus thin derivatives — map handicap (fav −1.5 ≡ 2-0) and totals

@@ -1,5 +1,7 @@
 # temp-truncation
 
+> **In plain English:** Bets on the day's high temperature in a city, split into one-degree buckets. Unusually, the answer is revealed gradually through the day as readings come in.
+
 Exploit structural repricing lag in Polymarket's daily "Highest temperature in <city>"
 bucket families. The resolution variable is a monotone running max of a free real-time
 public feed, so intraday observations create mathematical zeros (legs below the running

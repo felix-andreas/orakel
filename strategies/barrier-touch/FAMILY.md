@@ -1,5 +1,7 @@
 # barrier-touch
 
+> **In plain English:** Bets on whether a price will ever reach a given level before a deadline. They come in ladders — many levels, each traded separately — and the far-out levels behave like lottery tickets.
+
 Model one-touch barrier claims ("Hit Price" ladders) with first-passage mathematics and
 trade the *relative value* across ladder legs and windows — not single-leg direction.
 Polymarket runs a 64-event / ~750-market / ~$88M recurring cross-asset family (crypto,

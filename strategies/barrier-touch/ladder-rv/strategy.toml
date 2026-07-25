@@ -1,6 +1,19 @@
 family = "barrier-touch"
 variant = "ladder-rv"
 summary = "Bets on whether a price will ever touch some far-away level are priced too generously. We sell the far-fetched ones and hold to expiry."
+explainer = """
+Polymarket runs bets like "will the price of oil ever touch $110 before the month
+ends?" — and it lists a whole ladder of them, one bet per price level, for oil, gold,
+silver and some big stocks. The levels far away from today's price need an enormous move
+to pay out, so they sell for a few cents and attract people buying cheap lottery tickets.
+Lottery tickets are reliably overpriced, and here that is measurable: across our data,
+bets priced between 2 and 5 cents paid out 0 times out of 58. We take the other side of
+those bets and wait for the month to end. The reason this can work at all is that we are
+not trying to predict oil — we only need to know that a $20 move in three weeks is rarer
+than its price implies, which is arithmetic rather than forecasting. The catch is cost:
+the exchange charges a fee and there is a gap between the buying and selling price, so we
+only trade the levels where the overpricing is big enough to survive both.
+"""
 status = "trial"
 created = "2026-07-23"
 supersedes = ""

@@ -29,8 +29,11 @@ metric nobody can interpret.
   lines, not five boxes.
 - **Tables over cards** for anything with more than three attributes. Expandable rows
   beat separate pages for hierarchy (family → variants).
-- **Plain English, no jargon.** Every strategy, run and decision needs a one-sentence
-  description a smart outsider understands. Internal vocabulary (annROLC, paired Brier,
+- **Plain English, no jargon — and self-contained.** Every strategy, run and decision
+  needs a description a smart outsider can read **cold**, with no prior knowledge: what
+  the thing is, what we do, and *why that should work*. An explanation that assumes you
+  already know what a "leg" or a "ladder" or a "de-vigged mid" is has failed. Motivate the
+  claim; state the catch. Internal vocabulary (annROLC, paired Brier,
   gate 2) may appear *next to* the plain sentence, never instead of it.
 - **No walls of text.** Long documents get structure — summary line, then detail. If a
   page is a wall, it has failed regardless of the content's quality.

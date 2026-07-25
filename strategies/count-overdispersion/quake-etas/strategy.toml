@@ -1,6 +1,17 @@
 family = "count-overdispersion"
 variant = "quake-etas"
 summary = "Markets on how many earthquakes happen this week are priced as if quakes were independent. They cluster - aftershocks follow big ones - so the real spread of outcomes is twice as wide, and the extreme buckets are too cheap."
+explainer = """
+Polymarket runs weekly bets on how many earthquakes above a given size will happen
+anywhere in the world. Earthquakes are not independent events — a large one is followed by
+aftershocks — so the number in a given week swings far more widely than it would if
+quakes arrived at random. Textbook arithmetic assumes randomness and gets the spread badly
+wrong, which is why we expected the market's prices to be wrong at the extremes, and why
+we built a proper simulation of clustered quakes to price them. The check that killed it
+was working backwards from the market's own prices to see what spread the crowd implied:
+it was 1.36, against a historical 1.36. The crowd was already right. We had assumed an
+error rather than measuring for one.
+"""
 status = "retired"
 created = "2026-07-25"
 supersedes = ""

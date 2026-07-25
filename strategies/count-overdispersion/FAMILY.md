@@ -1,5 +1,7 @@
 # count-overdispersion
 
+> **In plain English:** Bets on how many times something will happen in a week — earthquakes, outages, storms. When the events cluster rather than arriving at random, the range of plausible answers is much wider than intuition suggests.
+
 **The crowd prices clustered counts as if the events were independent.** Whenever a
 market asks "how many X will happen this week", the natural mental model — and the
 natural closed form — is Poisson. But many real-world counts are *self-exciting*: one

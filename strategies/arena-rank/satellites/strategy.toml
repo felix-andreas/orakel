@@ -1,6 +1,18 @@
 family = "arena-rank"
 variant = "satellites"
 summary = "Price the small AI-leaderboard markets off the big, liquid one. The small ones turned out to be priced correctly already."
+explainer = """
+The same AI-leaderboard bets as our other leaderboard strategy. One of them — which
+company has the best model overall — has millions of dollars behind it and is priced
+carefully. The seven smaller bets beside it (best coding model, best Chinese company, and
+so on) have a tiny fraction of that money, yet all eight are decided by reading the same
+leaderboard at the same moment. The idea was to treat the big bet as a trustworthy anchor,
+work out what the small ones must be worth if the big one is right, and trade the
+difference. It did not survive testing: the small bets were already priced about
+correctly, and the leaderboard's own published margins of error turned out to describe the
+underlying skill of the models rather than the published ranking that actually settles the
+bet — so using them made our estimates worse, not better.
+"""
 status = "retired"
 created = "2026-07-25"
 supersedes = ""
