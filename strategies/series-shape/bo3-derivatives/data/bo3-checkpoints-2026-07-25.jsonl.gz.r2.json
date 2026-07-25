@@ -1,0 +1,11 @@
+{
+  "key": "blobs/49ae21c43fa61a4913a309fc3d3b472261fe2e3455df31291a667762a3fef101",
+  "sha256": "49ae21c43fa61a4913a309fc3d3b472261fe2e3455df31291a667762a3fef101",
+  "bytes": 5812362,
+  "content_type": "application/gzip",
+  "original_name": "bo3-checkpoints-2026-07-25.jsonl.gz",
+  "source_url": "derived from bo3-clob-history via src/backtest.py checkpoints",
+  "note": "10,471 BO3 triples with T-24h/-6h/-1h/-15m prices per leg + pre/post path stats",
+  "fetched_at": "2026-07-25T09:21:20Z",
+  "bucket": "orakel"
+}

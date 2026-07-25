@@ -1,0 +1,11 @@
+{
+  "key": "blobs/c44fda95087baf6d462ec527d6a49e606552bab9f57313f029a8cdb590eb8af1",
+  "sha256": "c44fda95087baf6d462ec527d6a49e606552bab9f57313f029a8cdb590eb8af1",
+  "bytes": 8548802,
+  "content_type": "application/gzip",
+  "original_name": "bo3-triples-2026-07-25.jsonl.gz",
+  "source_url": "derived from bo3-events via src/harvest.py legs",
+  "note": "12,581 moneyline+map_handicap+totals triples (10,980 true BO3 by leg semantics)",
+  "fetched_at": "2026-07-25T09:21:18Z",
+  "bucket": "orakel"
+}

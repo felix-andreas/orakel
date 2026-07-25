@@ -1,0 +1,11 @@
+{
+  "key": "blobs/52c0d45cac6ec9d91ac0bda03e12b2cc61ee193b6ca4767accf797c2bd6a2d9a",
+  "sha256": "52c0d45cac6ec9d91ac0bda03e12b2cc61ee193b6ca4767accf797c2bd6a2d9a",
+  "bytes": 42546,
+  "content_type": "application/json",
+  "original_name": "gate5-pinnacle-raw-2026-07-25.json",
+  "source_url": "guest.api.arcadia.pinnacle.com/0.1 sports/12 matchups + markets/related/straight, 2026-07-25T09:11Z",
+  "note": "GATE 5 raw: Pinnacle esports spreads/totals/moneylines, 48 matchups",
+  "fetched_at": "2026-07-25T09:21:24Z",
+  "bucket": "orakel"
+}

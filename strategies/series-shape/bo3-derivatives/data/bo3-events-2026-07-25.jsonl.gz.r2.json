@@ -1,0 +1,11 @@
+{
+  "key": "blobs/61da68c2cfff929d2c8df4cad6acd8f5aadb0669dfa9e661d0ebb671f4f3a90f",
+  "sha256": "61da68c2cfff929d2c8df4cad6acd8f5aadb0669dfa9e661d0ebb671f4f3a90f",
+  "bytes": 52519294,
+  "content_type": "application/gzip",
+  "original_name": "bo3-events-2026-07-25.jsonl.gz",
+  "source_url": "gamma-api.polymarket.com/events?closed=true&tag_id=64 date-windowed offset paging 2025-11-25..2026-07-26",
+  "note": "series-shape/bo3-derivatives day-1: 17,338 resolved esports events, independent harvest",
+  "fetched_at": "2026-07-25T09:21:17Z",
+  "bucket": "orakel"
+}

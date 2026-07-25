@@ -1,0 +1,11 @@
+{
+  "key": "blobs/e322944d828f2897912b7147f274d6d990a8be2ade2ea614c4072908b5d62a52",
+  "sha256": "e322944d828f2897912b7147f274d6d990a8be2ade2ea614c4072908b5d62a52",
+  "bytes": 26595038,
+  "content_type": "application/gzip",
+  "original_name": "bo3-clob-history-2026-07-25.tar.gz",
+  "source_url": "clob.polymarket.com/prices-history?market=<token>&startTs=gameStartTime-129600&fidelity=10",
+  "note": "36,167/36,167 token price histories, 0 failures",
+  "fetched_at": "2026-07-25T09:21:23Z",
+  "bucket": "orakel"
+}

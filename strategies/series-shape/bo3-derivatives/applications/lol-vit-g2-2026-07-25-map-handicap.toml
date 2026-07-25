@@ -1,0 +1,48 @@
+# LoL: Team Vitality vs G2 Esports (BO3) - LEC Regular Season, map handicap G2 -1.5.
+# The single best board this variant would ever have traded: deepest handicap book on the
+# 2026-07-25 slate, squarely inside the fundable band, and the idea's own example #1.
+# Kept as the concrete record of WHY the variant is retired.
+market_slug = "lol-vit-g2-2026-07-25-game-handicap-home-1pt5"
+condition_id = "0x34a4cdb995e6dbc177d7a9ee56e962e358e9e64b0d2a9e99ebdd8cb338739352"
+added = "2026-07-25"
+active = false
+
+# INACTIVE -- the variant is retired on day 1; see results/backtest-2026-07-25.md.
+# This board passes every liquidity gate and still has no edge, which is the whole finding:
+#   * book gate PASSES (1c spread, $4.7k/$4.4k at touch, $38.6k within 10c)
+#   * the idea priced it at "empirical band 0.8-0.9 => P(cover) 0.734 vs market 0.585,
+#     +14.9pp, net +13.3c after the 1.21c taker fee"
+#   * Pinnacle's de-vigged G2 -1.5 is 0.591 and Smarkets' exchange mid is 0.571, against a
+#     Polymarket mid of 0.585 -- i.e. the "+14.9pp edge" is 0.6pp of noise
+#   * on 1,110 resolved BO3s with a live handicap book the market->realised gap is
+#     -0.09pp +/- 1.50, and net of fee + 2c adverse fill the trade returns -2.9c/share
+# Not predicted on: the gates say the signal is noise, so a row here would add no evidence
+# the 34-pair Pinnacle comparison has not already settled far more sharply.
+
+[params]
+leg = "map_handicap"
+handicap_side = "G2 Esports"          # outcomes[0]; description: "wins 2 or more games than"
+series_format = "BO3"                  # verified from the LEGS: hc margin 2 AND totals threshold 3
+identity = "HC_cover(X) <=> X wins match AND Under 2.5"   # held 10,465/10,472 = 99.933%
+checkpoint = "T-6h"                    # the agent-cadence checkpoint
+fee_rate = 0.05                        # sports; fee = shares * 0.05 * p * (1-p)
+
+[book]   # measured 2026-07-25 09:15 UTC via clob.polymarket.com/book
+mid = 0.595
+best_bid = 0.590
+best_ask = 0.600
+spread_c = 1.0
+top_of_book_usd = 4700
+depth_10c_usd = 38590
+levels = 65
+volume_usd = 40352
+passes_book_gate = true                # spread <= 5c and top-of-book >= $500
+fee_at_mid_c = 1.20
+
+[external]   # GATE 5 -- the kill
+pinnacle_devig = 0.591                 # spread -1.5, period 0, bestOfX 3, overround 1.0490
+pinnacle_devig_power = 0.598
+smarkets_mid = 0.571                   # exchange back/lay mid, no vig
+polymarket_minus_pinnacle_pp = -0.6
+kill_threshold_pp = 3.0
+verdict = "fails gate 5"

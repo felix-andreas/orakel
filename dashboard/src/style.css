@@ -24,8 +24,8 @@
   --bg-sunken: #fafafa;
   --panel: #ffffff;
   --fg: #09090b;
-  --fg-muted: #6b7280;
-  --fg-subtle: #9ca3af;
+  --fg-muted: #52525b; /* body-secondary — 7.0:1 on white */
+  --fg-subtle: #6b7280; /* labels/captions — 4.9:1, still AA for normal text */
   --border: #e7e7ea;
   --border-strong: #d4d4d8;
   --hover: #f6f6f7;
@@ -94,8 +94,8 @@
     --bg-sunken: #0c0c0e;
     --panel: #101012;
     --fg: #fafafa;
-    --fg-muted: #9ca3af;
-    --fg-subtle: #71717a;
+    --fg-muted: #b4b4bb;
+    --fg-subtle: #93939c;
     --border: #232326;
     --border-strong: #34343a;
     --hover: #17171a;
@@ -135,8 +135,8 @@
   --bg-sunken: #0c0c0e;
   --panel: #101012;
   --fg: #fafafa;
-  --fg-muted: #9ca3af;
-  --fg-subtle: #71717a;
+  --fg-muted: #b4b4bb;
+  --fg-subtle: #93939c;
   --border: #232326;
   --border-strong: #34343a;
   --hover: #17171a;
@@ -226,18 +226,23 @@ a {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem 0.5rem 0.75rem 0.75rem;
+  padding: 0 0.5rem 0.75rem 0.75rem;
   border-right: 1px solid var(--border);
   background: var(--bg-sunken);
 }
 
+/* Same 3rem band as the top bar, so the wordmark and the theme toggle sit on
+   one visual header row across the sidebar/main seam. */
 .sidebar-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.25rem 0.25rem 0.25rem 0.5rem;
+  height: 3rem;
+  flex: none;
+  margin: 0 -0.5rem 0.5rem -0.75rem;
+  padding: 0 0.75rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .wordmark {
@@ -311,14 +316,15 @@ a {
   background: none;
   font: inherit;
   font-size: var(--fs-xs);
-  font-weight: 500;
-  color: var(--fg-subtle);
+  font-weight: 600;
+  color: var(--fg-muted);
   text-align: left;
   cursor: pointer;
 }
 
 .nav-group-head:hover {
-  color: var(--fg-muted);
+  color: var(--fg);
+  background: var(--hover);
 }
 
 .nav-group-head .chev {
@@ -341,38 +347,36 @@ a {
   padding-top: 0.125rem;
 }
 
+/* Every item is fully readable. "Not selected" is never signalled by dimming;
+   "selected" is signalled by weight plus a single marker rule. */
 .nav-items a {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.3125rem 0.5rem;
   border-radius: var(--r-md);
-  color: var(--fg-muted);
+  color: var(--fg);
   text-decoration: none;
   font-size: var(--fs-sm);
-  font-weight: 450;
+  font-weight: 400;
   white-space: nowrap;
 }
 
 .nav-items a svg {
   flex: none;
-  opacity: 0.75;
+  color: var(--fg-subtle);
 }
 
 .nav-items a:hover {
   background: var(--hover);
-  color: var(--fg);
 }
 
 .nav-items a[aria-current="page"] {
   background: var(--hover);
-  color: var(--fg);
-  font-weight: 550;
-  box-shadow: inset 0 0 0 1px var(--border);
+  font-weight: 600;
 }
 
 .nav-items a[aria-current="page"] svg {
-  opacity: 1;
   color: var(--tint-1);
 }
 
@@ -720,6 +724,75 @@ a {
   background: var(--warn-bg);
 }
 
+/* The plain-English sentence that describes a thing. It is the description —
+   it goes above the numbers and above the internal prose, never instead of
+   them (PRINCIPLES.md: plain English, no jargon). */
+.lede {
+  margin: 0;
+  font-size: var(--fs-xl);
+  line-height: 1.45;
+  font-weight: 450;
+  letter-spacing: -0.01em;
+  max-width: 58rem;
+  color: var(--fg);
+}
+
+.lede-missing {
+  font-size: var(--fs-sm);
+  color: var(--warn);
+}
+
+.item-summary {
+  display: block;
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+  white-space: normal;
+  margin-bottom: 0.125rem;
+}
+
+/* One-line stat strip — the compact alternative to a KPI card row. */
+.statline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.375rem 1.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--panel);
+}
+
+.statline .stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.statline .stat-v {
+  font-size: var(--fs-lg);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.statline .s-ok {
+  color: var(--ok);
+}
+
+.statline .s-warn {
+  color: var(--warn);
+}
+
+.statline .s-bad {
+  color: var(--bad);
+}
+
+.statline .stat-k {
+  font-size: var(--fs-xs);
+  color: var(--fg-subtle);
+}
+
 /* KPI values that carry an identifier rather than a number */
 .kpi-value .mono {
   font-size: var(--fs-lg);
@@ -981,6 +1054,146 @@ td.bar-cell {
   min-width: 6rem;
 }
 
+/* ================ expandable family table (strategies index) ================ */
+/* Table-like alignment without a <table>, so each row can open to reveal its
+   variants. Columns are shared by the family row and the variant rows. */
+
+.ftable {
+  display: flex;
+  flex-direction: column;
+}
+
+.frow {
+  border-bottom: 1px solid var(--border);
+}
+
+.ftable .frow:last-child {
+  border-bottom: none;
+}
+
+.frow > summary {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr) 5rem 5rem 6rem;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--fs-sm);
+}
+
+.frow > summary::-webkit-details-marker {
+  display: none;
+}
+
+.frow > summary:hover {
+  background: var(--hover);
+}
+
+.fname {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.fname::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 5px solid var(--fg-subtle);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  flex: none;
+  transition: transform 0.12s ease;
+}
+
+.frow[open] > summary .fname::before {
+  transform: rotate(90deg);
+}
+
+.fnum {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+}
+
+.fsum {
+  color: var(--fg-muted);
+  min-width: 0;
+}
+
+.fhead {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr) 5rem 5rem 6rem;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-xs);
+  color: var(--fg-subtle);
+}
+
+.fhead span:nth-child(n + 3) {
+  text-align: right;
+}
+
+.fvariants {
+  padding: 0 1rem 0.75rem 1rem;
+  background: var(--bg-sunken);
+}
+
+.fvar {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr) 5rem 5rem 6rem;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-sm);
+}
+
+.fvar:last-child {
+  border-bottom: none;
+}
+
+.fvar-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.fvar-name a {
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.fvar-name a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.fvar-when {
+  font-size: var(--fs-2xs);
+  color: var(--fg-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .fhead {
+    display: none;
+  }
+  .frow > summary,
+  .fvar {
+    grid-template-columns: minmax(0, 1fr) 4.5rem;
+  }
+  .frow > summary > :nth-child(n + 3),
+  .fvar > :nth-child(n + 4) {
+    display: none;
+  }
+}
+
 /* ============================ lists ============================ */
 
 .rows {
@@ -1106,95 +1319,99 @@ a.item:hover {
   text-underline-offset: 2px;
 }
 
-/* ============================ runs narrative ============================ */
+/* ==================== runs / decisions: dated story lines ==================== */
+/* One hairline between entries, no boxes: the text is the content. */
 
-.run-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  padding: 0.875rem 1rem;
+.run,
+.entry {
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border);
 }
 
-.run-date {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
+.runs .run:last-child,
+.entries .entry:last-child {
+  border-bottom: none;
 }
 
-.run-date b {
-  font-size: var(--fs-xl);
+.run-line,
+.entry-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.run-when b,
+.entry-line b {
+  font-size: var(--fs-lg);
   font-weight: 650;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 
-.run-date span {
+.run-when {
+  color: var(--fg-subtle);
   font-size: var(--fs-xs);
+}
+
+.run-meta,
+.entry-meta {
+  color: var(--fg-subtle);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.run-story,
+.entry-what {
+  margin: 0.25rem 0 0;
+  font-size: var(--fs-md);
+  line-height: 1.6;
+  max-width: 62rem;
+}
+
+.entry-what {
+  font-weight: 500;
+}
+
+.run-story b {
+  font-weight: 650;
+}
+
+.run-story a,
+.entry-what a {
+  color: var(--info);
+  text-decoration: none;
+}
+
+.run-story a:hover,
+.entry-what a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* the disclosure that holds the raw, internal version */
+details.doc-plain {
+  border: 0;
+  background: none;
+  margin-top: 0.25rem;
+}
+
+details.doc-plain > summary {
+  padding: 0.125rem 0;
+  font-size: var(--fs-xs);
+  font-weight: 400;
   color: var(--fg-subtle);
 }
 
-.run-lead {
-  margin: 0;
-  padding: 0.75rem 1rem;
-  font-size: var(--fs-sm);
-  color: var(--fg-muted);
-  line-height: 1.55;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-sunken);
-}
-
-.steps {
-  display: flex;
-  flex-direction: column;
-}
-
-.step {
-  display: grid;
-  grid-template-columns: 11.5rem minmax(0, 1fr);
-  gap: 1rem;
-  padding: 0.625rem 1rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.step:last-child {
-  border-bottom: none;
-}
-
-.step-who {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1875rem;
-  align-items: flex-start;
-}
-
-.step-role {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: var(--fs-sm);
-  font-weight: 550;
-}
-
-.step-note {
-  font-size: var(--fs-sm);
-  line-height: 1.55;
-  color: var(--fg-muted);
-  overflow-wrap: anywhere;
-}
-
-.step-note b {
+details.doc-plain > summary:hover {
+  background: none;
   color: var(--fg);
-  font-weight: 550;
 }
 
-@media (max-width: 700px) {
-  .step {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.25rem;
-  }
+details.doc-plain > .doc-body {
+  padding: 0.5rem 0 0;
+  border-top: 0;
 }
 
 /* ============================ documents ============================ */
@@ -1336,6 +1553,27 @@ select:hover {
 
 .chart svg {
   display: block;
+}
+
+/* Visible exit from a brush zoom; only rendered while the chart is zoomed. */
+.chart-reset {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 5;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  background: var(--panel);
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: var(--fs-2xs);
+  cursor: pointer;
+}
+
+.chart-reset:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
 }
 
 .chart-tip {

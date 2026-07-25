@@ -149,6 +149,67 @@ pub fn variants(paths: &[String]) -> Vec<(String, String)> {
     out
 }
 
+/// Everything `strategy.toml` declares about one variant. `summary` is the
+/// REQUIRED plain-English sentence (strategies/README.md) and is the primary
+/// description everywhere a strategy appears — the dashboard never shows a
+/// variant by name alone when it can show what the variant does.
+pub struct VariantMeta {
+    pub family: String,
+    pub variant: String,
+    pub summary: String,
+    pub status: String,
+    pub created: String,
+    pub supersedes: String,
+    pub labels: Vec<String>,
+    pub slot: Option<i64>,
+    pub trial_started: String,
+    pub review_due: String,
+    pub success_guideline: String,
+    pub retired_on: String,
+    pub retire_reason: String,
+}
+
+impl VariantMeta {
+    pub fn key(&self) -> String {
+        format!("{}/{}", self.family, self.variant)
+    }
+    pub fn href(&self) -> String {
+        format!("/strategies/{}/{}", self.family, self.variant)
+    }
+}
+
+pub fn parse_variant_meta(family: &str, variant: &str, src: &str) -> VariantMeta {
+    let t = toml_of(src);
+    VariantMeta {
+        family: family.to_string(),
+        variant: variant.to_string(),
+        summary: tstr(&t, "summary").to_string(),
+        status: tstr(&t, "status").to_string(),
+        created: tstr(&t, "created").to_string(),
+        supersedes: tstr(&t, "supersedes").to_string(),
+        labels: tlist(&t, "labels"),
+        slot: int_at(&t, &["trial", "slot"]),
+        trial_started: str_at(&t, &["trial", "started"]).to_string(),
+        review_due: str_at(&t, &["trial", "review_due"]).to_string(),
+        success_guideline: str_at(&t, &["trial", "success_guideline"]).to_string(),
+        retired_on: str_at(&t, &["retirement", "date"]).to_string(),
+        retire_reason: str_at(&t, &["retirement", "reason"]).to_string(),
+    }
+}
+
+/// Every variant in the repo, with its manifest read. Returns `live = false`
+/// if any read fell back to the embedded pack.
+pub async fn variant_metas(env: &Env, paths: &[String]) -> (Vec<VariantMeta>, bool) {
+    let mut out = Vec::new();
+    let mut live = true;
+    for (family, variant) in variants(paths) {
+        let f = text(env, &format!("strategies/{family}/{variant}/strategy.toml")).await;
+        live &= f.live;
+        out.push(parse_variant_meta(&family, &variant, &f.text));
+    }
+    (out, live)
+}
+
 /// `strategies/<family>/FAMILY.md` → family names, sorted.
 pub fn families(paths: &[String]) -> Vec<String> {
     let mut out: Vec<String> = paths

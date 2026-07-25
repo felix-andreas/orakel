@@ -1,0 +1,11 @@
+{
+  "key": "blobs/d5abbd9a91c4027e2ee14bb9092edc3de08fb6e19c6ab83c0f05a90a7aeff359",
+  "sha256": "d5abbd9a91c4027e2ee14bb9092edc3de08fb6e19c6ab83c0f05a90a7aeff359",
+  "bytes": 24160,
+  "content_type": "application/json",
+  "original_name": "gate5-pairs-2026-07-25.json",
+  "source_url": "derived via src/compare.py",
+  "note": "GATE 5: 34 Polymarket BO3 events matched to Pinnacle, de-vigged both ways",
+  "fetched_at": "2026-07-25T09:21:25Z",
+  "bucket": "orakel"
+}

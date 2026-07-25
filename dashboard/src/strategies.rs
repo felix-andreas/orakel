@@ -11,8 +11,8 @@
 
 use crate::data::{self, Table};
 use crate::render::{
-    self, badge, chip_row, doc, esc, fmt_int, fmt_prob, fmt_signed, fmt_ts, icon, item, items, kpi,
-    kpi_row, markdown_body, panel, panel_flush, panel_foot, table, table_scroll,
+    self, badge, chip_row, doc, esc, fmt_int, fmt_prob, fmt_signed, fmt_ts, icon, item, items,
+    markdown_body, panel, panel_flush, panel_foot, stat_line, table, table_scroll,
 };
 use crate::{shell, snapshot_banner, trail};
 use worker::Env;
@@ -25,110 +25,147 @@ pub async fn index(env: &Env) -> String {
     let (paths, tree_live) = data::tree(env).await;
     let preds = data::text(env, "predictions/predictions.csv").await;
     let scores = data::text(env, "predictions/scores.csv").await;
-    let state_doc = data::text(env, "ops/state.toml").await;
-    let mut all_live = tree_live && preds.live && scores.live && state_doc.live;
+    let detail = data::text(env, "predictions/scores_detail.csv").await;
+    let (metas, metas_live) = data::variant_metas(env, &paths).await;
+    let mut all_live = tree_live && preds.live && scores.live && detail.live && metas_live;
 
     let p = Table::parse(&preds.text);
     let s = Table::parse(&scores.text);
-    let state = data::toml_of(&state_doc.text);
+    let d = Table::parse(&detail.text);
     let families = data::families(&paths);
-    let variants = data::variants(&paths);
 
-    // Per-variant facts come from each strategy.toml.
-    let mut metas: Vec<(String, String, toml::Table)> = Vec::new();
-    for (family, variant) in &variants {
-        let f = data::text(env, &format!("strategies/{family}/{variant}/strategy.toml")).await;
-        all_live &= f.live;
-        metas.push((family.clone(), variant.clone(), data::toml_of(&f.text)));
-    }
-
-    let count_status = |want: &str| {
-        metas
-            .iter()
-            .filter(|(_, _, t)| data::tstr(t, "status") == want)
-            .count()
-    };
-
-    let kpis = kpi_row(&[
-        kpi("Families", &fmt_int(families.len() as i64), "layers", 4)
-            .context("a thesis shared by its variants"),
-        kpi("Variants", &fmt_int(variants.len() as i64), "flask", 1)
-            .context("the research unit — one folder each"),
-        kpi("In trial", &fmt_int(count_status("trial") as i64), "clock", 3)
-            .delta(
-                &format!(
-                    "{} of {} slots",
-                    data::int_at(&state, &["research", "slots_active"]).unwrap_or(0),
-                    data::int_at(&state, &["research", "slots_total"]).unwrap_or(0)
-                ),
-                "warn",
-            )
-            .context("running on a slot clock"),
-        kpi("Retired", &fmt_int(count_status("retired") as i64), "check", 2)
-            .context("folders stay, post-mortems in results/"),
+    let count_status = |want: &str| metas.iter().filter(|m| m.status == want).count();
+    let stats = stat_line(&[
+        (fmt_int(families.len() as i64), "families".to_string(), ""),
+        (fmt_int(metas.len() as i64), "strategies".to_string(), ""),
+        (
+            fmt_int(count_status("trial") as i64),
+            "in trial".to_string(),
+            "warn",
+        ),
+        (fmt_int(count_status("live") as i64), "live".to_string(), "ok"),
+        (
+            fmt_int(count_status("retired") as i64),
+            "dropped".to_string(),
+            "",
+        ),
+        (
+            fmt_int(p.rows.len() as i64),
+            "predictions logged".to_string(),
+            "",
+        ),
     ]);
 
-    let mut cards = String::new();
+    // One expandable row per family: the family's own thesis line collapsed,
+    // its variants (with the plain-English summary that IS the description)
+    // revealed on click. Table over cards; expansion over navigation.
+    let mut rows = String::from(
+        "<div class=\"fhead\"><span>Family</span><span>What it is</span><span>Strategies</span><span>Predictions</span><span>Improvement</span></div>",
+    );
     for family in &families {
         let fam_doc = data::text(env, &format!("strategies/{family}/FAMILY.md")).await;
         all_live &= fam_doc.live;
-        let summary = first_paragraph(&fam_doc.text);
+        let mine: Vec<&data::VariantMeta> = metas.iter().filter(|m| &m.family == family).collect();
+        let n_pred = p
+            .rows
+            .iter()
+            .filter(|row| p.cell(row, "family") == family.as_str())
+            .count();
+        let fam_score = s
+            .rows
+            .iter()
+            .find(|row| s.cell(row, "level") == "family" && s.cell(row, "key") == family.as_str());
+        let imp_cell = match fam_score {
+            Some(row) => {
+                let v = s.num(row, "mean_improvement");
+                format!(
+                    "<span class=\"{}\">{}</span>",
+                    if v > 0.0 { "s-ok" } else { "s-bad" },
+                    fmt_signed(v)
+                )
+            }
+            None => "<span class=\"muted\">—</span>".to_string(),
+        };
+        let active = mine.iter().any(|m| m.status == "trial" || m.status == "live");
 
-        let mut inner = String::new();
-        for (f, v, t) in metas.iter().filter(|(f, _, _)| f == family) {
-            let status = data::tstr(t, "status");
+        let mut vars = String::new();
+        for m in &mine {
             let n = p
                 .rows
                 .iter()
-                .filter(|row| p.cell(row, "family") == *f && p.cell(row, "variant") == *v)
+                .filter(|row| {
+                    p.cell(row, "family") == m.family && p.cell(row, "variant") == m.variant
+                })
                 .count();
-            let score = s
+            let scored = d
                 .rows
                 .iter()
-                .find(|row| s.cell(row, "level") == "variant" && s.cell(row, "key") == format!("{f}/{v}"));
-            let trailing = match score {
+                .filter(|row| {
+                    d.cell(row, "family") == m.family && d.cell(row, "variant") == m.variant
+                })
+                .count();
+            let vscore = s.rows.iter().find(|row| {
+                s.cell(row, "level") == "variant" && s.cell(row, "key") == m.key()
+            });
+            let vimp = match vscore {
                 Some(row) => {
-                    let imp = s.num(row, "mean_improvement");
-                    badge(&fmt_signed(imp), if imp > 0.0 { "ok" } else { "bad" })
+                    let v = s.num(row, "mean_improvement");
+                    format!(
+                        "<span class=\"{}\">{}</span>",
+                        if v > 0.0 { "s-ok" } else { "s-bad" },
+                        fmt_signed(v)
+                    )
                 }
-                None => render::status_badge(status),
+                None => "<span class=\"muted\">—</span>".to_string(),
             };
-            inner.push_str(&item(
-                &format!("/strategies/{f}/{v}"),
-                &esc(v),
-                &esc(&format!(
-                    "{} · created {} · {} predictions",
-                    status,
-                    data::tstr(t, "created"),
-                    n
-                )),
-                &trailing,
+            let when = if m.status == "retired" && !m.retired_on.is_empty() {
+                format!("{} → dropped {}", m.created, m.retired_on)
+            } else if !m.review_due.is_empty() && m.status == "trial" {
+                format!("trial since {} · review {}", m.trial_started, m.review_due)
+            } else {
+                format!("created {}", m.created)
+            };
+            vars.push_str(&format!(
+                "<div class=\"fvar\"><span class=\"fvar-name\"><a href=\"{href}\">{name}</a><span class=\"fvar-when\">{when}</span></span><span class=\"fsum\">{summary}</span><span class=\"fnum\">{status}</span><span class=\"fnum\">{n}{scored_sub}</span><span class=\"fnum\">{vimp}</span></div>",
+                href = esc(&m.href()),
+                name = esc(&m.variant),
+                when = esc(&when),
+                summary = esc(&m.summary),
+                status = render::status_badge(&m.status),
+                n = n,
+                scored_sub = if scored > 0 {
+                    format!("<span class=\"fvar-when\"> {scored} scored</span>")
+                } else {
+                    String::new()
+                },
+                vimp = vimp,
             ));
         }
-        if inner.is_empty() {
-            inner.push_str(&item("", "No variants yet", "", ""));
-        }
 
-        cards.push_str(&panel_foot(
-            family,
-            &summary,
-            &badge(
-                &render::count(metas.iter().filter(|(f, _, _)| f == family).count(), "variant"),
-                "",
-            ),
-            &items(&inner),
-            &format!(
-                "<span class=\"mono\">strategies/{family}/</span><a href=\"/strategies/{family}\">Family overview →</a>"
-            ),
-            false,
+        rows.push_str(&format!(
+            "<details class=\"frow\"{open}><summary><span class=\"fname\">{family}</span><span class=\"fsum\">{thesis}</span><span class=\"fnum\">{nvar}</span><span class=\"fnum\">{npred}</span><span class=\"fnum\">{imp}</span></summary><div class=\"fvariants\">{vars}<p class=\"note\"><a class=\"link\" href=\"/strategies/{family}\">Family page: the full thesis, cross-variant lessons and scoring →</a></p></div></details>",
+            open = if active { " open" } else { "" },
+            family = esc(family),
+            thesis = esc(&first_paragraph(&fam_doc.text)),
+            nvar = mine.len(),
+            npred = n_pred,
+            imp = imp_cell,
+            vars = vars,
         ));
     }
 
     let body = format!(
-        "{}{}<div class=\"grid-pair\">{}</div>",
-        if all_live { String::new() } else { snapshot_banner() },
-        kpis,
-        cards
+        "{banner}{stats}{table}",
+        banner = if all_live { String::new() } else { snapshot_banner() },
+        stats = stats,
+        table = panel_foot(
+            "Strategies",
+            "click a family to see its strategies",
+            &badge(&render::count(metas.len(), "strategy"), ""),
+            &format!("<div class=\"ftable\">{rows}</div>"),
+            "<span class=\"mono\">strategies/&lt;family&gt;/&lt;variant&gt;/strategy.toml</span><span>improvement = how much better than the market, per scored prediction</span>",
+            true,
+        ),
     );
 
     shell(
@@ -142,7 +179,7 @@ pub async fn index(env: &Env) -> String {
 }
 
 /// First non-heading paragraph of a markdown file, collapsed to one line and
-/// clipped — used as a panel subtitle.
+/// clipped — used as a family's one-line description.
 fn first_paragraph(src: &str) -> String {
     let mut buf = String::new();
     for line in src.lines() {
@@ -169,8 +206,8 @@ fn first_paragraph(src: &str) -> String {
         .replace('*', "")
         .replace('_', "");
     let buf = strip_links(&buf);
-    let clipped: String = buf.chars().take(150).collect();
-    if buf.chars().count() > 150 {
+    let clipped: String = buf.chars().take(130).collect();
+    if buf.chars().count() > 130 {
         format!("{}…", clipped.trim_end())
     } else {
         clipped
@@ -240,11 +277,11 @@ pub async fn family(env: &Env, family: &str) -> String {
         .filter(|(f, _)| f == family)
         .collect();
 
-    let mut metas: Vec<(String, toml::Table)> = Vec::new();
+    let mut metas: Vec<data::VariantMeta> = Vec::new();
     for (_, v) in &variants {
         let f = data::text(env, &format!("strategies/{family}/{v}/strategy.toml")).await;
         all_live &= f.live;
-        metas.push((v.clone(), data::toml_of(&f.text)));
+        metas.push(data::parse_variant_meta(family, v, &f.text));
     }
 
     let fam_rows: Vec<&Vec<String>> = p
@@ -257,71 +294,56 @@ pub async fn family(env: &Env, family: &str) -> String {
         .iter()
         .find(|row| s.cell(row, "level") == "family" && s.cell(row, "key") == family);
 
-    let kpis = kpi_row(&[
-        kpi("Variants", &fmt_int(variants.len() as i64), "flask", 1).context(
-            &metas
-                .iter()
-                .map(|(v, t)| format!("{v} ({})", data::tstr(t, "status")))
-                .collect::<Vec<_>>()
-                .join(", "),
+    let stats = stat_line(&[
+        (fmt_int(variants.len() as i64), "strategies".to_string(), ""),
+        (
+            fmt_int(fam_rows.len() as i64),
+            "predictions".to_string(),
+            "",
         ),
-        kpi("Predictions", &fmt_int(fam_rows.len() as i64), "list", 4).context("logged by this family"),
-        kpi(
-            "Scored",
-            &fam_score
+        (
+            fam_score
                 .map(|row| s.cell(row, "n").to_string())
                 .unwrap_or_else(|| "0".to_string()),
-            "check",
-            2,
-        )
-        .context("rows with a resolution"),
-        kpi(
-            "Mean improvement",
-            &fam_score
+            "scored".to_string(),
+            "",
+        ),
+        (
+            fam_score
                 .map(|row| fmt_signed(s.num(row, "mean_improvement")))
                 .unwrap_or_else(|| "—".to_string()),
-            "trend-up",
-            2,
-        )
-        .delta(
+            "better than the market, per prediction".to_string(),
             match fam_score.map(|row| s.num(row, "mean_improvement")) {
-                Some(v) if v > 0.0 => "beats market",
-                Some(_) => "behind market",
-                None => "not scored yet",
-            },
-            match fam_score.map(|row| s.num(row, "mean_improvement")) {
-                Some(v) if v > 0.0 => "up",
-                Some(_) => "down",
+                Some(v) if v > 0.0 => "ok",
+                Some(_) => "bad",
                 None => "",
             },
-        )
-        .context("market Brier minus ours"),
+        ),
     ]);
 
     let mut variant_items = String::new();
-    for (v, t) in &metas {
-        let status = data::tstr(t, "status");
+    for m in &metas {
         let n = p
             .rows
             .iter()
-            .filter(|row| p.cell(row, "family") == family && p.cell(row, "variant") == *v)
+            .filter(|row| p.cell(row, "family") == family && p.cell(row, "variant") == m.variant)
             .count();
-        let supersedes = data::tstr(t, "supersedes");
-        let sub = if supersedes.is_empty() {
-            format!("created {} · {} predictions", data::tstr(t, "created"), n)
+        let when = if m.status == "retired" && !m.retired_on.is_empty() {
+            format!("dropped {} · {} predictions", m.retired_on, n)
+        } else if m.status == "trial" && !m.review_due.is_empty() {
+            format!("review due {} · {} predictions", m.review_due, n)
         } else {
-            format!(
-                "created {} · supersedes {} · {} predictions",
-                data::tstr(t, "created"),
-                supersedes,
-                n
-            )
+            format!("created {} · {} predictions", m.created, n)
         };
         variant_items.push_str(&item(
-            &format!("/strategies/{family}/{v}"),
-            &esc(v),
-            &esc(&sub),
-            &render::status_badge(status),
+            &m.href(),
+            &esc(&m.variant),
+            &format!(
+                "<span class=\"item-summary\">{}</span>{}",
+                esc(&m.summary),
+                esc(&when)
+            ),
+            &render::status_badge(&m.status),
         ));
     }
 
@@ -378,11 +400,11 @@ pub async fn family(env: &Env, family: &str) -> String {
     };
 
     let body = format!(
-        "{banner}{kpis}<div class=\"grid-main\">{thesis}{variants}</div>{scoring}",
+        "{banner}{stats}<div class=\"grid-main\">{thesis}{variants}</div>{scoring}",
         banner = if all_live { String::new() } else { snapshot_banner() },
-        kpis = kpis,
+        stats = stats,
         thesis = panel_foot(
-            "Thesis",
+            "The idea in full",
             "what this family trades, and who is on the other side",
             "",
             &format!("<div class=\"prose\">{}</div>", markdown_body(&fam_doc.text)),
@@ -390,8 +412,8 @@ pub async fn family(env: &Env, family: &str) -> String {
             false,
         ),
         variants = panel(
-            "Variants",
-            "each one is a separate research unit",
+            "Strategies in this family",
+            "each one is a separate experiment with its own clock",
             &badge(&render::count(variants.len(), "variant"), ""),
             &items(&variant_items),
         ),
@@ -457,7 +479,7 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
         return shell(env, "/strategies", crumbs, all_live, &body).await;
     }
 
-    let meta = data::toml_of(&toml_doc.text);
+    let m = data::parse_variant_meta(family, variant, &toml_doc.text);
     let p = Table::parse(&preds.text);
     let s = Table::parse(&scores.text);
     let d = Table::parse(&detail.text);
@@ -478,79 +500,78 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
         .iter()
         .find(|row| s.cell(row, "level") == "variant" && s.cell(row, "key") == key);
 
-    let status = data::tstr(&meta, "status");
-    let started = data::str_at(&meta, &["trial", "started"]);
-    let review = data::str_at(&meta, &["trial", "review_due"]);
+    let status = m.status.clone();
     let ahead = scored
         .iter()
         .filter(|row| d.num(row, "improvement") > 0.0)
         .count();
 
-    let kpis = kpi_row(&[
-        kpi("Status", status, "flask", 1)
-            .delta(
-                &format!("slot {}", data::int_at(&meta, &["trial", "slot"]).unwrap_or(0)),
-                if status == "trial" { "warn" } else { "" },
-            )
-            .context(&format!("created {}", data::tstr(&meta, "created"))),
-        kpi("Predictions", &fmt_int(rows.len() as i64), "list", 4).context(&format!(
-            "{} markets",
-            {
-                let mut m: Vec<&str> = rows.iter().map(|row| p.cell(row, "market_slug")).collect();
-                m.sort_unstable();
-                m.dedup();
-                m.len()
-            }
-        )),
-        kpi("Scored", &fmt_int(scored.len() as i64), "check", 2)
-            .delta(
-                &format!("{ahead} ahead"),
-                if !scored.is_empty() && ahead == scored.len() { "up" } else { "" },
-            )
-            .context("rows with a resolution"),
-        kpi(
-            "Mean improvement",
-            &var_score
+    // The plain-English summary is the description of this strategy — first
+    // thing on the page, above every number and before the runbook prose.
+    let summary_html = if m.summary.is_empty() {
+        format!(
+            "<p class=\"lede lede-missing\">No plain-English summary yet — <span class=\"mono\">{base}/strategy.toml</span> is missing its required <span class=\"mono\">summary</span> field.</p>"
+        )
+    } else {
+        format!("<p class=\"lede\">{}</p>", esc(&m.summary))
+    };
+
+    let stats = stat_line(&[
+        (
+            render::status_badge(&status),
+            match status.as_str() {
+                "trial" => format!(
+                    "on slot {} since {}",
+                    m.slot.unwrap_or(0),
+                    m.trial_started
+                ),
+                "retired" => format!("dropped {}", m.retired_on),
+                _ => format!("created {}", m.created),
+            },
+            "",
+        ),
+        (fmt_int(rows.len() as i64), "predictions".to_string(), ""),
+        (
+            fmt_int(scored.len() as i64),
+            if scored.is_empty() {
+                "scored".to_string()
+            } else {
+                format!("scored, {ahead} beat the market")
+            },
+            "",
+        ),
+        (
+            var_score
                 .map(|row| fmt_signed(s.num(row, "mean_improvement")))
                 .unwrap_or_else(|| "—".to_string()),
-            "trend-up",
-            2,
-        )
-        .context(
-            &var_score
-                .map(|row| {
-                    format!(
-                        "Brier {:.4} vs market {:.4}",
-                        s.num(row, "mean_brier"),
-                        s.num(row, "mean_market_brier")
-                    )
-                })
-                .unwrap_or_else(|| "no resolutions yet".to_string()),
+            "better than the market, per prediction".to_string(),
+            match var_score.map(|row| s.num(row, "mean_improvement")) {
+                Some(v) if v > 0.0 => "ok",
+                Some(_) => "bad",
+                None => "",
+            },
         ),
-        kpi(
-            "Trial review",
-            if review.is_empty() { "—" } else { review },
-            "clock",
-            3,
-        )
-        .context(&if started.is_empty() {
-            "not on a trial clock".to_string()
-        } else {
-            format!("started {started}")
-        }),
+        (
+            if m.review_due.is_empty() {
+                "—".to_string()
+            } else {
+                m.review_due.clone()
+            },
+            "trial review due".to_string(),
+            if status == "trial" { "warn" } else { "" },
+        ),
     ]);
 
     // --- facts + documents (side panel) ---
     let mut facts = String::new();
-    facts.push_str(&render::row("Status", &render::status_badge(status)));
-    facts.push_str(&render::row("Created", &esc(data::tstr(&meta, "created"))));
-    let supersedes = data::tstr(&meta, "supersedes");
-    if !supersedes.is_empty() {
+    facts.push_str(&render::row("Status", &render::status_badge(&status)));
+    facts.push_str(&render::row("Created", &esc(&m.created)));
+    if !m.supersedes.is_empty() {
         facts.push_str(&render::row(
-            "Supersedes",
+            "Replaces",
             &format!(
                 "<a href=\"/strategies/{family}/{0}\">{0}</a>",
-                esc(supersedes)
+                esc(&m.supersedes)
             ),
         ));
     }
@@ -558,19 +579,23 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
         "Family",
         &format!("<a href=\"/strategies/{0}\">{0}</a>", esc(family)),
     ));
-    if !started.is_empty() {
-        facts.push_str(&render::row("Trial started", &esc(started)));
-        facts.push_str(&render::row("Review due", &esc(review)));
+    if !m.trial_started.is_empty() {
+        facts.push_str(&render::row("Trial started", &esc(&m.trial_started)));
+        facts.push_str(&render::row("Review due", &esc(&m.review_due)));
     }
-    let labels = data::tlist(&meta, "labels");
-    if !labels.is_empty() {
-        facts.push_str(&render::row("Labels", &chip_row(&labels)));
+    if !m.labels.is_empty() {
+        facts.push_str(&render::row("Labels", &chip_row(&m.labels)));
     }
-    let guideline = data::str_at(&meta, &["trial", "success_guideline"]);
-    if !guideline.is_empty() {
+    if !m.retire_reason.is_empty() {
         facts.push_str(&format!(
-            "<div class=\"row row-block\"><span class=\"k\">Success guideline</span><span class=\"v\">{}</span></div>",
-            esc(guideline)
+            "<div class=\"row row-block\"><span class=\"k\">Why it was dropped</span><span class=\"v\">{}</span></div>",
+            esc(&m.retire_reason)
+        ));
+    }
+    if !m.success_guideline.is_empty() {
+        facts.push_str(&format!(
+            "<div class=\"row row-block\"><span class=\"k\">What would make it a success</span><span class=\"v\">{}</span></div>",
+            esc(&m.success_guideline)
         ));
     }
 
@@ -601,7 +626,7 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
         panel(
             "Facts",
             "status, trial clock and labels as recorded in the repo",
-            &render::status_badge(status),
+            &render::status_badge(&status),
             &render::rows(&facts),
         ),
         panel(
@@ -757,12 +782,13 @@ pub async fn variant(env: &Env, family: &str, variant: &str, doc_path: Option<St
     };
 
     let body = format!(
-        "{banner}{kpis}<div class=\"grid-main\">{thesis}{side}</div>{applications}{preds}{worklog}",
+        "{banner}{summary}{stats}<div class=\"grid-main\">{thesis}{side}</div>{applications}{preds}{worklog}",
         banner = if all_live { String::new() } else { snapshot_banner() },
-        kpis = kpis,
+        summary = summary_html,
+        stats = stats,
         thesis = panel_foot(
-            "Strategy",
-            "how this variant models the market and what would kill it",
+            "How it works",
+            "the runbook: method, gates, and what would kill it",
             "",
             &format!("<div class=\"prose\">{}</div>", markdown_body(&strategy_md.text)),
             &format!("<span class=\"mono\">{base}/STRATEGY.md</span><a href=\"/strategies/{family}\">Family →</a>"),

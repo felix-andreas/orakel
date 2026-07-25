@@ -23,12 +23,14 @@ pub async fn page(env: &Env) -> String {
     let resolutions = data::text(env, "predictions/resolutions.csv").await;
     let state_doc = data::text(env, "ops/state.toml").await;
     let (paths, tree_live) = data::tree(env).await;
+    let (metas, metas_live) = data::variant_metas(env, &paths).await;
     let mut all_live = preds.live
         && detail.live
         && scores.live
         && resolutions.live
         && state_doc.live
-        && tree_live;
+        && tree_live
+        && metas_live;
 
     let p = Table::parse(&preds.text);
     let d = Table::parse(&detail.text);
@@ -55,7 +57,7 @@ pub async fn page(env: &Env) -> String {
         band2 = format!(
             "<div class=\"grid-main\">{}{}</div>",
             model_vs_market(&p),
-            slots_panel(&state)
+            slots_panel(&state, &metas)
         ),
         band3 = format!(
             "<div class=\"grid-pair\">{}{}</div>",
@@ -275,7 +277,7 @@ Chart.line(document.getElementById("chart-mm"), {{series:[
     )
 }
 
-fn slots_panel(state: &toml::Table) -> String {
+fn slots_panel(state: &toml::Table, metas: &[data::VariantMeta]) -> String {
     let total = data::int_at(state, &["research", "slots_total"]).unwrap_or(0);
     let slots = data::arr_at(state, &["research", "slot"]);
     let updated = data::str_at(state, &["firm", "updated"]);
@@ -296,10 +298,24 @@ fn slots_panel(state: &toml::Table) -> String {
             Some((f, v)) => format!("/strategies/{f}/{v}"),
             None => String::new(),
         };
+        // What the strategy IS, in plain English, beats its slot number.
+        let summary = metas
+            .iter()
+            .find(|m| m.key() == variant)
+            .map(|m| m.summary.clone())
+            .unwrap_or_default();
         inner.push_str(&item(
             &href,
             &esc(variant),
-            &esc(&format!("slot {id} · {day} · review {due}")),
+            &format!(
+                "{}{}",
+                if summary.is_empty() {
+                    String::new()
+                } else {
+                    format!("<span class=\"item-summary\">{}</span>", esc(&summary))
+                },
+                esc(&format!("slot {id} · {day} · review {due}"))
+            ),
             &badge("trial", "warn"),
         ));
     }
@@ -557,17 +573,13 @@ fn recent_runs(runs: &[(String, toml::Table)]) -> String {
 // ---------------------------------------------------------------------------
 
 pub async fn execution(env: &Env) -> String {
-    let body = panel(
-        "Execution engine",
-        "paper execution and backtests — under construction",
-        &badge("being built", "warn"),
-        &format!(
-            "{}{}",
-            render::empty_state(
-                "Not wired up yet",
-                "<div>The CEO is building the execution/backtest engine. This page renders its output as soon as the schema lands: per-signal paper fills, slippage against the book we snapshot hourly, and equity curves per variant.</div>",
-            ),
-            "<p class=\"note\">Until then, everything the firm claims lives in <a class=\"link\" href=\"/predictions\">Predictions</a> (probability vs market price, scored on resolution) and in the per-variant backtests under <a class=\"link\" href=\"/strategies\">Strategies</a>. CONSTITUTION.md §5: no real trading, ever — paper execution and backtests only.</p>",
+    // No panel, no empty-state heading: the breadcrumb already says
+    // "Execution" and PRINCIPLES.md allows exactly one name per thing.
+    let body = format!(
+        "{}{}",
+        "<p class=\"lede\">The engine that turns our predictions into simulated trades is being built. When it lands, this page shows what each strategy would actually have earned — fills against the order book we snapshot hourly, and the return on the money each trade ties up.</p>",
+        render::note(
+            "Until then the firm's claims live in <a class=\"link\" href=\"/predictions\">Predictions</a> (our probability against the market's price, marked when a market settles) and in the per-strategy backtests under <a class=\"link\" href=\"/strategies\">Strategies</a>. There is no real trading and never will be: paper only (CONSTITUTION.md §5).",
         ),
     );
     shell(

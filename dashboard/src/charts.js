@@ -26,7 +26,8 @@
  *   - Every colour and font is read from the CSS custom properties at render
  *     time — nothing hardcoded — so both themes just work.
  *   - Line: hover tooltip on the nearest point across all series; click-drag a
- *     horizontal brush to zoom; double-click resets.
+ *     horizontal brush to zoom. A "Reset zoom" button appears while zoomed
+ *     (double-click still works, but a hidden gesture is not an exit).
  *   - Bar: hover highlights; supports negative values with a zero baseline.
  *
  * Plain procedural code (CODING.md), data in → SVG out. Add new chart types as
@@ -231,6 +232,19 @@
     var tip = makeTip(container);
     var svg = null;
 
+    /* Every interaction needs a visible exit: the brush zoom gets a Reset
+       button that appears only while zoomed. Double-click still works. */
+    var reset = document.createElement("button");
+    reset.type = "button";
+    reset.className = "chart-reset";
+    reset.textContent = "Reset zoom";
+    reset.style.display = "none";
+    reset.addEventListener("click", function () {
+      domain = full.slice();
+      render();
+    });
+    container.appendChild(reset);
+
     function visible(s) {
       var vis = s.points.filter(function (p) {
         return p.t >= domain[0] && p.t <= domain[1];
@@ -412,6 +426,8 @@
       });
 
       container.appendChild(svg);
+      var zoomed = domain[0] > full[0] || domain[1] < full[1];
+      reset.style.display = zoomed ? "block" : "none";
     }
 
     watch(container, render);

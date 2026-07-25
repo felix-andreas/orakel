@@ -197,6 +197,22 @@ fn link_is_active(link: &NavLink, path: &str) -> bool {
     link.href == path || link.owns.iter().any(|p| path.starts_with(p))
 }
 
+/// Destination for a breadcrumb given only its label: a nav item's own route,
+/// or a section's first page. "" when the label names neither.
+fn nav_href(label: &str) -> String {
+    for g in NAV {
+        if g.label == label {
+            return g.links.first().map(|l| l.href.to_string()).unwrap_or_default();
+        }
+        for l in g.links {
+            if l.label == label {
+                return l.href.to_string();
+            }
+        }
+    }
+    String::new()
+}
+
 // ---------------------------------------------------------------------------
 // Page shell
 // ---------------------------------------------------------------------------
@@ -256,18 +272,23 @@ pub fn layout(active: &str, crumbs: &[Crumb], body: &str, fresh: &Freshness) -> 
         ));
     }
 
-    // --- breadcrumbs ---
+    // --- breadcrumbs: every level except the leaf is navigable --------------
+    // A crumb with no explicit href is resolved against NAV by label, so a
+    // section ("Research") lands on that section's first page. PRINCIPLES:
+    // everything that looks navigable is navigable.
     let mut crumb_html = String::new();
     for (i, c) in crumbs.iter().enumerate() {
         if i > 0 {
             crumb_html.push_str("<span class=\"sep\">/</span>");
         }
-        if c.href.is_empty() || i + 1 == crumbs.len() {
+        let last = i + 1 == crumbs.len();
+        let href = if c.href.is_empty() { nav_href(&c.label) } else { c.href.clone() };
+        if last || href.is_empty() {
             crumb_html.push_str(&format!("<span class=\"here\">{}</span>", esc(&c.label)));
         } else {
             crumb_html.push_str(&format!(
                 "<a href=\"{}\">{}</a>",
-                esc(&c.href),
+                esc(&href),
                 esc(&c.label)
             ));
         }
@@ -413,6 +434,27 @@ impl Kpi {
         self.context = text.to_string();
         self
     }
+}
+
+/// One-line statistics strip: the same numbers a KPI row carries, in about a
+/// quarter of the height. Used on every page whose point is the content below
+/// it — KPI cards are reserved for pages where the numbers ARE the headline.
+/// Each entry is (value_html, label, tone) with tone "" | "ok" | "warn" | "bad".
+pub fn stat_line(items: &[(String, String, &str)]) -> String {
+    let mut out = String::new();
+    for (value, label, tone) in items {
+        let class = match *tone {
+            "ok" => " s-ok",
+            "warn" => " s-warn",
+            "bad" => " s-bad",
+            _ => "",
+        };
+        out.push_str(&format!(
+            "<span class=\"stat\"><b class=\"stat-v{class}\">{value}</b><span class=\"stat-k\">{}</span></span>",
+            esc(label)
+        ));
+    }
+    format!("<div class=\"statline\">{out}</div>")
 }
 
 pub fn kpi_row(cards: &[Kpi]) -> String {

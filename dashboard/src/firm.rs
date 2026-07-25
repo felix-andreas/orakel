@@ -7,8 +7,8 @@
 
 use crate::data;
 use crate::render::{
-    self, badge, chip_row, doc, esc, fmt_int, icon, item, items, kpi, kpi_row, markdown, markdown_body, panel,
-    panel_flush, panel_foot, table,
+    self, badge, chip_row, doc, esc, fmt_int, icon, item, items, kpi, kpi_row, markdown,
+    markdown_body, panel, panel_flush, panel_foot, stat_line, table,
 };
 use crate::snapshots;
 use crate::{shell, snapshot_banner, trail};
@@ -222,19 +222,57 @@ pub async fn state(env: &Env) -> String {
 
 pub async fn decisions(env: &Env) -> String {
     let f = data::text(env, "ops/decisions.md").await;
-    let entries = f.text.lines().filter(|l| l.starts_with("## ")).count();
-    let body = format!(
-        "{banner}{panel}",
-        banner = if f.live { String::new() } else { snapshot_banner() },
-        panel = panel_foot(
-            "Decision log",
-            "append-only: what changed, why, and who decided",
-            &badge(&render::count(entries, "entry"), ""),
-            &format!("<div class=\"prose\">{}</div>", markdown_body(&f.text)),
-            "<span class=\"mono\">ops/decisions.md</span><a href=\"/state\">Current state →</a>",
-            false,
-        ),
-    );
+
+    // ops/decisions.md is append-only prose. Its "## <date> — <what changed>"
+    // headings are already the scannable spine; the reasoning underneath is
+    // detail. Split on them so the page reads as a list of changes, not a
+    // wall (PRINCIPLES.md: no walls of text).
+    let entries = split_entries(&f.text);
+
+    let body = if entries.is_empty() {
+        format!(
+            "{}{}",
+            if f.live { String::new() } else { snapshot_banner() },
+            render::empty_state("No decisions recorded yet", ""),
+        )
+    } else {
+        let mut list = String::new();
+        for (date, what, detail) in &entries {
+            list.push_str(&format!(
+                r#"<section class="entry"><div class="entry-line"><b>{date}</b><span class="entry-meta">{weekday}</span></div><p class="entry-what">{what}</p><details class="doc doc-plain"><summary>Why</summary><div class="doc-body"><div class="prose">{detail}</div></div></details></section>"#,
+                date = esc(date),
+                weekday = esc(data::weekday(date)),
+                what = esc(what),
+                detail = markdown(detail),
+            ));
+        }
+        format!(
+            "{banner}{stats}{panel}",
+            banner = if f.live { String::new() } else { snapshot_banner() },
+            stats = stat_line(&[
+                (fmt_int(entries.len() as i64), "structural changes".to_string(), ""),
+                (
+                    entries.last().map(|(d, _, _)| d.clone()).unwrap_or_default(),
+                    "first entry".to_string(),
+                    "",
+                ),
+                (
+                    entries.first().map(|(d, _, _)| d.clone()).unwrap_or_default(),
+                    "most recent".to_string(),
+                    "",
+                ),
+            ]),
+            panel = panel_foot(
+                "What changed, and when",
+                "newest first — open an entry for the reasoning behind it",
+                &badge(&render::count(entries.len(), "entry"), ""),
+                &format!("<div class=\"entries\">{list}</div>"),
+                "<span class=\"mono\">ops/decisions.md</span><a href=\"/state\">Current state →</a>",
+                true,
+            ),
+        )
+    };
+
     shell(
         env,
         "/decisions",
@@ -243,6 +281,45 @@ pub async fn decisions(env: &Env) -> String {
         &body,
     )
     .await
+}
+
+/// `## <date> — <what changed>` sections → (date, what, body). Anything before
+/// the first heading (the file's own preamble) is dropped: it explains the
+/// format, which the page header already does.
+fn split_entries(src: &str) -> Vec<(String, String, String)> {
+    let mut out: Vec<(String, String, String)> = Vec::new();
+    for line in src.lines() {
+        if let Some(head) = line.strip_prefix("## ") {
+            let head = head.trim();
+            // "2026-07-25 — Execution layer built" → ("2026-07-25", "Execution…")
+            let (date, what) = match head.split_once(|c| c == '—' || c == '-') {
+                Some((d, w)) if d.trim().len() == 10 => (d.trim().to_string(), w.trim().to_string()),
+                _ => (String::new(), head.to_string()),
+            };
+            let (date, what) = if date.is_empty() {
+                // Fall back to the leading 10 chars if they look like a date.
+                let maybe = head.chars().take(10).collect::<String>();
+                if maybe.len() == 10 && maybe.chars().filter(|c| *c == '-').count() == 2 {
+                    (
+                        maybe.clone(),
+                        head[10..].trim_start_matches([' ', '—', '-']).trim().to_string(),
+                    )
+                } else {
+                    (String::new(), head.to_string())
+                }
+            } else {
+                (date, what)
+            };
+            out.push((date, what, String::new()));
+        } else if let Some(last) = out.last_mut() {
+            if line.trim() == "---" {
+                continue;
+            }
+            last.2.push_str(line);
+            last.2.push('\n');
+        }
+    }
+    out
 }
 
 // ---------------------------------------------------------------------------
