@@ -1,0 +1,42 @@
+# Dashboard principles
+
+Binding rules for anyone touching this dashboard. Set by Felix, 2026-07-25.
+
+## The rule
+
+> **The goal is maximum bandwidth of information transport. No visual element that does
+> not have a UX purpose.**
+
+Every box, border, icon, colour, heading and line of chrome must justify itself by making
+information *faster to absorb*. If it only makes the page look designed, delete it. A
+dense, calm table beats a grid of decorated cards; a sentence in plain English beats a
+metric nobody can interpret.
+
+## What follows from it
+
+- **No decoration.** No element exists to fill space, balance a layout, or look
+  professional. Panels that hold one number are not panels.
+- **Vertical space is the scarcest resource.** Headline boxes must be compact; the
+  content people came for should be visible without scrolling.
+- **Tables over cards** for anything with more than three attributes. Expandable rows
+  beat separate pages for hierarchy (family → variants).
+- **Plain English, no jargon.** Every strategy, run and decision needs a one-sentence
+  description a smart outsider understands. Internal vocabulary (annROLC, paired Brier,
+  gate 2) may appear *next to* the plain sentence, never instead of it.
+- **No walls of text.** Long documents get structure — summary line, then detail. If a
+  page is a wall, it has failed regardless of the content's quality.
+- **Contrast serves reading.** Body text is readable; section headers are readable.
+  Never signal "inactive" by making text lighter — signal "active" by making it
+  *stronger* (weight), so nothing on screen is hard to read.
+- **Everything that looks navigable is navigable.** Breadcrumbs are always clickable at
+  every level; slugs, families and variants are links wherever they appear.
+- **No duplicate titles.** The breadcrumb is the title. One name per thing per screen.
+- **Every interaction has an exit.** Zoomed a chart? There is a visible reset. Expanded a
+  row? It collapses. State that persists (theme, sidebar) is remembered.
+- **Numbers are comparable.** Tabular figures, consistent units, sample sizes beside
+  every statistic, and never a number whose basis isn't stated.
+
+## Test before shipping
+
+Look at each page and ask: *what is the fastest question this page answers, and how many
+seconds does it take?* Then remove whatever did not help answer it.
