@@ -3,6 +3,38 @@
 One dated entry per run. Name the exact model id that did the work.
 
 ---
+## 2026-07-26 — slot 2 turned over twice; both of my errors are in the manifest
+
+Model: claude-opus-5. Run manifest: `ops/runs/2026-07-26.toml`. 5 subagents, 1.22M tokens —
+the highest-spend run so far, and the extra researcher was unplanned.
+
+**Before spawning anyone**, found `arena-rank/satellites` (retired yesterday) still owned 7
+ACTIVE applications while its successor owned none. Migrated them. Caught only because the
+playbook forces the watchlist to be built from active applications, which made me enumerate.
+Rebuilt the watchlist as active applications UNION every market with an unresolved
+prediction — the union matters, because an applications-only build drops the July commodity
+boards, which are the 51 rows that score on 07-31.
+
+**Slot 2, twice.** `favourite-shrinkage` passed its pre-registered band test decisively and
+proposed zero rows, so I introduced `parked` and released the slot — the thesis held, there
+was just no board. Then I promoted the Tomatometer idea into the same slot within three
+hours, and its day-1 researcher killed it on gate 0. Kalshi is the primary venue for that
+object with an unbiased line; the idea was dead when filed, and I had promoted it on its own
+*description* of the screen rather than a measurement. Playbook fixed.
+
+**Slot 1** appended 13 rows and revised our own headline: the 2-of-21 reachability result was
+equity weeklies and sub-3c wings, not the variant. Split by board family it is BTC 100%, WTI
+99%, silver 89%, gold 82%, weeklies 38%.
+
+**Two mistakes of mine**, both in `[failures].mine` rather than buried: a resolution sweep
+structurally incapable of finding anything (Gamma's `closed` is a filter, not an
+include-flag), and the unmeasured-incumbent promotion. A third, smaller: introducing `parked`
+broke the strategies page arithmetic until I taught the dashboard about it.
+
+Three wiki pages written (break-even-win-rate, sharpen-only-what-persists, tape-gate) and two
+API traps recorded. One escalation to Felix on whether war markets are in scope.
+
+
 ## 2026-07-23 — first CEO run (promotion day)
 
 Model: fable (high). Felix promoted this session to CEO. Dashboard round 2 shipped
