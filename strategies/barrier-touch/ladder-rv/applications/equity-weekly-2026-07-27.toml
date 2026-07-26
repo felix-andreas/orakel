@@ -35,3 +35,16 @@ iv_source = "none (RV14d 38.6% only) — wider internal spread required"
 # all 20 handed-off SPY/NVDA rows resolved NO; model Brier 0.00002 vs market 0.00090.
 # Every leg we predicted was a deep wing, so this confirms wing overpricing, not
 # mid-ladder calibration.
+
+# DAY-4 RE-READ (2026-07-26 ~01:35Z): the two boards diverged.
+#  SPY: alive but WIDE — every leg 11c-55c spread. All fail the book gate. Zero rows.
+#  NVDA: six legs now quote 1-5c wide (down-180 0.026/0.05, down-184 0.03/0.07,
+#        down-188 0.06/0.10, down-196 0.24/0.25, up-220 0.25/0.27, up-232 0.02/0.07),
+#        each showing $470-780 of listed liquidity. They pass the spread gate.
+#        THE TAPE SAYS NO: five of the six have ZERO trades in their entire life, and
+#        up-220 has two trades totalling $28. A market maker is quoting into an empty
+#        room. This is a third, distinct failure mode of the quoted price (alive AND
+#        tight AND no counterparty) and it motivated the standing TAPE GATE added to
+#        STRATEGY.md today. Zero rows.
+# Standing: weekly equity ladders are research-only for this variant (CEO, 2026-07-25) —
+# they may be predicted but cannot appear in a promotion case without fill evidence.

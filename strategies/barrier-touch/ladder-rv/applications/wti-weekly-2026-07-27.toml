@@ -5,7 +5,7 @@
 market_slug = "will-wti-hit-week-of-july-27-2026"
 condition_id = ""            # board = Gamma event; per-leg condition_ids added once a book exists
 added = "2026-07-25"
-active = false               # LISTED BUT NOT TRADEABLE/PREDICTABLE YET — see note
+active = false               # STILL NO BOOK at 2026-07-26 01:3xZ — see day-4 note
 
 [params]
 asset = "wti"
@@ -34,3 +34,10 @@ gate0 = "14/14 on will-wti-hit-week-of-july-20-2026 and 14/14 on week-of-july-13
 # otherwise satisfied (feed mirrored, gate-0 clean, ladder structure standard).
 # ACTION day-4 (Monday 2026-07-27): re-read the book; onboard the fundable 3-50c legs
 # with two-sided quotes and start predicting. Weekend book quality is the gate here.
+
+# DAY-4 RE-READ (2026-07-26 ~01:35Z, Sunday, ~21h before the window opens): the book has
+# NOT come alive. 12 of 14 legs still quote 1c/99c-class spreads. The two exceptions are
+# down-60 (0.001/0.007 — a genuine 0.6c spread, $2.8k listed liquidity, but a 0.4c mid,
+# far below the fundable floor) and up-125 (0.002/0.069, 6.7c -> fails). Still ZERO rows.
+# Re-read Monday after the 22:00Z open; weekend book quality is not the whole story here,
+# since the equity boards listed at the same hour DID develop quotes.

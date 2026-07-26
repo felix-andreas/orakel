@@ -1,0 +1,53 @@
+# Board-level application. WIDEN day-4 (2026-07-26): the August monthly listed
+# 2026-07-25 04:02Z. This is the first board this variant has met that SPANS A CME ROLL,
+# so it gets its own pricer — see results/august-roll-model-2026-07-26.md.
+market_slug = "what-price-will-wti-hit-in-august-2026"
+condition_id = ""            # board = Gamma event; per-leg ids added once a book exists
+added = "2026-07-26"
+active = false               # PRICEABLE BUT NOT PREDICTABLE — see note
+
+[params]
+asset = "wti"
+tier = "monthly"
+resolution_feed = "Pyth active-month CL futures — CLU6 then CLV6, see [roll]"
+pyth_symbol = "Commodities.WTIU6/USD"   # front leg
+pyth_symbol_deferred = "Commodities.WTIV6/USD"  # post-roll leg; also the model primitive
+window_start = 2026-08-02T22:00:00Z    # session for Mon Aug 3 opens 6pm ET Sun Aug 2
+window_end = 2026-08-31T21:00:00Z      # session for Mon Aug 31; Gamma endDate Sep 1 03:59Z
+session = "22:00Z prior day -> 21:00Z, business days (EDT); 21 sessions in August"
+iv_source = "OVX (CBOE daily close)"   # 68.0 on 2026-07-24; RV14d U6 47.0%, V6 41.7%
+
+[roll]
+instant = 2026-08-17T22:00:00Z   # start of the session for Tue 2026-08-18
+front = "CLU6 (WTIU6), active for sessions Aug 3..Aug 17 = 11 sessions"
+deferred = "CLV6 (WTIV6), active for sessions Aug 18..Aug 31 = 10 sessions"
+derivation = """
+Board fine print: the next contract becomes the active month at the start of the SECOND
+trading session prior to the nearest contract's last trading session (i.e. it is active
+for the nearest contract's final three sessions). CLU6 LTD = 3 business days before
+Tue 25 Aug 2026 = Thu 20 Aug (Pyth names the feed "PYTH WTI 20 AUGUST 2026"). Final three
+CLU6 sessions = Tue 18, Wed 19, Thu 20 Aug -> CLV6 active from the session for Tue 18 Aug,
+which opens 6pm ET Mon 17 Aug = 2026-08-17 22:00Z.
+"""
+spread_at_listing = "U6-V6 = +$4.58 (5.07%) at 2026-07-24 21:00Z; was +$0.04 on Jul 1"
+model = """
+ladderrv roll <data> <slug> <u0> <v0> <sigma_v> <beta>.  Primitive = ln V (deferred),
+front linked by ln U = ln V + k0 + beta*(ln V - ln V0), beta ~ 0.15 (U/V daily regression
+0.158; vol-ratio 0.127-0.168; corr 0.987). Barrier steps at the roll: V0*(B/U0)^(1/(1+b))
+before, B after, with absorption AT the roll for paths between the two.
+"""
+
+# NOTE (2026-07-26): the model exists and is validated; the BOOK does not.
+# 14 of 20 legs quote 46c-98c spreads (down-65 quotes 0.03/0.95; up-95 quotes 0.01/0.99) -
+# phantom midpoints, not prices. The 6 legs that pass a spread test are 5 sub-3c wings
+# plus up-140 at a 3.45c mid on a 2.0/4.9 book with a $10 top-of-book bid, whose own
+# spread + the 2c buffer already exceeds the mid, so no sell can fire. And every leg where
+# the roll actually matters (down-65..down-85, up-90..up-115) is one of the unquoted ones.
+# => ZERO prediction rows. Also: August resolves 2026-08-31, AFTER the 2026-08-02 trial
+# review, so no August row could count toward promotion in any case.
+#
+# What the roll is worth, naive (one spot, no jump) vs roll-aware, at U6 90.46 / V6 85.88:
+#   down-70 0.0588 -> 0.1213 | down-75 0.1672 -> 0.2846 | down-80 0.3651 -> 0.5082
+#   up-90 1.0000 -> 0.8431   | up-110 0.1495 -> 0.1231  | up-140 0.0013 -> 0.0005
+# The naive model under-prices every DOWN leg by 40-110% relative. Down legs are what we
+# sell. Never run `ladderrv live` on this board.

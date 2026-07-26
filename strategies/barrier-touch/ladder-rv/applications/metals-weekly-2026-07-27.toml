@@ -32,3 +32,7 @@ backtest = "metals earned trades day-3 (see results/metals-backtest-2026-07-25.m
 # spread is not a market price). Re-read Monday 2026-07-27.
 # When the book fills in: GOLD legs may be traded (sell-only, tier rules as usual);
 # SILVER legs stay prediction-only until its own edge separates from zero.
+
+# DAY-4 RE-READ (2026-07-26 ~01:35Z): still dead. Gold 13/14 legs at 0.01/0.99 (only
+# up-4400 differs, at 0.01/0.50). Silver 14/14 legs at 0.01/0.99 — the whole ladder is
+# unlisted in all but name. ZERO rows again. Re-read Monday.

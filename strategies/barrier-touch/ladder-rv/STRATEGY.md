@@ -44,10 +44,17 @@
    inside 0.5%), but 2/7 feed-*misses* inside 0.10% of the barrier resolved YES anyway
    (SPY ↑750 — Pyth peaked 749.99002, verified against the 5-second tape; XAGUSD ↑69 —
    peaked 68.942). Both were ↑ legs at round numbers.
-   **Book-quality gate (added 2026-07-25):** a leg needs a genuine two-sided book
-   (spread ≤ 5c) before it is predicted at all. Freshly-listed weekly boards quote
+   **Book-quality gate (added 2026-07-25, tightened 2026-07-26):** a leg needs a genuine
+   two-sided book before it is predicted at all. Freshly-listed weekly boards quote
    0.020/0.980 placeholders for their first days; a 0.50 "midpoint" off a 96c spread is
-   not a market price and must never enter a prediction row.
+   not a market price and must never enter a prediction row. Three tests, all required:
+   (a) **relative spread** `spread ≤ min(5c, ½·mid)` — a flat 5c bar is vacuous on a wing
+   (August ↓20 quotes 0.003/0.019: a 1.6c spread "passes" on a book whose mid is 3.8× its
+   bid); (b) **mid ∈ [3c, 97c]**; (c) **tape gate (new)** — at least one taker trade on
+   the side we would take, within 5c of the quote, in the last 7 days. (c) exists because
+   the NVDA week-of-Jul-27 ladder quotes 1–5c wide on six legs and has **zero trades ever**
+   on five of them: a market maker quoting into an empty room passes every spread test
+   there is. See `results/book-and-tape-audit-2026-07-26.md`.
 5. **Sizing/capacity**: read book depth, never headline volume (WTI headline = 20× real
    taker flow). Sub-3c legs and $<100 top-of-book books are diagnostics, not trades.
 
@@ -70,17 +77,33 @@ weekly family was found 2026-07-25 — 26 resolved metals weeklies plus WTI week
 invisible to us until then). Weeklies resolve in ≤5 sessions, so they are the preferred
 trial vehicle.
 
-**WTI active-month roll (verified 2026-07-25):** CLU6 is the active month for every
-session from Jul 1 through **Aug 17**; CLV6 takes over from the session for **Tue Aug 18**
-(opens Aug 17 22:00Z), because CLU6's LTD is Thu Aug 20 and the next contract goes active
-for the final three sessions. The July monthly and the week-of-Jul-27 board therefore
-resolve on **CLU6 only, no roll**. The **August monthly board spans the roll**, and the
-CLU6−CLV6 spread has blown out from +$0.19 (Jul 1) to **+$4.78 (Jul 24)** — the resolving
-series will gap DOWN ~5% at the roll, which a driftless GBM on U6 spot would badly
-misprice (↓ barriers get much easier, ↑ barriers much harder). The August board needs a
-roll-aware two-segment model or pre-roll-only predictions. CLU6's Pyth feed is deleted
-after Aug 20 → keep archiving WTIU6 daily until then, and WTIV6 from now on (started
-2026-07-25, backfilled to Jun 25).
+**WTI active-month rolls (corrected 2026-07-26 — the 07-25 version was wrong about July).**
+The rule is in every board's fine print: the next contract becomes active at the start of
+the **third-from-last** session of the nearest one, whose LTD is 3 business days before
+the 25th of the month preceding delivery (4 if the 25th is not a business day). Applied,
+and cross-checked against Pyth's own feed names:
+
+- **CLQ6 → CLU6 at the session for Fri 17 Jul** (2026-07-16 22:00Z): 25 Jul is a Saturday
+  → CLQ6 LTD Tue 21 Jul. So the **July monthly board and the week-of-Jul-13 weekly DO span
+  a roll** — our gate-0 mirror used WTIU6 for their CLQ6 halves. It changed no answer
+  (CLQ6 ran ~67–81 against barriers ≤65 / ≥95) but it was luck. `WTIQ6` is already
+  delisted and unrecoverable.
+- **CLU6 → CLV6 at the session for Tue 18 Aug** (2026-08-17 22:00Z); CLU6 LTD Thu 20 Aug
+  (Pyth: "PYTH WTI 20 AUGUST 2026"). The **week-of-Jul-27 board is CLU6-only**; the
+  **August monthly spans this roll**, with the CLU6−CLV6 spread out from +$0.04 (Jul 1) to
+  **+$4.58 (Jul 24 close)**.
+- **CLV6 → CLX6 at the session for Fri 18 Sep**; CLV6 LTD Tue 22 Sep. The September
+  monthly spans it. `WTIX6` does not exist on Pyth yet — **archive it the day it appears**
+  (~Aug 20, when U6 expires and is deleted). Pyth carries exactly two CL contracts.
+
+Roll-aware pricing is implemented (`ladderrv roll`, validated by `ladderrv selftest`):
+model ln V (deferred) as the primitive, link the front by `ln U = ln V + k0 + β·Δln V`
+with β ≈ 0.15 from the U/V regression, and price a barrier that **steps at the roll** —
+`V0·(B/U0)^(1/(1+β))` before, `B` after, with absorption *at* the roll instant for paths
+between the two. Derivation, calibration and the August table:
+`results/august-roll-model-2026-07-26.md`. The naive one-spot model under-prices every
+August ↓ leg by 40–110% relative (↓80: 0.365 → 0.508) — the single most dangerous error
+available to us, since ↓ legs are what we sell.
 
 Feed-mirror status: crypto (Binance), WTI (Pyth active-month CL + WTIU6 **and WTIV6**
 archives), equity SPY/NVDA (Pyth RTH), and metals gold/silver (Pyth `Metal.XAU|XAG/USD`,
@@ -111,6 +134,15 @@ boards; freeze the candle+vol archive to R2 via r2data before committing the man
 
 ## Evidence
 
+- `results/book-and-tape-audit-2026-07-26.md` — the fill question re-asked per board
+  family over all 70 markets we have predicted on. Reachable fraction of the scored
+  midpoint: **WTI 99%, BTC 100%, silver 89%, gold 82%, SPY/NVDA weekly 38%**. The 2/21
+  headline was a fact about equity weeklies and sub-3c wings, not about the variant.
+  Also: the tape gate, the 07-31 identity check (70/70 clean), and the
+  `?condition_ids=` + `closed=true` scoring hazard.
+- `results/august-roll-model-2026-07-26.md` — roll-aware two-segment pricer, its
+  validation, the CLQ6/CLU6/CLV6/CLX6 roll calendar, and why August is priceable but not
+  predictable today.
 - `results/metals-backtest-2026-07-25.md` — day-3 metals gates on 441 resolved gold/silver
   legs (31 boards): gate 0 440/441; per-asset Brier table (gold best, equity/crypto worse
   than market); delayed sell sim by asset; the resolution-epsilon table; gold earned,
@@ -142,3 +174,13 @@ boards; freeze the candle+vol archive to R2 via r2data before committing the man
   WTI Aug-monthly roll documented (CLU6→CLV6 at the Aug 18 session, spread +$4.78);
   WTIV6 archiving started. New applications: WTI/metals/equity week-of-Jul-27 (all
   listed, all awaiting a real book).
+- 2026-07-26 — day-4: **roll-aware pricer built and validated** (`ladderrv roll`,
+  `selftest`); roll calendar corrected — the **July** monthly spans a roll too. Two code
+  defects found by reading: `SessionCal` stopped at 2026-08-20 (τ truncated to 14 of the
+  August board's 21 sessions, σ√τ 18% low — **fixed**), and `cmd_live` does not diffuse
+  spot from now to a future window open (**not fixed**). **Book gate tightened** to a
+  relative spread plus a **tape gate**, after the NVDA week-of-Jul-27 ladder was found
+  quoting 1–5c wide with zero trades ever. Fill evidence re-cut per board family: the
+  commodity monthlies reach 82–100% of the scored midpoint, the equity weeklies 38%.
+  **13 prediction rows** (WTI/gold/silver July monthlies only); **zero** on August and
+  zero on every week-of-Jul-27 board.
