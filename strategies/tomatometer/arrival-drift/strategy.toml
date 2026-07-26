@@ -53,3 +53,26 @@ PROMOTION requires exec_edge, not paired Brier alone, and the break-even table f
 wiki/reference/break-even-win-rate.md: report q*, q and the 95% lower bound on q per
 price band, and refuse any band whose bound is under q*. >=15 scored rows across >=3 films.
 """
+
+[retirement]
+date = "2026-07-26"
+reason = """
+Killed on day 1 by its own pre-registered gate 0. Kalshi is not a peer retail venue for this
+object, it is the PRIMARY one — 19 resolved boards at $58k-$7.19M against Polymarket's $25k
+median, 10-29 rungs against 3-9, a 1c median spread where Polymarket's live 90+ leg quotes
+0.650/0.830. Its implied score is unbiased for the realised settlement at every checkpoint
+from T-96h (errors +0.134 to +0.643, se 0.12-0.81, 9 down / 10 up). The thesis needs the
+displayed score to sit ~2 points above settlement, so Kalshi already sits ~2 points below
+the displayed number: verbatim the kill the idea wrote for itself.
+
+Two independent confirmations. Gate 3: on 68 resolved ladder boards with per-leg ground
+truth, price minus realised runs +0.010 (t=+0.23) at T-96h to -0.171 (t=-3.34) at T-6h — the
+level claim is falsified in DIRECTION, and the expensive half is under-priced by 10.5-29.5pp,
+which is favourite-longshot bias pointing the opposite way to this trade. Gate 5: the natural
+form of the trade needs q* = 0.192 and won 1 of 30, and the idea's liquidity table does not
+reproduce — board totals match exactly but the final-72h in-band split is $8,952, not
+$48,846, with median single-leg in-band flow of $238 over 72h.
+
+Not audited: the founding -2.23-point drift measurement. The Wayback harvest was still
+running when the gates closed the day. The verdict does not rest on it.
+"""

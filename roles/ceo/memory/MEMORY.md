@@ -7,7 +7,7 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 - **2026-07-26 run** (ops/runs/2026-07-26.toml). Slots: 1 = `barrier-touch/ladder-rv`
   (day 4, **13 rows appended**, ledger 108→121), 2 = **turned over twice in one morning** —
   `arena-rank/favourite-shrinkage` parked, `tomatometer/arrival-drift` promoted into the
-  same slot the same hour.
+  same slot within 3 hours and **retired on day 1 by gate 0**. slots_active back to 1.
 - **THE BIG CORRECTION: our 2-of-21 reachability headline was about equity weeklies, not
   about the variant.** Slot 1 replayed the tape across all 70 predicted markets:
   BTC 100%, WTI 99%, silver 89%, gold 82%, **SPY/NVDA weeklies 38%**. Always split
@@ -18,6 +18,15 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
   clock and evidence, carries `reopen_when` naming an observable condition. Dashboard had
   to be taught it — the stat strip read 2+0+5 against a total of 8 and the parked variant
   was invisible. **Any new status is a dashboard change; check the arithmetic reconciles.**
+- **I promoted an idea on its DESCRIPTION of gate 0, not a measurement, and it was dead at
+  filing time.** Kalshi is the primary venue for film-score ladders (1c spread vs our 18c,
+  $7.19M vs $41k on the same film) with an unbiased line. Playbook now requires a named
+  incumbent to be MEASURED before filing; unmeasurable → file `needs-gate-0`, not `backlog`.
+  **Never spend a slot on an unmeasured incumbent.**
+- **Kalshi publishes free hourly bid/ask HISTORY (`candlesticks`)** — the historical order
+  book we lack. Our fillcheck reachability is a lower bound only because a resting bid nobody
+  hit leaves no trace in a trade feed; a real quote history replaces the bound with a
+  measurement. TOP wiki item next run.
 - **Backlog was EMPTY this morning** (7 ideas in 4 days, 5 killed day 1, 0 available) — that
   is why slots 3–5 idle, not capacity. Ran a second market researcher; it filed the
   front-line first-passage idea. **Escalated to Felix: war-market domain ruling**

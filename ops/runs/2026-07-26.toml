@@ -1,0 +1,173 @@
+date = "2026-07-26"
+trigger = "daily (self-bind, 01:07 UTC)"
+window = "01:08-02:30 UTC (weekend window 00:00-06:00 UTC)"
+model = "claude-opus-5"
+outcome = "ok"
+
+summary = """
+Slot 2 turned over twice in one morning: favourite-shrinkage PARKED (passed its test, no
+board to trade), tomatometer/arrival-drift promoted and then RETIRED on day 1 by the gate I
+should have run before promoting it. Slot 1 appended 13 rows and materially revised our own
+2-of-21 reachability headline. Two structural fixes (new `parked` status; watchlist error
+channel), three new wiki pages, one escalation to Felix.
+"""
+
+[[steps]]
+n = 1
+what = "Orient + inbox"
+result = "2026-07-25 manifest present. All 5 CEO inbox items already status:done. One open Felix item (github-token-scope, 1 day old, not stale)."
+
+[[steps]]
+n = 2
+what = "Structural fix before spawning anyone"
+result = """
+arena-rank/satellites was retired 2026-07-25 but still owned 7 ACTIVE applications, while
+its successor favourite-shrinkage (slot 2) owned none. Migrated the 7; left the 4 inactive
+behind as history. Caught only because the playbook makes the watchlist build read from
+active applications, which forced me to enumerate them.
+"""
+
+[[steps]]
+n = 3
+what = "Watchlist mirrored FIRST (playbook step 3)"
+result = """
+Rebuilt from active applications UNION every market carrying an unresolved prediction. The
+union matters: only 13 markets came from ladder-rv's applications, so an applications-only
+build would have dropped the July commodity boards — the exact 51 rows scoring on 07-31.
+70 -> 236 markets / 430 tokens, verified byte-identical on R2 readback. 23 markets needed
+token_id lookups, 10 resolvable only by condition_id and not by slug.
+Later pruned to 156 markets / 270 tokens — see step 8.
+"""
+
+[[steps]]
+n = 4
+what = "Market researcher (claude-opus-5, max)"
+result = "Filed ideas/2026-07-26-tomatometer-review-arrival.md. Promoted same day; killed same day (step 7). Also corrected a wiki screen in market-selection.md."
+
+[[steps]]
+n = 5
+what = "Second market researcher (claude-opus-5, max) — unplanned, run because the backlog was EMPTY"
+result = """
+7 ideas in 4 days, 5 killed day 1, 2 in trial, 0 available. Slots 3-5 idle for want of
+inventory, not capacity. Filed ideas/2026-07-26-frontline-first-passage.md (Ukraine
+front-line boards; first-passage of a point by a growing 2-D random set). Clears every
+screen we own including the fill test — bid side carries more notional than ask on all 7
+legs measured, 1c spreads, $4.7-5.1k resting depth, fee-free category.
+NOT promoted: escalated to Felix for a domain ruling (roles/felix/inbox/2026-07-26-war-markets-scope.md).
+"""
+
+[[steps]]
+n = 6
+what = "Slot 1 — barrier-touch/ladder-rv day 4 (claude-opus-5, xhigh)"
+result = """
+13 rows proposed and appended by the CEO after verification (ledger 108 -> 121): WTI July 7,
+gold 2, silver 4, all resolving 07-31. Zero rows on August and on all five week-of-Jul-27
+boards. New emission rule drops sub-3c wings.
+August roll model built and validated (CLU6->CLV6 at 2026-08-17 22:00Z, barrier steps at the
+roll, matches closed form to 5e-4); naive model under-prices every August down-leg by
+40-110%. Declined August anyway: 14/20 legs quote 46-98c spreads and every leg where the roll
+bites is unquoted. Found that JULY also spans a roll (CLQ6->CLU6) which our gate-0 mirror got
+wrong — no answer changes, but that was luck.
+"""
+
+[[steps]]
+n = 7
+what = "Slot 2 — two decisions in one morning"
+result = """
+(a) arena-rank/favourite-shrinkage PARKED. Its pre-registered band test passed decisively
+(+16.8pp, n=74, t=+5.94, RoLC +15.2%, 95% lower bound 0.846 vs 0.829 break-even) and it
+proposed zero rows: six of seven July boards at 0.935-0.983 with four asking 0.990, the
+seventh failing a new margin screen, Aug/Sep listed but unpriced at leg-sums 6.5-12.5.
+New status `parked` introduced for exactly this.
+(b) tomatometer/arrival-drift promoted into the freed slot within 3 hours, then RETIRED on
+day 1. Gate 0 killed it: Kalshi is the primary venue for the object ($58k-$7.19M boards vs
+our $25k median, 1c spread vs 18c) and its line is unbiased for realised settlement —
+verbatim the idea's own pre-registered kill. Confirmed twice more (level claim falsified in
+direction; q* = 0.192 won 1 of 30).
+"""
+
+[[steps]]
+n = 8
+what = "Health checks"
+result = """
+Dashboard 302 without Access headers / 200 with. Snapshot worker responding and writing
+hourly. All 17 R2 manifests resolve. Worklogs current. No stale (>7d) open inbox items.
+Watchlist pickup VERIFIED at the 02:07 cron: 236 markets / 430 tokens — but 166 token errors
+(39%), all `no book returned`, all placeholder legs (will-company-a..m, will-any-other-company)
+at volumeNum 0 and liquidityNum 0. Pruned to 156/270 and re-mirrored.
+"""
+
+[[steps]]
+n = 9
+what = "Scoring"
+result = """
+Nothing resolved (July boards check 07-31). Scores unchanged: 21 rows, 21/21 beating the
+market, 2/21 reachable. Refreshed fills.csv anyway — across the full ledger reachable rows
+went 41 -> 45 as open boards kept trading; the resolved subset did not move.
+"""
+
+[[steps]]
+n = 10
+what = "Dashboard"
+result = "Redeployed twice: the `parked` status (stat strip was reading 2+0+5 against a total of 8), and the park reason / reopen condition on the variant page. Verified live: 2+0+1+5 = 8."
+
+[failures]
+mine = """
+1. My morning resolution sweep queried Gamma with `condition_ids=` and no `&closed=true`.
+   `closed` is a FILTER, not an include-flag, so the query was structurally incapable of
+   returning a resolved market — the confident "0 newly closed" was vacuous. Caught only
+   because slot 1 independently reported the gotcha. Re-run correctly: still 0, but now an
+   answer. Documented with a truth table in wiki/recipes/polymarket-api.md.
+2. I promoted the Tomatometer idea on its own DESCRIPTION of gate 0 rather than a measured
+   comparison, and it was dead at filing time. Cost: one slot-day. Fix committed to
+   roles/market-researcher/PLAYBOOK.md — a named incumbent must be measured before filing,
+   and an idea that cannot get the data is filed `needs-gate-0`, not `backlog`.
+3. Introducing `parked` silently broke the strategies page arithmetic. Any new status is a
+   dashboard change.
+"""
+tooling = """
+The stop hook (~/.claude/stop-hook-git-check.sh) fired 5 times on files owned by running
+subagents. It checks tree cleanliness with no notion that agents share this checkout, so it
+fires on every multi-agent run by construction. Candidate fix, Felix's call since it lives
+outside the repo: scope it to CEO-owned paths (ops/, predictions/, roles/ceo/, wiki/,
+dashboard/) or skip while a subagent is live.
+"""
+
+[spend]
+subagents = 5
+subagent_tokens = 1_223_356
+note = """
+5 subagents: market researcher (229.8k), slot 1 (269.7k), slot 2 band test (226.1k), second
+market researcher (240.8k), slot 2 day-1 (257.0k). Highest-spend run so far; the extra
+researcher was an unplanned response to an empty backlog and produced the strongest idea we
+have filed.
+"""
+
+[health]
+dashboard_access = "302 without / 200 with — pass"
+snapshot_worker = "pass; 02:07 wrote 236 markets, watchlist pickup confirmed"
+r2_manifests = "17/17 resolve"
+worklogs = "current"
+inbox = "no stale items; 2 open to Felix (token scope, war-market ruling)"
+slots_producing = "slot 1 yes (13 rows); slot 2 zero rows twice, both with reasons"
+
+[artifacts]
+wiki_added = [
+  "reference/break-even-win-rate.md",
+  "reference/sharpen-only-what-persists.md",
+  "reference/tape-gate.md",
+]
+wiki_edited = ["index.md", "recipes/polymarket-api.md (closed-filter truth table; neg-risk placeholder legs)"]
+decisions = 3
+predictions_appended = 13
+ledger_total = 121
+
+[next_run]
+items = [
+  "Felix's war-market ruling -> promote frontline-first-passage or mark discarded-scope",
+  "Kalshi `candlesticks` — free hourly bid/ask HISTORY. This is the historical order book midpoint-is-not-a-fill says we lack; it would turn our reachability lower bound into a measurement. Top wiki item.",
+  "slot 1 day 5: leg-sum/null-model re-check STILL outstanding (2 runs), cmd_live spot diffusion (5.9% off for August), skipped R2 archive freeze — do not skip twice",
+  "07-31: WTI+gold+silver July boards resolve, ~51 rows scored — the trial's real evidence",
+  "~08-10: check whether August arena boards priced, to reopen favourite-shrinkage",
+  "Backlog is 1 idea (pending Felix). Idea SUPPLY is the binding constraint on slots.",
+]
