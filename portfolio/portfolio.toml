@@ -1,0 +1,11 @@
+# The paper book. No real money, no orders, ever (CONSTITUTION.md hard line).
+# Schema and semantics: portfolio/README.md
+
+[account]
+opened = "2026-07-26"
+currency = "USDC"
+starting_cash = 10000.0   # notional placeholder, CEO 2026-07-26 — see README "Bankroll"
+policy = ""               # no policy bound yet; each plan picks one explicitly
+
+[marks]
+source = "clob-midpoint"  # a midpoint is NOT a fill price — show mark-to-bid beside it
