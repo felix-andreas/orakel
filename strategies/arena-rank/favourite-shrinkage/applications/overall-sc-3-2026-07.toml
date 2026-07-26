@@ -1,3 +1,7 @@
+# Migrated 2026-07-26 from arena-rank/satellites (retired 2026-07-25) to its
+# successor arena-rank/favourite-shrinkage. Same cohort, same 2026-07-31 check;
+# the params below already use the mechanism that survived the satellites kill.
+# The slot-2 researcher owns whether this board belongs in the thesis.
 # text_overall_sc_3 - July 2026 cohort instance. Checks 2026-07-31 12:00 ET.
 market_slug = "which-company-has-the-3-ai-model-end-of-july-style-control-on"
 condition_id = ""   # one condition per leg; the board is a neg-risk group
