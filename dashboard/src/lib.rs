@@ -66,6 +66,10 @@ fn query(req: &Request, key: &str) -> Option<String> {
 
 #[event(fetch)]
 async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
+    // Resolve which commit we are serving ONCE, before any page reads a file,
+    // so every read on this request is pinned to the same SHA and none of them
+    // can trigger a refresh mid-page. See live::begin_request.
+    live::begin_request(&env).await;
     Router::new()
         // --- Overview ---
         .get_async("/", |_, ctx| async move {
@@ -224,12 +228,20 @@ pub async fn freshness(env: &Env, live: bool) -> Freshness {
     let head = live::head(env).await;
     let reason = match &head {
         Ok(_) if live => None,
-        // HEAD is reachable but some read on this page was not: the cause is
-        // per-file (a path that 5xx'd, a truncated body), not repo-wide.
-        Ok(_) => Some(
-            "Part of this page could not be read from the repository. What you see may be incomplete."
-                .to_string(),
-        ),
+        // HEAD is reachable but some read on this page was not, so the cause is
+        // per-file. Name the files: "part of this page" is not a diagnosis, and
+        // it cost real time to track down the one request in ~30 that hit it.
+        Ok(_) => {
+            let failed = live::failed_paths();
+            Some(match failed.len() {
+                0 => "A file this page needs could not be read from the repository.".to_string(),
+                1 => format!("Could not read {} from the repository.", failed[0]),
+                n => format!(
+                    "Could not read {n} files from the repository: {}.",
+                    failed.join(", ")
+                ),
+            })
+        }
         Err(e) => Some(e.clone()),
     };
     Freshness {

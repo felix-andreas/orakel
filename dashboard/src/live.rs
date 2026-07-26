@@ -49,6 +49,41 @@ pub struct Head {
 // Staleness is bounded by TTL_HEAD exactly as before.
 thread_local! {
     static HEAD_MEMO: RefCell<Option<(Head, f64)>> = const { RefCell::new(None) };
+    /// Paths whose read failed during THIS request, so the banner can name them.
+    /// "Part of this page could not be read" is not a diagnosis.
+    static FAILED: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
+}
+
+/// Resolve HEAD once, at the start of the request.
+///
+/// Every read needs the commit SHA, so before this existed each read consulted
+/// the memo independently — and a memo that lapsed *between* two reads of the
+/// same page did two bad things. A failed refresh made that one read return
+/// empty while its siblings succeeded, which is the "part of this page is
+/// missing" banner appearing over a page that looks complete. And a refresh
+/// that SUCCEEDED after `main` moved pinned the page's later reads to a
+/// different commit than its earlier ones — a page silently mixing two
+/// commits, which is the exact failure the fallback pack was removed to avoid.
+///
+/// Priming here means no read can trigger a refresh mid-page: a request takes
+/// well under a second, the TTL is 60, so the whole page sees one SHA.
+pub async fn begin_request(env: &Env) {
+    FAILED.with(|f| f.borrow_mut().clear());
+    let _ = head(env).await;
+}
+
+fn note_failure(path: &str) {
+    FAILED.with(|f| {
+        let mut f = f.borrow_mut();
+        if !f.iter().any(|p| p == path) {
+            f.push(path.to_string());
+        }
+    });
+}
+
+/// What failed during this request, for the banner.
+pub fn failed_paths() -> Vec<String> {
+    FAILED.with(|f| f.borrow().clone())
 }
 
 fn memo_get() -> Option<Head> {
@@ -58,6 +93,13 @@ fn memo_get() -> Option<Head> {
         let (head, at) = m.as_ref()?;
         (now - at < TTL_HEAD as f64 * 1000.0).then(|| head.clone())
     })
+}
+
+/// Last known HEAD regardless of age. A refresh that fails should not make the
+/// dashboard forget which commit it was serving a second ago — that turns a
+/// blip in GitHub's availability into a blank page.
+fn memo_stale() -> Option<Head> {
+    HEAD_MEMO.with(|m| m.borrow().as_ref().map(|(h, _)| h.clone()))
 }
 
 fn memo_put(head: &Head) {
@@ -160,28 +202,28 @@ pub async fn head(env: &Env) -> std::result::Result<Head, String> {
     if let Some(h) = memo_get() {
         return Ok(h);
     }
+    let stale = memo_stale();
+    let recover = |e: String| stale.clone().ok_or(e);
     let Some(tok) = token(env) else {
-        return Err(NO_TOKEN.to_string());
+        return recover(NO_TOKEN.to_string());
     };
     let url = format!("https://api.github.com/repos/{REPO}/commits/{BRANCH}");
-    let (status, body) = gh_get(&url, &tok, TTL_HEAD)
-        .await
-        .map_err(|_| UNREACHABLE.to_string())?;
-    if status != 200 {
-        return Err(explain(status));
-    }
-    let v: serde_json::Value = serde_json::from_str(&body)
-        .map_err(|_| "GitHub returned a response the dashboard could not parse.".to_string())?;
-    let head = Head {
-        sha: v["sha"]
-            .as_str()
-            .ok_or_else(|| "GitHub's commit response carried no SHA.".to_string())?
-            .to_string(),
-        date: v["commit"]["committer"]["date"]
-            .as_str()
-            .ok_or_else(|| "GitHub's commit response carried no timestamp.".to_string())?
-            .to_string(),
+    let Ok((status, body)) = gh_get(&url, &tok, TTL_HEAD).await else {
+        return recover(UNREACHABLE.to_string());
     };
+    if status != 200 {
+        return recover(explain(status));
+    }
+    let Ok(v) = serde_json::from_str::<serde_json::Value>(&body) else {
+        return recover("GitHub returned a response the dashboard could not parse.".to_string());
+    };
+    let (Some(sha), Some(date)) = (
+        v["sha"].as_str(),
+        v["commit"]["committer"]["date"].as_str(),
+    ) else {
+        return recover("GitHub's commit response was missing its SHA or timestamp.".to_string());
+    };
+    let head = Head { sha: sha.to_string(), date: date.to_string() };
     memo_put(&head);
     Ok(head)
 }
@@ -189,7 +231,10 @@ pub async fn head(env: &Env) -> std::result::Result<Head, String> {
 /// A repo file at request time. A failed read yields empty text and
 /// `live: false` — the page renders the error, never a stale copy.
 pub async fn repo_text(env: &Env, path: &str) -> Fetched {
-    let dead = || Fetched { text: String::new(), live: false };
+    let dead = || {
+        note_failure(path);
+        Fetched { text: String::new(), live: false }
+    };
     let (Some(tok), Ok(h)) = (token(env), head(env).await) else {
         return dead();
     };
