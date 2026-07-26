@@ -63,6 +63,21 @@ can beat the marginal trader. Distilled from poly's scored runs (2026-07).
   an ordering over many public objects — so the competition is modelling skill rather
   than who bothered to look.
 
+  **Second corollary (2026-07-26): this screen kills LEVEL claims, not bias claims.**
+  Before discarding a glanceable market, ask the follow-up question: *is the number they
+  are looking at the same number the market resolves on?* If the visible statistic is a
+  **partially-realised** version of the settled one — a running fraction whose denominator
+  is still growing, a cumulative count mid-window, a provisional print that gets revised —
+  then visibility is the mechanism rather than the obstacle: the crowd anchors on the
+  displayed value, and any systematic gap between it and its own terminal value is the
+  edge. Being universally visible is what *keeps* the anchor in place. Look for this
+  wherever a board settles on a live statistic **at a stated clock time rather than at
+  completion**. (Research-stage, not yet trial-confirmed: Polymarket's Rotten Tomatoes
+  ladders settle on `round(100·liked/total)` at a fixed instant while critics are still
+  filing; measured drift T−72h→settlement is −2.2 points, 8 down / 4 flat / 1 up, while
+  the market's implied median sits +0.5 *above* the displayed score —
+  `ideas/2026-07-26-tomatometer-review-arrival.md`.)
+
 ## Before you spend a slot
 
 Run the cheap screens first, in this order — each has killed a real trial in one day:

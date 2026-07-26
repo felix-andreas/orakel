@@ -4,86 +4,94 @@ _Keep under ~150 lines. Prune every run._
 
 ## Short-term
 
-- 2026-07-25 (run 3, Felix brief: find SIMULATION edge). Filed
-  `ideas/2026-07-25-quake-ladder-overdispersion-3.md` (backlog) + a discarded-idea file
-  `ideas/2026-07-25-tennis-games-ladder-discarded.md` carrying three kills. **The lesson of
-  the whole cycle: the binding constraint is WHO ELSE IS HERE, not modelling skill.** Run
-  the two counterparty checks BEFORE any backtest — (1) bookmaker/exchange line
-  (Pinnacle guest API), (2) does a specialist publish the sim free (check page SOURCE).
-  Now in `wiki/market-selection.md`.
-- **Filed idea = weekly USGS seismicity count ladders, window-open only.** M5.5+ weekly
-  count over 1,385 wks: mean 9.46, var 47.83, **Fano 5.06** (Poisson=1) → 2.25× wider than
-  Poisson; both tails ~1.6× too cheap, middle up to 1.6× too rich. M6.5+ Fano 1.51.
-  Clustering: after M6.5+ next-day M5.5+ rate 2.68× baseline (n=1,208); after M7.0+ 3.77×
-  (n=396). Gate 0: **21/21 M6.5+ exact, 15/20 M5.5+ (every miss off by one)** — because
-  **2.01 events/week sit at EXACTLY M5.5** and magnitudes get revised ±0.1 post-hoc = one
-  whole bucket. Crowd calibrated on the favourite at open (0.364 vs Herfindahl 0.366) → it
-  is a pure SHAPE claim. Crude conditional model beats market **+0.110 LL at open (se
-  0.046, 17/22)** and ~0 mid-week. Mid-week is dead: after a qualifying quake the `0` leg
-  moves **−0.279 within 1h** of −0.398 total = 70% in the first hour (runningmax pattern).
-  Books: all 8 legs 1–4.9c spread, $2.3–4.4k liq. **0/314 dead legs** (phantom gate).
-- **KILLED, do not re-propose:** (a) **PGA top-5/10/20 boards** — DataGolf publishes the
-  whole live Monte Carlo as free JSON in page source; also 10/100 legs ≤5c. Same kill hits
-  **MLB playoff ladders** (FanGraphs free). (b) **Tennis 14-leg derivative ladder** —
-  Polymarket = Pinnacle to **+0.07pp** on ≤3c books (27/27 within 3pp). My −7.6pp headline
-  was the phantom artifact: DEAD legs −27.5pp vs LIVE −5.0pp, and it **inverted with
-  liquidity** ($0 vol −17.3pp → >$1k vol **+11.8pp**). (c) earthquake ladders *mid-window*
-  (speed race).
-- 2026-07-25 (run 2): filed `ideas/2026-07-25-esports-series-shape-2.md` — **trialed and
-  KILLED same day** by exactly these two screens (Pinnacle −0.13pp; live books +0.08pp).
-  My idea; the mistake was measuring before screening. Slot 3 retired.
+- 2026-07-26 (run 4, Felix brief: market-SPECIFIC data + simulable process). Filed
+  **`ideas/2026-07-26-tomatometer-review-arrival.md`** — Polymarket's weekly **Rotten
+  Tomatoes threshold ladders**. Core: the resolution variable is a **counting process still
+  running at settlement**. Score = `round(100·liked/total)` at a fixed clock instant; the
+  denominator roughly triples during the board's life (median lifetime **5.1d**) and the
+  score **drifts DOWN**: embargo→settle **mean −4.14, median −2.0, 11 down/2 flat/1 up**
+  (n=14); at T−72h→T **mean −2.23, median −2.0, 8/4/1** (n=13, ~96 reviews added).
+  Conditional on denominator: **n<80 → −5.09, n≥80 → −0.67**. Market implied median sits
+  **+0.50 above the displayed score** — it prices no drift. Ladder also too diffuse: at
+  T−72h (n=57) modal bucket wins **0.684±0.062** vs own Herfindahl **0.535**, PIT outer-20%
+  **5.3%** vs 20%. Supply 67 resolved boards, **2–4/Monday**, zero coherence violations.
+- **RT run-4 screens, all measured:** phantom gate **2/320 legs dead (0.6%)**, median total
+  variation 1.48 (earthquake-ladder profile) — but individual legs still fake (live
+  Spider-Man `90+`: Gamma mid **0.740** off a **0.650/0.830** book, $265/$54 depth).
+  Checkpoint artifact **found**: at T−14d/T−7d the market **loses to a uniform null**
+  (LL 3.575 vs 1.655), 6/11 monotonicity violations → checkpoint must be **T−96h or later**.
+  Liquidity in the last 72h is **state-dependent and aligned with the edge**: in-the-grey
+  $52.0k of which **$48.8k in 8–92c** (93 wallets); but scream-7 $33.6k / **$37 in band**
+  and mario $12.0k / **$19** because they settled far from every strike and collapsed early.
+  50/60 boards have ≥1 leg in 10–90c at T−72h. Fees `culture_fees` 0.05 taker-only.
+- 2026-07-25 (run 3, brief: find SIMULATION edge). Filed
+  `ideas/2026-07-25-quake-ladder-overdispersion-3.md` + discarded-idea file
+  `ideas/2026-07-25-tennis-games-ladder-discarded.md` carrying three kills. **Lesson: the
+  binding constraint is WHO ELSE IS HERE, not modelling skill.** Quake idea trialed and
+  killed same day — crowd already implied Fano 1.362 vs empirical 1.358, and the signal was
+  a fresh-board checkpoint artifact.
+- **KILLED, do not re-propose:** (a) **PGA top-5/10/20** — DataGolf ships the whole live
+  Monte Carlo as free JSON in page source; same kill hits **MLB playoff ladders**
+  (FanGraphs). (b) **Tennis 14-leg derivative ladder** — Polymarket = Pinnacle to +0.07pp
+  on ≤3c books (27/27 within 3pp); my −7.6pp headline was the phantom artifact (DEAD −27.5pp
+  vs LIVE −5.0pp, inverting with liquidity). (c) earthquake ladders (both mid-window speed
+  race and the shape claim itself). (d) esports BO3 derivatives (run 2 idea, killed day 1).
 
 ## Medium-term
 
+- **Rotten Tomatoes family (2026-07-26), reusable facts.** Resolution source is fully
+  machine-readable: `rottentomatoes.com/m/<slug>` embeds
+  `<script id="media-scorecard-json">` with `likedCount / notLikedCount / reviewCount /
+  score` **plus a separate Top-Critics subscore**. Plain `curl` + browser UA works (RT slugs
+  need a year suffix for remakes: `the_odyssey_2026`, `michael_2026`). Rounding is
+  **nearest-integer on 100·L/N**, verified on 6 triples (67/227=29.52→**30**) → every strike
+  is an integer lattice boundary. **Wayback holds 54–78 captures/film, 5–7/day in release
+  week**, and `id_` captures are **gzip-compressed — decompress before regexing** (cost me a
+  pass). **Kalshi runs 233 `KXRT*` RT series** + a Metacritic game-score family; its
+  `/trade-api/v2/series?limit=1000` and `/markets` are open and unauthenticated — that is our
+  cheapest cross-venue check for any culture market, and it is a *retail* crowd, not a sharp
+  book, so agreement is weak evidence.
+- Scanned 2026-07-26 and rejected before working up: **SpaceX monthly launch-count ladders**
+  (`how-many-spacex-launches-in-january/february` exist but the family stopped after Feb —
+  only annual boards remain, bad cadence); **US measles cumulative-count ladders**
+  (`measles-cases-in-us-in-2026` $7.78M annual is deep, monthlies only ~$55k and 12/yr —
+  genuine future candidate for a first-passage/branching sim if cadence ever matters less);
+  **chess tournament outrights** (Swiss pairings + tiebreaks are genuinely simulable and
+  nobody prices them, but only a few events/year).
 - **Netflix weekly Top-10 family — measured and killed in research 2026-07-25, do not
-  re-propose without a daily source.** 8 boards/week (top & #2 × US & global × show &
-  movie), 243 resolved instances, real taker flow ~$160k/wk (48–206 wallets, top wallet
-  17–27%, not wash). Netflix publishes complete free ground truth:
-  `netflix.com/tudum/top10/data/all-weeks-{global,countries}.tsv` (264 weeks, 94
-  countries; global has views+hours, countries rank-only). Structure looked ideal —
-  market opens Wed, all official data publishes *before* open, nothing lands again until
-  the resolving print Tue 15:00 ET, so Mon–Tue trades a frozen-but-unpublished outcome.
-  **Killed because subscribers see the in-app daily Top 10**: prev-week decay model got
-  23% (shows) / 42% (films) argmax vs market 77% / 83% at Thursday. FlixPatrol = 403 from
-  this box; no official daily feed exists. Also measured: crowd modal leg underpriced at
-  every checkpoint (Wed 0.65→won 0.75; Mon-frozen 0.92→won 0.97, n=102) but the bid side
-  is empty (top-of-book $0–96) so the sell-the-field side is unexecutable; "Other" wins
-  4.5%. Reusable if a daily rank feed ever becomes reachable.
+  re-propose without a daily source.** 8 boards/wk, 243 resolved, ~$160k/wk real taker flow.
+  Free ground truth: `netflix.com/tudum/top10/data/all-weeks-{global,countries}.tsv` (264
+  wks, 94 countries). **Killed because subscribers see the in-app daily Top 10**: decay
+  model 23%/42% argmax (shows/films) vs market 77%/83% at Thursday; FlixPatrol 403s here.
+  Also measured: crowd modal leg underpriced at every checkpoint (n=102) but the bid side is
+  empty ($0–96 top-of-book) so the sell-the-field side is unexecutable.
 - **Esports landscape** (2026-07-25, post-kill): ~30-40 BO3s/day, 6,710 resolved triples,
-  typed by `sportsMarketType`. The measured "+14pp sweep edge" was phantom midpoints; on
-  live books it was +0.08pp (se 0.58) and Pinnacle agreed with Polymarket to −0.13pp. Keep
-  the harvest recipe, discard the thesis. Same structure now confirmed in tennis.
-
+  typed by `sportsMarketType`. Keep the harvest recipe, discard the thesis (phantom).
 - **Arena/LMArena** (2026-07-25): satellites idea killed; `favourite-shrinkage` runs in
-  slot 2. Facts that outlived it: Wayback DOES cover the whole family life once you
-  follow the `lmarena.ai` → `arena.ai` rebrand (8,132 captures of the new host); the
-  resolving slice is `text/overall-no-style-control`, NOT the default `/leaderboard/text`;
-  the column layout changed 3× so parse header-driven, never by index.
+  slot 2. Surviving facts: Wayback covers the family life once you follow the
+  `lmarena.ai` → `arena.ai` rebrand (8,132 captures); the resolving slice is
+  `text/overall-no-style-control`, NOT `/leaderboard/text`; layout changed 3× so parse
+  header-driven, never by index.
 - Scan tool `roles/market-researcher/tools/scan/` (Gamma /events → CSV + summary).
   20 pages ≈ 26.7k open market rows, ~1 min. Order `volume24hr` for "alive today".
   Series discovery: Gamma `/public-search?q=<text>&limit_per_type=50` finds all instances
   of a recurring family incl. resolved; vary the query wording and union the slugs
   (one query alone under-returns — 12 variants gave 251 Netflix events vs 20).
-- Landscape shape (stable 07-23→07-25): Sports ~11.6k mkts dominates count;
-  Politics/Elections dominate volume ($2.4B/$1.5B). ~87% of open markets <$10k volume;
-  fast-resolving supply plentiful. Current hot non-sport supply: Iran/Hormuz geopolitics
-  (~$3.7M family, energy desks are sharp there — avoid), AI-leaderboard rankings, box
-  office (Spider-Man opening wknd $188k, ends Aug 2), Musk tweet counts (poly already
-  proved that crowd calibrated — avoid).
-- Other primary-source markets seen but unprobed: NSIDC arctic sea-ice min ($62k, Oct 1 —
-  one instance/yr, bad trial cadence); VEI-6 volcano; Cat-4 US hurricane landfall (NHC);
-  EIA/AAA gas price; CDC counts. Box office is the best unprobed one: recurring weekly,
-  no financial incumbent, but Thursday-previews→weekend multiplier is a hobbyist-modelled
-  relationship, so run the calibration test before spending anything.
-- Scanned 2026-07-25 and parked with reasons (don't re-scan cold): **company market-cap
-  ranking boards** ($4.18M/$437k/$302k, 29 legs) — rejected, resolution variable is a live
-  stock price, glanceable + near-deterministic. **Non-US central-bank decision boards**
-  (BOJ $300k, Brazil $159k, ECB $141k; ~100 instances/yr) — parked, sharpest agent is a
-  rates desk pricing the local OIS curve and we can't read those curves free.
-  **US primary-election winner boards** (Aug 4/11/18 slates, 18–50 legs, $160k–$2.1M,
-  dozens resolved this cycle) — genuine future candidate, real fine print (runoff
-  triggers, Alaska top-4, advance-vs-win coherence); parked only because the cadence is
-  election-calendar-bound, not daily.
+- Landscape shape (stable 07-23→07-26): Sports ~11.6k mkts dominates count;
+  Politics/Elections dominate volume ($2.4B/$1.5B). ~87% of open markets <$10k volume.
+  Hot non-sport supply: Iran/Hormuz geopolitics (energy desks are sharp — avoid),
+  AI-leaderboard rankings, box office, Musk tweet counts (crowd calibrated — avoid).
+- Seen but unprobed: NSIDC arctic sea-ice min; VEI-6 volcano; Cat-4 US hurricane landfall
+  (NHC); EIA/AAA gas price; CDC counts. **Box office is the best unprobed one** — weekly,
+  no financial incumbent, and it is the *same shape* as the Tomatometer idea (settles on a
+  running total at a clock time), but Thursday-previews→weekend multiplier is
+  hobbyist-modelled, so run the calibration test first.
+- Scanned 2026-07-25, don't re-scan cold: **company market-cap ranking boards** — rejected,
+  resolution variable is a live stock price, glanceable + near-deterministic. **Non-US
+  central-bank decision boards** — sharpest agent is a rates desk on the local OIS curve,
+  unreadable free. **US primary-election winner boards** (18–50 legs, $160k–$2.1M) —
+  genuine future candidate with real fine print (runoff triggers, Alaska top-4,
+  advance-vs-win coherence); parked only on election-calendar cadence.
 - Weather city-dailies: bot-patrolled intraday (kill evidence) — only pre-day/forecast
   angles remain. "Hit Price" one-touch family: now trialing as barrier-touch/ladder-rv —
   don't re-propose.
@@ -95,15 +103,12 @@ _Keep under ~150 lines. Prune every run._
   or leg-sum unless filtered on `volumeNum > 0` and `price != 0.5`. Wayback CDX must be
   called over **https** (`http://` → 403 through the agent proxy). Python `urllib` gets
   403 from Gamma — shell out to `curl`.
-- Added to the wiki recipe 2026-07-25: Gamma **offset paging dies at offset 2000** and
-  returns the error as a 200-with-object (a list-assuming parser drops pages silently);
-  `/events/keyset`'s param is `after_cursor`, not `cursor`; the working deep-history
-  pattern is **date-windowed offset paging** (`end_date_min`/`end_date_max`). Also the
-  **taker-fee formula** `fee = shares × rate × p × (1−p)`, rate 0.05 sports / 0.07 crypto
-  / 0.04 politics-finance-tech / **0 geopolitics** — peaks at ~1.25c/share at p=0.50, so
-  it bites hardest exactly in the 3–50c fundable band. Makers pay nothing.
-- Binary sports markets: the two token midpoints sum to **1.0000** exactly, so there is no
-  overround at the mid and de-vigging is a no-op — the real cost is spread + taker fee.
+- All in the wiki recipe now (read it, don't re-derive): Gamma offset paging dies at
+  offset 2000 and returns the error as a **200-with-object**; `/events/keyset` wants
+  `after_cursor`; deep history = **date-windowed offset paging**; the taker-fee formula and
+  per-category rates (movies/culture = **0.05**, taker-only, rebate 0.25). Binary sports
+  midpoints sum to exactly 1.0000, so de-vigging at the mid is a no-op — the cost is spread
+  plus fee.
 
 ## Long-term
 
@@ -139,6 +144,16 @@ _Keep under ~150 lines. Prune every run._
   number as the headline. Two independent families (esports, tennis) produced double-digit
   phantom edges that vanished or inverted. Earthquake ladders scored 0/314 dead legs, so
   the gate discriminates — it does not kill everything.
+- **Refinement of the glanceable-state screen, 2026-07-26.** "The crowd can just look at
+  the within-window state" kills a **LEVEL** claim (Netflix, weather dailies, GISTEMP). It
+  does **not** kill a claim that the glanceable number is a **biased estimator of the
+  number that settles**. Ask the second question every time: *is the statistic they are
+  looking at the same statistic the market resolves on?* If it is a partially-realised
+  version — a running fraction, a cumulative count mid-window, a provisional print — then
+  the visible number is the anchor and the bias in it is the edge, and the fact that
+  everyone can see it is what keeps the anchor in place. This is what the Tomatometer idea
+  is; look for the same shape wherever a market settles on a live statistic at a *clock
+  time* rather than at completion.
 - The screen that has now killed three candidates in a row is one question: **does the
   crowd have an observation channel into the resolution variable that our pipeline
   lacks?** (GISTEMP: upstream inputs. Netflix: the in-app daily list. Weather dailies:

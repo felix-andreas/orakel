@@ -4,6 +4,77 @@ One dated entry per run. Name the exact model id that did the work.
 
 ---
 
+## 2026-07-26 (run 4) — Felix brief: market-specific data + simulable process. One idea filed
+
+Model: **claude-opus-5 (effort max)**. Brief restated two standing directives: (1) not
+market-agnostic — edge must come from a *market-specific* data source; (2) niche boards whose
+resolution is the output of a simulable process (queues, brackets, cumulative counts,
+path-dependent thresholds). Plus the four kills as pre-screens, now including the new
+`midpoint-is-not-a-fill` page.
+
+**Filed: `ideas/2026-07-26-tomatometer-review-arrival.md`** — Polymarket's weekly Rotten
+Tomatoes threshold ladders. **The resolution variable is a counting process that is still
+running when the market settles**, and the market's whole life sits inside the window in
+which the answer is generated (median board lifetime **5.1 days**, n=55).
+
+What I measured, in order:
+
+- **Family census.** 83 RT events found via `public-search` (5 query variants, unioned);
+  **67 resolved boards** in the modern threshold format, 60 with usable price history since
+  2025-11, **2–4 resolving per Monday**, 4–9 legs each, `negRisk=false`. **Zero coherence
+  violations across all 67** resolution patterns. Two open today.
+- **The resolution source is fully machine-readable and publishes the raw counts.** RT's
+  `<script id="media-scorecard-json">` gives `likedCount / notLikedCount / reviewCount /
+  score` plus a separate **Top-Critics** subscore. Plain `curl` + browser UA works. Rounding
+  confirmed as nearest-integer on `100·L/N` from six independent triples (67/227 = 29.52 → 30),
+  so every strike is an **integer lattice boundary**, not a judgement about the film.
+- **The drift, which is the whole idea.** Reconstructed score paths from **Wayback** (54–78
+  captures/film, 5–7/day in release week; captures are gzipped originals, must `gzip.decompress`
+  before parsing). Embargo→resolution: **mean −4.14, median −2.0, 11 down / 2 flat / 1 up**
+  (n=14). Conditional on the denominator: **n<80 → −5.09 (11 films); n≥80 → −0.67 (3)**.
+  At the tradeable checkpoint T−72h→T: **mean −2.23, median −2.0, 8 down / 4 flat / 1 up**
+  (n=13, median 96 reviews added). The Odyssey went **98 at embargo (n=125) → 95 at settlement
+  → 94 today (n=439)** on a board whose top strikes were 95/96/97/98/99.
+- **The market does not price it**: interpolated implied median minus displayed RT score at
+  the embargo instant = **+0.74 mean, +0.50 median** (n=9). The crowd centres on the number on
+  the page.
+- **Ladder width is also wrong.** At T−72h (n=57): market LL **0.981** vs uniform-null 1.733;
+  modal bucket wins **0.684 ± 0.062** against its own Herfindahl **0.535**, priced 0.641; PIT
+  in the outer 20% only **5.3%** vs 20% expected. Distribution too diffuse and centred too high.
+- **Checkpoint artifact found and avoided.** At T−14d/T−7d the market **loses to a uniform
+  null** (LL 3.575 vs 1.655) with 6/11 monotonicity violations — the boards are listed but
+  unpriced. Checkpoint must be **T−96h or later**. Exactly the `checkpoint-artifact` pattern;
+  I caught it because I ran the null first this time.
+- **Phantom gate passed at family level, failed per-leg.** Only **2/320 legs (0.6%)** never
+  moved, median total variation 1.48 — the earthquake-ladder profile. But the live Spider-Man
+  `90+` leg quotes a **0.740 Gamma midpoint off a 0.650/0.830 book with $265/$54 depth**. The
+  naive ladder read gives that bucket 61.5% of the mass; it is fabricated.
+- **Liquidity, measured on the window we would trade.** Last-72h taker notional and how much of
+  it sits in 8–92c, ten largest 2026 boards: in-the-grey **$52.0k / $48.8k in band** (93
+  wallets), michael $20.6k / $7.6k (297), how-to-make-a-killing $11.3k / $9.8k (33),
+  good-luck-have-fun $17.8k / $4.8k (69) — but scream-7 **$33.6k / $37** and mario
+  **$12.0k / $19**, because those settled far from every strike and collapsed to 0/1 early.
+  **The band is non-empty exactly when the score lands near a strike, which is exactly when our
+  edge is largest.** 50/60 boards have ≥1 leg in 10–90c at T−72h, 35/60 have ≥2.
+- **Counterparty screen.** No bookmaker prices critic scores. **But Kalshi runs 233 `KXRT*`
+  RT series** — a second retail venue, open unauthenticated API. Made it **gate 0**, with the
+  explicit note that agreement is *weak* evidence (both crowds read the same page) whereas
+  Kalshi pricing the drift while Polymarket does not would be decisive.
+- **Speed screen answered structurally**: there is no print to race. The drift is a
+  multi-day bias in a continuously-visible number, not news arriving.
+
+Rejected before working up: SpaceX monthly launch-count ladders (family discontinued after
+February — only annual boards remain, bad cadence); US measles cumulative-count ladders
+(monthly cadence only, and the $7.78M annual board is deep); chess tournament outrights (a few
+events/year). Kept the RT candidate because it was the only one with weekly supply, a free
+machine-readable feed, a simulable generating process, and no professional counterparty.
+
+Wiki: no new page this run. The RT finding is one market family's mechanism, not
+cross-strategy knowledge — it belongs in the idea file until a trial confirms it. Index left
+unchanged (14 pages).
+
+---
+
 ## 2026-07-25 (run 3) — Felix brief: hunt SIMULATION edge. One idea filed, three candidates killed
 
 Model: **opus-5 (xhigh)**. Brief: find niche markets whose resolution variable is a
