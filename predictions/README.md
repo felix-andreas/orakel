@@ -15,7 +15,21 @@ timestamp,market_slug,condition_id,outcome,token_id,family,variant,model,predict
 - `timestamp` — RFC3339 UTC of the prediction.
 - `outcome` / `token_id` — the outcome token (`clobTokenId`) the probability is for.
 - `family` / `variant` — the strategy that produced it (variant dir name, e.g. `gbm-v2`).
-- `model` — exact model id of the session that produced it.
+- `model` — exact model id of the session that produced it. **Write the full id**
+  (`claude-opus-5`), not an abbreviation — `AGENTS.md` requires it and `scoring/` aggregates
+  on this column, so every spelling becomes its own row in `scores.csv`.
+
+  Historic keys, one per day, left as recorded rather than rewritten:
+
+  | key | dates | reading |
+  |---|---|---|
+  | `fable` | 2026-07-23 | the Fable-family model, before the 07-24 switch |
+  | `opus` | 2026-07-24 | almost certainly Opus 5 — the directive landed that day — but not provable from the ledger |
+  | `opus-5` | 2026-07-25 | Opus 5 |
+  | `claude-opus-5` | 2026-07-26 onward | the convention |
+
+  They are not normalised because `opus` cannot be resolved with certainty, and inventing
+  certainty in an append-only evidence file is worse than a noisy `GROUP BY`.
 - `prediction` — probability in [0,1]. `market_price` — CLOB midpoint at prediction time
   (thin books: still the midpoint, by convention — see wiki on reading thin markets).
 - `run_id` — `<YYYY-MM-DD>/<trigger>` linking to `ops/runs/`.

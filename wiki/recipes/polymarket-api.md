@@ -119,3 +119,26 @@ executed fills from the Data API: the fee residual matches `p × (1 − p)` and 
 
 `condition_id` (stable market id) + `market_slug` (human) identify a market; each outcome
 is a token (`clobTokenId`) — predictions are probabilities on one outcome token.
+
+## `closed` is a FILTER, not an include-flag (Gamma `/markets`)
+
+Verified 2026-07-26 on both query forms — this bit us twice in one run, in both directions:
+
+| query | open market | closed market |
+|---|---|---|
+| `?condition_ids=<cid>` | returns the row | **`[]`** |
+| `?condition_ids=<cid>&closed=true` | **`[]`** | returns the row |
+| `?slug=<slug>` | returns the row | **`[]`** |
+| `?slug=<slug>&closed=true` | **`[]`** | returns the row |
+
+So `&closed=true` does not mean "include closed too", it means "closed only". Consequences,
+both of which actually happened:
+
+- **A resolution sweep without the flag can never find anything.** A CEO check for "which of
+  our open markets have resolved?" ran without it and returned a confident `0 newly closed`
+  that was structurally incapable of returning anything else.
+- **A row-verification sweep with the flag can never find anything either.** Validating 13
+  freshly proposed rows *with* `&closed=true` reported all 13 unresolvable — they were open.
+
+**Query both, or query on the state you expect and treat an empty result as "wrong filter"
+before treating it as "no such market".**
