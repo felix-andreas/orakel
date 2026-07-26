@@ -750,6 +750,9 @@ pub fn status_tone(status: &str) -> &'static str {
         "ok" | "done" | "answered" | "closed" | "resolved" | "adopted" | "live" | "true" => "ok",
         "open" | "pending" | "trialing" | "trial" | "skipped" | "in-flight" => "warn",
         "failed" | "rejected" | "dead" | "retired" | "killed" | "false" => "bad",
+        // Parked is neither: the thesis held, there is just nothing to trade.
+        // Toning it "bad" would read as a kill, "ok" as working. Neutral is honest.
+        "parked" | "dormant" => "",
         s if s.starts_with("kill") => "bad",
         _ => "",
     }

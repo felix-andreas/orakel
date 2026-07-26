@@ -74,6 +74,13 @@ pub async fn index(env: &Env) -> String {
             "live".to_string(),
             if count_status("live") > 0 { "ok" } else { "" },
         ),
+        // Parked has to be counted, or the numbers silently stop adding up to the
+        // strategy total and a whole variant becomes invisible.
+        (
+            fmt_int(count_status("parked") as i64),
+            "parked".to_string(),
+            "",
+        ),
         (
             fmt_int(count_status("retired") as i64),
             "dropped".to_string(),
@@ -165,7 +172,9 @@ pub async fn index(env: &Env) -> String {
                 }
                 None => "<span class=\"muted\">—</span>".to_string(),
             };
-            let when = if m.status == "retired" && !m.retired_on.is_empty() {
+            let when = if m.status == "parked" {
+                format!("parked {} — mechanism held, no board to trade", m.parked_on)
+            } else if m.status == "retired" && !m.retired_on.is_empty() {
                 format!("{} → dropped {}", m.created, m.retired_on)
             } else if !m.review_due.is_empty() && m.status == "trial" {
                 format!("trial since {} · review {}", m.trial_started, m.review_due)
@@ -617,7 +626,9 @@ pub async fn family(env: &Env, family: &str, want_tab: Option<String>) -> String
                         p.cell(row, "family") == family && p.cell(row, "variant") == m.variant
                     })
                     .count();
-                let when = if m.status == "retired" && !m.retired_on.is_empty() {
+                let when = if m.status == "parked" {
+                format!("parked {} — mechanism held, no board to trade", m.parked_on)
+            } else if m.status == "retired" && !m.retired_on.is_empty() {
                     format!("dropped {} · {} predictions", m.retired_on, n)
                 } else if m.status == "trial" && !m.review_due.is_empty() {
                     format!("review due {} · {} predictions", m.review_due, n)
@@ -944,6 +955,20 @@ pub async fn variant(env: &Env, family: &str, variant: &str, want_tab: Option<St
                 facts.push_str(&format!(
                     "<div class=\"row row-block\"><span class=\"k\">Why it was dropped</span><span class=\"v\">{}</span></div>",
                     esc(&m.retire_reason)
+                ));
+            }
+            // Parked is only useful if the reason and the wake-up condition are
+            // visible — otherwise it is just a variant that quietly stopped.
+            if !m.park_reason.is_empty() {
+                facts.push_str(&format!(
+                    "<div class=\"row row-block\"><span class=\"k\">Why it is parked</span><span class=\"v\">{}</span></div>",
+                    esc(&m.park_reason)
+                ));
+            }
+            if !m.reopen_when.is_empty() {
+                facts.push_str(&format!(
+                    "<div class=\"row row-block\"><span class=\"k\">What would reopen it</span><span class=\"v\">{}</span></div>",
+                    esc(&m.reopen_when)
                 ));
             }
             if !m.success_guideline.is_empty() {

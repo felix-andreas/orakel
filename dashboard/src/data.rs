@@ -197,6 +197,10 @@ pub struct VariantMeta {
     pub success_guideline: String,
     pub retired_on: String,
     pub retire_reason: String,
+    /// `parked`: the thesis held, there is just no board to trade right now.
+    pub parked_on: String,
+    pub park_reason: String,
+    pub reopen_when: String,
 }
 
 impl VariantMeta {
@@ -223,6 +227,9 @@ pub fn parse_variant_meta(family: &str, variant: &str, src: &str) -> VariantMeta
         trial_started: str_at(&t, &["trial", "started"]).to_string(),
         review_due: str_at(&t, &["trial", "review_due"]).to_string(),
         success_guideline: str_at(&t, &["trial", "success_guideline"]).to_string(),
+        parked_on: str_at(&t, &["parked", "date"]).to_string(),
+        park_reason: str_at(&t, &["parked", "reason"]).trim().to_string(),
+        reopen_when: str_at(&t, &["parked", "reopen_when"]).trim().to_string(),
         retired_on: str_at(&t, &["retirement", "date"]).to_string(),
         retire_reason: str_at(&t, &["retirement", "reason"]).to_string(),
     }
