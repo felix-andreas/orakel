@@ -9,7 +9,8 @@ Slot 2 turned over twice in one morning: favourite-shrinkage PARKED (passed its 
 board to trade), tomatometer/arrival-drift promoted and then RETIRED on day 1 by the gate I
 should have run before promoting it. Slot 1 appended 13 rows and materially revised our own
 2-of-21 reachability headline. Two structural fixes (new `parked` status; watchlist error
-channel), three new wiki pages, one escalation to Felix.
+channel), four new wiki pages, one escalation to Felix. A sub-agent orphaned by slot 2
+landed after close and closed the one audit the kill had left open.
 """
 
 [[steps]]
@@ -111,6 +112,20 @@ n = 10
 what = "Dashboard"
 result = "Redeployed twice: the `parked` status (stat strip was reading 2+0+5 against a total of 8), and the park reason / reopen condition on the variant page. Verified live: 2+0+1+5 = 8."
 
+[[steps]]
+n = 11
+what = "Post-close: an orphaned sub-agent landed"
+result = """
+A Wayback harvester the slot-2 researcher had spawned outlived its parent by ~90 minutes and
+delivered 2,608 captures across 116 films — into a variant folder that had already been
+retired. Rather than discard it, used it to close the one audit the kill left open. The
+founding drift claim REPLICATES at 8x the sample (-4.29 over 112 films vs the claimed -4.14,
+71% down vs 79%); its EXPLANATION does not (thin-denominator ratio 1.26x, not the claimed
+7.6x). Kill unaffected — gate 0 was never about whether the score drifts, but about the drift
+already being in Kalshi's price. Data frozen to R2 before the manifest was committed.
+Produced wiki/reference/rounded-threshold-ladders.md, which generalises well past this family.
+"""
+
 [failures]
 mine = """
 1. My morning resolution sweep queried Gamma with `condition_ids=` and no `&closed=true`.
@@ -134,11 +149,12 @@ dashboard/) or skip while a subagent is live.
 """
 
 [spend]
-subagents = 5
-subagent_tokens = 1_223_356
+subagents = 6
+subagent_tokens = 1_393_627
 note = """
-5 subagents: market researcher (229.8k), slot 1 (269.7k), slot 2 band test (226.1k), second
-market researcher (240.8k), slot 2 day-1 (257.0k). Highest-spend run so far; the extra
+6 subagents: market researcher (229.8k), slot 1 (269.7k), slot 2 band test (226.1k), second
+market researcher (240.8k), slot 2 day-1 (257.0k), plus an orphaned Wayback harvester (170.3k)
+spawned by slot 2 that reported after the run had closed. Highest-spend run so far; the extra
 researcher was an unplanned response to an empty backlog and produced the strongest idea we
 have filed.
 """
@@ -156,8 +172,9 @@ wiki_added = [
   "reference/break-even-win-rate.md",
   "reference/sharpen-only-what-persists.md",
   "reference/tape-gate.md",
+  "reference/rounded-threshold-ladders.md",
 ]
-wiki_edited = ["index.md", "recipes/polymarket-api.md (closed-filter truth table; neg-risk placeholder legs)"]
+wiki_edited = ["index.md", "recipes/polymarket-api.md (closed-filter truth table; neg-risk placeholder legs; Wayback is HTTPS-only through the proxy)"]
 decisions = 3
 predictions_appended = 13
 ledger_total = 121

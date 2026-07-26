@@ -23,6 +23,13 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
   $7.19M vs $41k on the same film) with an unbiased line. Playbook now requires a named
   incumbent to be MEASURED before filing; unmeasurable → file `needs-gate-0`, not `backlog`.
   **Never spend a slot on an unmeasured incumbent.**
+- **Sub-agents can outlive their parent.** Slot 2's Wayback harvester reported 90 min after
+  the run closed, into an already-retired folder. Used it to close the audit the kill left
+  open: the founding drift claim REPLICATED at 8x sample (-4.29 vs -4.14) but its explanation
+  did NOT (thin-denominator ratio 1.26x, not 7.6x). **A correct observation with a wrong
+  explanation that the market already prices is the failure mode to expect from here on** —
+  our screens are good enough that being right is no longer sufficient. Always check for
+  orphaned output before treating a variant folder as finished.
 - **Kalshi publishes free hourly bid/ask HISTORY (`candlesticks`)** — the historical order
   book we lack. Our fillcheck reachability is a lower bound only because a resting bid nobody
   hit leaves no trace in a trade feed; a real quote history replaces the bound with a
