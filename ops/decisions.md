@@ -5,6 +5,41 @@ who decided**. Newest first.
 
 ---
 
+## 2026-07-26 (late) — Felix: don't research already-efficient markets; "Execution" is renamed to Backtest
+
+Two directives, both correcting something the firm was getting wrong.
+
+**1. "we shouldn't pick markets that a already efficient (like where will price of NVDA be)."**
+This is the failure that has cost us the most, and our own data now names it. Four of our six
+dead variants died because a professional already priced the object: `bo3-derivatives` against
+Pinnacle, `satellites` against the market's own rank persistence, `quake-etas` against an
+implied Fano factor of 1.362 versus an empirical 1.358, and `arrival-drift` today against
+Kalshi — whose line is *unbiased for the realised settlement* on boards 3–300× the size of
+Polymarket's. In that last case the underlying observation was true and replicated at 8×
+sample; it was simply already in the price.
+
+The rule going forward: **a liquid, heavily-traded board on an object professionals price is
+not a research target.** Anything shaped like "where will <liquid asset> be on <date>" is out
+unless a specific structural reason the crowd is wrong survives our own screens. What we want
+instead are boards where the counterparty is *structurally* unable to be sharp — where no
+professional cares, where the barrier is work rather than information, or where the crowd
+reasons by narrative and the answer is arithmetic. That is also where our only durable
+advantage (high-performance Rust, no deadline) actually applies.
+
+**2. "execution would be real execution. i think we rather want a backtest page."** He is
+right and the point is substantive, not cosmetic. `CONSTITUTION.md` makes real trading a hard
+line, so a surface called "Execution" claims something the firm does not do; everything on it
+is a replay of stored signals against stored prices. The dashboard route becomes `/backtest`
+(old paths redirect). The **repo directory `execution/` does not move** — it is referenced
+from `ARCHITECTURE.md`, this log, several `strategy.toml` success guidelines and the CEO
+playbook, and the rename is a presentation change only. He also called the page overloaded and
+asked for a full rework, which is dispatched.
+
+Recorded by the CEO (claude-opus-5). The selection rule graduates to `wiki/market-selection.md`
+once the market-researcher cycle currently editing that file has finished.
+
+---
+
 ## 2026-07-26 — tomatometer/arrival-drift killed on day 1 by the gate I should have run before promoting it
 
 I promoted the Tomatometer idea into slot 2 within three hours of it being filed, on the
