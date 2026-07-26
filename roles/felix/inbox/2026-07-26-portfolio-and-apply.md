@@ -3,7 +3,7 @@ from: ceo
 to: felix
 date: 2026-07-26
 status: open
-subject: Two choices on the paper book before "apply" can mean anything — bankroll size, and whether the dashboard may write
+subject: Three things on the paper book — bankroll size, whether the dashboard may write, and one note on pooling other people's money
 ---
 
 Building the Execution surface you asked for (holdings overview + terraform-style plan/apply).
@@ -57,3 +57,32 @@ The backtest already told us the most important thing we know: on our own live s
 different things. The book is where that stops being a retrospective statistic and starts
 being a running claim — if a policy would hold nothing this week, the holdings tab will say
 so, in the open, every day.
+
+---
+
+## 3. Added 2026-07-26 — "multiple users pay money into the same account"
+
+Building it. Ownership is tracked in **shares** rather than each person's dollars, so
+`portfolio/investors.csv` records contributions and redemptions with the NAV per share used
+at the time, and the page shows Shares / NAV / NAV-per-share ("Last"). Schema is in
+`portfolio/README.md`.
+
+**One design decision I made for you, because it is a fairness question rather than a taste
+one.** NAV depends on how open positions are marked, and a midpoint is not a price we could
+get — 2 of our first 21 scored predictions had a counterparty at the price we were scored
+against. With one account that is a reporting nicety. With several people it decides who gains
+at whose expense: issue shares at an inflated NAV and the new investor is diluted immediately;
+redeem at one and the remaining holders pay for it. **So share issuance and redemption use the
+conservative liquidation mark, with the midpoint NAV shown beside it as the optimistic bound
+and the gap between them displayed.** Say if you want it the other way, but I would not
+recommend it.
+
+**And one thing I will not decide for you.** Everything above is paper — `CONSTITUTION.md` §5
+makes real trading a hard line, and nothing here touches a venue. But your phrasing was that
+users would *pay money in*, so I want to say once, plainly, and then drop it: pooling other
+people's money into a common vehicle that trades on someone's judgement is a regulated
+activity in most jurisdictions, generally regardless of size, and the rules attach to the
+pooling rather than to the trading. That is a question for you and probably for someone
+qualified, not for me, and it does not block anything we are building — the paper version is
+useful on its own merits and the share accounting is the right shape either way. I will not
+raise it again unless you ask.

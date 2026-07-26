@@ -99,3 +99,51 @@ Worker commit access to the firm's own state is a security decision for Felix, n
 convenience for me to take — so today "apply" renders the exact rows to append and the CEO
 commits them on the next run. That is also the more honest shape: an apply that requires a
 deliberate act leaves an auditable trail, which is what the ledger is for.
+
+## Shares, NAV and the "Last" price — the book is a fund, not one person's account
+
+Several people can pay into the same book. That makes it a pooled vehicle, so ownership is
+tracked in **shares**, not in each person's dollars, and the whole thing turns on getting one
+number right.
+
+### `investors.csv`
+
+```
+at,investor,action,amount_usd,nav_per_share,shares_delta,note
+```
+
+- `action` — `contribute` | `redeem`.
+- `shares_delta = amount_usd / nav_per_share`, positive on a contribution, negative on a
+  redemption. **The rate used is the NAV per share at that moment**, which is why the rate is
+  stored on the row: it is the evidence for how many shares someone got.
+- The first contribution into an empty book sets `nav_per_share = 1.0000` by definition.
+
+### The three numbers
+
+| | |
+|---|---|
+| **NAV** | `cash + Σ unrealised P&L on open positions`. Cash already includes money committed as collateral — posting collateral commits money, it does not spend it — so this does not double count. |
+| **Shares** | `Σ shares_delta` over `investors.csv`. |
+| **NAV per share ("Last")** | `NAV / shares`. This is the fund's price, and the only number an investor's stake depends on. |
+
+### The thing that must not be got wrong
+
+NAV depends on how open positions are marked, and **a midpoint is not a price you can get**
+(`wiki/reference/midpoint-is-not-a-fill.md` — our own first scored batch beat the market 21/21
+and had a counterparty at the scored price on 2 of 21).
+
+With one account that is a reporting nicety. With several people it is a fairness problem, and
+it runs in both directions:
+
+- Issue shares at a midpoint-based NAV that the book could not actually realise, and the new
+  investor buys in at an inflated price — they are diluted the moment anyone checks.
+- Redeem at that same inflated NAV and the *remaining* holders pay the difference.
+
+**So share issuance and redemption use the conservative mark: what the book could be
+liquidated at today, hitting the bid on longs and lifting the ask on shorts.** The
+midpoint-based NAV is shown beside it, labelled as the optimistic bound. Where the two differ,
+the gap is displayed — that gap is the honest measure of how much of the book's stated value
+is real, and it belongs on the page rather than in a footnote.
+
+Every share-issuing action records the NAV it used, so any dilution question can be settled
+from the file rather than from memory.
