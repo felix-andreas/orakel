@@ -25,3 +25,11 @@ Key conventions:
 - Durable, cross-strategy insight graduates to `wiki/`; run-specific notes stay in memory.
 - Memory lives in the repo, always — a memory that isn't committed and pushed doesn't
   exist.
+- **Never `git add -A`, `git add .`, or `git commit -a`.** Several agents share one checkout
+  and work concurrently. Stage the explicit paths you own. This has now gone wrong twice: on
+  2026-07-25 a blanket add swept a dashboard agent's in-progress diff into an unrelated
+  commit, and on 2026-07-26 a dashboard agent swept a market researcher's six files into a
+  commit titled "rename Execution → Backtest". Both times the content survived and the
+  history lied about who did what — and the fix (rewriting shared history while another
+  agent is live) is more dangerous than the problem, so it does not get fixed. Stage
+  explicitly, and `git pull --rebase` before every push.

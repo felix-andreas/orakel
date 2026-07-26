@@ -5,6 +5,72 @@ who decided**. Newest first.
 
 ---
 
+## 2026-07-26 (late) — Gate 0 becomes a regression test: Kalshi's whole catalogue is one call
+
+The market-researcher cycle run under Felix's "no already-efficient markets" directive filed
+**no idea**, which is the correct outcome and the one the playbook now asks for. It worked up
+the strongest candidate the scan produced — Polymarket's shipping-chokepoint boards resolving
+on IMF PortWatch, ~$36M open, 19 resolved weekly ladders, a pure counting process on a free
+government feed with zero taker fee — and killed it on three measured gates.
+
+The board passed **every liquidity screen we own**: 1–2c spreads, 174/125 distinct wallets,
+~$28k of seven-day taker flow on *both* sides of the leg we would trade, leg-sum 1.019. Worth
+saying plainly, because it is the good news buried in a kill: **our liquidity gates are not
+the binding constraint any more.** The three ways a quoted price lies are now screened for,
+and boards clear them.
+
+What killed it:
+
+1. **Gate 0, measured rather than described** (the rule I wrote this morning after promoting
+   an idea on a description). Kalshi's `KXHORMUZWEEKLY` declares **our exact PortWatch
+   resolution URL**, trades 156k–446k contracts a week at 1c spreads, and is unbiased for the
+   realised settlement: mean error +2.63, se 6.19, **t = 0.42** over n=9.
+2. **The cross-venue fallback is also dead.** Polymarket priced the realised winner +4.6pp
+   *higher* than Kalshi (se 3.8, t ≈ 1.2). If anything we are the sharper venue here — there
+   is no spread to harvest in either direction.
+3. **The one that generalises: the feed is not a fixed number.** PortWatch restates settled
+   weeks by **−9% to +247%**. Rebuilding all 19 resolved boards from the live API reproduces
+   the **wrong winning bucket on 7 of them (37%)**. For the week of 11–17 May, Kalshi settled
+   15, Polymarket resolved 40–59 two days later, and the feed reads 52 today. No vintage
+   archive exists. So the family is **unbacktestable**, which is a different and worse
+   category than "efficient" — we could not have measured our own edge even if one existed.
+
+**The capability this produced is worth more than the idea would have been.** Kalshi's entire
+catalogue — **12,186 series with declared `settlement_sources` and `expiration_value`, the
+exact settled integer** — comes back from **one unauthenticated call**. Gate 0 stops being an
+argument and becomes a regression test: before any modelling, ask whether Kalshi already
+declares the same resolution source, and if so compare their line to the settlement. Promoted
+to `wiki/reference/sharp-line-screen.md`. `wiki/reference/first-print-vintages.md` gains a
+mandatory companion gate: **rebuild ≥3 settled instances from the live feed and check they
+match what the venue actually paid**, before modelling anything.
+
+Screening those 12,186 series against everything we have considered found Kalshi covering
+nearly all of it — Rotten Tomatoes (244 series), Netflix ranks, MrBeast views, GPU prices,
+home values, reality-TV eliminations, chess, earthquakes, Emmys. **The one clean hole is
+domestic box office**, against a deep Polymarket family ($17.1M on the Avatar opener, live
+boards at $261k and $204k) resolving on The Numbers' *final* figures, explicitly "not studio
+estimates". Recorded as a lead, explicitly unverified: its own gate 0 is BoxOfficePro's
+forecast, which 403s us live but is archived in Wayback. Half a day, and it runs before a slot
+is spent — not after, which is the mistake I made this morning.
+
+**Two process failures, both mine to own.**
+
+I sent the `/execution` route-reassignment message to the **wrong agent** — it reached the
+market researcher, whose brief forbids touching `dashboard/`, and which correctly refused to
+act on it and told me. The backtest agent therefore never got the instruction and added the
+redirect I had tried to prevent; I removed it by hand. Agent ids returned from a parallel
+spawn are not ordered the way the calls were written, and I assumed they were.
+
+The backtest agent then ran a repo-wide `git add` and swept the researcher's six files into
+its own commit, despite an explicit instruction in its brief not to. Same failure as
+2026-07-25. Content is intact on `main` and verified file-by-file; only the commit message
+lies. The researcher declined to rewrite shared history with another agent live, which was the
+right call — the fix is more dangerous than the defect. Since briefs demonstrably do not
+prevent this, the rule has been moved into **`AGENTS.md`**, which every agent reads before
+anything else.
+
+---
+
 ## 2026-07-26 (late) — Felix: don't research already-efficient markets; "Execution" is renamed to Backtest
 
 Two directives, both correcting something the firm was getting wrong.

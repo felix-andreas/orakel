@@ -109,10 +109,23 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         // §5) and every number is a replay of stored signals against stored
         // prices. The old addresses still resolve: `set_path` keeps the query
         // string, so `?fees=v1` and `?doc=summary` survive the move. 302, not
-        // NOTE: the bare `/execution` route is deliberately NOT handled here.
-        // It is being rebuilt as the live paper book (holdings + plan/apply);
-        // a redirect to /backtest would shadow it. The leaf data path below
-        // does redirect, because the book will never use it.
+        // `/execution` is being rebuilt as the live paper book (holdings +
+        // plan/apply), so it cannot simply redirect to /backtest — that would
+        // shadow the new page. But the old backtest deep links must keep
+        // working, and they are identifiable: `?fees=` is a backtest parameter
+        // and the book will never use it. So the route disambiguates on it.
+        //
+        // Until the book page lands, the bare route redirects too. That branch
+        // is the one the book replaces; the `fees` branch stays forever.
+        .get_async("/execution", |req, _ctx| async move {
+            let mut url = req.url()?;
+            let is_backtest_link = url.query_pairs().any(|(k, _)| k == "fees");
+            url.set_path("/backtest");
+            if !is_backtest_link {
+                url.set_query(None);
+            }
+            Response::redirect_with_status(url, 302)
+        })
         .get_async("/execution/data/:set/:file", |req, ctx| async move {
             let set = ctx.param("set").cloned().unwrap_or_default();
             let file = ctx.param("file").cloned().unwrap_or_default();
