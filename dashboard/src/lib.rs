@@ -109,13 +109,10 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         // §5) and every number is a replay of stored signals against stored
         // prices. The old addresses still resolve: `set_path` keeps the query
         // string, so `?fees=v1` and `?doc=summary` survive the move. 302, not
-        // 301 — a permanent redirect is cached by browsers for a very long
-        // time, and this rename is a week old.
-        .get_async("/execution", |req, _ctx| async move {
-            let mut url = req.url()?;
-            url.set_path("/backtest");
-            Response::redirect_with_status(url, 302)
-        })
+        // NOTE: the bare `/execution` route is deliberately NOT handled here.
+        // It is being rebuilt as the live paper book (holdings + plan/apply);
+        // a redirect to /backtest would shadow it. The leaf data path below
+        // does redirect, because the book will never use it.
         .get_async("/execution/data/:set/:file", |req, ctx| async move {
             let set = ctx.param("set").cloned().unwrap_or_default();
             let file = ctx.param("file").cloned().unwrap_or_default();
