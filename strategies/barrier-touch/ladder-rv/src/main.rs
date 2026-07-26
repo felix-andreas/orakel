@@ -260,8 +260,11 @@ fn key_url(key: &str) -> (&'static str, String) {
 }
 
 fn is_holiday(d: NaiveDate) -> bool {
+    // Full market closures inside the session calendar's span. August 2026 has none;
+    // Sep 7 is Labor Day. Columbus Day (Oct 12) is NOT here — NYSE and CME energy both
+    // trade that day; only the bond market closes.
     d.year() == 2026
-        && matches!((d.month(), d.day()), (5, 25) | (6, 19) | (7, 3))
+        && matches!((d.month(), d.day()), (5, 25) | (6, 19) | (7, 3) | (9, 7))
 }
 
 fn is_bizday(d: NaiveDate) -> bool {
@@ -284,7 +287,13 @@ struct SessionCal {
 impl SessionCal {
     fn build(class: Class) -> SessionCal {
         let from = NaiveDate::from_ymd_opt(2026, 4, 1).unwrap();
-        let to = NaiveDate::from_ymd_opt(2026, 8, 20).unwrap();
+        // Must extend past the far end of every board we price. It used to stop at
+        // 2026-08-20 (CLU6's LTD), which silently truncated tau for any board running
+        // later: the August monthly ends 2026-08-31 21:00Z, so 7 of its 21 sessions had
+        // no minutes and sigma*sqrt(tau) came out 18% too small (2026-07-26).
+        // Extending the calendar forward cannot change any past count. Stops at Oct 31
+        // because ts() assumes EDT — revisit before the 2026-11-01 EST transition.
+        let to = NaiveDate::from_ymd_opt(2026, 10, 31).unwrap();
         let mut mins = vec![];
         let mut d = from;
         while d <= to {
@@ -1681,11 +1690,226 @@ fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
     Ok(())
 }
 
+// ---------- roll-aware pricing (WTI active-month boards spanning a CME roll) ----------
+//
+// A "Hit Price" WTI board resolves on the ACTIVE MONTH contract, and the active month
+// changes inside a monthly board's window. The resolving series therefore JUMPS by the
+// calendar spread on a known date, and `touch_prob` (one spot, one sigma, no jump) is
+// simply the wrong model for such a board. Derivation and numbers:
+// results/august-roll-model-2026-07-26.md.
+//
+// Model. Primitive = ln V (the DEFERRED contract, the one that survives to the end of the
+// board), driftless BM with vol sigma_v in session time. The front contract is linked to
+// it by the log calendar spread k = ln(U/V), which is itself a function of the flat price
+// (backwardation steepens when crude rallies):
+//
+//     ln U(t) = ln V(t) + k0 + beta * (ln V(t) - ln V0)
+//
+// beta is estimated by regressing d(ln U - ln V) on d(ln V); it also reproduces the
+// observed vol ratio, sigma_u = (1 + beta) * sigma_v. The link is deterministic, so a
+// barrier B on the U scale is the level B * (V0/U0)^... on the V scale:
+//
+//     B_front = V0 * (B / U0)^(1 / (1 + beta))
+//
+// The board is then one process with a barrier that STEPS at the roll: B_front while the
+// front contract is active, B afterwards. For an up-barrier B_front < B, so the pre-roll
+// leg is easier; for a down-barrier the post-roll leg is easier, and any path sitting
+// between the two levels at the roll instant is absorbed AT the roll — the series jumps
+// down onto the barrier. That atom is the whole story of the down wing.
+//
+// Numerics: absorbing heat kernel by images on a uniform log grid,
+// p(y|x,tau) = phi(y-x) - phi(y+x-2b). The grid must reach 2b - lo or the image source
+// is truncated and every touch probability comes out exactly half. Validated against
+// 2*N(-|ln(B/S)|/(sigma*sqrt(tau))) to ~5e-4.
+
+const ROLL_DX: f64 = 0.0004; // log-price grid step (~0.04%)
+
+/// One diffusion step with an absorbing UP barrier at grid index `ib` (mass at or above
+/// `ib` is killed). `dens` is a density on a uniform grid of spacing `dx`.
+fn absorb_step(dens: &[f64], tau: f64, sigma: f64, dx: f64, ib: usize) -> Vec<f64> {
+    let n = dens.len();
+    let mut out = vec![0.0; n];
+    if tau <= 0.0 {
+        out[..ib.min(n)].copy_from_slice(&dens[..ib.min(n)]);
+        return out;
+    }
+    let s = sigma * tau.sqrt();
+    let m = (9.0 * s / dx).ceil() as usize;
+    let mut ker = vec![0.0; 2 * m + 1];
+    let mut ksum = 0.0;
+    for (i, k) in ker.iter_mut().enumerate() {
+        let z = (i as f64 - m as f64) * dx;
+        *k = (-z * z / (2.0 * s * s)).exp();
+        ksum += *k;
+    }
+    for k in ker.iter_mut() {
+        *k /= ksum;
+    }
+    // image source: the density reflected about the barrier node
+    let mut img = vec![0.0; n];
+    for (j, v) in img.iter_mut().enumerate() {
+        if 2 * ib >= j && 2 * ib - j < n {
+            *v = dens[2 * ib - j];
+        }
+    }
+    for j in 0..ib.min(n) {
+        let mut acc = 0.0;
+        for (i, k) in ker.iter().enumerate() {
+            let src = j as isize + m as isize - i as isize;
+            if src >= 0 && (src as usize) < n {
+                acc += k * (dens[src as usize] - img[src as usize]);
+            }
+        }
+        out[j] = acc.max(0.0);
+    }
+    out
+}
+
+/// P(the active-month series touches `barrier` during the board window), with the active
+/// month switching from the front contract to the deferred one at the roll.
+/// `tau_pre` = session time from now to window open (barrier not live yet),
+/// `tau_front` = window open -> roll, `tau_back` = roll -> window close.
+#[allow(clippy::too_many_arguments)]
+fn touch_prob_roll(
+    u0: f64,
+    v0: f64,
+    barrier: f64,
+    dir: char,
+    sigma_v: f64,
+    beta: f64,
+    tau_pre: f64,
+    tau_front: f64,
+    tau_back: f64,
+) -> f64 {
+    let b_front = v0 * (barrier / u0).powf(1.0 / (1.0 + beta));
+    let sgn = if dir == 'H' { 1.0 } else { -1.0 };
+    let (x0, bf, bb) = (sgn * v0.ln(), sgn * b_front.ln(), sgn * barrier.ln());
+    let tot = sigma_v * (tau_pre + tau_front + tau_back).max(1e-12).sqrt();
+    let lo = x0 - 11.0 * tot - 0.05;
+    let (i_f, i_b) = (
+        ((bf - lo) / ROLL_DX).round(),
+        ((bb - lo) / ROLL_DX).round(),
+    );
+    if i_f <= 0.0 || i_b <= 0.0 {
+        return 1.0; // already at or beyond the barrier
+    }
+    let (i_f, i_b) = (i_f as usize, i_b as usize);
+    let n = 2 * i_f.max(i_b) + 1;
+    // window has not opened yet: free diffusion, so the state at the open is lognormal
+    let mut dens = vec![0.0; n];
+    if tau_pre <= 0.0 {
+        dens[(((x0 - lo) / ROLL_DX).round() as usize).min(n - 1)] = 1.0 / ROLL_DX;
+    } else {
+        let s0 = sigma_v * tau_pre.sqrt();
+        for (i, d) in dens.iter_mut().enumerate() {
+            let z = (lo + ROLL_DX * i as f64 - x0) / s0;
+            *d = (-0.5 * z * z).exp() / (s0 * (2.0 * std::f64::consts::PI).sqrt());
+        }
+    }
+    for d in dens.iter_mut().skip(i_f) {
+        *d = 0.0; // window opens with the front-contract barrier live
+    }
+    let mut dens = absorb_step(&dens, tau_front, sigma_v, ROLL_DX, i_f);
+    for d in dens.iter_mut().skip(i_b) {
+        *d = 0.0; // THE ROLL: the series jumps onto the deferred contract
+    }
+    let dens = absorb_step(&dens, tau_back, sigma_v, ROLL_DX, i_b);
+    (1.0 - dens.iter().sum::<f64>() * ROLL_DX).clamp(0.0, 1.0)
+}
+
+/// CLU6 -> CLV6: the active month changes at the start of the session for Tue 2026-08-18,
+/// which opens 6pm ET Mon 2026-08-17. Derived from the board's own fine print (the next
+/// contract is active for the final THREE sessions of the nearest one) and CLU6's LTD of
+/// Thu 2026-08-20, which Pyth states outright ("PYTH WTI 20 AUGUST 2026").
+const ROLL_U6_V6: &str = "2026-08-17T22:00:00Z";
+
+fn cmd_roll(data: &Path, slug: &str, u0: f64, v0: f64, sigma_v: f64, beta: f64) -> Result<()> {
+    let client = mk_client();
+    let now = Utc::now().timestamp();
+    let cal = SessionCal::build(Class::Wti);
+    let roll = DateTime::parse_from_rfc3339(ROLL_U6_V6)?.timestamp();
+    let ev_txt = get_text(
+        &client,
+        &format!("https://gamma-api.polymarket.com/events?slug={slug}"),
+    )?;
+    fs::create_dir_all(data.join("events_live"))?;
+    fs::write(data.join("events_live").join(format!("{slug}.json")), &ev_txt)?;
+    let v: serde_json::Value = serde_json::from_str(&ev_txt)?;
+    let ev = v.as_array().and_then(|a| a.first()).context("board not found")?;
+    let legs = extract_legs(slug, ev)?;
+    let l0 = legs.first().context("no legs")?;
+    let (ws, we) = (l0.ws, l0.we);
+    let mpy = min_per_year(Class::Wti);
+    let tau_pre = cal.count(now, ws) as f64 / mpy;
+    let tau_front = cal.count(ws.max(now), roll.min(we)) as f64 / mpy;
+    let tau_back = cal.count(roll.max(ws).max(now), we) as f64 / mpy;
+    let sigma_u = (1.0 + beta) * sigma_v;
+    println!(
+        "roll model | {slug}\n  U0 {u0:.3}  V0 {v0:.3}  spread {:+.3} ({:.2}%)  sigma_v {:.1}%  \
+         beta {beta:.2}  => sigma_u {:.1}%",
+        u0 - v0,
+        100.0 * (u0 - v0) / u0,
+        sigma_v * 100.0,
+        sigma_u * 100.0
+    );
+    println!(
+        "  window {} -> {} | roll {} | tau: pre {:.6} front {:.6} back {:.6} ({} / {} / {} sessions)",
+        DateTime::from_timestamp(ws, 0).unwrap().format("%m-%d %H:%MZ"),
+        DateTime::from_timestamp(we, 0).unwrap().format("%m-%d %H:%MZ"),
+        DateTime::from_timestamp(roll, 0).unwrap().format("%m-%d %H:%MZ"),
+        tau_pre,
+        tau_front,
+        tau_back,
+        (tau_pre * mpy / 1380.0).round(),
+        (tau_front * mpy / 1380.0).round(),
+        (tau_back * mpy / 1380.0).round()
+    );
+    println!(
+        "  {:>3} {:>8} {:>9} {:>8} {:>8} {:>8} {:>8}",
+        "dir", "barrier", "B_front", "naive", "roll", "diff", "mid"
+    );
+    for l in &legs {
+        if l.closed {
+            continue;
+        }
+        let book_txt = get_text(
+            &client,
+            &format!("https://clob.polymarket.com/book?token_id={}", l.token_yes),
+        )
+        .unwrap_or_default();
+        let b: serde_json::Value = serde_json::from_str(&book_txt).unwrap_or_default();
+        let best = |side: &str| -> Option<f64> {
+            b[side].as_array()?.last()?["price"].as_str()?.parse().ok()
+        };
+        let mid = match (best("bids"), best("asks")) {
+            (Some(bb), Some(aa)) => Some(0.5 * (bb + aa)),
+            _ => None,
+        };
+        // what the current model would say: one spot (the front contract), no jump
+        let naive = touch_prob(u0, l.barrier, l.dir, sigma_u, tau_front + tau_back);
+        let q = touch_prob_roll(
+            u0, v0, l.barrier, l.dir, sigma_v, beta, tau_pre, tau_front, tau_back,
+        );
+        println!(
+            "  {:>3} {:>8.1} {:>9.2} {:>8.4} {:>8.4} {:>+8.4} {:>8}",
+            l.dir,
+            l.barrier,
+            v0 * (l.barrier / u0).powf(1.0 / (1.0 + beta)),
+            naive,
+            q,
+            naive - q,
+            mid.map(|m| format!("{m:.4}")).unwrap_or_default()
+        );
+    }
+    Ok(())
+}
+
 // ---------- main ----------
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
-    let usage = "usage: ladderrv <discover|candles|vol|clob|analyze|tape|wash|live> <data_dir> ...";
+    let usage = "usage: ladderrv <discover|candles|vol|clob|analyze|tape|wash|live|roll> \
+                 <data_dir> ...\n  roll <board-slug> <u0> <v0> <sigma_v> <beta>";
     if args.len() < 3 {
         bail!("{usage}");
     }
@@ -1710,6 +1934,28 @@ fn main() -> Result<()> {
         "live" => {
             let slugs: Vec<String> = args[3].split(',').map(String::from).collect();
             cmd_live(&data, &slugs)
+        }
+        "roll" => cmd_roll(
+            &data,
+            &args[3],
+            args[4].parse()?,
+            args[5].parse()?,
+            args[6].parse()?,
+            args[7].parse()?,
+        ),
+        "selftest" => {
+            // touch_prob_roll with beta=0, no pre-window time and one barrier must
+            // reproduce the closed-form driftless one-touch probability.
+            let (s, sig, tau) = (100.0, 0.5, 0.08);
+            for (b, d) in [(105.0, 'H'), (110.0, 'H'), (130.0, 'H'), (95.0, 'L'), (70.0, 'L')] {
+                let grid = touch_prob_roll(s, s, b, d, sig, 0.0, 0.0, tau, 0.0);
+                let closed = touch_prob(s, b, d, sig, tau);
+                println!("  {d}{b}: grid {grid:.5} closed {closed:.5} diff {:+.6}", grid - closed);
+            }
+            let split = touch_prob_roll(100.0, 100.0, 120.0, 'H', sig, 0.0, 0.0, 0.04, 0.04);
+            let one = touch_prob(100.0, 120.0, 'H', sig, 0.08);
+            println!("  split 0.04+0.04 vs one 0.08: {split:.5} vs {one:.5} diff {:+.6}", split - one);
+            Ok(())
         }
         _ => bail!("{usage}"),
     }
