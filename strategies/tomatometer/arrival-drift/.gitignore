@@ -1,0 +1,9 @@
+# Raw harvests live in R2 (see data/*.r2.json manifests), never in git.
+target/
+data/pm_history/
+data/pm_boards.json
+data/pm_legs.csv
+data/*.tar.gz
+data/pm_checkpoints.csv
+data/rt_paths.csv
+data/rt_slug_map.csv

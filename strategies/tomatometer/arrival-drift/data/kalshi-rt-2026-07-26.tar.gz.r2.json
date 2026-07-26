@@ -1,0 +1,9 @@
+{
+  "key": "blobs/b71dbafdf0eecdbe8510ece58f2c064a7c52d74ffddf0f98189033eac97ef5db",
+  "sha256": "b71dbafdf0eecdbe8510ece58f2c064a7c52d74ffddf0f98189033eac97ef5db",
+  "bytes": 1663601,
+  "content_type": "application/gzip",
+  "original_name": "kalshi-rt-2026-07-26.tar.gz",
+  "fetched_at": "2026-07-26T02:08:49Z",
+  "bucket": "orakel"
+}
