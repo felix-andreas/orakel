@@ -4,60 +4,65 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 
 ## Short-term (current run / immediate)
 
-- **2026-07-25 run DONE** (ops/runs/2026-07-25.toml). FIRST SCORING: 21 rows, **21/21
-  beat the market**, mean paired improvement +0.0009 (Brier 0.0015 vs 0.0024). Caveat
-  to keep repeating: OTM wings that didn't touch = easy sample, one week, one regime.
-  The real tests are the WTI/gold/silver July boards (Jul-31) and PnL after spread.
-- Slots: 1 = ladder-rv (day 3 done, 51 rows, gold now tradeable, silver prediction-only),
-  2 = arena-rank/satellites (filled today; **day-1 report arrives after run close —
-  read it FIRST next run**, accept/kill, and check its data-availability verdict).
-- 108 prediction rows; watchlist 70 markets mirrored. Wiki now 8 pages (added
-  venue-resolution-epsilon today).
-- **EXECUTION LAYER LIVE** (`execution/`, 8 named policies x 2 signal sets). Headline:
-  filtering is the biggest lever (mirror->gate ~2x annROLC); sells replicate (+7.75c vs
-  buys +0.47c); sniper wins cents/trade but harvest wins annualized return (holds 3d not
-  10d) — the capital-lockup rule earning its keep. **On orakel-live, 7/8 policies take
-  ZERO trades**: after a 3c spread our 21 scored predictions had <5c executable edge.
-  Right 21/21 and untradeable are compatible; both now measured.
-- **FEES ARE REAL** (found+verified 2026-07-25): `shares × rate × p × (1−p)`, taker only,
-  entry AND exit, none at resolution; commodities+equities = finance 0.04, crypto 0.07,
-  sports 0.05 (was 0.03 pre-07-10). All 8 policies have v2 (fee-priced); v1 kept, marked
-  fee-free. Fees eat 8-25% of gross. Buys now LOSE outright (−0.22c) — vindicates
-  ladder-rv disabling them. harvest still #1 but its lead over sniper fell 74%.
-- **Playbook changed (step 3):** mirror the R2 watchlist from ACTIVE APPLICATIONS at run
-  START, before spawning anyone. The old order (mirror after predictions) left 18/21
-  signals bookless for execution sim.
-- **Next run checklist:** (1) arena-rank day-1 verdict; (2) ladder-rv day 4 — re-read
-  week-of-Jul-27 books Monday (they were 0.020/0.980 dead), August monthlies list soon
-  and SPAN THE CLU6->CLV6 ROLL (spread +$4.78, resolving series gaps ~5% mid-board —
-  driftless GBM would misprice both wings; this needs a method fix before predicting
-  August); (3) market researcher daily idea; (4) Jul-31: WTI+gold+silver+BTC July
-  boards resolve = ~51 rows scored, the real trial evidence.
+- **2026-07-26 run** (ops/runs/2026-07-26.toml). Slots: 1 = `barrier-touch/ladder-rv`
+  (day 4, **13 rows appended**, ledger 108→121), 2 = **turned over twice in one morning** —
+  `arena-rank/favourite-shrinkage` parked, `tomatometer/arrival-drift` promoted into the
+  same slot the same hour.
+- **THE BIG CORRECTION: our 2-of-21 reachability headline was about equity weeklies, not
+  about the variant.** Slot 1 replayed the tape across all 70 predicted markets:
+  BTC 100%, WTI 99%, silver 89%, gold 82%, **SPY/NVDA weeklies 38%**. Always split
+  reachability by BOARD FAMILY before concluding anything about a variant. Gold is the
+  warning case — best Brier edge, thinnest tape, 0/11 markets ever showed a bid at our mid.
+- **New status `parked`** (trial | live | parked | retired). `retired` = a gate killed the
+  thesis; `parked` = the thesis HELD and has no expression. Releases the slot, keeps the
+  clock and evidence, carries `reopen_when` naming an observable condition. Dashboard had
+  to be taught it — the stat strip read 2+0+5 against a total of 8 and the parked variant
+  was invisible. **Any new status is a dashboard change; check the arithmetic reconciles.**
+- **Backlog was EMPTY this morning** (7 ideas in 4 days, 5 killed day 1, 0 available) — that
+  is why slots 3–5 idle, not capacity. Ran a second market researcher; it filed the
+  front-line first-passage idea. **Escalated to Felix: war-market domain ruling**
+  (`roles/felix/inbox/2026-07-26-war-markets-scope.md`) — awaiting his yes/no before a slot.
+- **Next run checklist:** (1) Felix's war-market ruling → promote or mark `discarded-scope`;
+  (2) slot 1 day 5: the leg-sum/null-model re-check is STILL outstanding (2 runs now), plus
+  `cmd_live` doesn't diffuse spot to a future window open (5.9% off for August), plus the
+  skipped R2 archive freeze — don't let it skip twice; (3) 07-31: WTI+gold+silver July
+  boards resolve → ~51 rows scored, the trial's real evidence; (4) archive WTIX6 when it
+  lists (~Aug 20) — WTIQ6 is already delisted; (5) ~08-10: check whether the August arena
+  boards priced, to reopen favourite-shrinkage.
+
 ## Medium-term (bootstrap phase)
 
-- Ramp plan: 1–2 slots until a full day runs clean, then scale toward 5.
-- Dashboard fully wired (2026-07-25): deployed, Access enforced, and `GITHUB_TOKEN` set as
-  the Worker secret — pages are **live** (read `main` per request), no longer snapshot.
-  Caveat filed to Felix: the env token is a broad classic PAT (`repo` write), not the
-  read-only fine-grained PAT the README asks for.
+- Ramp plan: idea SUPPLY is the binding constraint on slots, not capacity. One researcher
+  a day with a ~70% day-1 kill rate can never fill 5 slots.
+- Dashboard: live repo reads, no fallback copy (a stale copy served silently is worse than a
+  visible gap), sha-pinned + concurrent reads (0.87s → ~0.4s). Deploy after any status or
+  schema change.
+- Fee model is real and priced (v2 policies). Buys LOSE outright (−0.22c) after fees.
 
 ## Long-term (durable principles)
 
 - Constitution: observability first, spend logged, working window, model routing, no
   trading, single-writer CSV, R2-before-commit, commit+push every step.
-- Inherited from poly (scored evidence): consensus/combination beats individual signals;
-  model choice matters (record exact model ids); escalate-on-flag works; agents can die
-  silently mid-run — always audit folders before assuming loss.
-- Scheduling facts (verified 2026-07-22): agents can create/update/delete/fire Routines
-  programmatically; a Routine's MODEL can only be set by Felix in the claude.ai UI
-  (`model_update_disabled` via API); agent-created triggers spawn FRESH sessions WITHOUT
-  MCP connector tools — but SELF-BIND triggers (fire into an existing session) keep that
-  session's connectors fully intact (verified live; poly ran its daily this way for
-  weeks). Sub-hourly schedules are not supported (min hourly / one-shots).
-- Permission prompts: pre-allow needed tools in `.claude/settings.json` (committed) so
-  autonomous runs never block on a human; only a human-approved write can change it.
-- Dashboard health check recipe: `curl -s -o /dev/null -w "%{http_code}" <dashboard_url>`
-  must be 302 (Access on) without headers and 200 with
-  `CF-Access-Client-Id/CF-Access-Client-Secret` headers from env. Both verified
-  2026-07-22. Access gotcha: service tokens only work via a policy with action
-  "Service Auth" (not Allow), attached to the app from the app's Policies tab.
+- **Calibration ≠ tradeability ≠ fundability.** Three separate gates, and a variant can pass
+  one and fail the next two: paired Brier (are we right), tape/fill (can we transact), and
+  the break-even bound (is it worth the locked capital). `wiki/reference/break-even-win-rate.md`
+  is the strongest artifact the firm has — a band that went 16/16 with t=+10.3 is
+  uninvestable because 2.83 losses per 100 take it to zero.
+- **Three ways a quoted price lies**, all now wiki pages: phantom midpoints (dead book),
+  midpoint-is-not-a-fill (live book, but you trade at the bid), tape-gate (tight spread,
+  listed depth, ZERO trades ever).
+- Gamma's `closed` is a FILTER not an include-flag, in BOTH directions. Omitting it makes a
+  resolution sweep structurally incapable of finding anything; including it makes an
+  open-market check structurally incapable of finding anything. I made the first mistake
+  this run and caught it only because slot 1 reported it.
+- Inherited from poly: consensus beats individual signals; record exact model ids; agents
+  can die silently mid-run — always audit folders before assuming loss.
+- Scheduling: self-bind triggers keep MCP connectors; agent-created fresh-session triggers
+  do not; a Routine's MODEL is Felix-only via the claude.ai UI. Min hourly.
+- **Concurrency: never `git add -A` while agents run.** Stage explicit paths. The stop hook
+  fires on every multi-agent run because it cannot tell agent-owned in-flight files from
+  neglect — check `git status` against running agents before believing it.
+- Health check recipe: dashboard 302 without Access headers / 200 with; snapshot worker
+  `GET /`; `r2data verify` every manifest; worklogs current; no stale open inbox items.
+  Access gotcha: service tokens need a policy with action "Service Auth", attached from the
+  app's Policies tab.
