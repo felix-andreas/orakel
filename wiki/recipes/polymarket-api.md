@@ -142,3 +142,24 @@ both of which actually happened:
 
 **Query both, or query on the state you expect and treat an empty result as "wrong filter"
 before treating it as "no such market".**
+
+## Neg-risk boards: placeholder legs exist only in `/events`
+
+A neg-risk group lists unnamed placeholder outcomes — `will-company-a-…` through
+`will-company-m-…`, plus `will-any-other-company-…`. They are open markets with
+`enableOrderBook: true` and **no book at all**, sitting at `volumeNum: 0` and
+`liquidityNum: 0`.
+
+Two things follow, both learned the hard way on 2026-07-26:
+
+1. **They are invisible to `/markets?condition_ids=<cid>`** — that endpoint returns `[]` for
+   them even though they are open and appear in the parent event. Any filter written against
+   `/markets` silently classifies them as "unknown" and keeps them. Read `volumeNum` /
+   `liquidityNum` from `/events?slug=<event>` instead.
+2. **Snapshotting them poisons your error channel.** Feeding them to the CLOB `POST /books`
+   yields `no book returned for token` for every one. On our first mirror of the arena
+   cohort that was 166 of 430 tokens — 39% of the fetch failing by construction, which makes
+   a genuine failure invisible.
+
+Filter on `volumeNum == 0 && liquidityNum == 0` at build time rather than blocklisting slug
+patterns, and rebuild the list each run, so a leg that later activates returns by itself.
