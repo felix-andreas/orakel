@@ -1,7 +1,7 @@
 ---
 date: 2026-07-26
 slug: tomatometer-review-arrival
-status: backlog # backlog | trialing | discarded-idea | promoted
+status: trialing # -> strategies/tomatometer/arrival-drift (slot 2, 2026-07-26), same day it was filed
 example_markets:
   [
     "spider-man-brand-new-day-rotten-tomatoes-score-20260630144021976",

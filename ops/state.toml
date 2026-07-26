@@ -28,7 +28,7 @@ execution = "opus-5, effort xhigh/high"
 
 [research]
 slots_total = 5
-slots_active = 1
+slots_active = 2
 
 [[research.slot]]
 id = 1
@@ -36,7 +36,13 @@ variant = "barrier-touch/ladder-rv"
 trial_started = "2026-07-23"
 trial_review_due = "2026-08-02"
 
-# Slot 2 released 2026-07-26: arena-rank/favourite-shrinkage PARKED. Its mechanism
+[[research.slot]]
+id = 2
+variant = "tomatometer/arrival-drift"
+trial_started = "2026-07-26"
+trial_review_due = "2026-08-05"
+
+# Slot 2 was released and refilled the same day. arena-rank/favourite-shrinkage PARKED. Its mechanism
 # passed the pre-registered band test decisively (+16.8pp, t=+5.94, RoLC +15.2% in the
 # fundable band) and has no tradeable board until the August cohort prices (~08-10).
 # A slot that cannot trade for two weeks is a slot the firm is pretending to use.
@@ -46,7 +52,7 @@ trial_review_due = "2026-08-02"
 
 [strategies]
 live = []    # promoted variants, e.g. ["barrier-touch/gbm"]
-trial = ["barrier-touch/ladder-rv"]
+trial = ["barrier-touch/ladder-rv", "tomatometer/arrival-drift"]
 parked = ["arena-rank/favourite-shrinkage"]  # validated mechanism, no tradeable board until ~2026-08-10
 retired = ["temp-truncation/runningmax", "climate-nowcast/gistemp-era5", "arena-rank/satellites", "series-shape/bo3-derivatives", "count-overdispersion/quake-etas"] # folders stay; post-mortems in results/
 

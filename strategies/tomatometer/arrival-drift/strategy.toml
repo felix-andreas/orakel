@@ -1,0 +1,42 @@
+family = "tomatometer"
+variant = "arrival-drift"
+summary = "A film's Rotten Tomatoes score is still being counted when the bet settles, and it drifts down as more critics file. The crowd prices the number on the page today."
+explainer = """
+Rotten Tomatoes gives a film a percentage: not an average rating, just the share of
+professional critics who liked it. Polymarket runs weekly bets on whether a new film's
+score will be at least 70, at least 80, and so on, and those bets settle at a fixed clock
+time — usually the Monday morning after opening weekend. The catch is that critics are
+still filing reviews right up to that moment: the number of reviews roughly triples over
+the bet's five-day life. And the score tends to slip as they arrive, because the critics
+who rush out early are the ones who liked it. Across fourteen films we measured a fall of
+about two points over the final three days, and four points from the moment the embargo
+lifted, with eleven films down and one up. The crowd appears to price whatever number is
+showing on the page right now — its implied score sits half a point ABOVE the displayed
+one, when history says it should sit below. So we simulate the reviews still to come
+instead of reading today's number. The honest catch is that this is a small sample of
+films, the effect is only worth a few points, and the bets are worth trading only when the
+score happens to land near one of the thresholds — which is also, conveniently, when
+anyone is willing to trade them.
+"""
+status = "trial"
+created = "2026-07-26"
+supersedes = ""
+labels = ["class:counting-process", "class:selection-bias", "data:rotten-tomatoes", "family-type:threshold-ladders", "horizon:1-5d", "sim:arrival-process"]
+
+[trial]
+slot = 2
+started = "2026-07-26"
+review_due = "2026-08-05"
+success_guideline = """
+Gates first, cheapest-first, and gate 0 is a kill: Kalshi runs 233 Rotten Tomatoes series
+on an open API — if their line already prices the drift, this is dead the way
+bo3-derivatives died against Pinnacle. Treat agreement as WEAK evidence either way (both
+venues are retail crowds reading the same page), and say so explicitly.
+Then: checkpoint no earlier than T-96h (the market loses to a uniform null at T-14d/T-7d
+with 6/11 monotonicity violations — that is an unlisted board, not an edge).
+Then per-leg book gate, not family-level: the family passes the phantom screen at 0.6%
+dead legs, but a live leg was found quoting a 0.740 midpoint off a 0.650/0.830 book.
+PROMOTION requires exec_edge, not paired Brier alone, and the break-even table from
+wiki/reference/break-even-win-rate.md: report q*, q and the 95% lower bound on q per
+price band, and refuse any band whose bound is under q*. >=15 scored rows across >=3 films.
+"""
