@@ -940,6 +940,7 @@ fn cmd_bands(a: &[String]) -> Result<()> {
         let mut n = 0usize;
         let mut k = 0usize;
         let mut cost_sum = 0.0;
+        let mut fee_sum = 0.0;
         for r in &rows {
             if r.len() <= c_t {
                 continue;
@@ -966,19 +967,20 @@ fn cmd_bands(a: &[String]) -> Result<()> {
             if win {
                 k += 1;
             }
-            cost_sum += cost + fee_rate * p * (1.0 - p);
+            cost_sum += cost;
+            fee_sum += fee_rate * p * (1.0 - p);
         }
         if n == 0 {
             continue;
         }
-        let qstar = cost_sum / n as f64;
+        let qstar = (cost_sum + fee_sum) / n as f64;
         let q = k as f64 / n as f64;
         let ql = wilson_lower(k, n);
         // losses per 100 trades that take the observed q down to q*
         let ruin = (q - qstar) * 100.0;
         println!(
             "{lo:.2}-{hi:.2},{n},{:.4},{qstar:.4},{q:.4},{ql:.4},{ruin:.2},{}",
-            cost_sum / n as f64 - fee_rate * 0.0,
+            cost_sum / n as f64,
             if ql > qstar { "CLEARS" } else { "refuse" }
         );
     }

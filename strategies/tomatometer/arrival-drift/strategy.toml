@@ -18,9 +18,22 @@ films, the effect is only worth a few points, and the bets are worth trading onl
 score happens to land near one of the thresholds — which is also, conveniently, when
 anyone is willing to trade them.
 """
-status = "trial"
+status = "retired"
 created = "2026-07-26"
 supersedes = ""
+retired = "2026-07-26"
+outcome = """
+Killed on day 1 by three independent gates. (0) Kalshi is the primary venue for this object
+(20-100x Polymarket volume, 10-29 rungs vs 3-9, 1c median spread) and its implied score is
+unbiased for realised settlement at every checkpoint from T-96h (implied-median error +0.134
+to +0.643, se 0.12-0.81, 9 down/10 up at T-96h) -- the idea's own pre-registered kill.
+(3) The level claim is falsified in DIRECTION on 68 resolved Polymarket ladder boards with
+per-leg ground truth: price-minus-realised is +0.010 (t=+0.23) at T-96h and -0.171 (t=-3.34)
+at T-6h, concentrated entirely in legs priced >=0.50 -- favourite-longshot bias, pointing the
+opposite way to the trade. (5) The break-even table refuses every band; the trade in its
+natural form needs q*=0.192 and won 1 of 30. Zero prediction rows.
+Full evidence: results/gates-2026-07-26.md
+"""
 labels = ["class:counting-process", "class:selection-bias", "data:rotten-tomatoes", "family-type:threshold-ladders", "horizon:1-5d", "sim:arrival-process"]
 
 [trial]

@@ -1,0 +1,9 @@
+{
+  "key": "blobs/6ca5ccdf4536d5140cd4189d0a9ff5fd75c8cc398b3885b68c3877f0f269d9c2",
+  "sha256": "6ca5ccdf4536d5140cd4189d0a9ff5fd75c8cc398b3885b68c3877f0f269d9c2",
+  "bytes": 1571503,
+  "content_type": "application/gzip",
+  "original_name": "polymarket-rt-2026-07-26.tar.gz",
+  "fetched_at": "2026-07-26T02:17:06Z",
+  "bucket": "orakel"
+}
