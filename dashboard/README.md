@@ -12,7 +12,7 @@ without JS every group stays open.
 
 | Section | Pages |
 |---|---|
-| Overview | **Dashboard** `/` · **Daily runs** `/runs` · **Backtest** `/backtest` |
+| Overview | **Dashboard** `/` · **Daily runs** `/runs` · **Backtest** `/backtest` · **Paper book** `/execution` |
 | Research | **Strategies** `/strategies` · **Ideas** `/ideas` · **Predictions** `/predictions` |
 | Data | **Snapshots** `/snapshots` |
 | Firm | **State** `/state` · **Decisions** `/decisions` · **Inboxes** `/inboxes` · **Wiki** `/wiki` |
@@ -25,7 +25,8 @@ Detail routes hang off those and light up their parent nav item:
 | `/backtest?tab=history` \| `?tab=method` | the other signal set / the accounting rules, as real addresses (default tab = no parameter) |
 | `/backtest?fees=v1` | the same rows priced with **no venue fee** (superseded, kept for attribution) |
 | `/backtest?doc=summary` \| `?doc=design` | the engine's own write-up / the accounting rules, rendered whole |
-| `/execution`, `/execution/data/…` | **302** to the `/backtest` equivalent, query string intact — the surface was renamed 2026-07-26 |
+| `/execution` | the **paper book**, tabbed: Holdings (default) · Plan `?tab=plan`. The plan's whole selection is in the URL (`?s=`, `?m=`, `?p=`) |
+| `/execution?fees=…`, `/execution/data/…` | **302** to the `/backtest` equivalent — the backtest was called Execution until 2026-07-26 and `fees` is a parameter the book never uses |
 | `/strategies/<family>` | the family, **tabbed**: Overview (its plain-English line, its variants) · How it works (FAMILY.md) · Predictions (every variant's rows + family/variant scoring) |
 | `/strategies/<family>/<variant>` | one strategy, **tabbed**: Overview (`explainer`, facts, applications) · How it works (STRATEGY.md) · Results (`results/*.md`) · Predictions · Logs (WORKLOG + MEMORY) |
 | `/strategies/…?tab=<key>` | the tab, as a real address. `how-it-works` \| `results` \| `predictions` \| `logs`; the default tab carries no parameter, so the bare URL is canonical |
@@ -172,6 +173,7 @@ dashboard/
     ├── snapshots.rs    # R2 book snapshots and series endpoints
     ├── overview.rs     # / dashboard
     ├── backtest.rs     # /backtest (tabbed), its ?doc= views and the equity-curve JSON
+    ├── book.rs         # /execution — the paper book: Holdings, Plan, Apply
     ├── runs.rs         # /runs narrative
     ├── strategies.rs   # /strategies, family + variant (tabbed), ?doc= redirects
     ├── predictions.rs  # /predictions, /markets/<slug>
@@ -238,6 +240,57 @@ verdicts. The tab order is the order a reader's questions arrive:
   only where more than one policy traded** — a single line from $1,000 to $1,002 is not a
   comparison, and vertical space is the scarcest thing on the page. Because the tab *is*
   the signal set, the old set `<select>` is gone.
+
+### The paper book
+
+`/execution` (`src/book.rs`) is the live counterpart of the backtest: not *what would have
+happened*, but *what we hold now and what a policy would do about it next*. It is **paper**
+— no wallet, no order, no venue (CONSTITUTION.md §5) — and the page says so in a banner on
+both tabs, in the nav label and in the breadcrumb, not only in a comment.
+
+| Tab | Question it answers |
+|---|---|
+| **Holdings** (default) | *How much money is there, how much is committed, what is open, what is it worth?* Cash, free cash and committed as separate figures (`free = cash − Σ collateral`, so a fully deployed book cannot look cash-healthy), then one row per position, then the ledger. |
+| **Plan** `?tab=plan` | *What would this policy do about today's signals, and what would it cost?* Pick strategies × markets × policy; get target positions minus the open ones, `terraform plan`-style. |
+
+- **Every position is marked twice.** At the CLOB midpoint and at the price we could
+  actually get out at (bid for a long, ask for a short). A midpoint is not a fill
+  (`wiki/reference/midpoint-is-not-a-fill.md`: 21/21 beat the market, 2/21 had a
+  counterparty at the scored price), so the mid column is labelled an upper bound and the
+  gap between the two columns is the most informative number on the page. Where the live
+  book cannot price a position, `predictions/fills.csv`'s observed prices stand in, named.
+- **Return on locked capital, never cents per trade** (`execution/DESIGN.md` §3), with the
+  annualized figure beside it and "too young to annualize" under a day.
+- **The ledger is the authority.** Cash is `starting_cash + Σ cash_delta`; if the ledger's
+  collateral movements and `positions.csv` disagree the page raises a red banner and says
+  to believe the ledger.
+- **The empty book is a first-class view**, because it is today's real state and will be
+  for a while: what the book is, that it is paper, that nothing is open, and a link to the
+  Plan tab.
+- **Plan is a pure function** and its whole selection lives in the URL (`?s=family/variant`
+  repeated, `?m=slug` repeated, `?p=policy-file`), so a plan is linkable, reproducible and
+  correct under the back button. The form is a plain GET form — no JavaScript.
+- **Gates are the engine's, in the engine's order** — `candidates()` mirrors
+  `execution/engine/src/sim.rs::simulate` line for line (side, min edge, edge percentile,
+  spread, depth, fundability, per-market cap, sizing, slippage, taker fee), so a candidate
+  refused here would be refused there. Two live-only departures, both deliberate: a
+  delayed policy (`patient`) acts on **the latest prediction that is already
+  `delay_hours` old** rather than the newest one, since live the entry observation is the
+  current book; and a candidate is refused when the book already holds **the other side**
+  of that token, because a plan whose rows cancel each other out is not applicable.
+- **A plan that proposes nothing is the important screen**, not a blank one: every refused
+  candidate is listed with the rule that stopped it and the number that failed, tallied by
+  rule at the top. On our own live signals seven of the eight policies take zero trades —
+  this is where that stops being a statistic.
+- **v1 policies raise a banner.** They are fee-free and exist only so the v1→v2 delta reads
+  as the cost of the fee; the default is `fade-v2`, or `portfolio.toml`'s bound policy.
+- **A plan is never silently truncated.** If it needs more collateral than there is free
+  cash it is shown in full, with a red banner saying it does not fit.
+- **Apply cannot write, and does not pretend to.** The dashboard is a read-only Worker with
+  no commit path by design, so Apply renders the exact `ledger.csv` rows the plan implies
+  plus the command to append them, and says why that is the better shape (the ledger is the
+  audit trail). There is no fake success state. Rows carry a `plan_id` — an FNV-1a digest
+  of the selection, the policy and the prices — so an applied trade traces back to the plan.
 
 ### Still planned
 

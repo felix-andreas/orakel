@@ -167,6 +167,11 @@ pub const NAV: &[NavGroup] = &[
             // (CONSTITUTION.md §5) and the page is a replay of stored signals
             // against stored prices. The icon still reads as replay.
             NavLink { href: "/backtest", label: "Backtest", icon: "play", owns: &["/backtest/"] },
+            // "Paper book", not "Positions" or "Execution": the label has to
+            // carry the fact that no money and no order is involved
+            // (CONSTITUTION.md §5) every time the page is named, not only once
+            // on the page itself.
+            NavLink { href: "/execution", label: "Paper book", icon: "layers", owns: &[] },
         ],
     },
     NavGroup {
@@ -959,13 +964,23 @@ pub fn fmt_pct(v: f64, decimals: usize) -> String {
 }
 
 /// "1 variant" / "3 variants" — every count chip goes through here.
+///
+/// The `-y → -ies` rule only applies after a CONSONANT: "strategy → strategies"
+/// but "day → days", not "daies".
 pub fn count(n: usize, noun: &str) -> String {
     if n == 1 {
-        format!("1 {noun}")
-    } else if let Some(stem) = noun.strip_suffix('y') {
-        format!("{n} {stem}ies")
-    } else {
-        format!("{n} {noun}s")
+        return format!("1 {noun}");
+    }
+    match noun.strip_suffix('y') {
+        Some(stem)
+            if !stem
+                .chars()
+                .next_back()
+                .is_some_and(|c| matches!(c, 'a' | 'e' | 'i' | 'o' | 'u')) =>
+        {
+            format!("{n} {stem}ies")
+        }
+        _ => format!("{n} {noun}s"),
     }
 }
 

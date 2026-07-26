@@ -1758,6 +1758,12 @@ details.doc.doc-plain > summary:hover {
   font-size: var(--fs-xs);
 }
 
+/* The icon never shrinks when the sentence wraps — at 375px it otherwise
+   collapses to a sliver. */
+.banner svg {
+  flex: none;
+}
+
 /* A failed repo read. There is no fallback data source, so this is an error,
    not a notice — it must not read as "showing you something older". */
 .banner-bad {
@@ -1787,6 +1793,158 @@ select {
 
 select:hover {
   border-color: var(--border-strong);
+}
+
+/* The one button in the app: a plan's submit. Everything else is a link. */
+.btn {
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--bg);
+  background: var(--fg);
+  border: 1px solid var(--fg);
+  border-radius: var(--r-md);
+  padding: 0.1875rem 0.75rem;
+  cursor: pointer;
+}
+
+.btn:hover {
+  opacity: 0.85;
+}
+
+/* ---------------------------- the plan picker ----------------------------
+   A GET form, so the whole selection round-trips through the URL. Rows, not
+   boxes: each group is a label and its options separated by space, and the
+   option lists are multi-column so a long market list stays one screen
+   (PRINCIPLES: density is a feature; cards are the exception). */
+
+.pick {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pick-group {
+  min-width: 0;
+}
+
+details.pick-group > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+details.pick-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.pick-group > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.875rem;
+  color: var(--fg-subtle);
+}
+
+details.pick-group[open] > summary::before {
+  content: "▾";
+}
+
+.pick-label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.pick-hint {
+  font-weight: 400;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.pick-opts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(22rem, 100%), 1fr));
+  gap: 0 1rem;
+  margin-top: 0.25rem;
+}
+
+.pick-opts-narrow {
+  grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
+}
+
+.pick-opts label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4375rem;
+  padding: 0.1875rem 0;
+  font-size: var(--fs-sm);
+  min-width: 0;
+  cursor: pointer;
+}
+
+.pick-opts label > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pick-opts input {
+  flex: none;
+  accent-color: var(--tint-1);
+}
+
+.pick-sub {
+  display: block;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}
+
+.pick-empty {
+  margin: 0.25rem 0 0;
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.pick-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: var(--fs-sm);
+}
+
+/* ------------------------- the plan diff and apply -------------------------
+   terraform's legibility, not its colours: one symbol column, fixed width, so
+   the eye reads the shape of a plan before any of the numbers. */
+
+.plan-line {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+.plan-sym {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+td .plan-sym {
+  display: inline-block;
+  width: 1ch;
+}
+
+/* Copyable output — the ledger rows and the command that appends them. */
+.codeblock {
+  margin: 0.375rem 0 0.75rem;
+  padding: 0.5rem 0.625rem;
+  overflow-x: auto;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+  white-space: pre;
+  color: var(--fg);
 }
 
 .chart-controls {

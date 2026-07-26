@@ -10,7 +10,7 @@
 //! and the top bar says `cannot read repo` instead of a timestamp.
 //!
 //! Information architecture (src/render.rs NAV):
-//!   Overview     Dashboard · Daily runs · Backtest
+//!   Overview     Dashboard · Daily runs · Backtest · Paper book
 //!   Research     Strategies · Ideas · Predictions
 //!   Data         Snapshots
 //!   Firm         State · Decisions · Inboxes · Wiki
@@ -23,6 +23,7 @@
 //! on pages that draw charts and /table.js on pages with a sortable table.
 
 mod backtest;
+mod book;
 mod data;
 mod dev;
 mod firm;
@@ -104,27 +105,24 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 "application/json; charset=utf-8",
             )
         })
-        // The surface was called "Execution" until 2026-07-26, which claimed
-        // something the firm does not do — it places no orders (CONSTITUTION.md
-        // §5) and every number is a replay of stored signals against stored
-        // prices. The old addresses still resolve: `set_path` keeps the query
-        // string, so `?fees=v1` and `?doc=summary` survive the move. 302, not
-        // `/execution` is being rebuilt as the live paper book (holdings +
-        // plan/apply), so it cannot simply redirect to /backtest — that would
-        // shadow the new page. But the old backtest deep links must keep
-        // working, and they are identifiable: `?fees=` is a backtest parameter
-        // and the book will never use it. So the route disambiguates on it.
-        //
-        // Until the book page lands, the bare route redirects too. That branch
-        // is the one the book replaces; the `fees` branch stays forever.
-        .get_async("/execution", |req, _ctx| async move {
+        // `/execution` is the live paper book — holdings, plan and apply
+        // (src/book.rs). The BACKTEST was called "Execution" until 2026-07-26,
+        // which claimed something the firm does not do (it places no orders,
+        // CONSTITUTION.md §5), so it moved to /backtest and left this address
+        // free. Old backtest deep links still have to work, and they are
+        // identifiable: `?fees=` is a backtest parameter and the book will never
+        // use it. So the route disambiguates on it — that branch stays forever,
+        // everything else is the book. 302, not 301: a permanent redirect is
+        // cached by browsers for a very long time and this rename is a week old.
+        // (The leaf `/execution/data/…` below is pure backtest and redirects
+        // unconditionally.)
+        .get_async("/execution", |req, ctx| async move {
             let mut url = req.url()?;
-            let is_backtest_link = url.query_pairs().any(|(k, _)| k == "fees");
-            url.set_path("/backtest");
-            if !is_backtest_link {
-                url.set_query(None);
+            if url.query_pairs().any(|(k, _)| k == "fees") {
+                url.set_path("/backtest");
+                return Response::redirect_with_status(url, 302);
             }
-            Response::redirect_with_status(url, 302)
+            Response::from_html(book::page(&ctx.env, &url).await)
         })
         .get_async("/execution/data/:set/:file", |req, ctx| async move {
             let set = ctx.param("set").cloned().unwrap_or_default();
