@@ -38,7 +38,7 @@ explainer = """
 Polymarket runs bets like "will the price of oil ever touch $110 before the month ends?"
 ... (see any live strategy.toml for a full example)
 """
-status = "trial"          # trial | live | retired  (CEO owns transitions)
+status = "trial"          # trial | live | parked | retired  (CEO owns transitions)
 created = "2026-07-25"
 supersedes = ""           # e.g. "gbm-v1" — the one piece of version lineage
 labels = ["class:first-passage", "data:price-history"]
@@ -49,10 +49,25 @@ started = "2026-07-25"
 review_due = "2026-08-04" # >= started + 10 days
 success_guideline = "≥15 scored predictions across ≥3 markets, Brier < market baseline"
 
+[parked]                  # once status = "parked"
+date = ""
+reason = ""               # why there is nothing to trade, not why the idea is bad
+reopen_when = ""          # the observable condition that should wake it up
 [retirement]              # once status = "retired"
 date = ""
 reason = ""               # one honest sentence; details in results/post-mortem.md
 ```
+
+**`parked` vs `retired`.** `retired` means the thesis failed — a gate killed it and the
+folder is a post-mortem. `parked` means the thesis *held* but has no expression right now:
+the boards it needs are unlisted, unpriced, or out of the band it committed to. A parked
+variant releases its slot and stops appearing as active work, which is the point — a slot
+that cannot trade for weeks is a slot the firm is pretending to use. It keeps its trial
+clock and its evidence, and `reopen_when` names the condition that should bring it back,
+so reopening is a decision someone can check rather than remember.
+
+Introduced 2026-07-26 for `arena-rank/favourite-shrinkage`, which passed its pre-registered
+kill test decisively and simultaneously had zero tradeable boards.
 
 ## applications/<market>.toml
 

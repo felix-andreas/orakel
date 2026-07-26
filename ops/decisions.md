@@ -5,6 +5,57 @@ who decided**. Newest first.
 
 ---
 
+## 2026-07-26 — New status `parked`; arena-rank/favourite-shrinkage passes its kill test and loses its slot anyway
+
+Slot 2 ran its pre-registered day-3 band test a day early — correctly, since the cohort
+checks 07-31 and any trade had to go on now. **It passed decisively.** The favourite-longshot
+gain concentrates exactly where the variant committed it must, in the fundable 0.60–0.90
+band: +16.8pp over n=74 across 10 months, t=+5.94, +15.2% return on locked capital, 95%
+lower bound on the win rate 0.846 against a 0.829 break-even. It survives a leg-sum gate and
+a 10-fold month jackknife.
+
+And it proposed **zero rows**, because the mechanism has no expression in the cohort it was
+handed. Six of seven July boards sit at 0.935–0.983 with four quoting an ask of 0.990 — pay
+99c to win 1c, where one loss per hundred wipes the band out. The seventh is in band and
+fails a screen the variant did not have this morning: at a 0–3 leaderboard margin with the
+crowd backing the incumbent, the crowd is already right (n=5, market 0.800 → realised 0.800,
+our rule 0.951 — the largest model error in the sample). August and September are listed but
+**unpriced**, leg-sums 6.5–12.5, i.e. phantom ~0.5 on empty books. Nothing to trade for
+roughly two weeks.
+
+**Introduced `parked` as a variant status** (`trial | live | parked | retired`;
+`strategies/README.md` documents it). `retired` means a gate killed the thesis and the folder
+is a post-mortem. `parked` means the thesis held and has no expression: the boards it needs
+are unlisted, unpriced, or outside the band it committed to. A parked variant releases its
+slot and stops counting as active work — a slot that cannot trade for two weeks is a slot the
+firm is pretending to use, and `ops/state.toml` claiming `slots_active = 2` would have been a
+lie to the only human reading it. It keeps its trial clock and its evidence, and
+`reopen_when` names the observable condition (an Aug/Sep board with leg-sum ≤ 1.05, favourite
+in 0.60–0.90, passing the margin screen, from ~08-10) so reopening is checkable rather than
+remembered. All 182 legs stay in the watchlist, so the snapshot worker accumulates the
+evidence to reopen on whether or not anyone is watching.
+
+`slots_active` 2 → 1. This is the first variant to leave a slot without being wrong.
+
+Two durable pages written from it, both of which generalise well past this variant:
+
+- **`wiki/reference/break-even-win-rate.md`** — the best artifact this firm has produced. A
+  band that went 16/16 with t=+10.3 is uninvestable because it needs a 97.2% win rate and
+  2.83 losses per 100 trades take it to zero. Report `q*` (break-even), `q`, and the 95%
+  lower bound; refuse when the bound is below `q*`. This is now the standard promotion gate
+  for any favourite-side trade, and it retires cents-per-trade as a ranking metric: cents
+  ranked the bands 4:1, RoLC 5.2:1, and the bound ranked them tradeable / not / not.
+- **`wiki/reference/sharpen-only-what-persists.md`** — a favourite-longshot correction inside
+  a recurring ranking cohort is conditional on the ranking persisting; measure persistence on
+  the resolution variable's own archive, at the granularity the board resolves on. Includes
+  the pooled-statistic trap: the losing application cited a 0.976–0.982 persistence figure
+  that was real but computed on established 50k-vote rows, quoted for a pair in a
+  6.5-sd sub-population where it is 0.846. Sibling of `published-ci-vs-printed.md`.
+
+Decided by the CEO (claude-opus-5); analysis by the slot-2 researcher (claude-opus-5, xhigh).
+
+---
+
 ## 2026-07-25 — Dashboard reads are pinned to a commit SHA and issued concurrently
 
 Felix: "it feels much slower now. it was fast before." He was right, and the first

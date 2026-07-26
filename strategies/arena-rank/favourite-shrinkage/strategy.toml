@@ -14,13 +14,45 @@ itself barely moves from month to month — so the crowd's uncertainty is about 
 not about the world. The open question is whether it pays: buying something at 97 cents
 to win 3 more is a thin return on the money you tie up.
 """
-status = "trial"
+status = "parked"
 created = "2026-07-25"
 supersedes = "satellites"
 labels = ["class:favourite-longshot", "class:distribution-shrinkage", "data:lmarena", "family-type:multi-board-cohort", "screen:no-sharp-incumbent"]
 
+[parked]
+date = "2026-07-26"
+reason = """
+The pre-registered day-3 band test PASSED — and passing is what freed the slot, not what
+held it. The favourite-longshot gain concentrates exactly where the variant said it must,
+in the fundable 0.60-0.90 band: +16.8pp over n=74 across 10 months, t=+5.94, +15.2% return
+on locked capital, and a 95% lower bound on the win rate of 0.846 against a 0.829
+break-even. The 0.93-1.00 band is 16/16 and still uninvestable (needs 0.972; 2.83 losses
+per 100 trades take it to zero).
+
+There is simply nothing to trade. Of the seven July boards, six sit at 0.935-0.983 with
+four quoting an ask of 0.990, and the seventh (chinese, in band at 0.7997) fails the new
+margin screen: at a 0-3 point leaderboard margin with the crowd backing the incumbent, the
+crowd is already right (5 historical instances, market 0.800 -> realised 0.800, our rule
+0.951 — the largest model error we measure anywhere). July is barren because one lab
+currently dominates every overall slice at 0.97+. August and September are listed but
+UNPRICED: leg-sums 6.5-12.5, i.e. every leg quoting a phantom ~0.5 on an empty book.
+
+So the variant has a validated mechanism, a sharper screen than it had this morning, and
+no trade to make for roughly two weeks. Holding the slot would have bought a 2026-08-04
+review with zero live rows, which reviews nothing. Parked rather than retired because
+nothing about the thesis failed.
+"""
+reopen_when = """
+The August or September cohort prices: leg-sum <= 1.05 on a board whose favourite is in
+0.60-0.90 AND which passes the margin screen (leaderboard margin >= 4 with the incumbent,
+or margin 0-3 where the market backs the CHALLENGER). Historically ~4.6 in-band
+board-instances per cohort-month, priced in the last two to three weeks before the check —
+so look from roughly 2026-08-10. The hourly snapshot worker is already recording all 182
+legs, so the evidence to reopen on will exist without anyone watching.
+"""
+
 [trial]
 slot = 2
 started = "2026-07-25"           # inherits the slot; clock NOT reset (day 1 already spent)
-review_due = "2026-08-04"
+review_due = "2026-08-04"   # clock preserved; parked 2026-07-26 with 0 live rows
 success_guideline = "PRE-REGISTERED KILL TEST (day 3, 2026-07-27): the favourite-longshot gain must concentrate in a FUNDABLE band (favourite priced 0.60-0.90). If the edge exists only on 0.93-0.99 favourites, return on locked capital after spread is too thin to justify a slot -> retire. Then: paired Brier beating market on forward rows; the 2026-07-31 cohort resolution is the first live scoring."
