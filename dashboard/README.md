@@ -12,7 +12,7 @@ without JS every group stays open.
 
 | Section | Pages |
 |---|---|
-| Overview | **Dashboard** `/` · **Daily runs** `/runs` · **Execution** `/execution` |
+| Overview | **Dashboard** `/` · **Daily runs** `/runs` · **Backtest** `/backtest` |
 | Research | **Strategies** `/strategies` · **Ideas** `/ideas` · **Predictions** `/predictions` |
 | Data | **Snapshots** `/snapshots` |
 | Firm | **State** `/state` · **Decisions** `/decisions` · **Inboxes** `/inboxes` · **Wiki** `/wiki` |
@@ -22,8 +22,10 @@ Detail routes hang off those and light up their parent nav item:
 
 | Route | What it shows |
 |---|---|
-| `/execution?fees=v1` | the same matrix priced with **no venue fee** (superseded, kept for attribution) |
-| `/execution?doc=summary` \| `?doc=design` | the engine's own write-up / the accounting rules, rendered whole |
+| `/backtest?tab=history` \| `?tab=method` | the other signal set / the accounting rules, as real addresses (default tab = no parameter) |
+| `/backtest?fees=v1` | the same rows priced with **no venue fee** (superseded, kept for attribution) |
+| `/backtest?doc=summary` \| `?doc=design` | the engine's own write-up / the accounting rules, rendered whole |
+| `/execution`, `/execution/data/…` | **302** to the `/backtest` equivalent, query string intact — the surface was renamed 2026-07-26 |
 | `/strategies/<family>` | the family, **tabbed**: Overview (its plain-English line, its variants) · How it works (FAMILY.md) · Predictions (every variant's rows + family/variant scoring) |
 | `/strategies/<family>/<variant>` | one strategy, **tabbed**: Overview (`explainer`, facts, applications) · How it works (STRATEGY.md) · Results (`results/*.md`) · Predictions · Logs (WORKLOG + MEMORY) |
 | `/strategies/…?tab=<key>` | the tab, as a real address. `how-it-works` \| `results` \| `predictions` \| `logs`; the default tab carries no parameter, so the bare URL is canonical |
@@ -143,7 +145,7 @@ Chart.bar (el, { bars: [{ label, v, tone }] }, opts)
 // opts: { min, max, x: "time" | "index", yPrecision }
 ```
 
-- **eight** series colours (`--chart-1..8`), because the execution page draws one line per
+- **eight** series colours (`--chart-1..8`), because the backtest page draws one line per
   policy and there are eight policies;
 - multi-series with per-series `mode` (`"line"` / `"dots"`) and a pinned palette `color`,
   so a series that is absent at render time never recolours the others (the legend is
@@ -169,7 +171,7 @@ dashboard/
     ├── live.rs         # GitHub API with Cache API caching
     ├── snapshots.rs    # R2 book snapshots and series endpoints
     ├── overview.rs     # / dashboard
-    ├── execution.rs    # /execution, its ?doc= views and the equity-curve JSON
+    ├── backtest.rs     # /backtest (tabbed), its ?doc= views and the equity-curve JSON
     ├── runs.rs         # /runs narrative
     ├── strategies.rs   # /strategies, family + variant (tabbed), ?doc= redirects
     ├── predictions.rs  # /predictions, /markets/<slug>
@@ -191,24 +193,51 @@ RFC4180 quoting and **column access by name** (`data::Table`), so an added colum
 shifts a page's data — and `execution/results/summary.csv`, whose `fee_model` column is a
 sentence full of commas, lines up with its header.
 
-### The execution page
+### The backtest page
 
-`/execution` reads `execution/results/summary.csv` (one row per signal set × policy ×
-policy version) and `execution/README.md` (the policies' plain-English characters). It
-never recomputes a metric.
+Called **Backtest**, not Execution: the firm places no orders and never will
+(CONSTITUTION.md §5), so a surface named after execution claimed something we do not do.
+Every number on it is a replay of stored signals against stored prices. **The repo
+directory keeps its name** — `execution/` is the engine's home and is referenced from
+ARCHITECTURE.md, `ops/decisions.md`, several `strategy.toml` success guidelines and the
+CEO's playbook — and every file path the page prints is the true one
+(`execution/results/summary.csv`). The rename is presentation only.
 
-- The headline is **annualized return on locked capital**, not cents per trade
-  (DESIGN.md §3) — both are shown, and the two leaders disagreeing is the finding.
-- **v1 is fee-free, v2 charges the venue's real taker fee.** The version is a visible
-  switch, each row prints the other version's number and the gap in percentage points,
-  the cost model is quoted in the engine's own words, and choosing v1 raises a banner.
-- Sample size sits under every headline number, and the engine's `n < 30` rule is
-  respected: underpowered rows are shown, labelled and **not ranked** (DESIGN.md §7).
-- Caveats are generated from the same CSV (synthetic fills, one regime, `patient`'s
-  dropped 24h-later observations, peak deployment above bankroll), so they cannot drift
-  from the numbers.
+`/backtest` reads `execution/results/summary.csv` (one row per signal set × policy ×
+policy version) and `execution/README.md` (the policies' plain-English characters),
+concurrently. It never recomputes a metric.
+
+**One tab per signal set, plus method** — because "which policy is best" is meaningless
+without saying *on whose signals* (DESIGN.md §2), and our two sets return opposite
+verdicts. The tab order is the order a reader's questions arrive:
+
+| Tab | Question it answers |
+|---|---|
+| **Our own signals** (default) | *Does any of this trade at all?* On `orakel-live`, **7 of the 8 policies take zero trades** — the most important result we have, and the reason this tab is the landing page. Being calibrated and being tradeable are different properties. |
+| **Historical signals** `?tab=history` | *Where there ARE trades, which policy wins?* The ranked matrix over `ladder-rv-hist`, the fee before/after per row, and the equity curves. |
+| **How it works** `?tab=method` | The capital-lockup rule, the fee model, and what the engine refuses to conclude. |
+
+- The deciding metric is **annualized return on locked capital**, never cents per trade
+  (DESIGN.md §3); both are shown and the two leaders disagreeing is the finding.
+- **v1 is fee-free, v2 charges the venue's real taker fee.** v2 is the default and carries
+  no parameter, the version is a visible switch that survives a tab change, each ranked row
+  prints the other version's number and the gap in percentage points, the cost model is
+  quoted in the engine's own words, and choosing v1 raises a banner.
+- Sample size sits beside every number and the `n < 30` rule is respected: underpowered
+  rows are shown, labelled and **not ranked** (DESIGN.md §7).
+- **No t-statistic is shown.** Our own wiki says it answers the wrong question — the null
+  that matters is the break-even win rate, not zero
+  (`wiki/reference/break-even-win-rate.md`) — and SUMMARY.md says these particular ones are
+  optimistic because repeated signals on a market share an outcome. Both facts are stated
+  in the caveats instead; the engine's t-stats remain in `?doc=summary`.
+- Caveats are generated from the same CSV (synthetic fills, one regime, sub-daily holds
+  annualising by ~500×, `patient`'s dropped 24h-later observations, peak deployment above
+  bankroll), so they cannot drift from the numbers.
 - Equity curves come from `execution/results/<set>/<policy>-v<n>.json` via
-  `/execution/data/<set>/v<n>.json`, one `Chart.line` series per policy.
+  `/backtest/data/<set>/v<n>.json`, one `Chart.line` series per policy. **They are drawn
+  only where more than one policy traded** — a single line from $1,000 to $1,002 is not a
+  comparison, and vertical space is the scarcest thing on the page. Because the tab *is*
+  the signal set, the old set `<select>` is gone.
 
 ### Still planned
 

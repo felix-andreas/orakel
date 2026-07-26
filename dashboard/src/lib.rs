@@ -10,7 +10,7 @@
 //! and the top bar says `cannot read repo` instead of a timestamp.
 //!
 //! Information architecture (src/render.rs NAV):
-//!   Overview     Dashboard · Daily runs · Execution
+//!   Overview     Dashboard · Daily runs · Backtest
 //!   Research     Strategies · Ideas · Predictions
 //!   Data         Snapshots
 //!   Firm         State · Decisions · Inboxes · Wiki
@@ -22,9 +22,9 @@
 //! settings popover's theme/density choices (inline, in the shell), /charts.js
 //! on pages that draw charts and /table.js on pages with a sortable table.
 
+mod backtest;
 mod data;
 mod dev;
-mod execution;
 mod firm;
 mod live;
 mod overview;
@@ -78,16 +78,18 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .get_async("/runs", |_, ctx| async move {
             Response::from_html(runs::page(&ctx.env).await)
         })
-        .get_async("/execution", |req, ctx| async move {
+        .get_async("/backtest", |req, ctx| async move {
             // v2 (the venue's real taker fee) is the default; v1 is fee-free and
             // must be asked for explicitly.
             let version = match query(&req, "fees").as_deref() {
                 Some("v1") | Some("1") => 1,
                 _ => 2,
             };
-            Response::from_html(execution::page(&ctx.env, version, query(&req, "doc")).await)
+            Response::from_html(
+                backtest::page(&ctx.env, version, query(&req, "tab"), query(&req, "doc")).await,
+            )
         })
-        .get_async("/execution/data/:set/:file", |_, ctx| async move {
+        .get_async("/backtest/data/:set/:file", |_, ctx| async move {
             let set = ctx.param("set").cloned().unwrap_or_default();
             let file = ctx.param("file").cloned().unwrap_or_default();
             let version = file
@@ -98,9 +100,28 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 return Response::error("bad request", 400);
             };
             static_response(
-                &execution::equity_json(&ctx.env, &set, version).await,
+                &backtest::equity_json(&ctx.env, &set, version).await,
                 "application/json; charset=utf-8",
             )
+        })
+        // The surface was called "Execution" until 2026-07-26, which claimed
+        // something the firm does not do — it places no orders (CONSTITUTION.md
+        // §5) and every number is a replay of stored signals against stored
+        // prices. The old addresses still resolve: `set_path` keeps the query
+        // string, so `?fees=v1` and `?doc=summary` survive the move. 302, not
+        // 301 — a permanent redirect is cached by browsers for a very long
+        // time, and this rename is a week old.
+        .get_async("/execution", |req, _ctx| async move {
+            let mut url = req.url()?;
+            url.set_path("/backtest");
+            Response::redirect_with_status(url, 302)
+        })
+        .get_async("/execution/data/:set/:file", |req, ctx| async move {
+            let set = ctx.param("set").cloned().unwrap_or_default();
+            let file = ctx.param("file").cloned().unwrap_or_default();
+            let mut url = req.url()?;
+            url.set_path(&format!("/backtest/data/{set}/{file}"));
+            Response::redirect_with_status(url, 302)
         })
         // --- Research ---
         .get_async("/strategies", |_, ctx| async move {

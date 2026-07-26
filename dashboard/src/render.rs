@@ -163,7 +163,10 @@ pub const NAV: &[NavGroup] = &[
         links: &[
             NavLink { href: "/", label: "Dashboard", icon: "gauge", owns: &[] },
             NavLink { href: "/runs", label: "Daily runs", icon: "calendar", owns: &["/runs/"] },
-            NavLink { href: "/execution", label: "Execution", icon: "play", owns: &["/execution/"] },
+            // "Backtest", not "Execution": the firm places no orders
+            // (CONSTITUTION.md §5) and the page is a replay of stored signals
+            // against stored prices. The icon still reads as replay.
+            NavLink { href: "/backtest", label: "Backtest", icon: "play", owns: &["/backtest/"] },
         ],
     },
     NavGroup {

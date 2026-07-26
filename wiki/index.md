@@ -11,7 +11,7 @@ overlaps, pruning stale pages. One concept per file.
 
 ## Reference (base rates, biases, methods)
 
-- [reference/sharp-line-screen.md](reference/sharp-line-screen.md) — if a bookmaker prices it, check their line FIRST; cheapest kill we have
+- [reference/sharp-line-screen.md](reference/sharp-line-screen.md) — if a bookmaker prices it, check their line FIRST; cheapest kill we have. **Kalshi's 12,186-series catalogue with declared settlement URLs is ONE unauthenticated call — run it before anything else**
 - [reference/checkpoint-artifact.md](reference/checkpoint-artifact.md) — an unpriced board manufactures edge; gate on leg-sum, and if your null model wins, audit the checkpoint
 - [reference/phantom-midpoints.md](reference/phantom-midpoints.md) — a dead book quotes 0.05/0.95 and the API calls it 0.51; pooling those fabricated +14pp of fake edge
 - [reference/midpoint-is-not-a-fill.md](reference/midpoint-is-not-a-fill.md) — our own first batch beat the market 21/21 and was reachable 2/21; always report the fillable count next to the Brier
@@ -24,7 +24,7 @@ overlaps, pruning stale pages. One concept per file.
 - [reference/delayed-execution-test.md](reference/delayed-execution-test.md) — re-run intraday backtests with t+15min fills; "is the edge inside the first 3 minutes?"
 - [reference/published-ci-vs-printed.md](reference/published-ci-vs-printed.md) — a source's error bars describe the latent quantity; the market resolves on the printed number
 - [reference/venue-resolution-epsilon.md](reference/venue-resolution-epsilon.md) — the venue can resolve Yes on a feed near-miss; never sell inside the epsilon
-- [reference/first-print-vintages.md](reference/first-print-vintages.md) — index markets resolve on the FIRST print; reconstruct vintages or corrupt the backtest
+- [reference/first-print-vintages.md](reference/first-print-vintages.md) — index markets resolve on the FIRST print; reconstruct vintages or corrupt the backtest. **Rebuild ≥3 settled instances from the live feed before modelling: one "public machine-readable" feed restated by +247% and got 37% of boards wrong**
 - [reference/rounded-threshold-ladders.md](reference/rounded-threshold-ladders.md) — the strike IS a rounding boundary; verified half-up 2,128/2,128, and Python's round() is wrong on exactly the 12 ties that decide the bet
 - [reference/thin-market-price-read.md](reference/thin-market-price-read.md) — when the midpoint is an artifact; tape, wallets, sibling curves
 - [reference/wash-trading.md](reference/wash-trading.md) — detecting fake volume; what to trust instead of the mid

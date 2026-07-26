@@ -233,7 +233,7 @@ fn headline(
             )),
         match best {
             Some(row) => stat(&esc(x.cell(row, "policy")), "best way to trade the signals")
-                .href("/execution")
+                .href("/backtest")
                 .tone("ok")
                 .context(&format!(
                     "{}%/yr on locked capital · {} trades",
@@ -241,7 +241,7 @@ fn headline(
                     fmt_int(x.num(row, "n_trades") as i64)
                 )),
             None => stat("—", "best way to trade the signals")
-                .href("/execution")
+                .href("/backtest")
                 .context("no policy reaches n = 30 yet"),
         },
         stat(&fmt_int(markets.len() as i64), "markets covered")

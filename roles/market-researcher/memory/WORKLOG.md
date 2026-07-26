@@ -4,6 +4,59 @@ One dated entry per run. Name the exact model id that did the work.
 
 ---
 
+## 2026-07-26 (run 5) — Felix: "don't pick markets that are already efficient". No positive idea filed; a $36M family killed on measured gates
+
+Model: **claude-opus-5 (effort max)**.
+
+- **Landscape scan** (20 pages, 25,902 open market rows). Screened for the shapes Felix
+  asked for — counting processes, scheduling/capacity, elimination structures, cumulative
+  thresholds — and pulled the strongest candidate: Polymarket's **shipping-chokepoint
+  transit ladders** resolving on **IMF PortWatch**.
+- **Built the gate-0 tool the playbook now demands.** Kalshi's entire catalogue is one
+  unauthenticated call: `/trade-api/v2/series?limit=1000` → **12,186 series** carrying
+  `settlement_sources`. Per-series `/markets` yields `volume_fp`, `floor_strike` and
+  **`expiration_value`** (the exact settled integer); `/candlesticks` yields the price path.
+  Promoted to `wiki/reference/sharp-line-screen.md` + index.
+- **Gate 0, measured (not described).** Kalshi's `KXHORMUZWEEKLY` declares *our exact
+  PortWatch resolution URL*, trades **156k–446k contracts/week** at **1c spreads**, and its
+  window-close implied median is **unbiased** against 9 realised settlements: mean error
+  **+2.63, se 6.19, t = 0.42**. Same kill as tomatometer, found before any modelling.
+- **Cross-venue fallback, also measured.** Translated Kalshi's ≥X step CDF into Polymarket's
+  bucket geometry at matched timestamps across the 9 overlapping weeks: Polymarket priced
+  the realised winner **+4.6pp** higher (median +1.2pp, se ≈3.8, **t ≈ 1.2**), better in
+  6 weeks / worse in 2 / tied 1. Polymarket is if anything the *sharper* venue — no
+  harvestable spread in either direction.
+- **The venue-independent kill: the resolution feed is not a fixed number.** Pulled the full
+  PortWatch ArcGIS layer (2,757 days × 28 chokepoints, 2019→, no key). Comparing settled
+  values to the same API today: revisions of **−9% to +247%**. Rebuilding all 19 resolved
+  Polymarket boards from the live feed reproduces the **wrong winning bucket on 7 (37%)**.
+  Sharpest fact: for the week of May 11–17 **Kalshi settled 15 on May 19, Polymarket
+  resolved the 40–59 bucket on May 21, and the feed reads 52 today** — two venues,
+  contradictory answers, one week. No vintage archive exists (ArcGIS query endpoints are not
+  in Wayback), so the family is **unbacktestable**, not merely efficient. Promoted to
+  `wiki/reference/first-print-vintages.md` as a mandatory pre-modelling gate.
+- **Also measured, and worth keeping:** the board passes every liquidity screen we own —
+  1–2c spreads, 174/125 distinct wallets, ~$28k of 7-day taker flow on **both sides** of the
+  leg we would trade, leg-sum 1.019, zero taker fee. Our liquidity gates are working; they
+  are not the binding constraint. Screened Bab el-Mandeb (no Kalshi counterpart, cv 7%,
+  lag-1 R² 0.075) and rejected it: inherits the vintage kill with **zero** resolved
+  instances to measure it on, on a $12k board.
+- **Filed `ideas/2026-07-26-chokepoint-transit-ladders-discarded.md`** (`discarded-idea`)
+  with all three kills, the live book/tape table, and a cheapest-first revival checklist.
+- **Forward pointer, honestly labelled unverified.** Screening all 12,186 Kalshi series
+  against our structural families found Kalshi covering essentially everything (RT 244,
+  Netflix 25, MrBeast views, GPU prices, metro home values, reality-TV eliminations, chess
+  31, quakes 9, by-elections 16, Emmys 30, hurricanes 62). **The one clean hole is domestic
+  box office** — 2 hits, both Golden Globe *award* markets. Polymarket's box-office family is
+  deep ($17.1M Avatar opener; dozens at $300k–$1.4M; live boards today at $261k/$204k) and
+  resolves on The Numbers **final** figures, explicitly *"not studio estimates"* — the
+  Tomatometer shape. Recorded as a **lead, not an idea**: gate 0 is BoxOfficePro's long-range
+  forecast, which 403s us live but **is archived in Wayback** (verified). Half a day of work,
+  and it must be run before anyone spends a slot.
+- Memory pruned 201 → 182 lines (run-4 RT detail compressed now that the variant is retired).
+
+---
+
 ## 2026-07-26 (run 4) — Felix brief: market-specific data + simulable process. One idea filed
 
 Model: **claude-opus-5 (effort max)**. Brief restated two standing directives: (1) not
