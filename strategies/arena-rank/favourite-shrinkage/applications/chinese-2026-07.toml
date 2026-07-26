@@ -6,11 +6,36 @@
 market_slug = "best-chinese-ai-company-end-of-july"
 condition_id = ""   # one condition per leg; the board is a neg-risk group
 added = "2026-07-25"
-active = true
+active = false
+# DEACTIVATED 2026-07-26 (slot-2 researcher, claude-opus-5 xhigh) -- the day-3
+# fundable-band test. This board PASSES the band test (de-vigged favourite 0.7997 today,
+# book 0.3c/$7.8k, leg-sum 0.9710, $33k of realised taker buying in 7d) and still fails,
+# on the LEADERBOARD-MARGIN screen the variant did not have:
+#   * resolving table (Jul 21) has Alibaba qwen3.7-max-preview 1476 vs Moonshot kimi-k3
+#     1473 -- a +3 margin between two PRELIMINARY rows with 3,714 / 3,619 votes. Alibaba's
+#     backstop qwen3.5-max-preview (1470) sits BELOW kimi-k3.
+#   * the migrated note's "one-refresh persistence 0.976-0.982" is the top-30 POOLED
+#     figure; for pairs where both rows are <5k votes it is 0.846 (11/13), and
+#     company-level leadership at a 0-3 margin persists 0.44-0.54 over 1-14 days.
+#   * historical cell that matches this board exactly (incumbent favourite, margin 0-3,
+#     priced 0.60-0.90): market 0.800 -> realised 0.800, gap +0.0pp on n=5/4 months.
+#     Our alpha=1.75 rule would say 0.951 -- a 15.1pp overshoot, the worst of any cell.
+#   * break-even at the 0.778 ask incl. fee is 0.785; the table has not refreshed since
+#     Jul 21 and 1-2 refreshes are due before the 07-31 check. That residual is release
+#     timing = private information (wiki/market-selection.md).
+# results/fundable-band-2026-07-26.md S5.
+
 
 # Highest fundable taker flow of the cohort ($38.8k in the 3-50c band over the board life), and the only satellite whose favourite is not already ~0.99.
-# Resolving table has Alibaba rank 11 (1476 +/-10, Preliminary) vs Moonshot rank 13 (1473 +/-10, Preliminary): a 3-point gap between two Preliminary rows, where empirical one-refresh persistence is 0.976-0.982.
-# Only 3 resolved prior instances.
+# Resolving table has Alibaba rank 11 (1476 +/-10, Preliminary) vs Moonshot rank 13 (1473 +/-10, Preliminary).
+# CORRECTED 2026-07-26: the line above previously read "a 3-point gap between two Preliminary
+# rows, where empirical one-refresh persistence is 0.976-0.982". That 0.98 is the top-30
+# POOLED figure and does not describe this pair. Measured on the resolving slice's own
+# archive: sd(delta score) is 5.87 for Preliminary rows and 6.55 for <5k-vote rows vs
+# 1.60-2.25 for established ones; at gap 3-5 with BOTH rows <5k votes, persistence is
+# 0.846 (11/13); and company-level Chinese leadership at a 0-3 margin persists 0.44-0.54
+# over 1-14 days. The mis-citation is what made this board look tradeable.
+# Only 3 resolved prior instances (2026-04 lost to Baidu from p_fav 0.838 at T-7d).
 
 [params]
 board_type = "text_overall_nosc_1_chinese"

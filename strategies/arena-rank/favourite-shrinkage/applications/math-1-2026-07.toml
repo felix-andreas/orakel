@@ -6,7 +6,14 @@
 market_slug = "which-company-has-the-best-math-ai-model-end-of-july"
 condition_id = ""   # one condition per leg; the board is a neg-risk group
 added = "2026-07-25"
-active = true
+active = false
+# DEACTIVATED 2026-07-26 (slot-2 researcher, claude-opus-5 xhigh) -- fails the
+# pre-registered fundable-band test: de-vigged favourite 0.9757 today, ask 0.972, gross
+# +2.19c, RoLC +2.3%, +159% annualised, break-even win rate 0.973 -- 2.7 losses per 100
+# take it to zero, and the board has ZERO resolved history to bound that tail.
+# The alpha=1.75 output is the 0.995 clip, so the displayed edge is clip-minus-ask, not a
+# model view. results/fundable-band-2026-07-26.md S4.
+
 
 # NO resolved instances of this board type (created 2026-07) - forward test only.
 # Book is excellent (0.9c spread, $25.9k depth, $24.3k fundable flow), which is why it is active despite having no backtest.

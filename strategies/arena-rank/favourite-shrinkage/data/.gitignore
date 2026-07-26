@@ -1,0 +1,9 @@
+# raw pulls are frozen to R2 (the *.r2.json manifests ARE committed); git keeps only
+# markdown, code and small derived summaries.
+arena-2026-*/
+*.tar.gz
+*.json.gz
+live-2026-*.json
+!live-analysis-*.json
+band_split.json
+margin_null.json

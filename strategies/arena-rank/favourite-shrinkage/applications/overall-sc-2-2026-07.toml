@@ -6,7 +6,13 @@
 market_slug = "which-company-has-the-2-ai-model-end-of-july-style-control-on"
 condition_id = ""   # one condition per leg; the board is a neg-risk group
 added = "2026-07-25"
-active = true
+active = false
+# DEACTIVATED 2026-07-26 (slot-2 researcher, claude-opus-5 xhigh) -- fails the
+# pre-registered fundable-band test: de-vigged favourite 0.9473, ASK 0.990 (+0.46c,
+# +33% annualised, break-even 0.990, one loss per 100 wipes it out). 7-day taker buying on
+# our side $668. Fattest overround on the cohort (leg-sum 1.0255) so the de-vigged number
+# flatters the executable one. results/fundable-band-2026-07-26.md S4.
+
 
 # 7 resolved prior instances; leg sum 1.033.
 

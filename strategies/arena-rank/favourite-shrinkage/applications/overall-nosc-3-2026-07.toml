@@ -6,7 +6,12 @@
 market_slug = "which-company-has-the-third-best-ai-model-end-of-july"
 condition_id = ""   # one condition per leg; the board is a neg-risk group
 added = "2026-07-25"
-active = true
+active = false
+# DEACTIVATED 2026-07-26 (slot-2 researcher, claude-opus-5 xhigh) -- fails the
+# pre-registered fundable-band test: the favourite has run to 0.9831 de-vigged since the
+# 0.934 recorded yesterday; ASK 0.990. +0.46c, RoLC +0.5%, +33% annualised, break-even
+# 0.990, ONE loss per 100 wipes it out. results/fundable-band-2026-07-26.md S4.
+
 
 # 7 resolved prior instances; deepest #2/#3 book on the cohort (depth $22.5k, spread 2.6c).
 # Favourite at 0.934 leaves room for the sharpening rule.

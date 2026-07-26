@@ -1,0 +1,11 @@
+{
+  "key": "blobs/b33c420b9e024255f17430aa4e9499ed952ff25f22fd3327a724e46094354c18",
+  "sha256": "b33c420b9e024255f17430aa4e9499ed952ff25f22fd3327a724e46094354c18",
+  "bytes": 1304262,
+  "content_type": "application/gzip",
+  "original_name": "arena-tables-2026-07-26.tar.gz",
+  "source_url": "https://arena.ai/leaderboard/{text/overall-no-style-control,text/overall,text/math-no-style-control,text/math}",
+  "note": "arena-rank/favourite-shrinkage forward vintage archive 2026-07-26 (data_date Jul 21, 2026) - raw HTML + parsed rows",
+  "fetched_at": "2026-07-26T01:33:40Z",
+  "bucket": "orakel"
+}

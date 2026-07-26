@@ -6,7 +6,13 @@
 market_slug = "which-company-has-the-3-ai-model-end-of-july-style-control-on"
 condition_id = ""   # one condition per leg; the board is a neg-risk group
 added = "2026-07-25"
-active = true
+active = false
+# DEACTIVATED 2026-07-26 (slot-2 researcher, claude-opus-5 xhigh) -- fails the
+# pre-registered fundable-band test: de-vigged favourite 0.9348, ASK 0.979 (+1.52c,
+# RoLC +1.6%, +110% annualised, break-even 0.980, 2.0 losses per 100 take it to zero).
+# 7-day taker buying on our side $209 across 19 fills. Leg-sum 1.0275, the fattest on the
+# cohort. results/fundable-band-2026-07-26.md S4.
+
 
 # Style control ON board, so it resolves on text/overall - a DIFFERENT ordering from the nosc boards.
 # 7 resolved prior instances.
