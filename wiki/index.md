@@ -15,6 +15,8 @@ overlaps, pruning stale pages. One concept per file.
 - [reference/checkpoint-artifact.md](reference/checkpoint-artifact.md) — an unpriced board manufactures edge; gate on leg-sum, and if your null model wins, audit the checkpoint
 - [reference/phantom-midpoints.md](reference/phantom-midpoints.md) — a dead book quotes 0.05/0.95 and the API calls it 0.51; pooling those fabricated +14pp of fake edge
 - [reference/midpoint-is-not-a-fill.md](reference/midpoint-is-not-a-fill.md) — our own first batch beat the market 21/21 and was reachable 2/21; always report the fillable count next to the Brier
+- [reference/break-even-win-rate.md](reference/break-even-win-rate.md) — a band that went 16/16 with t=+10.3 and is still uninvestable; report q*, q and the 95% lower bound, refuse when the bound is under break-even
+- [reference/sharpen-only-what-persists.md](reference/sharpen-only-what-persists.md) — a favourite-longshot correction is conditional on the ranking persisting; measure persistence on the resolution variable's own archive, and never quote a pooled statistic across a sub-population
 
 - [reference/favorite-longshot-bias.md](reference/favorite-longshot-bias.md) — tails rich, favorites shaved inside bucket families
 - [reference/recurring-crowd-calibration.md](reference/recurring-crowd-calibration.md) — cheap test: is this recurring market's crowd already calibrated?
