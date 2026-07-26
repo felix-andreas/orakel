@@ -1,0 +1,10 @@
+{
+  "key": "blobs/5aa35fb64c935b05436c16d92dcc92d1e14a7452d43e31f65d56612bbede9a45",
+  "sha256": "5aa35fb64c935b05436c16d92dcc92d1e14a7452d43e31f65d56612bbede9a45",
+  "bytes": 41445,
+  "content_type": "application/gzip",
+  "original_name": "rt-score-paths-2026-07-26.tar.gz",
+  "source_url": "Wayback Machine CDX + web.archive.org RT film pages (HTTPS only via the agent proxy)",
+  "fetched_at": "2026-07-26T03:27:26Z",
+  "bucket": "orakel"
+}

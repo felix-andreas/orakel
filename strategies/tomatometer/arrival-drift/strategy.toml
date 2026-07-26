@@ -73,6 +73,12 @@ form of the trade needs q* = 0.192 and won 1 of 30, and the idea's liquidity tab
 reproduce — board totals match exactly but the final-72h in-band split is $8,952, not
 $48,846, with median single-leg in-band flow of $238 over 72h.
 
-Not audited: the founding -2.23-point drift measurement. The Wayback harvest was still
-running when the gates closed the day. The verdict does not rest on it.
+AUDIT CLOSED after retirement (results/drift-audit-2026-07-26.md). The harvest finished 90
+minutes after the gates did, so the founding drift claim was checked rather than left open.
+It REPLICATES at 8x the sample: mean -4.29 over 112 films against the claimed -4.14, 71% of
+films falling against the claimed 79%. Its EXPLANATION does not: the idea attributed the
+drift to thin denominators and reported a 7.6x ratio between n<80 and n>=80; at scale that
+ratio is 1.26x. So the variant died the most instructive way available - a correct
+observation, an incorrect explanation of it, and a market that already priced it. None of
+this disturbs the kill, which was never a claim about whether the score drifts.
 """

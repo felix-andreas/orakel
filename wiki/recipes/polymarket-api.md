@@ -163,3 +163,10 @@ Two things follow, both learned the hard way on 2026-07-26:
 
 Filter on `volumeNum == 0 && liquidityNum == 0` at build time rather than blocklisting slug
 patterns, and rebuild the list each run, so a leg that later activates returns by itself.
+
+## Wayback (`web.archive.org`) through the agent proxy
+
+**HTTPS only.** `http://web.archive.org/...` is rejected with "Host not in allowlist"; the
+same URL over `https://` works. The CDX API supports `collapse=timestamp:10`, and on
+low-traffic pages that loses almost nothing — an uncollapsed pass over 104 films added 73
+captures (+4.5%), because Wayback rarely stores more than one capture an hour for them.

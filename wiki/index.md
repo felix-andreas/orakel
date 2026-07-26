@@ -25,6 +25,7 @@ overlaps, pruning stale pages. One concept per file.
 - [reference/published-ci-vs-printed.md](reference/published-ci-vs-printed.md) — a source's error bars describe the latent quantity; the market resolves on the printed number
 - [reference/venue-resolution-epsilon.md](reference/venue-resolution-epsilon.md) — the venue can resolve Yes on a feed near-miss; never sell inside the epsilon
 - [reference/first-print-vintages.md](reference/first-print-vintages.md) — index markets resolve on the FIRST print; reconstruct vintages or corrupt the backtest
+- [reference/rounded-threshold-ladders.md](reference/rounded-threshold-ladders.md) — the strike IS a rounding boundary; verified half-up 2,128/2,128, and Python's round() is wrong on exactly the 12 ties that decide the bet
 - [reference/thin-market-price-read.md](reference/thin-market-price-read.md) — when the midpoint is an artifact; tape, wallets, sibling curves
 - [reference/wash-trading.md](reference/wash-trading.md) — detecting fake volume; what to trust instead of the mid
 
