@@ -13,6 +13,11 @@ updated = "2026-07-25"
 # keeps all MCP connectors). Cron is UTC: 01:07 = 03:07 German summer / 02:07 winter.
 ceo_trigger = "self-bind daily 01:07 UTC (cron 7 1 * * *), armed 2026-07-22 by the CEO"
 additional_triggers = ["snapshot worker (Cloudflare cron, 7 * * * *, no LLM)"]
+# STALE-FEED GATE (2026-07-27, wiki/reference/stale-feed-gate.md): variants resolving on a
+# feed with session hours must not emit a disagreement row while that feed is shut. WTI,
+# gold and silver trade 22:00Z->21:00Z Mon-Fri, so weekend runs on barrier-touch/ladder-rv
+# predict nothing on those assets. 64 of 95 outstanding rows were priced off a shut feed.
+stale_feed_gate = "adopted 2026-07-27; suppress, do not re-price at market"
 
 [models]
 # Standing default from CONSTITUTION.md §4 — tune here, log the change.

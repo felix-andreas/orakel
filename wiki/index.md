@@ -17,6 +17,7 @@ overlaps, pruning stale pages. One concept per file.
 - [reference/phantom-midpoints.md](reference/phantom-midpoints.md) — a dead book quotes 0.05/0.95 and the API calls it 0.51; pooling those fabricated +14pp of fake edge
 - [reference/midpoint-is-not-a-fill.md](reference/midpoint-is-not-a-fill.md) — our own first batch beat the market 21/21 and was reachable 2/21; always report the fillable count next to the Brier
 - [reference/tape-gate.md](reference/tape-gate.md) — a 1c spread with listed depth and ZERO trades ever; the third way a quote lies, and the one that revised our own 2-of-21 headline
+- [reference/stale-feed-gate.md](reference/stale-feed-gate.md) — the FOURTH way a quote misleads, and the only one where OUR number is the broken one: 64 of 95 rows priced off a feed shut for the weekend, while the book repriced 0.475 → 0.715 during the closure
 - [reference/break-even-win-rate.md](reference/break-even-win-rate.md) — a band that went 16/16 with t=+10.3 and is still uninvestable; report q*, q and the 95% lower bound, refuse when the bound is under break-even
 - [reference/sharpen-only-what-persists.md](reference/sharpen-only-what-persists.md) — a favourite-longshot correction is conditional on the ranking persisting; measure persistence on the resolution variable's own archive, and never quote a pooled statistic across a sub-population
 
