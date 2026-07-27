@@ -47,8 +47,12 @@ The August or September cohort prices: leg-sum <= 1.05 on a board whose favourit
 0.60-0.90 AND which passes the margin screen (leaderboard margin >= 4 with the incumbent,
 or margin 0-3 where the market backs the CHALLENGER). Historically ~4.6 in-band
 board-instances per cohort-month, priced in the last two to three weeks before the check —
-so look from roughly 2026-08-10. The hourly snapshot worker is already recording all 182
-legs, so the evidence to reopen on will exist without anyone watching.
+so look from roughly 2026-08-10. CORRECTION 2026-07-27: an earlier version of this said the snapshot worker is already
+recording all 182 legs so the evidence would accumulate unattended. That is no longer true
+and was wrong to promise. Parking the variant deactivated its applications, so the arena
+boards left the watchlist, and the August boards are not listed yet in any case (checked
+2026-07-27: all three slugs return nothing). Reopening is therefore a CALENDAR item on the
+CEO's checklist, not a passive observation — someone has to go and look from ~08-10.
 """
 
 [trial]
