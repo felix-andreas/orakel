@@ -11,7 +11,7 @@ overlaps, pruning stale pages. One concept per file.
 
 ## Reference (base rates, biases, methods)
 
-- [reference/sharp-line-screen.md](reference/sharp-line-screen.md) — if a bookmaker prices it, check their line FIRST; cheapest kill we have. **Kalshi's 12,186-series catalogue with declared settlement URLs is ONE unauthenticated call — run it before anything else**
+- [reference/sharp-line-screen.md](reference/sharp-line-screen.md) — if a bookmaker prices it, check their line FIRST; cheapest kill we have. **Kalshi's 12,186-series catalogue with declared settlement URLs is ONE unauthenticated call — run it before anything else.** But it has a blind spot: an empty catalogue slot says no *venue* prices the object, never that it is unforecast — box office died to a free Substack, and the market's implied sigma named the analyst before we found him
 - [reference/checkpoint-artifact.md](reference/checkpoint-artifact.md) — an unpriced board manufactures edge; gate on leg-sum, and if your null model wins, audit the checkpoint
 - [reference/phantom-midpoints.md](reference/phantom-midpoints.md) — a dead book quotes 0.05/0.95 and the API calls it 0.51; pooling those fabricated +14pp of fake edge
 - [reference/midpoint-is-not-a-fill.md](reference/midpoint-is-not-a-fill.md) — our own first batch beat the market 21/21 and was reachable 2/21; always report the fillable count next to the Brier

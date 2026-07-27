@@ -4,6 +4,96 @@ One dated entry per run. Name the exact model id that did the work.
 
 ---
 
+## 2026-07-27 (run 6) — the empty Kalshi slot was empty for a reason. No positive idea filed; box office killed on the implied-distribution check and a free Substack
+
+Model: **claude-opus-5 (effort max)**.
+
+Worked up the lead my own memory flagged last cycle as "NEXT CYCLE'S LEAD": Polymarket's
+domestic box office weekend ladders. Filed
+`ideas/2026-07-27-box-office-weekend-ladders-discarded.md`.
+
+**Gate 0, measured before anything else (playbook rule from 07-26).**
+
+- **Kalshi**: dumped all **12,187** series; grepped titles, tickers and every declared
+  `settlement_sources` URL. **2 hits, both Golden Globe *award* markets** (`KXGGBOXOFFICE`,
+  `KXGGBOFILM`, settling on goldenglobes.com). Zero gross ladders.
+- **Pinnacle** guest API: sport 58 "Entertainment" `matchupCount: 0`; `/sports/58/leagues`
+  → `[]`. **Smarkets** v3, all 7 states: one annual *winner* market
+  ("Highest Grossing Movie 2026") and one placeholder with `{"markets": []}`.
+- **`first-print-vintages` rebuild gate**: pulled 187 weekend charts (2023-01 → 2026-07,
+  11,421 film-weekend rows) and rebuilt every resolved board from today's live pages —
+  **98/98 = 100%** reproduce the exact bucket Polymarket paid. Best feed we have measured
+  (PortWatch was 12/19). Only **33 of 11,421** rows anywhere still carry an estimate value,
+  5 of them the currently-open weekend.
+
+**Family sizing.** 190 events via unioned `/public-search` variants; 110 resolved three-day
+ladders, **50 holdover (Nth-weekend) ladders** of which 46 resolved with volume; 3-5 live
+boards a week; $4.8k-$17.1M; `culture_fees` 0.05 taker-only. **13.3%** of resolved boards
+landed within 1% of a bucket edge (23.5% within 2%).
+
+**The mechanism I came for, confirmed live and then priced correctly by the crowd.** The
+Numbers shows studio *estimates* Sunday midday and *finals* Monday afternoon, and the
+boards stay open across that gap by their own resolution text. At 03:20 ET today The
+Odyssey's second weekend read $25,800,000 + $34,550,000 + $26,650,000 = **exactly
+$87,000,000** (all round to $50k = estimates; the previous Thursday reads $17,625,485,
+exact = final; the cell also carries `class="chart_estimate"`). The `86-92m` leg was
+**0.975** with its lower edge 1.15% away. Pooled, that price is right: post-estimate
+leaders win **94.4%** at a mean price of 0.901, and the 0.90-1.01 band went **71/71**.
+
+**Kill 1 — implied-distribution check** (the `quake-etas` kill, different family). Pulled
+the CLOB path for all **524 legs of 110 resolved boards** at five checkpoints. The leading
+bucket is calibrated at every one: Fri 12:00 ET 0.605 → 59.0%, Sat 0.738 → 74.1%, Sun 20:00
+0.901 → 94.4%, Mon 22:00 0.983 → 97.2% (Brier 0.474 / 0.317 / 0.089 / 0.033). Fitting a
+lognormal to each de-vigged ladder: **market implied σ = 0.120 at Friday noon** (n=36),
+0.100 Saturday. Against that I built the best forecast the free data supports — **571 daily
+charts** (2025-01-01 → 2026-07-26, 652 films) + the weekend panel → 1,363 holdover
+film-weekends, 437 at the $2M+ board scale; regressed log(weekend) on prior weekend,
+current-week Mon-Thu, theatre ratio, weekend ordinal and seasonal dummies: **σ 0.218 raw /
+0.171 robust, in-sample.** The idea's central hope — that the current week's Mon-Thu
+dailies are near-sufficient — is false: Mon-Thu alone (0.311) is *worse* than the prior
+weekend (0.250), and adding it buys 0.002. Median interior bucket is **10.4%** wide.
+Head-to-head on 32 resolved holdover ladders at Friday noon: **market Brier 0.487, us
+0.701, we win 8/32.**
+
+**Kill 2 — the counterparty is not a venue, it is a man with a Substack.** **Box Office
+Theory** (Shawn Robbins, ex-BoxOfficePro chief analyst) publishes a point forecast for
+**every holdover, by weekend ordinal**. Verified against the Substack archive API myself:
+**61 "Box Office Weekend Forecast" posts, 2025-01-22 → 2026-07-24, 61 of 61
+`audience: "everyone"`, published Wednesdays** (46/61). Measured MAPE vs The Numbers: 9.1%
+(n=6, 07-15 issue vs finals) and 14.9% (n=5, 07-22 issue). **~10% MAPE is σ ≈ 0.12** — the
+market's implied σ to two decimals. The price *is* his forecast plus its error
+distribution. The numbers live in a **PNG table inside a free Substack post**, which is why
+no venue check, title grep or `settlement_sources` scan could ever have found it.
+
+**Kill 3 — fundability.** A raw point-estimate edge does survive post-estimate: legs priced
+3-25c at Sunday 20:00 go **2 wins in 47** (4.3% realised vs 11.1% priced, −6.8pp). It is
+unreachable. Measured live relative spreads: Odyssey `80-86m` mid 0.0095 / bid 0.002 / ask
+0.017 = **1.58**; `92-98m` 1.16; Spider-Man `220-240m` 0.83. The tape is genuinely alive
+(85-652 taker trades per leg / 7d, $1.7k-$38.9k flow on every leg) — this is
+`tape-gate`'s *other* warning, best edge and worst book correlate. Full `q*/q/q⁻` table at
+measured spreads plus the 0.05 fee, per band, per side, three checkpoints: **0 of 18
+combinations clear.** Closest is Sat 12:00 / 0.75-0.90, which went **19 for 19** and still
+misses (q⁻ 0.832 vs q\* 0.839) — the `arena-rank` 16/16 lesson in a new family.
+
+**Wiki maintenance (I corrected my own entry from yesterday).** On 07-26 I promoted "a hole
+in a 12k-series catalogue is the cheapest positive signal we have found" into
+`wiki/reference/sharp-line-screen.md`. Today falsified it. Amended that page with a new
+section, *"The screen has a blind spot: the counterparty is not always a market"*, carrying
+four rules — run "does a specialist publish this free?" as question **one** (third family
+now lost to it after golf/DataGolf and MLB/FanGraphs); an empty catalogue slot answers only
+"does a *venue* price this?"; look for the forecast in newsletters, forums and podcasts,
+not just web pages; and **fit the market's implied σ early — if it is tighter than your data
+supports, someone published the number, and that tells you a specialist exists before you
+have found them.** Index entry updated to match.
+
+**Environment note.** `web.archive.org` was hard-blocked the entire run — 14 consecutive
+connection resets across CDX, timemap and snapshot URLs — while `archive.org/wayback/available`
+worked fine. The planned BoxOfficePro vintage pull was impossible; it did not matter, but
+do not plan a run around Wayback without testing it first. `boxofficepro.com` also 403s
+behind Cloudflare to curl, WebFetch and r.jina.ai alike.
+
+---
+
 ## 2026-07-26 (run 5) — Felix: "don't pick markets that are already efficient". No positive idea filed; a $36M family killed on measured gates
 
 Model: **claude-opus-5 (effort max)**.

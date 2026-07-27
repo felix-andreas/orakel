@@ -44,13 +44,47 @@ Unbiased. Same kill as `tomatometer/arrival-drift` a day earlier, found before a
 
 Two corollaries worth keeping:
 
-- **Absence in the catalogue is informative too.** Screening all 12,186 series against our
-  structural families found Kalshi covering Rotten Tomatoes (244), Netflix ranks (25),
-  MrBeast views, GPU prices, metro home values, reality-TV eliminations, chess, earthquakes,
-  Emmys — and **not domestic box office** (2 hits, both Golden Globe award markets). A hole
-  in a 12k-series catalogue is the cheapest positive signal we have found.
+- **Absence in the catalogue is informative — but far weaker than it looks.** Screening all
+  12,186 series against our structural families found Kalshi covering Rotten Tomatoes (244),
+  Netflix ranks (25), MrBeast views, GPU prices, metro home values, reality-TV eliminations,
+  chess, earthquakes, Emmys — and **not domestic box office** (2 hits, both Golden Globe
+  award markets). That was written up as "the cheapest positive signal we have found". It is
+  **not a positive signal at all** — see the next section.
 - **Agreement between two retail venues is weak evidence; a venue naming your resolution URL
   is strong evidence.** Check `settlement_sources`, not the title.
+
+## The screen has a blind spot: the counterparty is not always a market
+
+**Measured 2026-07-27 (box-office-weekend-ladders kill), and it cost a full research day.**
+Domestic box office is the one clean hole in Kalshi's 12,186 series. Pinnacle lists sport 58
+"Entertainment" with `matchupCount: 0` and `/sports/58/leagues` → `[]`. Smarkets has one
+annual *winner* market and one empty placeholder. No venue anywhere prices a weekend-gross
+ladder. Polymarket's feed is perfect too — 98 of 98 settled boards rebuilt to the exact
+bucket from the live pages.
+
+And the family is still dead, because **a retired industry analyst gives the forecast away
+for free**. Shawn Robbins (ex-BoxOfficePro chief analyst) posts a point forecast for every
+holdover weekend, by film and weekend ordinal, on a free Substack: 61 issues since
+2025-01-22, every one `audience: "everyone"`, published Wednesdays, **~10% MAPE**. The
+market's implied lognormal sigma is **0.120** — which is that MAPE. The price *is* his
+forecast plus its error distribution.
+
+Rules that follow:
+
+1. **Run "does a specialist publish this free?" as question one, not question three.** It is
+   the same kill as DataGolf (golf) and FanGraphs (MLB); this is now the third family lost to
+   it, and the first where no venue check could ever have found it.
+2. **An empty catalogue slot answers "does a *venue* price this?", never "is this
+   unforecast?"** Kalshi lists what people want to hedge or gamble on, not what is hard.
+   A hole means *the cheapest kill is unavailable*, so the remaining gates must carry more
+   weight — the opposite of the encouragement it feels like.
+3. **Look for the forecast in places that are not web pages.** Robbins' numbers live in a
+   PNG table inside a Substack post — invisible to any title grep, any `settlement_sources`
+   scan, and any search for "API". Check newsletters, forums and podcasts in the object's
+   own subculture before concluding nobody is modelling it.
+4. **The market's implied sigma names the incumbent.** If the crowd's de-vigged distribution
+   is tighter than anything your data supports, someone published the number. Fit the sigma
+   first; it tells you a specialist exists before you have found them.
 
 ## Free, read-only sources (verified working from our environment)
 

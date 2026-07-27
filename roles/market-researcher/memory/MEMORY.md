@@ -4,60 +4,72 @@ _Keep under ~150 lines. Prune every run._
 
 ## Short-term
 
-- 2026-07-26 (run 5, Felix: "don't pick markets that are already efficient"). **Filed
-  nothing positive.** Worked up shipping-chokepoint transit ladders (IMF PortWatch), killed
-  it three ways, filed
-  **`ideas/2026-07-26-chokepoint-transit-ladders-discarded.md`**. It passed EVERY screen we
-  own except the two I ran: live 1-2c book, 174 wallets, $28k/7d taker flow both sides,
-  leg-sum 1.019, zero taker fee, 19 resolved instances, ~$36M open siblings.
-  **(a) Kalshi runs the identical contract** (`KXHORMUZWEEKLY`, `settlement_sources` =
-  our exact PortWatch URL), 156k–446k contracts/wk, 1c spreads, and is **unbiased** at
-  window close: mean err +2.63, se 6.19, t=0.42, n=9. **(b) No cross-venue spread**: PM vs
-  Kalshi on the realised winner +4.6pp, se 3.8, t=1.2 — PM if anything the *better* venue.
-  **(c) The feed is not a number**: PortWatch restated settled weeks −9% to **+247%**;
-  today's API reproduces the wrong winning bucket on **7/19** boards; the two venues
-  resolved the SAME week to contradictory values 2 days apart (Kalshi 15 / PM 40–59 / feed
-  52 today). No vintage archive exists (ArcGIS query endpoints aren't in Wayback), so the
-  family is **unbacktestable**, not merely efficient.
-- **THE TOOL FROM THIS RUN — use it first, every run.** Kalshi's whole catalogue is one
+- 2026-07-27 (run 6). **Filed nothing positive.** Worked up the box-office lead my own
+  memory flagged last cycle; killed it three ways, filed
+  **`ideas/2026-07-27-box-office-weekend-ladders-discarded.md`**. Everything upstream
+  passed and passed well: **Kalshi 0/12,187 series** (2 hits, both Golden Globe *award*
+  markets), Pinnacle sport 58 `matchupCount: 0` + `/leagues` → `[]`, Smarkets one annual
+  winner market; **feed-stability gate 98/98 boards rebuilt to the exact bucket** (best we
+  have ever measured); 190 events, 110 resolved ladders, 50 holdover ladders, 3-5 live
+  boards/wk, $4.8k-$17.1M, live tape 85-652 taker trades per leg / 7d. Killed by:
+  **(a) implied-distribution check** — market implied lognormal σ **0.120** at Fri noon
+  (0.100 Sat) vs our best model's **0.171** fitted IN-SAMPLE on the whole free panel
+  (437 film-weekends, 6 covariates); head-to-head Brier on 32 holdover ladders **0.487
+  market vs 0.701 us**, we win 8/32. **(b) A free named-analyst forecast** — Shawn Robbins
+  (ex-BoxOfficePro chief analyst), `boxofficetheory.substack.com`, **61 free weekly issues
+  since 2025-01-22, all `audience: everyone`, Wednesdays**, point forecast per holdover by
+  weekend ordinal, **~10% MAPE = the market's implied σ**. (c) **Fundability: 0 of 18**
+  band×side×checkpoint combos clear the break-even bound at measured spreads; the only raw
+  edge (3-25c legs post-Sunday-estimate, −6.8pp, 2 wins/47) sits on legs whose **bid is
+  13-21% of the mid** (Odyssey `80-86m`: mid 0.0095, bid 0.002, relspr 1.58).
+- **THE LESSON, and it corrects something I wrote myself.** I put "a hole in a 12k-series
+  catalogue is the cheapest positive signal we have found" into
+  `wiki/reference/sharp-line-screen.md` on 07-26. **False.** An empty catalogue slot says
+  no *venue* prices the object; it says nothing about whether an *analyst* does. Kalshi
+  lists what people hedge or gamble on, not what is hard. Third family now lost to "a
+  specialist publishes it free" (golf/DataGolf, MLB/FanGraphs, box office/Box Office
+  Theory) and the first where no venue check could ever have found it — the numbers live in
+  a **PNG table inside a Substack post**, invisible to every title grep and
+  `settlement_sources` scan. Two new rules in the wiki: run "does a specialist publish this
+  free?" as question ONE; and **fit the market's implied σ early — if it is tighter than
+  your data supports, someone published the number, and that tells you a specialist exists
+  before you have found them.**
+- **KEEP THE PIPELINE (dead idea, live tooling).** The Numbers is fully scrapeable with
+  plain `curl` + browser UA: `/box-office-chart/weekend/YYYY/MM/DD` and
+  `/box-office-chart/daily/YYYY/MM/DD`, clean server-rendered tables. 187 weekend + 571
+  daily charts ≈ 4 min wall-clock. **Estimates carry `class="chart_estimate"` and are round
+  to $50k; finals are exact to the dollar** — a two-way machine-readable
+  provisional-vs-final detector, and only 33 of 11,421 panel rows ever stay round.
+  `web.archive.org` was **hard-blocked** all run (14 consecutive resets across CDX, timemap
+  and snapshot URLs) while `archive.org/wayback/available` worked — don't plan a run around
+  Wayback without testing it first.
+- 2026-07-26 (run 5). Filed nothing positive; killed shipping-chokepoint ladders
+  (`ideas/2026-07-26-chokepoint-transit-ladders-discarded.md`) — Kalshi runs the identical
+  contract off our exact PortWatch URL and is unbiased (t=0.42, n=9), AND the feed restates
+  −9% to +247% so 7/19 settled boards can't be rebuilt. **Unbacktestable, not merely
+  efficient.** Full detail in the worklog + idea file.
+- **THE TOOL — use it first, every run.** Kalshi's whole catalogue is one
   unauthenticated call: `api.elections.kalshi.com/trade-api/v2/series?limit=1000` →
   **12,186 series** with `settlement_sources` URLs. Per-series `/markets` gives
   `volume_fp`, `floor_strike` and **`expiration_value` = the exact settled integer**;
   `/series/<T>/markets/<tk>/candlesticks?...&period_interval=60` gives the price path.
   This turns gate 0 from an argument into a regression AND gives free point-in-time
   vintages of any resolution source. In `wiki/reference/sharp-line-screen.md`.
-- **Kalshi coverage map (screened 2026-07-26, don't re-derive):** covers RT (244 series),
+- **Kalshi coverage map (screened 2026-07-26, re-verified 07-27, don't re-derive):** covers RT (244 series),
   Netflix ranks (25), MrBeast/YouTube views, GPU rental prices (H100/B200 weekly+monthly),
   metro home values, reality-TV eliminations (Big Brother/Survivor/Love Island/Traitors),
   chess (31), earthquakes (9), UK by-elections (16), Emmys (30), hurricanes (62), Suez +
-  Panama chokepoints. **The one clean hole is DOMESTIC BOX OFFICE** — 2 hits, both Golden
-  Globe *award* markets; no opening-weekend/weekend-gross/total-gross series anywhere.
-- **NEXT CYCLE'S LEAD (unverified — do NOT file as backlog before gate 0).** Polymarket box
-  office: `avatar-fire-and-ash-opening-weekend-box-office` $17.1M, moana-2 $4.4M, joker-2
-  $2.6M, wicked-for-good $2.4M, dozens at $300k–$1.4M, plus 2nd/3rd-weekend and
-  total-domestic-gross boards. Live now: `the-odyssey-2nd-weekend-box-office-20260720175402816`
-  ($261k, $79k/24h, 86–92m leg 0.83/0.84) and `spider-man-brand-new-day-opening-weekend-box-office-20260618144048496`
-  ($204k). Resolves on **The Numbers final daily figures, explicitly "not studio estimates"**,
-  open until BOM+TN both confirm → the Sunday number the crowd sees ≠ the number that
-  settles (Tomatometer shape). Fees `culture_fees` 0.05 taker-only. **Gate 0 = BoxOfficePro
-  long-range forecast**: live site 403s us, but it **is** in Wayback under
-  `boxofficepro.com/long-range-box-office-forecast*` (verified). Pull N archived forecasts,
-  match to films, compare to actual AND to the pre-release Polymarket price. Half a day.
-- 2026-07-26 (run 4). Filed `ideas/2026-07-26-tomatometer-review-arrival.md` (RT threshold
-  ladders; drift −4.14 embargo→settle, −2.23 at T−72h, market implied median +0.50 ABOVE
-  the displayed score). **Promoted same day, killed day 1 — I named Kalshi as gate 0 and
-  described it instead of measuring it.** Kalshi is the PRIMARY venue for RT ladders
-  ($58k–$7.19M vs PM's $25k median, 1c vs 18c spread) and unbiased for settlement. The
-  drift was real (replicated −4.29 at 8× sample) and already in the price. This produced
-  the PLAYBOOK RULE: **if you name an incumbent you must MEASURE it before filing.**
-  Surviving RT screens: checkpoint must be **T−96h or later** (at T−14d/T−7d the market
-  loses to a uniform null, LL 3.575 vs 1.655); phantom gate 2/320 legs dead.
-- 2026-07-25 (run 3, brief: find SIMULATION edge). Filed
-  `ideas/2026-07-25-quake-ladder-overdispersion-3.md` + discarded-idea file
-  `ideas/2026-07-25-tennis-games-ladder-discarded.md` carrying three kills. **Lesson: the
-  binding constraint is WHO ELSE IS HERE, not modelling skill.** Quake idea trialed and
-  killed same day — crowd already implied Fano 1.362 vs empirical 1.358, and the signal was
-  a fresh-board checkpoint artifact.
+  Panama chokepoints. The one clean hole was DOMESTIC BOX OFFICE — **worked up and killed
+  2026-07-27; the hole was not a signal.** Read the map as "where the cheap kill is
+  available", never as "where nobody is looking".
+- 2026-07-26 (run 4). Filed `ideas/2026-07-26-tomatometer-review-arrival.md`; **promoted
+  same day, killed day 1 — I named Kalshi as gate 0 and described it instead of measuring
+  it.** Kalshi is the PRIMARY venue for RT ladders and unbiased for settlement; the drift
+  was real (−4.29 at 8× sample) and already in the price. Produced the PLAYBOOK RULE: **if
+  you name an incumbent you must MEASURE it before filing.**
+- 2026-07-25 (run 3, brief: find SIMULATION edge). Quake idea trialed and killed same day —
+  crowd already implied Fano 1.362 vs empirical 1.358. **Lesson: the binding constraint is
+  WHO ELSE IS HERE, not modelling skill.**
 - **KILLED, do not re-propose:** (a) **PGA top-5/10/20** — DataGolf ships the whole live
   Monte Carlo as free JSON in page source; same kill hits **MLB playoff ladders**
   (FanGraphs). (b) **Tennis 14-leg derivative ladder** — Polymarket = Pinnacle to +0.07pp
@@ -66,25 +78,25 @@ _Keep under ~150 lines. Prune every run._
   race and the shape claim itself). (d) esports BO3 derivatives (run 2 idea, killed day 1).
   (e) **RT/Tomatometer ladders** (Kalshi primary + unbiased). (f) **ALL IMF PortWatch
   chokepoint boards** — Hormuz, Bab el-Mandeb, Suez cumulative — Kalshi unbiased AND the
-  feed restates by up to +247% so nothing is backtestable.
+  feed restates by up to +247% so nothing is backtestable. (g) **ALL Polymarket box office
+  boards** — opening weekend, Nth weekend, opening day, total-gross-by-date — crowd σ 0.120
+  vs our 0.171, and a free Wednesday Substack forecast at ~10% MAPE is what they are pricing;
+  total-gross-by-date is additionally unbacktestable at ~6 resolved instances.
 
 ## Medium-term
 
-- **Rotten Tomatoes family — dead as a target, but keep the plumbing.**
+- **Rotten Tomatoes plumbing (family dead, scraper worth keeping).**
   `rottentomatoes.com/m/<slug>` embeds `<script id="media-scorecard-json">` with
-  `likedCount / notLikedCount / reviewCount / score` + a Top-Critics subscore; plain `curl`
-  + browser UA works (remakes need a year suffix: `the_odyssey_2026`). Rounding is
-  **half-up on 100·L/N**, 2,128/2,128 (`wiki/reference/rounded-threshold-ladders.md`).
-  Wayback holds 54–78 captures/film; `id_` captures are **gzip — decompress before
-  regexing**. Kalshi runs 233 `KXRT*` series and is the primary venue.
-- Scanned + rejected before working up (07-26): **SpaceX monthly launch counts** (family
-  stopped after Feb, bad cadence); **US measles cumulative ladders** (annual $7.78M deep,
-  monthlies ~$55k × 12/yr — future first-passage/branching candidate); **chess outrights**
-  (simulable but Kalshi runs 31 chess series, and only a few events/year).
+  `likedCount / notLikedCount / reviewCount / score`; plain `curl` + browser UA works
+  (remakes need a year suffix: `the_odyssey_2026`). Rounding **half-up on 100·L/N**,
+  2,128/2,128 (`wiki/reference/rounded-threshold-ladders.md`).
+- Scanned + rejected before working up (07-26): **SpaceX monthly launch counts** (bad
+  cadence); **US measles cumulative ladders** (annual $7.78M deep, monthlies ~$55k × 12/yr —
+  future first-passage/branching candidate); **chess outrights** (Kalshi runs 31 series).
 - **Netflix weekly Top-10 — killed 2026-07-25, don't re-propose without a daily source.**
   Free ground truth `netflix.com/tudum/top10/data/all-weeks-{global,countries}.tsv`; killed
   because subscribers see the in-app daily Top 10 (decay model 23%/42% argmax vs market
-  77%/83%), and the bid side is empty ($0–96 top-of-book) so selling the field is unexecutable.
+  77%/83%), and the bid side is empty so selling the field is unexecutable.
 - **Arena/LMArena** (2026-07-25): satellites killed; `favourite-shrinkage` parked. Wayback
   covers it via the `lmarena.ai`→`arena.ai` rebrand (8,132 captures); resolving slice is
   `text/overall-no-style-control`; layout changed 3× so parse header-driven, never by index.
@@ -98,10 +110,9 @@ _Keep under ~150 lines. Prune every run._
   Hot non-sport supply: Iran/Hormuz geopolitics (energy desks are sharp — avoid),
   AI-leaderboard rankings, box office, Musk tweet counts (crowd calibrated — avoid).
 - Seen but unprobed: NSIDC arctic sea-ice min; VEI-6 volcano; Cat-4 US hurricane landfall
-  (NHC); EIA/AAA gas price; CDC counts. **Box office is the best unprobed one** — weekly,
-  no financial incumbent, and it is the *same shape* as the Tomatometer idea (settles on a
-  running total at a clock time), but Thursday-previews→weekend multiplier is
-  hobbyist-modelled, so run the calibration test first.
+  (NHC); EIA/AAA gas price; CDC counts. (Box office was the best unprobed one — probed and
+  killed 07-27.) For each of these, **fit the market's implied σ before building anything**:
+  it is one afternoon and it names the incumbent you have not found yet.
 - Scanned 2026-07-25, don't re-scan cold: **company market-cap ranking boards** — rejected,
   resolution variable is a live stock price, glanceable + near-deterministic. **Non-US
   central-bank decision boards** — sharpest agent is a rates desk on the local OIS curve,
