@@ -62,7 +62,7 @@ const SCORES_HEADER: [&str; 10] = [
 ];
 
 /// Output order of aggregate levels in scores.csv.
-const LEVEL_ORDER: [&str; 6] = ["variant", "family", "model", "status", "horizon", "overall"];
+const LEVEL_ORDER: [&str; 7] = ["variant", "family", "model", "status", "horizon", "market", "overall"];
 
 struct Prediction {
     timestamp_raw: String,
@@ -536,7 +536,15 @@ fn aggregate(rows: &[ScoredRow]) -> Vec<AggRow> {
             (2, r.model.clone()),
             (3, r.status.clone()),
             (4, r.horizon.clone()),
-            (5, "overall".to_string()),
+            // Per MARKET, because rows are not independent observations. We
+            // predict the same market every morning, so one barrier touch is
+            // scored once per day it was open — inflating a win and a loss
+            // alike. On 2026-07-27 four rows on `will-wti-dip-to-85` swung the
+            // firm's whole headline from +0.0009 to -0.0172; they are one
+            // event. Read the per-market level to see how many EVENTS a
+            // conclusion rests on, not how many rows.
+            (5, r.market_slug.clone()),
+            (6, "overall".to_string()),
         ];
         for k in keys {
             let e = acc.entry(k).or_default();

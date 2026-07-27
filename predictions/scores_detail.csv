@@ -1,7 +1,9 @@
 timestamp,market_slug,outcome,family,variant,model,status,horizon,prediction,market_price,actual,brier,market_brier,improvement,logloss,best_price,fillable,exec_edge
+2026-07-23T10:04:09Z,will-wti-dip-to-85-in-july-2026,Yes,barrier-touch,ladder-rv,fable,trial,3-7d,0.4937,0.525,1,0.25634,0.225625,-0.030715,0.705827,0.999,true,0.5053
 2026-07-23T10:04:09Z,will-spy-dip-to-715-by-july-20-2026,Yes,barrier-touch,ladder-rv,fable,trial,1-3d,0,0.038,0,0,0.001444,0.001444,0.000001,0.02,false,0.02
 2026-07-23T10:04:09Z,will-spy-dip-to-720-by-july-20-2026,Yes,barrier-touch,ladder-rv,fable,trial,1-3d,0.0002,0.032,0,0,0.001024,0.001024,0.0002,0.0401,true,0.0399
 2026-07-23T10:04:09Z,will-nvda-dip-to-192-by-july-20-2026,Yes,barrier-touch,ladder-rv,fable,trial,1-3d,0.0027,0.0395,0,0.000007,0.00156,0.001553,0.002704,0.0109,false,0.0082
+2026-07-24T01:41:51Z,will-wti-dip-to-85-in-july-2026,Yes,barrier-touch,ladder-rv,opus,trial,3-7d,0.352,0.41,1,0.419904,0.3481,-0.071804,1.044124,0.999,true,0.647
 2026-07-24T01:41:51Z,will-wti-dip-to-90-in-july-2026,Yes,barrier-touch,ladder-rv,opus,trial,0-1d,0.8263,0.82,1,0.030172,0.0324,0.002228,0.190797,0.76,true,0.0663
 2026-07-24T01:41:51Z,will-spy-reach-775-by-july-20-2026,Yes,barrier-touch,ladder-rv,opus,trial,0-1d,0,0.0125,0,0,0.000156,0.000156,0.000001,0.002,false,0.002
 2026-07-24T01:41:51Z,will-spy-reach-770-by-july-20-2026,Yes,barrier-touch,ladder-rv,opus,trial,0-1d,0,0.015,0,0,0.000225,0.000225,0.000001,0.003,false,0.003
@@ -20,3 +22,5 @@ timestamp,market_slug,outcome,family,variant,model,status,horizon,prediction,mar
 2026-07-24T01:41:51Z,will-nvda-dip-to-184-by-july-20-2026,Yes,barrier-touch,ladder-rv,opus,trial,0-1d,0,0.0125,0,0,0.000156,0.000156,0.000001,0.001,false,0.001
 2026-07-24T01:41:51Z,will-nvda-dip-to-180-by-july-20-2026,Yes,barrier-touch,ladder-rv,opus,trial,0-1d,0,0.011,0,0,0.000121,0.000121,0.000001,0.003,false,0.003
 2026-07-24T01:41:51Z,will-nvda-dip-to-176-by-july-20-2026,Yes,barrier-touch,ladder-rv,opus,trial,0-1d,0,0.0115,0,0,0.000132,0.000132,0.000001,0.01,false,0.01
+2026-07-25T01:52:10Z,will-wti-dip-to-85-in-july-2026,Yes,barrier-touch,ladder-rv,opus-5,trial,1-3d,0.3928,0.415,1,0.368692,0.342225,-0.026467,0.934455,0.999,true,0.6062
+2026-07-26T01:45:55Z,will-wti-dip-to-85-in-july-2026,Yes,barrier-touch,ladder-rv,claude-opus-5,trial,1-3d,0.365,0.715,1,0.403225,0.081225,-0.322,1.007858,0.999,true,0.634

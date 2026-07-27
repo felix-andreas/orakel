@@ -17,3 +17,5 @@ will-nvda-dip-to-188-by-july-20-2026,0x3d53646647d378e01b943e03b34b6f756b275508b
 will-nvda-dip-to-184-by-july-20-2026,0x88d20b0df968a6f9d64041d4acac4af205da9ddd9ae876ecf53b7f8b277bd476,No,2026-07-24,no touch during window
 will-nvda-dip-to-180-by-july-20-2026,0x941f844090600a543b62d651a55faf0b5dd07093b39e2cf695b875a8ae08b828,No,2026-07-24,no touch during window
 will-nvda-dip-to-176-by-july-20-2026,0x782ad54af79b232375e4996fc1bc15316c1d0c3381ba4993f23d4c6743882372,No,2026-07-24,no touch during window
+will-wti-dip-to-85-in-july-2026,0x574897029f416bf4b0a30b51b2ffcc512f2d5f940557913189cff2205f27c08d,Yes,2026-07-27,WTI touched $85; closedTime 2026-07-27T00:03:33Z
+will-wti-dip-to-90-in-july-2026-from-july-25,0xc01ab4e58e374a875a84d0800090e8b858abaacd34ba0ac202ed9807686334f5,Yes,2026-07-27,WTI touched $90 (re-added leg, window from Jul 25); closedTime 2026-07-27T00:12:10Z

@@ -71,6 +71,52 @@ anything else.
 
 ---
 
+## 2026-07-27 — WTI touched $85 and the headline flipped: ladder-rv now LOSES to the market
+
+Two markets resolved overnight, both YES, and we were wrong on both.
+
+`will-wti-dip-to-85-in-july-2026` **touched**. We predicted no-touch four mornings running —
+0.4937, 0.3520, 0.3928, 0.3650 — while the market went 0.525 → 0.410 → 0.415 → **0.715**. The
+second, `will-wti-dip-to-90-...-from-july-25`, also touched, on a leg where we broadly agreed
+with the market (0.9409 vs 0.9470).
+
+**The variant's headline inverts: mean paired improvement −0.0172 over 25 rows, from +0.000945
+over 21.** `dip-to-85` alone contributes **−0.4510**, which is larger than the total loss of
+−0.4312 — every other row still nets +0.0198.
+
+Three things follow, and the order matters because only the first is a defence and it is a
+weak one.
+
+**1. Scoring now aggregates per MARKET as well as per row, because rows are not independent.**
+We predict the same market every morning, so one barrier touch is scored once per day it was
+open. Those four `dip-to-85` rows are one event. Counted per market: 19 markets, mean
+**−0.0051**. Counted per row: 25 rows, mean **−0.0173** — 3.4× worse, entirely because we
+happened to predict the losing market four times. Both are negative; the flip is real either
+way. `scoring/` gained a `market` level so the number of *events* a conclusion rests on is
+visible next to the number of rows, and this cuts both ways — it would have deflated the
+21/21 headline too.
+
+**2. The 07-26 row is the research finding and it is not about counting.** That morning the
+market had repriced to 0.715 and we stayed at 0.365 — a 35-point disagreement, and the market
+was right. On 07-23 we were within 3 points of it. So the model did not merely have a
+different view; **it failed to move when the market did.** Something priced that move in and
+our pricer did not see it. Slot 1 has been told to explain that specifically, today.
+
+**3. Reachability makes this worse, not better.** Tradeability went 2/21 → **6/25**, because
+mid-board WTI legs at 0.4–0.7 are exactly the reachable ones. So the rows we could actually
+have traded are the rows we lost on, and the wings we "beat the market" on remain the ones
+nobody would trade with us. The two halves of the ledger are now cleanly separated: where
+there is liquidity we were wrong, and where we were right there was no liquidity.
+
+This is the caveat I have been repeating since the first scoring run — "21/21 was easy OTM
+wings, one week, one regime" — arriving on schedule. It is also why the 07-31 resolution
+matters more than ever: ~48 further rows on the July commodity boards, four days out, and the
+trial review is 08-02. No slot decision today; the evidence that decides it lands on Friday.
+
+Recorded by the CEO (claude-opus-5).
+
+---
+
 ## 2026-07-26 (late) — Felix: don't research already-efficient markets; "Execution" is renamed to Backtest
 
 Two directives, both correcting something the firm was getting wrong.
