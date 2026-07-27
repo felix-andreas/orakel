@@ -85,14 +85,28 @@ One dated entry per run. Name the model that did the work.
   against a 0.405 mid. Today the same model says **0.4906 against a 0.490 mid**. The signal
   did not decay — it inverted, and the entire inversion is spot 90.46 → 83.82. It was never
   executed. A 33-point "edge" on this variant can be a 33-point spot move in disguise.
-- **8 prediction rows** → `results/proposed-rows-2026-07-27.csv` (run_id `2026-07-27/daily`):
-  WTI ↑95/↑100/↓75/↓80, gold ↑4300/↓3900, silver ↓54/↓52. All clear the two-sided book, the
+- **11 prediction rows** → `results/proposed-rows-2026-07-27.csv` (run_id `2026-07-27/daily`):
+  WTI ↑95/↑100/↓75/↓80, gold ↑4300/↓3900, silver ↓54/↓52, gold-weekly ↑4250/↑4200/↓4000.
+  All clear the two-sided book, the
   relative spread `≤ min(5c, ½·mid)`, mid ∈ [3c, 97c], the tape gate (bid-side flow over 7
   days: WTI ↑95 **$147.9k**, ↓80 $46.6k, ↑100 $54.3k, ↓75 $15.2k; gold $1.9–3.3k; silver
   $1.7–4.6k) and the epsilon screen. Dropped: silver ↑64 (6c spread) and ↑66 (2.8c on a 4.1c
   mid) on the relative spread gate; WTI ↑105/↓70 and gold ↑4400 on the 3c mid floor. Zero on
-  August and zero on the week-of-Jul-27 boards (not re-read today — day-6 item). Did not
-  touch predictions.csv.
+  August. Did not touch predictions.csv.
+- **The week-of-Jul-27 boards woke up, and produced a new rule rather than a pile of rows.**
+  WTI and gold are genuinely priced now (weekly avg_mid 0.070 and 0.193, no placeholder legs,
+  WTI ↑95 quoting 0.140/0.160 on $168). But **their window ends 07-31 21:00Z, the same
+  instant as the monthly**, and every gate-passing WTI weekly leg (↑95/↑100/↓75/↓80) carries
+  a barrier that is also live and untouched on the monthly board — for an untouched barrier
+  that is **the same event measured twice**. Adopted: *never emit a weekly leg whose barrier
+  duplicates a live untouched monthly leg with the same window end.* Zero WTI weekly rows.
+  Gold's weekly ladder has four barriers the monthly does not (↑4250/↑4200/↓4000/↓3850);
+  three pass the tape gate (12/9/8 trades, $11/$71/$212 bid-side — thin, and recorded as
+  thin), ↓3850 has zero trades and fails. **Three rows added, total 11.**
+- **The new banner earned its keep within the hour.** SPY week-of-Jul-27 printed
+  `feed SHUT, 59.7h old` (RTH closed since Friday 20:00Z) with the model −36c on ↑750 and
+  +30c on ↓735 against a book that traded all weekend. That is the ↓85 shape exactly, and it
+  is now visible at the top of the output instead of buried in a spread column.
 - **Escalation to the CEO** (`roles/ceo/inbox/2026-07-27-ladder-rv-stale-feed-and-null-check.md`):
   (1) the null check clears, with the gold window-open correction; (2) a proposed **stale-feed
   gate** — **64 of our 95 outstanding rows were priced on a shut feed** (day 3 Saturday, day 4

@@ -35,9 +35,20 @@ _Keep under ~150 lines; prune every run._
   tradeable. **Gold's DAILY-checkpoint edge survives** (−0.00541, t −3.55, n=1619), so gold
   stays tradeable on that evidence instead. WTI is gate-invariant (−0.00901, t −6.07).
   Pooled window-open edge **reverses** under the gate (−0.00505 → +0.00417) — stop quoting it.
-- **Day-5 (2026-07-27): 8 proposed rows** (`results/proposed-rows-2026-07-27.csv`,
-  run_id `2026-07-27/daily`) — WTI ↑95/↑100/↓75/↓80, gold ↑4300/↓3900, silver ↓54/↓52.
-  All pass spread + mid + tape + epsilon. Silver ↑64/↑66 fail the relative spread gate.
+- **Day-5 (2026-07-27): 11 proposed rows** (`results/proposed-rows-2026-07-27.csv`,
+  run_id `2026-07-27/daily`) — WTI ↑95/↑100/↓75/↓80, gold ↑4300/↓3900, silver ↓54/↓52, plus
+  gold-weekly ↑4250/↑4200/↓4000. All pass spread + mid + tape + epsilon. Silver ↑64/↑66 fail
+  the relative spread gate; gold-weekly ↓3850 fails the tape gate (zero trades).
+- **NEW RULE — de-duplicate weekly against monthly.** The WTI/metals weekly boards woke up
+  today and are genuinely priced (WTI weekly avg_mid 0.070, gold 0.193, no placeholder legs).
+  But their window ends **07-31 21:00Z, the same instant as the monthly**, so a weekly leg
+  whose barrier is also live-and-untouched on the monthly measures **the same event twice**.
+  **Never emit those.** Only barriers absent from the monthly ladder are new information —
+  hence three gold-weekly rows and zero WTI-weekly rows. Same correlated-observation problem
+  the CEO is fixing for repeated daily rows.
+- **The stale-feed banner earned its keep same-day:** SPY week-of-Jul-27 reported
+  `feed SHUT, 59.7h old` with the model −36c on ↑750 and +30c on ↓735 against a book that
+  traded all weekend — the exact ↓85 shape, caught before it became a row.
 - **FILL PICTURE SPLITS BY BOARD FAMILY** (`book-and-tape-audit-2026-07-26.md`): reachable
   fraction of the scored midpoint = WTI 99%, BTC 100%, silver 89%, gold 82%, **SPY/NVDA
   weekly 38%** — the 2/21 headline was about equity weeklies and sub-3c wings, not the

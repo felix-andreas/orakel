@@ -318,7 +318,7 @@ committed) and `data/live-2026-07-27.tar.gz.r2.json`.
 
 ---
 
-## 6. Today's rows — 8, all July monthlies
+## 6. Today's rows — 11
 
 Gates applied uniformly and stated in advance: two-sided CLOB book; **relative** spread
 `≤ min(5c, ½·mid)`; mid ∈ [3c, 97c]; **tape gate** (≥1 taker trade on the bid side within
@@ -339,10 +339,39 @@ Tape, last 7 days, bid-side (YES-equivalent, folded as `tools/fillcheck` does):
 
 Dropped, with reasons: WTI ↑105 / ↓70 and gold ↑4400 on the 3c mid floor; **silver ↑64
 (0.140/0.200, 6c spread) and ↑66 (0.027/0.055, 2.8c on a 4.1c mid)** on the relative
-spread gate; the whole sub-3c wing on both floors. Zero rows on August (no book) and zero
-on the five week-of-Jul-27 boards.
+spread gate; the whole sub-3c wing on both floors. Zero rows on August (no book).
 
-`results/proposed-rows-2026-07-27.csv`, run_id `2026-07-27/daily`, model `claude-opus-5`.
+### 6.1 The week-of-Jul-27 boards woke up, and a new de-duplication rule
+
+Re-read at 07:41Z after their Sunday 22:00Z open. **WTI and gold are now genuinely
+priced** — the WTI weekly ladder's average mid is 0.070 and gold's 0.193, with no leg in
+the [45c, 55c] placeholder band, so neither trips the §1 tell. WTI quotes ↑95 at 0.140/0.160
+($168 top-of-book) and ↓80 at 0.380/0.420 ($126).
+
+**And we still emit zero WTI weekly rows, for a reason worth adopting as a rule.** The WTI
+weekly window ends **2026-07-31 21:00Z — the same instant as the monthly** — and every
+gate-passing weekly leg (↑95, ↑100, ↓75, ↓80) carries a barrier that is *also live and
+untouched on the monthly board*. For a barrier that has not yet been touched, "touches
+before Friday" is the **same event** measured twice. Emitting both would inflate the row
+count with perfectly correlated observations — exactly the aggregation problem the CEO is
+already correcting for repeated daily rows.
+
+> **Rule adopted: never emit a weekly-board leg whose barrier duplicates a live, untouched
+> monthly leg with the same window end.** Only barriers absent from the monthly ladder are
+> new information.
+
+That leaves four genuinely new gold barriers (↑4250, ↑4200, ↓4000, ↓3850 — none on the
+monthly ladder). Tape gate, 7 days: ↑4250 12 trades / $11 bid-side, ↑4200 9 / $71, ↓4000
+8 / $212 → **pass**; ↓3850 **zero trades → fail**. Epsilon screen from their own 07-26
+22:00Z window start: 3.16% / 2.01% / 1.37% clear. **Three rows added.** They pass every
+stated gate and I am recording that the flow behind them is thin — single-digit trade
+counts on a one-day-old board — so nobody reads them later as liquid evidence.
+
+`results/proposed-rows-2026-07-27.csv`, **11 rows**, run_id `2026-07-27/daily`, model
+`claude-opus-5`. SPY week-of-Jul-27: **zero**, and it is the day's best advertisement for
+the new banner — `cmd_live` reported `feed SHUT, 59.7h old` and the model showed −36c on
+↑750 and +30c on ↓735 against a book that has been trading all weekend. That is the exact
+shape of the ↓85 loss, caught before it became a row.
 
 **Caveat the CEO should price in:** these q values come from the pricer as changed *today*.
 The change is material on this board — WTI ↓75 would have been 0.177 under yesterday's

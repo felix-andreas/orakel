@@ -2,7 +2,7 @@
 
 **From:** slot-1 researcher, `barrier-touch/ladder-rv` · **Model:** claude-opus-5 (effort xhigh)
 **Full write-up:** `strategies/barrier-touch/ladder-rv/results/legsum-null-and-stale-feed-2026-07-27.md`
-**Rows:** `strategies/barrier-touch/ladder-rv/results/proposed-rows-2026-07-27.csv` — **8 rows**,
+**Rows:** `strategies/barrier-touch/ladder-rv/results/proposed-rows-2026-07-27.csv` — **11 rows**,
 run_id `2026-07-27/daily`, status `trial`. I did not touch `predictions.csv`.
 
 ---
@@ -123,12 +123,29 @@ all about the market lying to us. Happy to write it up if you want it.
   silver ↓54 (1.44%), gold ↓3900 (1.55%), WTI ↑95 (1.59%), WTI ↓80 (1.75%). Nothing inside
   0.2%. Worth remembering that ↓85 was 1.32% clear on Sunday and touched anyway — that
   screen is for adjudication risk, not price risk, and it did its job.
-- **8 rows today**: WTI ↑95/↑100/↓75/↓80, gold ↑4300/↓3900, silver ↓54/↓52. All pass the
-  two-sided book, the relative spread `≤ min(5c, ½·mid)`, mid ∈ [3c, 97c], the tape gate
-  (7-day bid-side flow: WTI ↑95 **$147.9k**, ↑100 $54.3k, ↓80 $46.6k, ↓75 $15.2k; gold
-  $1.9–3.3k; silver $1.7–4.6k) and the epsilon screen. Silver ↑64 (6c spread) and ↑66 (2.8c
-  on a 4.1c mid) fail the relative spread gate; WTI ↑105/↓70 and gold ↑4400 fail the 3c mid
-  floor. Zero on August, zero on the week-of-Jul-27 boards.
+- **11 rows today**: WTI ↑95/↑100/↓75/↓80, gold ↑4300/↓3900, silver ↓54/↓52, plus three
+  gold-*weekly* barriers ↑4250/↑4200/↓4000. All pass the two-sided book, the relative spread
+  `≤ min(5c, ½·mid)`, mid ∈ [3c, 97c], the tape gate (7-day bid-side flow: WTI ↑95
+  **$147.9k**, ↑100 $54.3k, ↓80 $46.6k, ↓75 $15.2k; gold monthly $1.9–3.3k; silver
+  $1.7–4.6k) and the epsilon screen. Silver ↑64 (6c spread) and ↑66 (2.8c on a 4.1c mid)
+  fail the relative spread gate; WTI ↑105/↓70 and gold ↑4400 fail the 3c mid floor. Zero on
+  August.
+- **A new de-duplication rule you will want, given the aggregation fix you are making.**
+  The week-of-Jul-27 boards woke up overnight and WTI's is now genuinely liquid (↑95 quoting
+  0.140/0.160 on $168 of top-of-book; ladder avg_mid 0.070, so it is not a placeholder
+  book). I emitted **zero** WTI weekly rows anyway, because that board's window ends
+  **07-31 21:00Z — the same instant as the monthly** — and every gate-passing weekly leg
+  (↑95/↑100/↓75/↓80) carries a barrier that is *also live and untouched on the monthly*. For
+  an untouched barrier those are **the same event measured twice**, and shipping both would
+  have padded the 07-31 batch with perfectly correlated rows. Adopted as a standing rule:
+  *never emit a weekly leg whose barrier duplicates a live untouched monthly leg with the
+  same window end.* Only gold's ladder had barriers the monthly lacks; three of those four
+  pass the tape gate (8–12 trades, $11–212 bid-side — thin, and recorded as thin), the
+  fourth has zero trades and was dropped.
+- **SPY week-of-Jul-27: zero rows, and it is the day's best advertisement for the banner.**
+  `cmd_live` reported `feed SHUT, 59.7h old` and the model showed −36c on ↑750 and +30c on
+  ↓735 against a book that has been trading all weekend. That is the ↓85 shape exactly,
+  caught at the top of the output instead of discovered on Tuesday.
 - **Caveat you should price in:** these q values come from the pricer **as changed today**.
   The change is material on this board — WTI ↓75 would have been 0.177 under yesterday's
   code and is 0.100 under today's; ↑95 0.129 → 0.064; ↓80 0.571 → 0.491. **Every move is
