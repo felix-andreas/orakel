@@ -25,7 +25,7 @@ Detail routes hang off those and light up their parent nav item:
 | `/backtest?tab=history` \| `?tab=method` | the other signal set / the accounting rules, as real addresses (default tab = no parameter) |
 | `/backtest?fees=v1` | the same rows priced with **no venue fee** (superseded, kept for attribution) |
 | `/backtest?doc=summary` \| `?doc=design` | the engine's own write-up / the accounting rules, rendered whole |
-| `/execution` | the **paper book**, tabbed: Holdings (default) · Plan `?tab=plan`. The plan's whole selection is in the URL (`?s=`, `?m=`, `?p=`) |
+| `/execution` | the **paper book**, tabbed: Holdings (default) · Plan `?tab=plan` · Shares & NAV `?tab=shares`. The plan's whole selection is in the URL (`?s=`, `?m=`, `?p=`) |
 | `/execution?fees=…`, `/execution/data/…` | **302** to the `/backtest` equivalent — the backtest was called Execution until 2026-07-26 and `fees` is a parameter the book never uses |
 | `/strategies/<family>` | the family, **tabbed**: Overview (its plain-English line, its variants) · How it works (FAMILY.md) · Predictions (every variant's rows + family/variant scoring) |
 | `/strategies/<family>/<variant>` | one strategy, **tabbed**: Overview (`explainer`, facts, applications) · How it works (STRATEGY.md) · Results (`results/*.md`) · Predictions · Logs (WORKLOG + MEMORY) |
@@ -246,12 +246,22 @@ verdicts. The tab order is the order a reader's questions arrive:
 `/execution` (`src/book.rs`) is the live counterpart of the backtest: not *what would have
 happened*, but *what we hold now and what a policy would do about it next*. It is **paper**
 — no wallet, no order, no venue (CONSTITUTION.md §5) — and the page says so in a banner on
-both tabs, in the nav label and in the breadcrumb, not only in a comment.
+every tab, in the nav label and in the breadcrumb, not only in a comment.
 
 | Tab | Question it answers |
 |---|---|
 | **Holdings** (default) | *How much money is there, how much is committed, what is open, what is it worth?* Cash, free cash and committed as separate figures (`free = cash − Σ collateral`, so a fully deployed book cannot look cash-healthy), then one row per position, then the ledger. |
-| **Plan** `?tab=plan` | *What would this policy do about today's signals, and what would it cost?* Pick strategies × markets × policy; get target positions minus the open ones, `terraform plan`-style. |
+| **Plan** `?tab=plan` | *What would this policy do about today's signals, and what would it cost?* Configure → plan → apply; target positions minus the open ones, `terraform plan`-style. |
+| **Shares & NAV** `?tab=shares` | *Several people pay into one book — who owns what, and what is a share worth?* NAV at both marks and the gap between them, shares outstanding, NAV per share ("Last"), the per-investor register and every contribution and redemption with the rate it was struck at. |
+
+**Markets are shown as the ladders they are.** A slug like
+`will-bitcoin-dip-to-42pt5k-in-july-2026-821` is one rung of a board — one asset over one
+window, listed as a whole ladder of price levels — and 53 of them is not 53 ideas, it is
+four boards. `parse_rung`/`boards_of` turn a slug into `BTC ≤ 42.5k` plus the plain-English
+question behind it, group by (asset, window) and sort by barrier so the downside and upside
+rungs read as one continuum. The label leads and the slug stays underneath, everywhere a
+market is named on the page: nobody recognises a market by its slug, but the slug is what
+the URL, the CSVs and the ledger rows carry.
 
 - **Every position is marked twice.** At the CLOB midpoint and at the price we could
   actually get out at (bid for a long, ask for a short). A midpoint is not a fill
@@ -270,6 +280,17 @@ both tabs, in the nav label and in the breadcrumb, not only in a comment.
 - **Plan is a pure function** and its whole selection lives in the URL (`?s=family/variant`
   repeated, `?m=slug` repeated, `?p=policy-file`), so a plan is linkable, reproducible and
   correct under the back button. The form is a plain GET form — no JavaScript.
+- **The plan reads as configure → plan → apply.** Three numbered sections and a step strip
+  that carries the *state* of each one (`fade-v2 · 1 strategy · 53 markets — all defaults,
+  nothing to change` / `no changes — every one of 53 candidates was refused` / `nothing to
+  append`), each a real anchor. It is allowed to exist only because it answers the page's
+  question before any scrolling; a progress indicator carrying no state would be the
+  decoration PRINCIPLES.md forbids.
+- **The defaults are the plan.** Strategies and markets collapse behind a summary line
+  saying what the default resolved to, so the reader can see at a glance that they need not
+  touch either; the policy is the one control that is always open, because it is the choice
+  that usually matters. A whole board is selected in one click — a link, so it is
+  bookmarkable and the back button undoes it.
 - **Gates are the engine's, in the engine's order** — `candidates()` mirrors
   `execution/engine/src/sim.rs::simulate` line for line (side, min edge, edge percentile,
   spread, depth, fundability, per-market cap, sizing, slippage, taker fee), so a candidate
@@ -291,6 +312,41 @@ both tabs, in the nav label and in the breadcrumb, not only in a comment.
   plus the command to append them, and says why that is the better shape (the ledger is the
   audit trail). There is no fake success state. Rows carry a `plan_id` — an FNV-1a digest
   of the selection, the policy and the prices — so an applied trade traces back to the plan.
+
+#### Shares, NAV and the "Last" price
+
+Several people can pay into one book, so ownership is counted in **shares**, not in each
+person's dollars (`portfolio/README.md`). NAV is `cash + Σ unrealised P&L` — cash already
+includes money committed as collateral, because posting collateral commits money rather than
+spending it, so nothing is double counted.
+
+- **Issuance and redemption are struck at the conservative liquidation mark**, never the
+  midpoint: the bid on a long, the ask on a short. With one account the mark is a reporting
+  nicety; with several people it decides who gains at whose expense in both directions —
+  issue at an inflated NAV and the new investor is diluted, redeem at one and the remaining
+  holders fund it. The midpoint NAV sits beside it labelled as the optimistic bound and
+  **the gap is displayed**, per position as well as in total, because that gap is the size
+  of the transfer the wrong mark would make.
+- **A position with no live two-sided book is counted, not hidden.** Its conservative figure
+  falls back to a midpoint, which makes it not conservative, and the page says how many.
+- **`shares_delta` is never recomputed.** It is taken from `investors.csv` exactly as
+  written — it is the evidence for how many shares somebody got — and the check
+  (`amount ÷ nav_per_share`) is shown against any row that disagrees rather than quietly
+  repairing it.
+- **The empty register is a first-class view**: what a share is, that the first contribution
+  strikes at 1.0000 by definition, the exact first row that would be written, and a worked
+  example of what issuing at a flattered NAV would cost the new investor. Nothing on the page
+  accepts money and the page says so.
+- **The opening balance has no owner, and the page says so.** `starting_cash` is a notional
+  placeholder nobody paid in, so NAV is 10,000.00 against 0 shares; taken literally with the
+  1.0000 first-contribution rule, the first contributor is handed the whole balance. A banner
+  states the conflict with the live numbers and names the two one-line fixes. Raised with
+  Felix in `roles/felix/inbox/2026-07-26-shares-opening-balance.md`.
+- **The arithmetic is unit-tested** (`cargo test --lib`, `src/book.rs` `mod tests`): two
+  contributions struck at different NAVs and a redemption, asserting that issuing at the true
+  NAV moves nothing between holders, that the register sums to the book, and that the
+  conservative NAV is below the midpoint one. These are pure functions over parsed tables, so
+  they need no Worker.
 
 ### Still planned
 

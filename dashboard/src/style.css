@@ -1871,6 +1871,11 @@ details.pick-group[open] > summary::before {
   grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
 }
 
+/* One column: for a short list whose lines are sentences, not names. */
+.pick-opts-1 {
+  grid-template-columns: 1fr;
+}
+
 .pick-opts label {
   display: flex;
   align-items: baseline;
@@ -1902,6 +1907,178 @@ details.pick-group[open] > summary::before {
   margin: 0.25rem 0 0;
   font-size: var(--fs-sm);
   color: var(--fg-muted);
+}
+
+/* One line of prose explaining a group, under its label. */
+.pick-note,
+.pick-say {
+  margin: 0.25rem 0 0;
+  max-width: 68ch;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  line-height: 1.5;
+}
+
+.pick-note b {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* A strategy is ONE line: name, status, and as much of its summary as fits.
+   The whole explainer lives on the strategy's own page — printing it here made
+   a two-row picker four inches tall. */
+.pick-one {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pick-one > b {
+  flex: none;
+}
+
+.pick-say-1 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+/* ------------------------------- ladder boards -------------------------------
+   These markets come in boards: one asset over one window, listed as a ladder
+   of price levels. A board is a heading and its rows, never a box. */
+
+.board {
+  margin-top: 0.5rem;
+  min-width: 0;
+}
+
+.board-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.125rem;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-sm);
+}
+
+.board-head > b {
+  font-weight: 600;
+}
+
+.board-n {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.board-head > a {
+  margin-left: auto;
+  font-size: var(--fs-xs);
+}
+
+/* One rung: the human label, its price, and the slug demoted to a second line —
+   nobody picks a market by its slug, but the slug is what the URL carries. */
+.pick-rung {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 0.5rem;
+  min-width: 0;
+}
+
+.pick-rung > b {
+  font-weight: 600;
+}
+
+.pick-px {
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.pick-slug {
+  grid-column: 1 / -1;
+  color: var(--fg-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+
+/* ------------------------------ the plan's steps ------------------------------
+   configure → plan → apply. Three real anchors carrying the state of each step,
+   so the page answers its own question before any scrolling. Not decoration:
+   delete the state text and this would have to go too. */
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+  gap: 0.25rem 1rem;
+  margin: 0.75rem 0 0;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 0.5rem;
+  padding: 0.25rem 0;
+  color: var(--fg);
+  text-decoration: none;
+  border-top: 2px solid var(--border);
+}
+
+.step:hover {
+  border-top-color: var(--border-strong);
+}
+
+/* Active is marked by WEIGHT, never by dimming the others. */
+.step[aria-current="step"] {
+  border-top-color: var(--fg);
+}
+
+.step-n {
+  grid-row: 1 / 3;
+  align-self: start;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-sm);
+  color: var(--fg-subtle);
+}
+
+.step[aria-current="step"] .step-n {
+  color: var(--fg);
+}
+
+.step-t {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.step[aria-current="step"] .step-t {
+  font-weight: 700;
+}
+
+.step-s {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}
+
+/* A scroll target with no appearance of its own; the two sticky bars are ~5rem. */
+.anchor {
+  scroll-margin-top: 6rem;
+}
+
+/* A heading inside a section, for a second table that belongs to the same idea. */
+.sub-head {
+  margin: 1rem 0 0.25rem;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
 }
 
 .pick-actions {

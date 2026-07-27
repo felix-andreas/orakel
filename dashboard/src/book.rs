@@ -134,21 +134,21 @@ fn enc(s: &str) -> String {
     out
 }
 
-/// This page's address with `tab` swapped and everything else preserved —
-/// switching tabs must never silently change what you are looking at.
-fn href(sel: &Sel, tab: &str) -> String {
+/// One address on this page, from explicit parts. Everything the reader chose
+/// is a query parameter, so any link the page draws is a complete plan.
+fn href_of(tab: &str, strategies: &[String], markets: &[String], policy: &str) -> String {
     let mut q: Vec<String> = Vec::new();
     if !tab.is_empty() {
         q.push(format!("tab={}", enc(tab)));
     }
-    for s in &sel.strategies {
+    for s in strategies {
         q.push(format!("s={}", enc(s)));
     }
-    for m in &sel.markets {
+    for m in markets {
         q.push(format!("m={}", enc(m)));
     }
-    if !sel.policy.is_empty() {
-        q.push(format!("p={}", enc(&sel.policy)));
+    if !policy.is_empty() {
+        q.push(format!("p={}", enc(policy)));
     }
     if q.is_empty() {
         "/execution".to_string()
@@ -157,8 +157,25 @@ fn href(sel: &Sel, tab: &str) -> String {
     }
 }
 
+/// This page's address with `tab` swapped and everything else preserved —
+/// switching tabs must never silently change what you are looking at.
+fn href(sel: &Sel, tab: &str) -> String {
+    href_of(tab, &sel.strategies, &sel.markets, &sel.policy)
+}
+
+/// The same selection with a different market list — what a "select this whole
+/// board" link is. A link, not a script: it is bookmarkable and the back button
+/// undoes it.
+fn href_markets(sel: &Sel, markets: &[String]) -> String {
+    href_of("plan", &sel.strategies, markets, &sel.policy)
+}
+
 fn tabbar(sel: &Sel, open_positions: usize) -> String {
-    let tabs = [("", "Holdings", render::fmt_int(open_positions as i64)), ("plan", "Plan", String::new())];
+    let tabs = [
+        ("", "Holdings", render::fmt_int(open_positions as i64)),
+        ("plan", "Plan", String::new()),
+        ("shares", "Shares & NAV", String::new()),
+    ];
     let mut out = String::new();
     for (key, label, count) in &tabs {
         let n = if count.is_empty() {
@@ -183,10 +200,10 @@ fn tabbar(sel: &Sel, open_positions: usize) -> String {
 
 pub async fn page(env: &Env, url: &Url) -> String {
     let sel = parse_sel(url);
-    if sel.tab == "plan" {
-        plan_page(env, &sel).await
-    } else {
-        holdings_page(env, &sel).await
+    match sel.tab.as_str() {
+        "plan" => plan_page(env, &sel).await,
+        "shares" => shares_page(env, &sel).await,
+        _ => holdings_page(env, &sel).await,
     }
 }
 
@@ -222,8 +239,34 @@ fn usd_signed(v: f64) -> String {
     }
 }
 
+/// Share counts, two decimals. The zero guard is not cosmetic: Rust's `Sum`
+/// for `f64` folds from −0.0, so summing an EMPTY register printed
+/// "−0.00 shares outstanding", which reads as a debt rather than as nothing.
 fn shares_fmt(v: f64) -> String {
-    format!("{v:.2}")
+    if v.abs() < 0.005 {
+        return "0.00".to_string();
+    }
+    // The house minus sign, as every other number on the dashboard uses.
+    format!("{}{:.2}", if v < 0.0 { "−" } else { "" }, v.abs())
+}
+
+/// A market as a reader recognises it. These slugs are rungs on a ladder
+/// (`will-bitcoin-dip-to-42pt5k-in-july-2026-821`) and nobody identifies one by
+/// reading it; the label goes first and the slug stays underneath, because the
+/// slug is what the URL, the CSVs and the ledger rows actually carry.
+fn market_cell(slug: &str, outcome: &str) -> String {
+    if slug.is_empty() {
+        return "<span class=\"muted\">—</span>".to_string();
+    }
+    let r = parse_rung(slug);
+    format!(
+        "<a href=\"/markets/{slug}\" title=\"{q}\">{label}</a>\
+         <span class=\"sub\">{outcome}<span class=\"mono\"> {slug}</span></span>",
+        slug = esc(slug),
+        q = esc(&r.question),
+        label = esc(&r.label),
+        outcome = esc(outcome),
+    )
 }
 
 fn tone_of(v: f64) -> &'static str {
@@ -377,7 +420,6 @@ fn rolc(pnl: f64, capital: f64, days: i64) -> (Option<f64>, Option<f64>) {
 /// against today's quote.
 struct Policy {
     file: String,
-    name: String,
     version: i64,
     character: String,
     min_edge: f64,
@@ -448,7 +490,6 @@ fn parse_policy(file: &str, src: &str) -> Policy {
     };
     Policy {
         file: file.to_string(),
-        name: data::tstr(&t, "name").to_string(),
         version: t.get("version").and_then(|v| v.as_integer()).unwrap_or(0),
         character: data::tstr(&t, "character").trim().to_string(),
         min_edge: fnum_or(&t, &["entry", "min_edge"], 0.0),
@@ -596,9 +637,9 @@ fn synthetic_quote(mid: f64, assumed_spread: f64) -> Option<Quote> {
 
 fn paper_banner() -> String {
     format!(
-        "<div class=\"banner\">{} <div><strong>Paper book.</strong> No wallet, no order, no venue — \
-         the firm places no trades at all (CONSTITUTION.md §5). Every figure below is what \
-         we <em>would</em> hold if we had acted on our own signals, priced against real quotes.</div></div>",
+        "<div class=\"banner\">{} <div><strong>Paper book.</strong> No wallet, no order, no venue, no money \
+         (CONSTITUTION.md §5). Every figure is what we <em>would</em> hold had we acted on our own signals, \
+         priced against real quotes.</div></div>",
         render::icon("alert")
     )
 }
@@ -638,7 +679,7 @@ async fn holdings_page(env: &Env, sel: &Sel) -> String {
         && metas_live;
 
     let account = data::toml_of(&acct.text);
-    let starting_cash = fnum_or(&account, &["account", "starting_cash"], 0.0);
+    let starting_cash = 0.0_f64; // no opening balance: the notional is not fund money
     let currency = data::str_at(&account, &["account", "currency"]);
     let opened = data::str_at(&account, &["account", "opened"]);
 
@@ -721,9 +762,8 @@ async fn holdings_page(env: &Env, sel: &Sel) -> String {
 
         rows.push(vec![
             format!(
-                "<a href=\"/markets/{0}\">{0}</a><span class=\"sub\">{1}</span>{2}",
-                esc(slug),
-                esc(outcome),
+                "{}{}",
+                market_cell(slug, outcome),
                 match settled {
                     Some(w) => badge(&format!("resolved {w} — settle it"), "warn"),
                     None => String::new(),
@@ -1058,11 +1098,7 @@ fn ledger_section(l: &Table, starting_cash: f64, cash: f64) -> String {
         rows.push(vec![
             format!("<span class=\"mono\">{}</span>", esc(&fmt_ts(l.cell(r, "applied_at")))),
             badge(l.cell(r, "action"), ""),
-            format!(
-                "<a href=\"/markets/{0}\">{0}</a><span class=\"sub\">{1}</span>",
-                esc(l.cell(r, "market_slug")),
-                esc(l.cell(r, "outcome"))
-            ),
+            market_cell(l.cell(r, "market_slug"), l.cell(r, "outcome")),
             esc(l.cell(r, "side")),
             shares_fmt(l.num(r, "shares")),
             fmt_prob(l.num(r, "price")),
@@ -1101,6 +1137,227 @@ fn ledger_section(l: &Table, starting_cash: f64, cash: f64) -> String {
             usd(cash)
         ),
     )
+}
+
+// ---------------------------------------------------------------------------
+// Reading a market slug as a rung on a ladder
+//
+// Polymarket lists these as ladders: one market per price level, all on the
+// same asset and the same window ("will oil ever touch $110 before August?",
+// then $115, then $120…). Fifty-three slugs is not fifty-three ideas, it is six
+// boards. A picker that prints the raw slugs makes the reader do that grouping
+// in their head every time, so it is done here instead.
+// ---------------------------------------------------------------------------
+
+/// One market, read as a rung on a board.
+struct Rung {
+    slug: String,
+    /// The board it belongs to: `(asset token, window text)`.
+    asset: String,
+    window: String,
+    /// `BTC ≥ 75k` — the whole market in four characters and a number.
+    label: String,
+    /// The same thing as a sentence, for the row's tooltip. PRINCIPLES: an
+    /// explanation that assumes you already know what a ladder is has failed.
+    question: String,
+    /// Barrier as a number, which is the order a ladder is read in.
+    level: f64,
+}
+
+/// `xauusd` → `gold`. The ticker, for the dense row label.
+fn asset_ticker(a: &str) -> &str {
+    match a {
+        "bitcoin" => "BTC",
+        "wti" => "WTI",
+        "xauusd" => "gold",
+        "xagusd" => "silver",
+        "spy" => "SPY",
+        "nvda" => "NVDA",
+        other => other,
+    }
+}
+
+/// `xauusd` → `Gold`. The full name, for the board heading.
+fn asset_name(a: &str) -> &str {
+    match a {
+        "bitcoin" => "Bitcoin",
+        "wti" => "WTI crude oil",
+        "xauusd" => "Gold",
+        "xagusd" => "Silver",
+        "spy" => "S&P 500 (SPY)",
+        "nvda" => "Nvidia (NVDA)",
+        other => other,
+    }
+}
+
+/// The barrier token as a number: `42pt5k` → 42500, `45k` → 45000, `176` → 176.
+/// `pt` is how a slug spells a decimal point and `k` is thousands.
+fn barrier_value(tok: &str) -> Option<f64> {
+    let t = tok.replace("pt", ".");
+    let (num, mult) = match t.strip_suffix('k') {
+        Some(n) => (n.to_string(), 1000.0),
+        None => (t, 1.0),
+    };
+    num.parse::<f64>().ok().map(|v| v * mult)
+}
+
+/// The barrier as a reader wants it: thousands collapse to `k` only where the
+/// numbers are big enough for it to help (bitcoin), so gold stays `4300`.
+fn barrier_text(tok: &str) -> String {
+    match barrier_value(tok) {
+        Some(v) if v >= 10_000.0 => {
+            let k = v / 1000.0;
+            if (k - k.round()).abs() < 1e-9 {
+                format!("{}k", k.round() as i64)
+            } else {
+                format!("{k}k")
+            }
+        }
+        Some(v) if v.fract().abs() < 1e-9 => format!("{}", v as i64),
+        Some(v) => format!("{v}"),
+        None => tok.to_string(),
+    }
+}
+
+fn capitalize(s: &str) -> String {
+    let mut c = s.chars();
+    match c.next() {
+        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+        None => String::new(),
+    }
+}
+
+/// The window the whole board expires on, from the slug's tail. `in-july-2026`
+/// is a calendar month, `by-july-20-2026` a deadline; trailing digits are
+/// Polymarket's own ids and say nothing.
+fn window_text(rest: &[&str]) -> String {
+    let year = |s: &str| -> String {
+        let d: String = s.chars().take_while(|c| c.is_ascii_digit()).take(4).collect();
+        if d.len() == 4 {
+            d
+        } else {
+            String::new()
+        }
+    };
+    match rest.first().copied() {
+        Some("in") if rest.len() >= 3 => {
+            format!("{} {}", capitalize(rest[1]), year(rest[2]))
+        }
+        Some("by") if rest.len() >= 4 => {
+            format!("by {} {} {}", rest[2], capitalize(rest[1]), year(rest[3]))
+        }
+        _ => rest.join(" "),
+    }
+}
+
+/// A slug → its rung. Anything that is not a barrier ladder still parses: it
+/// keeps its slug as the label and lands on a board named after its asset, so
+/// a new market shape never falls out of the picker.
+fn parse_rung(slug: &str) -> Rung {
+    let body = slug.strip_prefix("will-").unwrap_or(slug);
+    let parts: Vec<&str> = body.split('-').collect();
+    let asset = parts.first().copied().unwrap_or("").to_string();
+
+    // Where the barrier sits, and which way it points.
+    let mut dir: Option<(bool, usize)> = None;
+    for (i, p) in parts.iter().enumerate() {
+        if *p == "reach" {
+            dir = Some((true, i + 1));
+            break;
+        }
+        if *p == "dip" && parts.get(i + 1) == Some(&"to") {
+            dir = Some((false, i + 2));
+            break;
+        }
+    }
+
+    let Some((up, bi)) = dir else {
+        return Rung {
+            slug: slug.to_string(),
+            asset: asset.clone(),
+            window: String::new(),
+            label: body.replace('-', " "),
+            question: slug.to_string(),
+            level: 0.0,
+        };
+    };
+
+    let tok = parts.get(bi).copied().unwrap_or("");
+    let rest: Vec<&str> = parts.get(bi + 1..).unwrap_or(&[]).to_vec();
+    let window = window_text(&rest);
+    let barrier = barrier_text(tok);
+    // The same market listed again mid-month is a different market with the
+    // same barrier — without this, two rows read as one row printed twice.
+    let relisted = rest.iter().position(|p| *p == "from").and_then(|i| {
+        let month: String = capitalize(rest.get(i + 1)?).chars().take(3).collect();
+        Some(format!("{} {month}", rest.get(i + 2)?))
+    });
+
+    Rung {
+        slug: slug.to_string(),
+        label: format!(
+            "{} {} {}{}",
+            asset_ticker(&asset),
+            if up { "≥" } else { "≤" },
+            barrier,
+            match &relisted {
+                Some(d) => format!(" (relisted {d})"),
+                None => String::new(),
+            }
+        ),
+        question: format!(
+            "Will {} ever trade {} {} during {}?{}",
+            asset_name(&asset),
+            if up { "at or above" } else { "at or below" },
+            barrier,
+            if window.is_empty() { "the window" } else { &window },
+            match &relisted {
+                Some(d) => format!(" (this listing opened {d})"),
+                None => String::new(),
+            }
+        ),
+        asset,
+        window,
+        level: barrier_value(tok).unwrap_or(0.0),
+    }
+}
+
+/// One asset over one window, with its ladder in price order — low barriers
+/// first, so the downside rungs and the upside rungs read as one continuum.
+struct Board {
+    label: String,
+    rungs: Vec<Rung>,
+}
+
+fn boards_of(slugs: &[String]) -> Vec<Board> {
+    let mut out: Vec<Board> = Vec::new();
+    let mut keys: Vec<(String, String)> = Vec::new();
+    for slug in slugs {
+        let r = parse_rung(slug);
+        let key = (r.asset.clone(), r.window.clone());
+        match keys.iter().position(|k| *k == key) {
+            Some(i) => out[i].rungs.push(r),
+            None => {
+                let label = if r.window.is_empty() {
+                    asset_name(&r.asset).to_string()
+                } else {
+                    format!("{} — {}", asset_name(&r.asset), r.window)
+                };
+                keys.push(key);
+                out.push(Board { label, rungs: vec![r] });
+            }
+        }
+    }
+    for b in &mut out {
+        b.rungs.sort_by(|a, c| {
+            a.level
+                .partial_cmp(&c.level)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| a.slug.cmp(&c.slug))
+        });
+    }
+    out.sort_by(|a, b| a.label.cmp(&b.label));
+    out
 }
 
 // ---------------------------------------------------------------------------
@@ -1194,9 +1451,31 @@ async fn plan_page(env: &Env, sel: &Sel) -> String {
         .try_into()
         .unwrap_or_else(|_| unreachable!("read_all returns one Doc per path"));
 
+    let account = data::toml_of(&acct.text);
+    let bound_policy = data::str_at(&account, &["account", "policy"]);
     let policy_paths = data::files_in(&paths, "execution/policies", ".toml");
     let (metas, metas_live) = data::variant_metas(env, &paths).await;
-    let policy_docs = data::read_all(env, policy_paths.iter().cloned()).await;
+    // Read ONE policy, not all sixteen. The picker needs names, and the names
+    // are already in the tree paths — only the CHOSEN policy's rules are ever
+    // evaluated. Reading all of them fanned ~16 extra concurrent GitHub
+    // requests out of a page that already makes a dozen, and on 2026-07-27
+    // seven of them came back empty at once: the page rendered with a banner
+    // naming the seven files it could not read. A request you do not need is a
+    // request that cannot fail.
+    let policy_name = if !sel.policy.is_empty() {
+        sel.policy.clone()
+    } else if !bound_policy.is_empty() {
+        bound_policy.to_string()
+    } else {
+        DEFAULT_POLICY.to_string()
+    };
+    let stem = |path: &String| -> String {
+        path.rsplit('/').next().unwrap_or("").trim_end_matches(".toml").to_string()
+    };
+    let chosen_doc = match policy_paths.iter().find(|p| stem(p) == policy_name) {
+        Some(path) => data::text(env, path).await,
+        None => data::Doc { text: String::new(), live: true },
+    };
     let all_live = acct.live
         && pos.live
         && preds.live
@@ -1204,25 +1483,25 @@ async fn plan_page(env: &Env, sel: &Sel) -> String {
         && led.live
         && tree_live
         && metas_live
-        && policy_docs.iter().all(|d| d.live);
+        && chosen_doc.live;
 
+    // The list exists so the picker can offer every policy by name; only the
+    // chosen entry carries parsed rules, and only it is ever evaluated.
     let policies: Vec<Policy> = policy_paths
         .iter()
-        .zip(&policy_docs)
-        .map(|(path, doc)| {
-            let file = path
-                .rsplit('/')
-                .next()
-                .unwrap_or("")
-                .trim_end_matches(".toml")
-                .to_string();
-            parse_policy(&file, &doc.text)
+        .map(|path| {
+            let file = stem(path);
+            let text = if file == policy_name { chosen_doc.text.as_str() } else { "" };
+            parse_policy(&file, text)
         })
         .collect();
 
-    let account = data::toml_of(&acct.text);
-    let starting_cash = fnum_or(&account, &["account", "starting_cash"], 0.0);
-    let bound_policy = data::str_at(&account, &["account", "policy"]);
+    // Policies size against a NOTIONAL bankroll, which is deliberately not fund
+    // money and never enters NAV (portfolio/README.md, "The opening balance has
+    // no owner"). Without it every policy computes a zero position and the plan
+    // can say nothing; counting it as capital would hand the first contributor
+    // the whole balance.
+    let notional = fnum_or(&account, &["sizing", "notional_bankroll"], 0.0);
 
     let p = Table::parse(&pos.text);
     let pr = Table::parse(&preds.text);
@@ -1244,13 +1523,6 @@ async fn plan_page(env: &Env, sel: &Sel) -> String {
         sel.strategies.clone()
     };
 
-    let policy_name = if !sel.policy.is_empty() {
-        sel.policy.clone()
-    } else if !bound_policy.is_empty() {
-        bound_policy.to_string()
-    } else {
-        DEFAULT_POLICY.to_string()
-    };
     let policy = policies.iter().find(|x| x.file == policy_name);
 
     // Live signals, grouped by token, newest first. Grouped rather than
@@ -1302,6 +1574,18 @@ async fn plan_page(env: &Env, sel: &Sel) -> String {
         sel.markets.clone()
     };
 
+    // The current price of every selectable market, so the picker shows what
+    // each rung is actually worth rather than a list of names. Live book where
+    // we have one, the midpoint logged with the last prediction otherwise.
+    let quotes = snap.as_ref().map(|s| books_from_snapshot(&s.doc)).unwrap_or_default();
+    let mut prices: HashMap<String, f64> = HashMap::new();
+    for g in &signals {
+        let slug = pr.cell(g[0], "market_slug").to_string();
+        let token = pr.cell(g[0], "token_id");
+        let px = quotes.get(token).map(|q| q.mid).unwrap_or(pr.num(g[0], "market_price"));
+        prices.insert(slug, px);
+    }
+
     let picker = selection_form(
         sel,
         &metas,
@@ -1309,15 +1593,17 @@ async fn plan_page(env: &Env, sel: &Sel) -> String {
         &chosen_strategies,
         &available_markets,
         &chosen_markets,
+        &prices,
         &policies,
         &policy_name,
+        bound_policy,
     );
 
     let Some(policy) = policy else {
         let body = format!(
             "{banner}{picker}{err}",
             banner = paper_banner(),
-            picker = picker,
+            picker = anchor("configure", &picker),
             err = section(
                 "No such policy",
                 "",
@@ -1336,9 +1622,10 @@ async fn plan_page(env: &Env, sel: &Sel) -> String {
     };
 
     // --- current book -------------------------------------------------------
-    let quotes = snap.as_ref().map(|s| books_from_snapshot(&s.doc)).unwrap_or_default();
     let ledger_cash: f64 = l.rows.iter().map(|r| l.num(r, "cash_delta")).sum();
-    let cash = starting_cash + ledger_cash;
+    // Sizing capital = the notional plus whatever contributed money has done.
+    // The holdings and shares tabs deliberately do NOT add the notional in.
+    let cash = notional + ledger_cash;
     let committed: f64 = p.rows.iter().map(|r| p.num(r, "collateral")).sum();
     let free = cash - committed;
 
@@ -1349,18 +1636,100 @@ async fn plan_page(env: &Env, sel: &Sel) -> String {
     let plan_id = plan_id(&policy_name, &chosen_strategies, &chosen_markets, &actions);
 
     let body = format!(
-        "{banner}{picker}{summary}{v1}{funding}{table}{gates}{apply}",
+        "{banner}{steps}{picker}{plan}{gates}{apply}",
         banner = paper_banner(),
-        picker = picker,
-        summary = plan_summary(policy, &actions, &cands, &snap, &plan_id),
-        v1 = v1_warning(policy),
-        funding = funding(&actions, cash, committed, free),
-        table = actions_table(&actions, &metas),
+        steps = plan_steps(
+            &policy_name,
+            chosen_strategies.len(),
+            chosen_markets.len(),
+            sel.strategies.is_empty() && sel.markets.is_empty() && sel.policy.is_empty(),
+            &actions,
+            &cands,
+        ),
+        picker = anchor("configure", &picker),
+        plan = anchor(
+            "plan",
+            &format!(
+                "{}{}{}{}",
+                plan_summary(policy, &actions, &cands, &snap, &plan_id),
+                v1_warning(policy),
+                funding(&actions, cash, committed, free),
+                actions_table(&actions, &metas),
+            )
+        ),
         gates = gate_report(&cands, policy),
-        apply = apply_section(&actions, policy, &plan_id),
+        apply = anchor("apply", &apply_section(&actions, policy, &plan_id)),
     );
 
     shell_sub(env, "/execution", crumbs, all_live, &bar, &body).await
+}
+
+/// A scroll target with no appearance of its own — the step strip's links land
+/// here. `scroll-margin-top` in the stylesheet keeps the heading clear of the
+/// two sticky bars.
+fn anchor(id: &str, html: &str) -> String {
+    format!("<div class=\"anchor\" id=\"{id}\">{html}</div>")
+}
+
+/// Configure → plan → apply, with the state of each step written into it. It
+/// navigates (three real anchors) and it answers the page's question before any
+/// scrolling, which is the only reason a progress indicator is allowed to exist
+/// here at all — PRINCIPLES.md forbids the decorative kind.
+fn plan_steps(
+    policy_name: &str,
+    strategies: usize,
+    markets: usize,
+    untouched: bool,
+    actions: &[Action],
+    cands: &[Cand],
+) -> String {
+    let changes = actions.iter().filter(|a| a.kind != "no change" && a.kind != "unmanaged").count();
+    let refused = cands.iter().filter(|c| !c.gate.is_empty()).count();
+
+    let configure = format!(
+        "{policy} · {s} · {m}{d}",
+        policy = policy_name,
+        s = render::count(strategies, "strategy"),
+        m = render::count(markets, "market"),
+        d = if untouched { " — all defaults, nothing to change" } else { "" },
+    );
+    let plan = if changes > 0 {
+        format!(
+            "{} to make",
+            render::count(changes, "change")
+        )
+    } else if cands.is_empty() {
+        "no candidates at all — nothing is in scope".to_string()
+    } else {
+        format!(
+            "no changes — every one of {} was refused, and by which rule is below",
+            render::count(refused, "candidate")
+        )
+    };
+    let apply = if changes > 0 {
+        format!("{} for the CEO to append by hand", render::count(changes, "ledger row"))
+    } else {
+        "nothing to append".to_string()
+    };
+
+    // Whichever step holds the answer is the one to read; mark it by WEIGHT,
+    // never by dimming the others.
+    let here = if changes > 0 { 3 } else { 2 };
+    let cell = |n: usize, id: &str, title: &str, state: &str| {
+        format!(
+            "<a class=\"step\" href=\"#{id}\"{cur}><span class=\"step-n\">{n}</span>\
+             <span class=\"step-t\">{title}</span><span class=\"step-s\">{state}</span></a>",
+            cur = if n == here { " aria-current=\"step\"" } else { "" },
+            title = esc(title),
+            state = esc(state),
+        )
+    };
+    format!(
+        "<nav class=\"steps\" aria-label=\"How this page works\">{}{}{}</nav>",
+        cell(1, "configure", "Configure", &configure),
+        cell(2, "plan", "Plan", &plan),
+        cell(3, "apply", "Apply", &apply),
+    )
 }
 
 /// Every chosen signal put through the policy's gates, in the same order as
@@ -2021,7 +2390,13 @@ fn plan_summary(
     let refused = cands.iter().filter(|x| !x.gate.is_empty()).count();
 
     let line = format!(
-        "<p class=\"plan-line\"><b>Plan:</b> {o} to open, {i} to increase, {rd} to reduce, {c} to close.</p>"
+        "<p class=\"plan-line\"><b>Plan:</b> {o} to open, {i} to increase, {rd} to reduce, {c} to close; \
+         {unchanged} left alone{outside}.</p>",
+        outside = if unmanaged > 0 {
+            format!(", {unmanaged} outside the selection")
+        } else {
+            String::new()
+        }
     );
     let prices = match snap {
         Some(s) => format!(
@@ -2032,13 +2407,10 @@ fn plan_summary(
     };
 
     let stats = stat_grid(&[
-        stat(&esc(&policy.name), "policy")
+        stat(&esc(&policy.file), "policy")
             .href("/backtest")
-            .context(if policy.character.is_empty() {
-                "no character line in the policy file"
-            } else {
-                &policy.character
-            }),
+            .tone(if policy.taker_fees { "" } else { "warn" })
+            .context(&format!("version {} — {}", policy.version, policy.fee_label())),
         stat(&render::fmt_int(considered as i64), "signals considered").context(
             if policy.delay_hours > 0.0 {
                 // A delayed policy does not act on the newest number it has.
@@ -2054,14 +2426,12 @@ fn plan_summary(
             } else {
                 format!("{refused} candidates were refused, and the table below says by which rule")
             }),
-        stat(&render::fmt_int((o + i + rd + c) as i64), "actions")
-            .context(&format!("{unchanged} unchanged · {unmanaged} outside this plan")),
     ]);
 
     section_foot(
-        "What this plan would do",
-        "target positions minus what is open, the way terraform reads a diff",
-        &badge(&format!("version {}", policy.version), if policy.version >= 2 { "ok" } else { "warn" }),
+        "2 · The plan",
+        "target positions minus what is open — the way terraform reads a diff",
+        "",
         &format!("{line}{stats}"),
         &format!(
             "<span class=\"mono\">execution/policies/{}.toml</span><span class=\"mono\">plan {}</span><span>{}</span>",
@@ -2215,11 +2585,7 @@ fn actions_table(actions: &[Action], metas: &[data::VariantMeta]) -> String {
                 symbol(a.kind)
             ),
             format!("<b>{}</b>", esc(a.kind)),
-            format!(
-                "<a href=\"/markets/{0}\">{0}</a><span class=\"sub\">{1}</span>",
-                esc(&a.slug),
-                esc(&a.outcome)
-            ),
+            market_cell(&a.slug, &a.outcome),
             strategy,
             esc(&a.side),
             if a.shares > 0.0 && a.kind != "no change" {
@@ -2338,11 +2704,7 @@ fn gate_report(cands: &[Cand], policy: &Policy) -> String {
     let mut rows: Vec<Vec<String>> = Vec::new();
     for c in &refused {
         rows.push(vec![
-            format!(
-                "<a href=\"/markets/{0}\">{0}</a><span class=\"sub\">{1}</span>",
-                esc(&c.slug),
-                esc(&c.outcome)
-            ),
+            market_cell(&c.slug, &c.outcome),
             format!(
                 "{}<span class=\"sub\">{}</span>",
                 fmt_prob(c.p),
@@ -2433,7 +2795,7 @@ fn apply_section(actions: &[Action], policy: &Policy, plan_id: &str) -> String {
         .collect();
     if acting.is_empty() {
         return section(
-            "Apply",
+            "3 · Apply",
             "",
             "",
             &render::empty_state(
@@ -2507,7 +2869,7 @@ fn apply_section(actions: &[Action], policy: &Policy, plan_id: &str) -> String {
     );
 
     section_foot(
-        "Apply",
+        "3 · Apply",
         "the exact rows this plan implies, for the CEO to append",
         &badge("nothing is written by this page", "warn"),
         &body,
@@ -2528,19 +2890,58 @@ fn selection_form(
     chosen_strategies: &[String],
     available_markets: &[String],
     chosen_markets: &[String],
+    prices: &HashMap<String, f64>,
     policies: &[Policy],
     policy_name: &str,
+    bound_policy: &str,
 ) -> String {
+    // --- policy: the only choice that usually matters, so it comes first ----
+    // Split by version, because that split is not cosmetic: a v1 policy is
+    // fee-free and exists only so the v1→v2 gap reads as the cost of the fee.
+    let mut costed = String::new();
+    let mut free = String::new();
+    for p in policies {
+        let opt = format!(
+            "<option value=\"{v}\"{on}>{name}</option>",
+            v = esc(&p.file),
+            on = if p.file == policy_name { " selected" } else { "" },
+            name = esc(&p.file),
+        );
+        if p.taker_fees {
+            costed.push_str(&opt);
+        } else {
+            free.push_str(&opt);
+        }
+    }
+    let opts = format!(
+        "<optgroup label=\"Costed — the venue's real taker fee\">{costed}</optgroup>\
+         <optgroup label=\"Fee-free — for reading the cost of the fee, not for trading\">{free}</optgroup>"
+    );
+    let chosen_policy = policies.iter().find(|p| p.file == policy_name);
+    let policy_line = match chosen_policy {
+        Some(p) if !p.character.is_empty() => format!(
+            "<p class=\"pick-say\">{}</p>",
+            esc(&p.character)
+        ),
+        _ => String::new(),
+    };
+
+    // --- strategies: one line each. The whole explainer is on the strategy's
+    // --- own page, and printing it here made a two-row picker four inches tall.
     let mut strat = String::new();
+    let mut offered = 0usize;
     for m in metas {
         // A retired variant produces no new signals; offering it would be a
         // control that cannot do anything.
         if m.status == "retired" && !chosen_strategies.contains(&m.key()) {
             continue;
         }
+        offered += 1;
         let key = m.key();
         strat.push_str(&format!(
-            "<label><input type=\"checkbox\" name=\"s\" value=\"{v}\"{on}><span><b>{k}</b> {badge}<span class=\"pick-sub\">{sum}</span></span></label>",
+            "<label title=\"{full}\"><input type=\"checkbox\" name=\"s\" value=\"{v}\"{on}>\
+             <span class=\"pick-one\"><b>{k}</b>{badge}<span class=\"pick-say-1\">{sum}</span></span></label>",
+            full = esc(&m.summary),
             v = esc(&key),
             on = if chosen_strategies.contains(&key) { " checked" } else { "" },
             k = esc(&key),
@@ -2552,86 +2953,1147 @@ fn selection_form(
         strat = "<p class=\"pick-empty\">No strategy has a manifest to select.</p>".to_string();
     }
 
+    // --- markets, as the ladders they are ----------------------------------
+    let boards = boards_of(available_markets);
     let mut mkt = String::new();
-    for slug in available_markets {
+    for b in &boards {
+        let slugs: Vec<String> = b.rungs.iter().map(|r| r.slug.clone()).collect();
+        let on = b.rungs.iter().filter(|r| chosen_markets.contains(&r.slug)).count();
+        let mut rows = String::new();
+        for r in &b.rungs {
+            rows.push_str(&format!(
+                "<label title=\"{q}\"><input type=\"checkbox\" name=\"m\" value=\"{v}\"{ck}>\
+                 <span class=\"pick-rung\"><b>{lab}</b>{px}<span class=\"pick-slug\">{slug}</span></span></label>",
+                q = esc(&r.question),
+                v = esc(&r.slug),
+                ck = if chosen_markets.contains(&r.slug) { " checked" } else { "" },
+                lab = esc(&r.label),
+                px = match prices.get(&r.slug) {
+                    Some(p) => format!("<span class=\"pick-px\">{}</span>", fmt_prob(*p)),
+                    None => "<span class=\"pick-px muted\">—</span>".to_string(),
+                },
+                slug = esc(&r.slug),
+            ));
+        }
         mkt.push_str(&format!(
-            "<label><input type=\"checkbox\" name=\"m\" value=\"{v}\"{on}><span>{s}</span></label>",
-            v = esc(slug),
-            on = if chosen_markets.contains(slug) { " checked" } else { "" },
-            s = esc(slug),
+            "<div class=\"board\"><div class=\"board-head\"><b>{label}</b>\
+             <span class=\"board-n\">{n} selected of {total}</span>\
+             <a href=\"{only}\">only this board</a></div>\
+             <div class=\"pick-opts pick-opts-narrow\">{rows}</div></div>",
+            label = esc(&b.label),
+            n = on,
+            total = b.rungs.len(),
+            only = esc(&href_markets(sel, &slugs)),
+            rows = rows,
         ));
     }
     if mkt.is_empty() {
         mkt = "<p class=\"pick-empty\">The selected strategies have no unresolved predictions, so there is nothing to pick.</p>".to_string();
-    }
-
-    let mut opts = String::new();
-    for p in policies {
-        opts.push_str(&format!(
-            "<option value=\"{v}\"{on}>{name} — {ch}</option>",
-            v = esc(&p.file),
-            on = if p.file == policy_name { " selected" } else { "" },
-            name = esc(&p.file),
-            ch = esc(if p.character.is_empty() { "no description" } else { &p.character }),
+    } else {
+        mkt.push_str(&format!(
+            "<p class=\"pick-actions\"><a href=\"{}\">Every market again</a></p>",
+            esc(&href_of("plan", &sel.strategies, &[], &sel.policy))
         ));
     }
 
-    let markets_open = !sel.markets.is_empty();
+    // --- the state of each group, said in the summary line so the reader can
+    // --- decide whether to open it at all ----------------------------------
+    let strat_summary = if sel.strategies.is_empty() {
+        format!(
+            "using the default — {}",
+            if default_strategies.is_empty() {
+                "nothing is on trial or live, so no signal is in scope".to_string()
+            } else {
+                format!(
+                    "{} on trial or live: {}",
+                    render::count(default_strategies.len(), "strategy"),
+                    default_strategies.join(", ")
+                )
+            }
+        )
+    } else {
+        format!("{} of {offered} chosen by hand", chosen_strategies.len())
+    };
     let market_summary = if sel.markets.is_empty() {
         format!(
-            "all {} with a live prediction",
-            render::count(available_markets.len(), "market")
+            "using the default — all {} these strategies have a live signal on, across {}",
+            render::count(available_markets.len(), "market"),
+            render::count(boards.len(), "board")
         )
     } else {
         format!(
-            "{} of {} chosen",
+            "{} of {} chosen by hand, across {}",
             chosen_markets.len(),
-            available_markets.len()
+            available_markets.len(),
+            render::count(boards.len(), "board")
         )
     };
 
+    let untouched = sel.strategies.is_empty() && sel.markets.is_empty() && sel.policy.is_empty();
+    let lede = if untouched {
+        format!(
+            "<p class=\"finding\">Nothing here needs changing to get a plan — the defaults below are already a \
+             complete one, and the button just re-runs it against the current book. The choice that usually \
+             matters is the <b>policy</b>: it is the rule that turns a probability into a position, and \
+             different policies disagree about whether there is a trade at all. This one is \
+             <span class=\"mono\">{p}</span>{why}.</p>",
+            p = esc(policy_name),
+            why = if bound_policy.is_empty() {
+                ", the standing default — <span class=\"mono\">portfolio.toml</span> binds the book to no policy yet"
+            } else {
+                ", the policy <span class=\"mono\">portfolio.toml</span> binds this book to"
+            },
+        )
+    } else {
+        "<p class=\"finding\">This is a hand-made selection, and the whole of it is in the address bar — \
+         the link reproduces this exact plan for anyone who opens it. \
+         <a href=\"/execution?tab=plan\">Back to the defaults</a>.</p>"
+            .to_string()
+    };
+
     let body = format!(
-        r#"<form class="pick" method="get" action="/execution">
+        r#"{lede}<form class="pick" method="get" action="/execution">
 <input type="hidden" name="tab" value="plan">
 <div class="pick-group">
-  <div class="pick-label">Strategies <span class="pick-hint">whose signals this plan may act on. Default: everything on trial or live.</span></div>
-  <div class="pick-opts">{strat}</div>
+  <div class="pick-label">Policy <span class="pick-hint">the rules that turn a probability into a position — how much edge is worth crossing for, how big a ticket, when to get out</span></div>
+  <select name="p" aria-label="Execution policy">{opts}</select>
+  {policy_line}
 </div>
+<details class="pick-group"{sopen}>
+  <summary><span class="pick-label">Strategies <span class="pick-hint">{ssum}</span></span></summary>
+  <p class="pick-note">Whose signals this plan may act on. Each line is one strategy variant; open its page from the diff below for the full explanation.</p>
+  <div class="pick-opts pick-opts-1">{strat}</div>
+</details>
 <details class="pick-group"{mopen}>
   <summary><span class="pick-label">Markets <span class="pick-hint">{msum}</span></span></summary>
-  <div class="pick-opts pick-opts-narrow">{mkt}</div>
+  <p class="pick-note">These markets come in <b>boards</b>: one asset over one window, listed as a ladder of price levels. <b>{up}</b> is a bet the price touches that level at some point in the window; <b>{down}</b> that it falls to it. Nobody picks these one at a time, so pick a board.</p>
+  {mkt}
 </details>
-<div class="pick-group">
-  <div class="pick-label">Execution policy <span class="pick-hint">the rules that turn a probability into a position. A <span class="mono">-v1</span> policy charges no fee and will say so.</span></div>
-  <select name="p" aria-label="Execution policy">{opts}</select>
-</div>
 <div class="pick-actions">
-  <button type="submit" class="btn">Plan</button>
+  <button type="submit" class="btn">Re-run the plan</button>
   <a class="link" href="/execution?tab=plan">Reset to defaults</a>
   <a class="link" href="{back}">Back to holdings</a>
 </div>
 </form>"#,
+        lede = lede,
+        opts = opts,
+        policy_line = policy_line,
         strat = strat,
         mkt = mkt,
-        opts = opts,
+        ssum = esc(&strat_summary),
         msum = esc(&market_summary),
-        mopen = if markets_open { " open" } else { "" },
+        sopen = if sel.strategies.is_empty() { "" } else { " open" },
+        mopen = if sel.markets.is_empty() { "" } else { " open" },
+        up = esc("BTC ≥ 75k"),
+        down = esc("BTC ≤ 45k"),
         back = esc(&href(sel, "")),
     );
 
-    section_foot(
-        "What to plan",
-        "strategies, markets and the policy — all three live in the address, so this plan is a link",
+    section(
+        "1 · Configure",
+        "what to plan — and all of it lives in the address, so a plan is a link",
         "",
         &body,
-        &format!(
-            "<span>defaults: {} · every market they have a live prediction on · <span class=\"mono\">{}</span></span>",
-            if default_strategies.is_empty() {
-                "no strategy is on trial or live".to_string()
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Shares, NAV and the "Last" price
+//
+// Several people can pay into one book, so ownership is counted in SHARES, not
+// in each person's dollars (portfolio/README.md). Everything on this tab hangs
+// off one number and one decision about it:
+//
+//   NAV            cash + Σ unrealised P&L on open positions. Cash already
+//                  includes money committed as collateral — posting collateral
+//                  commits money, it does not spend it — so this does not
+//                  double count.
+//   Shares         Σ shares_delta over portfolio/investors.csv.
+//   NAV per share  NAV / shares. The fund's price, and the only number an
+//                  investor's stake depends on.
+//
+// And the decision: NAV depends on how open positions are marked, and a
+// MIDPOINT IS NOT A PRICE ANYONE OFFERED (wiki/reference/midpoint-is-not-a-fill:
+// our first scored batch beat the market 21/21 and had a counterparty at the
+// scored price on 2 of 21). With one account that is a reporting nicety. With
+// several people it decides who gains at whose expense, in both directions —
+// issue at an inflated NAV and the new investor is diluted, redeem at one and
+// the remaining holders pay for it. So issuance and redemption are struck at
+// the CONSERVATIVE liquidation mark (hit the bid on longs, lift the ask on
+// shorts), the midpoint NAV is shown beside it as the optimistic bound, and the
+// gap between them is on the page rather than in a footnote — that gap is the
+// honest measure of how much of the book's stated value is real.
+// ---------------------------------------------------------------------------
+
+/// One row of `portfolio/investors.csv`.
+struct Entry {
+    at: String,
+    investor: String,
+    action: String,
+    /// Signed by the action: money in positive, money out negative, whichever
+    /// sign the file happened to write.
+    amount: f64,
+    /// The NAV per share the row was struck at. Stored on the row because it is
+    /// the evidence for how many shares somebody got.
+    nav_ps: f64,
+    /// `shares_delta` exactly as written. Never recomputed — the file is the
+    /// record, and a page that silently "corrects" it destroys the evidence.
+    shares: f64,
+    note: String,
+    /// `amount ÷ nav_per_share` recomputed, so a row that does not add up can
+    /// be shown to not add up. `None` when the row records no rate.
+    implied: Option<f64>,
+}
+
+fn parse_investors(t: &Table) -> Vec<Entry> {
+    let mut out: Vec<Entry> = t
+        .rows
+        .iter()
+        .map(|r| {
+            let action = t.cell(r, "action").to_string();
+            let raw = t.num(r, "amount_usd");
+            let amount = if action == "redeem" { -raw.abs() } else { raw.abs() };
+            let nav_ps = t.num(r, "nav_per_share");
+            Entry {
+                at: t.cell(r, "at").to_string(),
+                investor: t.cell(r, "investor").to_string(),
+                action,
+                amount,
+                nav_ps,
+                shares: t.num(r, "shares_delta"),
+                note: t.cell(r, "note").to_string(),
+                implied: (nav_ps.abs() > EPS).then(|| amount / nav_ps),
+            }
+        })
+        .collect();
+    out.sort_by(|a, b| a.at.cmp(&b.at));
+    out
+}
+
+fn shares_outstanding(entries: &[Entry]) -> f64 {
+    entries.iter().map(|e| e.shares).sum()
+}
+
+/// NAV ÷ shares. `None` when nothing has been issued — a price per share with
+/// no shares behind it is a division by zero wearing a number's clothes.
+fn nav_per_share(nav: f64, shares: f64) -> Option<f64> {
+    (shares > EPS).then(|| nav / shares)
+}
+
+/// A row whose `shares_delta` does not match `amount ÷ nav_per_share`.
+fn mismatched(e: &Entry) -> bool {
+    match e.implied {
+        Some(i) => (i - e.shares).abs() > 1e-4,
+        None => e.shares.abs() > EPS,
+    }
+}
+
+/// One investor's whole position in the book.
+struct Holder {
+    name: String,
+    shares: f64,
+    /// Net money in: contributions less redemptions.
+    paid_in: f64,
+    entries: usize,
+}
+
+fn holders(entries: &[Entry]) -> Vec<Holder> {
+    let mut out: Vec<Holder> = Vec::new();
+    for e in entries {
+        match out.iter_mut().find(|h| h.name == e.investor) {
+            Some(h) => {
+                h.shares += e.shares;
+                h.paid_in += e.amount;
+                h.entries += 1;
+            }
+            None => out.push(Holder {
+                name: e.investor.clone(),
+                shares: e.shares,
+                paid_in: e.amount,
+                entries: 1,
+            }),
+        }
+    }
+    out.sort_by(|a, b| {
+        b.shares
+            .partial_cmp(&a.shares)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a.name.cmp(&b.name))
+    });
+    out
+}
+
+/// The book's value at both marks.
+struct Nav {
+    cash: f64,
+    /// Unrealised P&L marking every open position at the price we could get out
+    /// at today: the bid on a long, the ask on a short.
+    liq_pnl: f64,
+    /// The same at the midpoint, which nobody offered.
+    mid_pnl: f64,
+    /// Open positions with no live two-sided book. Their conservative figure
+    /// falls back to a midpoint, so for those rows it is not conservative and
+    /// the page has to say so.
+    unpriced: usize,
+    positions: usize,
+}
+
+impl Nav {
+    /// What the book could be turned into cash for today. The rate shares are
+    /// issued and redeemed at.
+    fn liquidation(&self) -> f64 {
+        self.cash + self.liq_pnl
+    }
+    /// The optimistic bound.
+    fn midpoint(&self) -> f64 {
+        self.cash + self.mid_pnl
+    }
+    /// What the midpoint claims and the book could not realise.
+    fn gap(&self) -> f64 {
+        self.midpoint() - self.liquidation()
+    }
+}
+
+/// One open position marked twice, so the gap can be attributed rather than
+/// only totalled.
+struct MarkRow {
+    slug: String,
+    outcome: String,
+    side: String,
+    shares: f64,
+    entry: f64,
+    mid: Option<f64>,
+    exit: Option<f64>,
+    mid_pnl: Option<f64>,
+    liq_pnl: Option<f64>,
+}
+
+fn nav_of(
+    cash: f64,
+    p: &Table,
+    pr: &Table,
+    quotes: &HashMap<String, Quote>,
+) -> (Nav, Vec<MarkRow>) {
+    let mut nav = Nav { cash, liq_pnl: 0.0, mid_pnl: 0.0, unpriced: 0, positions: p.rows.len() };
+    let mut rows: Vec<MarkRow> = Vec::new();
+    for row in &p.rows {
+        let slug = p.cell(row, "market_slug");
+        let outcome = p.cell(row, "outcome");
+        let side = p.cell(row, "side").to_string();
+        let shares = p.num(row, "shares");
+        let entry = p.num(row, "entry_price");
+        let live = quotes.get(p.cell(row, "token_id"));
+        let logged = latest_pred(pr, slug, outcome).map(|r| pr.num(r, "market_price"));
+        let mid = live.map(|q| q.mid).or(logged);
+        // Out of a long is the bid; out of a short is the ask. Never the mid.
+        let exit = live.map(|q| if side == "sell" { q.ask } else { q.bid });
+        if exit.is_none() {
+            nav.unpriced += 1;
+        }
+        let mid_pnl = mid.map(|m| pnl_at(&side, entry, m, shares));
+        let liq_pnl = exit.map(|x| pnl_at(&side, entry, x, shares));
+        nav.mid_pnl += mid_pnl.unwrap_or(0.0);
+        // Falling back to the midpoint here makes the conservative figure
+        // optimistic for that row. Counted above, said on the page.
+        nav.liq_pnl += liq_pnl.or(mid_pnl).unwrap_or(0.0);
+        rows.push(MarkRow {
+            slug: slug.to_string(),
+            outcome: outcome.to_string(),
+            side,
+            shares,
+            entry,
+            mid,
+            exit,
+            mid_pnl,
+            liq_pnl,
+        });
+    }
+    (nav, rows)
+}
+
+// ---------------------------------------------------------------------------
+
+async fn shares_page(env: &Env, sel: &Sel) -> String {
+    let (docs, snap) = futures::join!(
+        data::read_all(
+            env,
+            [
+                "portfolio/portfolio.toml",
+                "portfolio/positions.csv",
+                "portfolio/ledger.csv",
+                "portfolio/investors.csv",
+                "predictions/predictions.csv",
+            ]
+            .map(String::from)
+        ),
+        snapshots::latest(env),
+    );
+    let [acct, pos, led, inv, preds]: [data::Doc; 5] = docs
+        .try_into()
+        .unwrap_or_else(|_| unreachable!("read_all returns one Doc per path"));
+    let all_live = acct.live && pos.live && led.live && inv.live && preds.live;
+
+    let account = data::toml_of(&acct.text);
+    let starting_cash = 0.0_f64; // no opening balance: the notional is not fund money
+    let currency = data::str_at(&account, &["account", "currency"]);
+
+    let p = Table::parse(&pos.text);
+    let l = Table::parse(&led.text);
+    let iv = Table::parse(&inv.text);
+    let pr = Table::parse(&preds.text);
+
+    let quotes = snap.as_ref().map(|s| books_from_snapshot(&s.doc)).unwrap_or_default();
+    let cash = starting_cash + l.rows.iter().map(|r| l.num(r, "cash_delta")).sum::<f64>();
+    let (nav, marks) = nav_of(cash, &p, &pr, &quotes);
+
+    let entries = parse_investors(&iv);
+    let shares = shares_outstanding(&entries);
+    let last = nav_per_share(nav.liquidation(), shares);
+    let last_mid = nav_per_share(nav.midpoint(), shares);
+    let hold = holders(&entries);
+
+    let bar = tabbar(sel, p.rows.len());
+    let crumbs = trail(&[("Overview", ""), ("Paper book", ""), ("Shares & NAV", "")]);
+
+    let lede = "<p class=\"lede\">Several people can pay into this one book, so ownership is counted in \
+         <b>shares</b> rather than in each person's dollars. A share is a fixed slice of everything the \
+         book owns; its price — the <b>NAV per share</b>, or “Last” — is the book's whole value divided by \
+         the shares outstanding, and it is the only number anybody's stake depends on.</p>";
+
+    let kpis = stat_grid(&[
+        stat(&usd(nav.liquidation()), "net asset value")
+            .context("what the book could be turned into cash for today — the rate shares are issued and redeemed at"),
+        stat(&usd(nav.midpoint()), "the same at the midpoint")
+            .tone(if nav.gap().abs() > 0.005 { "warn" } else { "" })
+            .context("the optimistic bound: a midpoint is the average of a bid and an ask, and nobody offered it"),
+        stat(&usd_signed(-nav.gap()), "gap between the two")
+            .tone(if nav.gap().abs() > 0.005 { "warn" } else { "" })
+            .context(&if nav.gap().abs() > 0.005 && nav.midpoint().abs() > EPS {
+                format!(
+                    "{} of the stated value the book could not realise",
+                    render::fmt_pct(nav.gap() / nav.midpoint(), 2)
+                )
+            } else if nav.positions == 0 {
+                "no position is open, so there is nothing a midpoint could flatter".to_string()
             } else {
-                default_strategies.join(", ")
+                "the two marks agree — nothing is being flattered".to_string()
+            }),
+        stat(
+            &match last {
+                Some(v) => format!("{v:.4}"),
+                None => "—".to_string(),
             },
-            DEFAULT_POLICY
+            "NAV per share, the \u{201c}Last\u{201d}",
+        )
+        .context(&match (last, last_mid) {
+            (Some(_), Some(m)) => format!("{m:.4} if the midpoint were believed — that difference is the one that moves money"),
+            _ => "nothing has been issued, so there is no price yet — the first contribution strikes at 1.0000 by definition".to_string(),
+        }),
+        stat(&shares_fmt(shares), "shares outstanding")
+            .context(&format!(
+                "{} across {}",
+                render::count(entries.len(), "recorded movement"),
+                render::count(hold.len(), "investor")
+            )),
+    ]);
+
+    // Dead branch, kept as the guard it is: the schema no longer HAS an opening
+    // balance. `sizing.notional_bankroll` is what policies size against and it
+    // never enters NAV, so there is no unowned cash to warn about
+    // (portfolio/README.md, "The opening balance has no owner"). If a future
+    // change ever puts uncontributed money into NAV again, this fires.
+    let unowned = if starting_cash <= 0.005 {
+        String::new()
+    } else if shares <= EPS {
+        format!(
+            "<div class=\"banner\">{icon} <div><strong>The opening balance has no owner.</strong> \
+             The book holds {cash} of paper cash that came from <span class=\"mono\">portfolio.toml</span>'s \
+             notional <span class=\"mono\">starting_cash</span>, not from anybody's contribution — so net asset \
+             value is {cash} while shares outstanding are <b>0</b>. Read literally, the schema then says a first \
+             contribution of {ex} buys {exs} shares at 1.0000 and NAV per share becomes {jump} on the next \
+             reload, which would hand the entire opening balance to whoever pays in first. Before anyone \
+             contributes, the opening balance has to be either booked as a founding contribution (at 1.0000, so \
+             it holds {founder} shares) or set to zero. That is Felix's call and this page will not guess \
+             it.</div></div>",
+            icon = render::icon("alert"),
+            cash = usd(starting_cash),
+            ex = usd(1000.0),
+            exs = shares_fmt(1000.0),
+            jump = format!("{:.4}", (starting_cash + 1000.0) / 1000.0),
+            founder = shares_fmt(starting_cash),
+        )
+    } else {
+        format!(
+            "<div class=\"banner banner-bad\">{icon} <div><strong>The opening balance still has no owner, and \
+             the holders are being credited with it.</strong> {cash} of the {nav} above came from \
+             <span class=\"mono\">portfolio.toml</span>'s notional <span class=\"mono\">starting_cash</span> \
+             rather than from a contribution, but every share outstanding has a claim on it — so NAV per share \
+             reads <b>{last}</b> where the money actually paid in supports <b>{real}</b>. {who} Set \
+             <span class=\"mono\">starting_cash</span> to zero, or record the opening balance as a founding \
+             contribution, and the two agree.</div></div>",
+            icon = render::icon("alert"),
+            cash = usd(starting_cash),
+            nav = usd(nav.liquidation()),
+            last = last.map(|v| format!("{v:.4}")).unwrap_or_else(|| "—".to_string()),
+            real = format!("{:.4}", (nav.liquidation() - starting_cash) / shares),
+            who = match hold.first() {
+                Some(h) => format!(
+                    "On today's numbers that flatters {} by {}.",
+                    esc(&h.name),
+                    usd(h.shares / shares * starting_cash)
+                ),
+                None => String::new(),
+            },
+        )
+    };
+
+    let body = format!(
+        "{banner}{lede}{kpis}{unowned}{fair}{navsec}{register}{history}",
+        banner = paper_banner(),
+        lede = lede,
+        kpis = kpis,
+        unowned = unowned,
+        fair = fairness_note(&nav),
+        navsec = nav_section(&nav, &marks, currency, &snap, starting_cash, &l),
+        register = register_section(&hold, shares, last, currency),
+        history = history_section(&entries, last, &nav),
+    );
+
+    shell_sub(env, "/execution", crumbs, all_live, &bar, &body).await
+}
+
+/// Why the conservative mark is the one that issues shares. This is the whole
+/// argument of the tab and it is three sentences, so it sits above the tables
+/// rather than under them.
+fn fairness_note(nav: &Nav) -> String {
+    let extra = if nav.unpriced > 0 {
+        format!(
+            " <b>{} could not be marked against a live two-sided book at all</b>, so their conservative figure \
+             falls back to a midpoint — for those rows the conservative number is not conservative, and the \
+             gap below understates the real one.",
+            render::count(nav.unpriced, "open position")
+        )
+    } else {
+        String::new()
+    };
+    render::notes(&[
+        format!(
+            "<b>Shares are issued and redeemed at the conservative mark</b>, never the midpoint. \
+             Getting out of a long means hitting somebody's <b>bid</b>; getting out of a short means lifting \
+             somebody's <b>ask</b>. The midpoint sits between the two and is a price no counterparty ever \
+             named — our own first scored batch beat the market on 21 of 21 predictions and had somebody \
+             reachable at the scored price on <b>2 of 21</b> \
+             (<a href=\"/wiki/reference/midpoint-is-not-a-fill\">midpoint is not a fill</a>).{extra}"
+        ),
+        format!(
+            "<b>With one account that is a nicety; with several it decides who pays whom.</b> Issue shares at \
+             a midpoint NAV the book could not realise and the new investor buys in above what the book is \
+             worth — they are diluted the moment anybody checks. Redeem at that same inflated number and the \
+             <em>remaining</em> holders fund the difference. The gap above is therefore not a display \
+             preference: it is the size of the transfer that using the wrong mark would make."
+        ),
+    ])
+}
+
+/// The two marks, side by side, with the arithmetic shown rather than asserted.
+fn nav_section(
+    nav: &Nav,
+    marks: &[MarkRow],
+    currency: &str,
+    snap: &Option<snapshots::Latest>,
+    starting_cash: f64,
+    l: &Table,
+) -> String {
+    let pct = |v: f64| -> String {
+        let base = nav.midpoint();
+        if base.abs() < EPS {
+            "—".to_string()
+        } else {
+            render::fmt_pct(v / base, 2)
+        }
+    };
+
+    let rows = vec![
+        vec![
+            "Cash".to_string(),
+            usd(nav.cash),
+            usd(nav.cash),
+            "—".to_string(),
+            format!(
+                "{} at open, plus {} since. Money committed as collateral is still in here — posting \
+                 collateral commits cash, it does not spend it, so counting it again would double it.",
+                usd(starting_cash),
+                render::count(l.rows.len(), "ledger row")
+            ),
+        ],
+        vec![
+            "Unrealised P&L on open positions".to_string(),
+            usd_signed(nav.liq_pnl),
+            usd_signed(nav.mid_pnl),
+            usd_signed(nav.mid_pnl - nav.liq_pnl),
+            if nav.positions == 0 {
+                "no position is open, so there is nothing to mark and the two marks cannot disagree".to_string()
+            } else {
+                format!(
+                    "{} marked at the bid on a long and the ask on a short, against the same positions marked at the midpoint",
+                    render::count(nav.positions, "open position")
+                )
+            },
+        ],
+        vec![
+            "<b>Net asset value</b>".to_string(),
+            format!("<b>{}</b>", usd(nav.liquidation())),
+            usd(nav.midpoint()),
+            format!(
+                "<span class=\"{}\">{}</span><span class=\"sub\">{} of the midpoint figure</span>",
+                if nav.gap().abs() > 0.005 { "s-warn" } else { "muted" },
+                usd_signed(nav.gap()),
+                pct(nav.gap())
+            ),
+            "the left-hand column is the one shares are issued and redeemed at".to_string(),
+        ],
+    ];
+
+    let detail = if marks.is_empty() {
+        String::new()
+    } else {
+        let mut mr: Vec<Vec<String>> = Vec::new();
+        for m in marks {
+            let gap = match (m.mid_pnl, m.liq_pnl) {
+                (Some(a), Some(b)) => Some(a - b),
+                _ => None,
+            };
+            mr.push(vec![
+                market_cell(&m.slug, &m.outcome),
+                badge(&m.side, ""),
+                shares_fmt(m.shares),
+                fmt_prob(m.entry),
+                match m.exit {
+                    Some(v) => format!(
+                        "{}<span class=\"sub\">{}</span>",
+                        fmt_prob(v),
+                        if m.side == "sell" { "the ask" } else { "the bid" }
+                    ),
+                    None => "<span class=\"muted\">no live book</span>".to_string(),
+                },
+                match m.mid {
+                    Some(v) => fmt_prob(v),
+                    None => "<span class=\"muted\">—</span>".to_string(),
+                },
+                match m.liq_pnl.or(m.mid_pnl) {
+                    Some(v) => format!("<span class=\"{}\">{}</span>", tone_class(v), usd_signed(v)),
+                    None => "<span class=\"muted\">—</span>".to_string(),
+                },
+                match gap {
+                    Some(v) if v.abs() > 0.005 => {
+                        format!("<span class=\"s-warn\">{}</span>", usd_signed(v))
+                    }
+                    Some(_) => "0.00".to_string(),
+                    None => "<span class=\"muted\">—</span>".to_string(),
+                },
+            ]);
+        }
+        format!(
+            "<h3 class=\"sub-head\">Where the gap comes from</h3>{}",
+            table(
+                &[
+                    ("Market", ""),
+                    ("Side", ""),
+                    ("Shares", "num"),
+                    ("Entry", "num"),
+                    ("Exit price", "num"),
+                    ("Midpoint", "num"),
+                    ("P&L at the exit price", "num"),
+                    ("Flattered by the midpoint", "num"),
+                ],
+                &mr,
+            )
+        )
+    };
+
+    let marked = match snap {
+        Some(s) => format!("marks from the order-book snapshot taken {} minutes ago", s.age_mins),
+        None => "no order-book snapshot was readable, so nothing could be marked against a real bid".to_string(),
+    };
+
+    section_foot(
+        "Net asset value",
+        "the book's whole worth, at the price it could get and at the price it would like",
+        "",
+        &format!(
+            "{}{}",
+            table(
+                &[
+                    ("", ""),
+                    ("At the exit price", "num"),
+                    ("At the midpoint", "num"),
+                    ("Difference", "num"),
+                    ("What it is", "wrap"),
+                ],
+                &rows,
+            ),
+            detail
+        ),
+        &format!(
+            "<span class=\"mono\">portfolio/ledger.csv · positions.csv</span><span>amounts in paper {}</span><span>{}</span>",
+            esc(currency),
+            esc(&marked)
         ),
     )
 }
+
+/// Who owns the book. One row per investor: shares, the fraction of the whole
+/// they are, what they put in and what it is worth at today's conservative NAV.
+fn register_section(hold: &[Holder], shares: f64, last: Option<f64>, currency: &str) -> String {
+    if hold.is_empty() {
+        return section_foot(
+            "Who holds what",
+            "one row per investor — shares, fraction, money in, worth now",
+            "",
+            &render::empty_state(
+                "Nobody holds a share yet",
+                "<div>The register is empty, so the whole book is unowned. \
+                 A contribution is <b>two rows</b>, committed together: the money arrives in \
+                 <span class=\"mono\">portfolio/ledger.csv</span> as a <span class=\"mono\">deposit</span>, and the \
+                 shares it buys are recorded in <span class=\"mono\">portfolio/investors.csv</span> with the NAV \
+                 per share they were struck at. The first contribution into an empty book strikes at \
+                 <b>1.0000</b> by definition, and every one after that at whatever the conservative NAV per \
+                 share is at that moment.</div>",
+            ),
+            "<span class=\"mono\">portfolio/investors.csv</span><a href=\"/wiki/reference/midpoint-is-not-a-fill\">Why the mark decides who gains →</a>",
+        );
+    }
+
+    let mut rows: Vec<Vec<String>> = Vec::new();
+    for h in hold {
+        let frac = if shares.abs() > EPS { h.shares / shares } else { 0.0 };
+        let value = last.map(|v| h.shares * v);
+        let gain = value.map(|v| v - h.paid_in);
+        rows.push(vec![
+            format!("<b>{}</b>", esc(&h.name)),
+            shares_fmt(h.shares),
+            format!(
+                "{}{}",
+                render::fmt_pct(frac, 2),
+                render::minibar(frac, 1)
+            ),
+            usd(h.paid_in),
+            match value {
+                Some(v) => usd(v),
+                None => "<span class=\"muted\">—</span>".to_string(),
+            },
+            match gain {
+                Some(v) => format!("<span class=\"{}\">{}</span>", tone_class(v), usd_signed(v)),
+                None => "<span class=\"muted\">—</span>".to_string(),
+            },
+            render::count(h.entries, "movement"),
+        ]);
+    }
+
+    section_foot(
+        "Who holds what",
+        "one row per investor — shares, fraction, money in, worth now",
+        &badge(&render::count(hold.len(), "investor"), ""),
+        &format!(
+            "{}{}",
+            table(
+                &[
+                    ("Investor", ""),
+                    ("Shares", "num"),
+                    ("Fraction of the book", "num"),
+                    ("Paid in, net", "num"),
+                    ("Worth now", "num"),
+                    ("Gain", "num"),
+                    ("Movements", "num"),
+                ],
+                &rows,
+            ),
+            render::notes(&[
+                "<b>Paid in, net</b> is contributions less redemptions, so somebody who has taken more out than \
+                 they put in shows a negative figure and their gain is what they walked away with."
+                    .to_string(),
+                "<b>Worth now</b> is shares × the conservative NAV per share, which is the rate they could \
+                 actually redeem at today — not the midpoint one."
+                    .to_string(),
+            ])
+        ),
+        &format!(
+            "<span class=\"mono\">portfolio/investors.csv</span><span>amounts in paper {}</span>",
+            esc(currency)
+        ),
+    )
+}
+
+/// Every contribution and redemption, with the NAV per share each was struck
+/// at — the evidence for how many shares somebody got.
+fn history_section(entries: &[Entry], last: Option<f64>, nav: &Nav) -> String {
+    if entries.is_empty() {
+        return section_foot(
+            "Contributions and redemptions",
+            "every movement, and the NAV per share it was struck at",
+            "",
+            &render::empty_state(
+                "Nothing has been paid in or taken out",
+                &format!(
+                    "<div><span class=\"mono\">portfolio/investors.csv</span> holds only its header. The first \
+                     row ever written would look like this — the rate is <b>1.0000</b> because an empty book \
+                     has no price yet, and it is stored on the row so the shares it bought can be checked \
+                     against it forever:</div>\
+                     <pre class=\"codeblock\">at,investor,action,amount_usd,nav_per_share,shares_delta,note\n\
+                     2026-08-01T09:00:00Z,felix,contribute,1000.00,1.0000,1000.0000,first contribution</pre>\
+                     <div>After that, a contribution of {ex} at a NAV per share of 1.2500 would buy \
+                     {exs} shares, and issuing it at a midpoint-flattered 1.3500 instead would buy only \
+                     {bad} — the missing {diff} shares being a transfer from the new investor to the \
+                     existing ones. That is the arithmetic this page exists to keep honest.</div>\
+                     <div><b>Nothing here accepts money.</b> This is paper (CONSTITUTION.md §5) and the \
+                     dashboard cannot write; a contribution is a row the CEO commits.</div>",
+                    ex = usd(500.0),
+                    exs = shares_fmt(400.0),
+                    bad = shares_fmt(500.0 / 1.35),
+                    diff = shares_fmt(400.0 - 500.0 / 1.35),
+                ),
+            ),
+            "<span class=\"mono\">portfolio/investors.csv</span><span>append-only, and the authority for every share outstanding</span>",
+        );
+    }
+
+    let mut running = 0.0;
+    let mut rows: Vec<Vec<String>> = Vec::new();
+    let mut bad = 0usize;
+    for e in entries {
+        running += e.shares;
+        let off = mismatched(e);
+        if off {
+            bad += 1;
+        }
+        rows.push(vec![
+            format!("<span class=\"mono\">{}</span>", esc(&fmt_ts(&e.at))),
+            format!("<b>{}</b>", esc(&e.investor)),
+            badge(&e.action, if e.action == "redeem" { "warn" } else { "ok" }),
+            usd_signed(e.amount),
+            format!("{:.4}", e.nav_ps),
+            format!(
+                "{}{}",
+                shares_fmt(e.shares),
+                if off {
+                    format!(
+                        "<span class=\"sub s-bad\">{} ÷ {:.4} = {}</span>",
+                        usd(e.amount.abs()),
+                        e.nav_ps,
+                        e.implied.map(shares_fmt).unwrap_or_else(|| "—".to_string())
+                    )
+                } else {
+                    String::new()
+                }
+            ),
+            shares_fmt(running),
+            esc(&e.note),
+        ]);
+    }
+    rows.reverse();
+
+    let mut notes = vec![format!(
+        "<b>The rate on each row is the evidence.</b> <span class=\"mono\">shares_delta</span> is taken from the \
+         file exactly as written and never recomputed; the check is <span class=\"mono\">amount ÷ nav_per_share</span>, \
+         and a row where the two disagree is flagged in the shares column rather than quietly fixed. \
+         {bad}"
+    ,
+        bad = if bad == 0 {
+            "Every row reconciles.".to_string()
+        } else {
+            format!("<b>{} does not reconcile.</b>", render::count(bad, "row"))
+        }
+    )];
+    if let Some(v) = last {
+        notes.push(format!(
+            "The line ends at today's conservative NAV per share, <b>{v:.4}</b> — {} of net asset value over \
+             {} shares outstanding. That last point is a mark, not a struck trade: no shares changed hands \
+             at it, and it moves whenever the book does.",
+            usd(nav.liquidation()),
+            shares_fmt(shares_outstanding(entries)),
+        ));
+    }
+
+    section_foot(
+        "Contributions and redemptions",
+        "every movement, and the NAV per share it was struck at",
+        &badge(&render::count(entries.len(), "movement"), ""),
+        &format!(
+            "{}{}{}",
+            nav_chart(entries, last),
+            table(
+                &[
+                    ("When", ""),
+                    ("Investor", ""),
+                    ("Action", ""),
+                    ("Amount", "num"),
+                    ("NAV per share", "num"),
+                    ("Shares", "num"),
+                    ("Shares outstanding after", "num"),
+                    ("Note", "wrap"),
+                ],
+                &rows,
+            ),
+            render::notes(&notes)
+        ),
+        "<span class=\"mono\">portfolio/investors.csv</span><span>newest first; append-only</span>",
+    )
+}
+
+/// NAV per share over time: one point per movement at the rate it was struck
+/// at, plus today's mark. Drawn only when there is more than one point — a
+/// single dot is not a line and vertical space is the scarcest thing here.
+fn nav_chart(entries: &[Entry], last: Option<f64>) -> String {
+    let mut pts: Vec<(i64, f64)> = entries
+        .iter()
+        .filter_map(|e| Some((data::ts_ms(&e.at)?, e.nav_ps)))
+        .collect();
+    if let Some(v) = last {
+        pts.push((now_ms(), v));
+    }
+    pts.sort_by_key(|(t, _)| *t);
+    if pts.len() < 2 {
+        return String::new();
+    }
+    let points: Vec<String> = pts
+        .iter()
+        .map(|(t, v)| format!("{{\"t\":{t},\"v\":{v}}}"))
+        .collect();
+    format!(
+        "<div class=\"chart chart-sm\" id=\"nav-ps\"></div>\
+         <script src=\"/charts.js\"></script>\
+         <script>Chart.line(document.getElementById(\"nav-ps\"),{{\"label\":{lab},\"points\":[{pts}]}},{{x:\"time\",yPrecision:4}});</script>",
+        lab = crate::json_str("NAV per share"),
+        pts = points.join(","),
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Tests — the share arithmetic, and reading a slug as a rung.
+//
+// These are the two things on this page that are arithmetic rather than
+// rendering, and the share maths is the part where being wrong moves money
+// between people rather than merely looking odd. Everything under test is a
+// pure function over parsed tables, so none of it needs a Worker.
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The worked example from portfolio/README.md, end to end: two
+    /// contributions struck at different NAVs and one redemption.
+    ///
+    ///   1  alice pays 1000.00 into an empty book. First contribution ⇒ the
+    ///      rate is 1.0000 by definition ⇒ 1000 shares. NAV 1000, Last 1.0000.
+    ///   2  the book earns; liquidation NAV is 1250.00 over 1000 shares, so
+    ///      Last is 1.2500. bob pays 500.00 at that rate ⇒ 400 shares.
+    ///      NAV 1750 over 1400 shares — Last is STILL 1.2500. Issuing at the
+    ///      true NAV moves nothing between holders, which is the whole point.
+    ///   3  the book gives some back; liquidation NAV 1540.00 over 1400 shares
+    ///      ⇒ Last 1.1000. alice redeems 220.00 at that rate ⇒ −200 shares.
+    ///      NAV 1320 over 1200 shares — Last is STILL 1.1000.
+    const LEDGER: &str = "\
+at,investor,action,amount_usd,nav_per_share,shares_delta,note
+2026-08-01T09:00:00Z,alice,contribute,1000.00,1.0000,1000.0000,first contribution
+2026-08-15T09:00:00Z,bob,contribute,500.00,1.2500,400.0000,
+2026-09-01T09:00:00Z,alice,redeem,220.00,1.1000,-200.0000,partial
+";
+
+    fn near(a: f64, b: f64) {
+        assert!((a - b).abs() < 1e-9, "{a} != {b}");
+    }
+
+    #[test]
+    fn shares_are_issued_and_redeemed_without_moving_value() {
+        let t = Table::parse(LEDGER);
+        let e = parse_investors(&t);
+        assert_eq!(e.len(), 3);
+
+        // A redemption is money OUT whichever sign the file wrote it with.
+        near(e[0].amount, 1000.0);
+        near(e[1].amount, 500.0);
+        near(e[2].amount, -220.0);
+
+        // Every row's shares_delta equals amount ÷ the rate it was struck at.
+        assert!(e.iter().all(|x| !mismatched(x)), "a row does not reconcile");
+
+        // Shares outstanding, and the price per share at each stage.
+        near(shares_outstanding(&e[..1]), 1000.0);
+        near(nav_per_share(1000.0, 1000.0).unwrap(), 1.0000);
+        near(shares_outstanding(&e[..2]), 1400.0);
+        near(nav_per_share(1750.0, 1400.0).unwrap(), 1.2500);
+        near(shares_outstanding(&e), 1200.0);
+        near(nav_per_share(1320.0, 1200.0).unwrap(), 1.1000);
+
+        // The register, at the end: NAV 1320.00 over 1200 shares ⇒ 1.1000.
+        let shares = shares_outstanding(&e);
+        let last = nav_per_share(1320.0, shares).unwrap();
+        let h = holders(&e);
+        assert_eq!(h.len(), 2);
+
+        let alice = h.iter().find(|x| x.name == "alice").unwrap();
+        near(alice.shares, 800.0);
+        near(alice.paid_in, 780.0); // 1000 in, 220 back out
+        near(alice.shares / shares, 2.0 / 3.0); // 66.67%
+        near(alice.shares * last, 880.0);
+        near(alice.shares * last - alice.paid_in, 100.0);
+
+        let bob = h.iter().find(|x| x.name == "bob").unwrap();
+        near(bob.shares, 400.0);
+        near(bob.paid_in, 500.0);
+        near(bob.shares / shares, 1.0 / 3.0); // 33.33%
+        near(bob.shares * last, 440.0);
+        near(bob.shares * last - bob.paid_in, -60.0);
+
+        // The register adds up to the book, and the gains add up to the book's.
+        near(alice.shares * last + bob.shares * last, 1320.0);
+        near(alice.shares / shares + bob.shares / shares, 1.0);
+        near(100.0 + -60.0, 1320.0 + 220.0 - 1500.0);
+    }
+
+    #[test]
+    fn nothing_issued_means_no_price_per_share() {
+        let e = parse_investors(&Table::parse(
+            "at,investor,action,amount_usd,nav_per_share,shares_delta,note\n",
+        ));
+        assert!(e.is_empty());
+        near(shares_outstanding(&e), 0.0);
+        assert!(nav_per_share(10_000.0, 0.0).is_none());
+        assert!(holders(&e).is_empty());
+    }
+
+    #[test]
+    fn a_row_that_does_not_reconcile_is_flagged() {
+        let e = parse_investors(&Table::parse(
+            "at,investor,action,amount_usd,nav_per_share,shares_delta,note\n\
+             2026-08-01T09:00:00Z,alice,contribute,1000.00,1.2500,1000.0000,wrong\n",
+        ));
+        // 1000 ÷ 1.25 is 800, not 1000 — the file keeps its number and the page
+        // says it disagrees rather than silently repairing the evidence.
+        assert!(mismatched(&e[0]));
+        near(e[0].implied.unwrap(), 800.0);
+        near(shares_outstanding(&e), 1000.0);
+    }
+
+    /// The mark decides the split. Marking at the midpoint claims value the
+    /// book cannot realise; the gap is exactly what issuing at the wrong price
+    /// would transfer.
+    #[test]
+    fn nav_is_lower_at_the_price_we_could_actually_get() {
+        let positions = Table::parse(
+            "opened_at,market_slug,condition_id,outcome,token_id,side,shares,entry_price,collateral,family,variant,policy,run_id\n\
+             2026-08-01T09:00:00Z,will-wti-reach-130-in-july-2026,0xc,Yes,tok-long,buy,100,0.4000,40.00,f,v,fade-v2,r\n\
+             2026-08-01T09:00:00Z,will-wti-reach-120-in-july-2026,0xd,Yes,tok-short,sell,100,0.6000,40.00,f,v,fade-v2,r\n",
+        );
+        let preds = Table::parse(
+            "timestamp,market_slug,condition_id,outcome,token_id,family,variant,model,prediction,market_price,run_id,status\n",
+        );
+        let mut q: HashMap<String, Quote> = HashMap::new();
+        q.insert(
+            "tok-long".to_string(),
+            Quote { bid: 0.45, ask: 0.55, mid: 0.50, depth_bid: None, depth_ask: None, synthetic: false },
+        );
+        q.insert(
+            "tok-short".to_string(),
+            Quote { bid: 0.45, ask: 0.55, mid: 0.50, depth_bid: None, depth_ask: None, synthetic: false },
+        );
+
+        let (nav, marks) = nav_of(1000.0, &positions, &preds, &q);
+        assert_eq!(marks.len(), 2);
+        assert_eq!(nav.unpriced, 0);
+        // Long 0.40 → mid 0.50 is +10.00, but only the 0.45 bid is reachable: +5.00.
+        // Short 0.60 → mid 0.50 is +10.00, but getting out lifts the 0.55 ask: +5.00.
+        near(nav.mid_pnl, 20.0);
+        near(nav.liq_pnl, 10.0);
+        near(nav.liquidation(), 1010.0);
+        near(nav.midpoint(), 1020.0);
+        near(nav.gap(), 10.0);
+
+        // 1010 over 1000 shares issues at 1.0100; the midpoint would have
+        // issued at 1.0200 and sold the new investor 1% less than they paid for.
+        near(nav_per_share(nav.liquidation(), 1000.0).unwrap(), 1.01);
+        near(nav_per_share(nav.midpoint(), 1000.0).unwrap(), 1.02);
+    }
+
+    /// A position with no live two-sided book cannot be marked conservatively
+    /// at all. It falls back to a midpoint and is counted, because a silent
+    /// fallback would make the conservative NAV quietly optimistic.
+    #[test]
+    fn a_position_with_no_book_is_counted_not_hidden() {
+        let positions = Table::parse(
+            "opened_at,market_slug,condition_id,outcome,token_id,side,shares,entry_price,collateral,family,variant,policy,run_id\n\
+             2026-08-01T09:00:00Z,will-wti-reach-130-in-july-2026,0xc,Yes,tok-gone,buy,100,0.4000,40.00,f,v,fade-v2,r\n",
+        );
+        let preds = Table::parse(
+            "timestamp,market_slug,condition_id,outcome,token_id,family,variant,model,prediction,market_price,run_id,status\n\
+             2026-08-01T09:00:00Z,will-wti-reach-130-in-july-2026,0xc,Yes,tok-gone,f,v,m,0.30,0.5000,r,trial\n",
+        );
+        let (nav, _) = nav_of(1000.0, &positions, &preds, &HashMap::new());
+        assert_eq!(nav.unpriced, 1);
+        near(nav.mid_pnl, 10.0);
+        near(nav.liq_pnl, 10.0); // the fallback — and therefore NOT conservative
+        near(nav.gap(), 0.0);
+    }
+
+    #[test]
+    fn a_slug_reads_as_a_rung_on_a_board() {
+        let r = parse_rung("will-bitcoin-reach-75k-in-july-2026");
+        assert_eq!(r.label, "BTC ≥ 75k");
+        assert_eq!(r.window, "July 2026");
+        near(r.level, 75_000.0);
+
+        let r = parse_rung("will-bitcoin-dip-to-42pt5k-in-july-2026-821");
+        assert_eq!(r.label, "BTC ≤ 42.5k");
+        near(r.level, 42_500.0);
+
+        // A bare 60000 is the same rung as a 60k one and sorts with its ladder.
+        let r = parse_rung("will-bitcoin-dip-to-60000-in-july-20260706151220612-754");
+        assert_eq!(r.label, "BTC ≤ 60k");
+        assert_eq!(r.window, "July 2026");
+        near(r.level, 60_000.0);
+
+        // A deadline board, not a calendar month.
+        let r = parse_rung("will-spy-dip-to-715-by-july-20-2026");
+        assert_eq!(r.label, "SPY ≤ 715");
+        assert_eq!(r.window, "by 20 July 2026");
+
+        // Gold stays in gold's units — collapsing 4300 to 4.3k helps nobody.
+        assert_eq!(parse_rung("will-xauusd-reach-4300-in-july-2026").label, "gold ≥ 4300");
+
+        // Two listings of the same barrier are two markets, and must not read
+        // as one row printed twice.
+        let a = parse_rung("will-wti-dip-to-90-in-july-2026");
+        let b = parse_rung("will-wti-dip-to-90-in-july-2026-from-july-25");
+        assert_eq!(a.label, "WTI ≤ 90");
+        assert_eq!(b.label, "WTI ≤ 90 (relisted 25 Jul)");
+        assert_eq!(a.window, b.window);
+
+        // Anything that is not a ladder still lands somewhere sensible.
+        let r = parse_rung("will-openai-have-the-best-model-end-of-july");
+        assert_eq!(r.asset, "openai");
+        near(r.level, 0.0);
+    }
+
+    #[test]
+    fn a_board_is_one_asset_over_one_window_in_price_order() {
+        let slugs: Vec<String> = [
+            "will-bitcoin-reach-75k-in-july-2026",
+            "will-bitcoin-dip-to-45k-in-july-2026-597",
+            "will-spy-dip-to-715-by-july-20-2026",
+            "will-bitcoin-reach-70k-in-july-2026",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+        let b = boards_of(&slugs);
+        assert_eq!(b.len(), 2);
+        let btc = b.iter().find(|x| x.label.starts_with("Bitcoin")).unwrap();
+        assert_eq!(btc.label, "Bitcoin — July 2026");
+        // Low barriers first, so the downside and upside rungs read as one ladder.
+        let labels: Vec<&str> = btc.rungs.iter().map(|r| r.label.as_str()).collect();
+        assert_eq!(labels, vec!["BTC ≤ 45k", "BTC ≥ 70k", "BTC ≥ 75k"]);
+        assert_eq!(b.iter().find(|x| x.label.starts_with("S&P")).unwrap().rungs.len(), 1);
+    }
+}
+
