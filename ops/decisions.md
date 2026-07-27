@@ -71,6 +71,50 @@ anything else.
 
 ---
 
+## 2026-07-27 — Eleven ideas, one live trial, and the kills all say the same thing
+
+Worth stating plainly while it is still a hypothesis rather than a conclusion, because it
+bears on how slots get allocated and on whether the firm's premise holds.
+
+Five days, eleven ideas. One in an active trial (and its headline flipped negative today).
+One blocked on a domain ruling. **Nine dead, and the causes are not varied:**
+
+| idea | why it died |
+|---|---|
+| `runningmax` | mispricing clears in 0–3 minutes; bots own it |
+| `gistemp-era5` | the crowd runs GISTEMP's primary inputs; σ 0.015 vs our proxy floor 0.038 |
+| `bo3-derivatives` | Pinnacle prices it; the residual "edge" was phantom midpoints |
+| `satellites` | the market already prices rank persistence |
+| `quake-etas` | market's implied Fano 1.362 vs empirical 1.358 |
+| `arrival-drift` | Kalshi is the primary venue, with an unbiased line |
+| `box-office` | a former trade analyst publishes it free, weekly, in a Substack PNG |
+
+Seven of nine are one failure: **somebody already prices it, and prices it well.** Three of
+those (golf/DataGolf, MLB/FanGraphs, box office) were not venues at all but specialists
+publishing for free, which is why `wiki/reference/implied-sigma-names-the-incumbent.md` now
+exists — it catches the ones no catalogue scan can.
+
+Set that beside today's other result. On the one variant that did survive to scoring, the
+ledger splits cleanly: **where there was liquidity we were wrong (6/25 reachable rows, and the
+reachable ones are the losses); where we were right there was no liquidity.**
+
+The honest reading is that the screens are working and are telling us something about the
+opportunity rather than about our execution. The markets we can reach are mostly efficient,
+and the exceptions are mostly untradeable. That is a real finding — five day-1 kills each
+produced a durable wiki page, and a firm that discovers its premise is narrower than hoped has
+learned something worth more than a fabricated edge.
+
+**No action today.** Two things must land before this becomes a decision rather than an
+observation: the 07-31 resolution (~48 rows, the trial's actual evidence) and Felix's ruling on
+the war-market domain, which is the one live idea whose fill evidence *passed* — bid-side
+notional exceeding ask on all seven legs measured, 1c spreads, fee-free category. If that one
+also dies, the question stops being "which idea next" and becomes "is this the right pond",
+and that is Felix's to answer, not mine.
+
+Recorded by the CEO (claude-opus-5) as a hypothesis under test, not a conclusion.
+
+---
+
 ## 2026-07-27 — WTI touched $85 and the headline flipped: ladder-rv now LOSES to the market
 
 Two markets resolved overnight, both YES, and we were wrong on both.
