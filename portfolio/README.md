@@ -29,9 +29,12 @@ eight policies take **zero** trades. The book is where that stops being a statis
 [account]
 opened = "2026-07-26"
 currency = "USDC"
-starting_cash = 10000.0   # notional; see "Bankroll" below
 policy = ""               # the execution policy this book is bound to, e.g. "harvest-v2"
                           # empty = no policy chosen yet; the plan page picks one per plan
+
+[sizing]
+notional_bankroll = 10000.0   # what policies size against. NOT money anyone owns and
+                              # NOT part of NAV — see "The opening balance has no owner"
 
 [marks]
 source = "clob-midpoint"  # how open positions are marked. A midpoint is NOT a fill price
@@ -65,7 +68,7 @@ applied_at,action,market_slug,condition_id,outcome,token_id,side,shares,price,fe
 
 ## Cash
 
-`cash = starting_cash + Σ cash_delta`. Free cash is `cash − Σ collateral` over open
+`cash = Σ contributions − Σ redemptions + Σ cash_delta`. Free cash is `cash − Σ collateral` over open
 positions. Both are shown, because a book with no free cash is fully deployed even if its
 cash line looks healthy — and `execution/DESIGN.md` §3 already makes the point that a policy
 earning 40% on 3% of the bankroll is a rounding error on the fund.
@@ -79,12 +82,33 @@ here is an upper bound and must be labelled as one. Where `predictions/fills.csv
 observed bid for a position, show the mark-to-bid figure beside the mark-to-mid one — that
 pair is the honest picture and the difference between them is the point.
 
-## Bankroll
+## The opening balance has no owner — so it is not in NAV
 
-`starting_cash = 10000` is a notional placeholder chosen by the CEO on 2026-07-26 so the
-percentages mean something. It is not a claim about capital Felix intends to deploy. Change
-it in `portfolio.toml` and the whole book rescales; nothing depends on the number except the
-percentages. Flagged to Felix in `roles/felix/inbox/2026-07-26-portfolio-and-apply.md`.
+The first version of this schema had `starting_cash = 10000` **and** "the first contribution
+strikes at 1.0000". A dashboard agent caught that those cannot both hold: NAV would be 10,000
+against 0 shares, so a first contribution of 1,000 buys 1,000 shares at 1.0000 and the
+contributor instantly owns an 11,000 book. The first person in is handed the entire opening
+balance and everyone after them buys at 11× what the money supports. That was a CEO design
+error, not a rounding artifact, and it does not shrink until real contributions dilute it.
+
+The mistake was conflating two different numbers:
+
+| | what it is | in NAV? |
+|---|---|---|
+| **`sizing.notional_bankroll`** | the size policies compute positions against, so a plan can say anything at all | **no** |
+| **contributions** | money someone actually paid in, recorded in `investors.csv` | **yes** |
+
+So: **`notional_bankroll` is a sizing parameter and never enters NAV, cash or shares.** It has
+no owner because nobody paid it. NAV is contributions plus what they earned, which is zero
+until somebody contributes — and a book with zero shares has **no** NAV per share, rather than
+a NAV per share of 1.0000. The page says "no shares issued" rather than inventing a price.
+
+This keeps both properties we wanted: policies can still size (the plan page works on an empty
+book), and the first contributor gets exactly what they paid for.
+
+Felix's real bankroll figure is still open in
+`roles/felix/inbox/2026-07-26-portfolio-and-apply.md`; it changes what policies consider worth
+trading, and nothing else.
 
 ## Plan and apply
 
@@ -116,15 +140,17 @@ at,investor,action,amount_usd,nav_per_share,shares_delta,note
 - `shares_delta = amount_usd / nav_per_share`, positive on a contribution, negative on a
   redemption. **The rate used is the NAV per share at that moment**, which is why the rate is
   stored on the row: it is the evidence for how many shares someone got.
-- The first contribution into an empty book sets `nav_per_share = 1.0000` by definition.
+- The first contribution into an empty book strikes at `nav_per_share = 1.0000` by
+  definition — and it is honest precisely because `notional_bankroll` is not in NAV, so
+  1.0000 corresponds to a book holding exactly what that first contributor paid in.
 
 ### The three numbers
 
 | | |
 |---|---|
-| **NAV** | `cash + Σ unrealised P&L on open positions`. Cash already includes money committed as collateral — posting collateral commits money, it does not spend it — so this does not double count. |
+| **NAV** | `cash + Σ unrealised P&L on open positions`, where cash is contributed money only — `notional_bankroll` is excluded. Cash already includes money committed as collateral (posting collateral commits money, it does not spend it), so this does not double count. |
 | **Shares** | `Σ shares_delta` over `investors.csv`. |
-| **NAV per share ("Last")** | `NAV / shares`. This is the fund's price, and the only number an investor's stake depends on. |
+| **NAV per share ("Last")** | `NAV / shares` — **undefined while shares are zero**, and shown as "no shares issued" rather than as a number. |
 
 ### The thing that must not be got wrong
 

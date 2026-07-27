@@ -4,8 +4,15 @@
 [account]
 opened = "2026-07-26"
 currency = "USDC"
-starting_cash = 10000.0   # notional placeholder, CEO 2026-07-26 — see README "Bankroll"
 policy = ""               # no policy bound yet; each plan picks one explicitly
+
+# The money policies size against. This is a SIZING PARAMETER, not money anybody
+# owns, and it is deliberately NOT part of NAV — see README "The opening balance
+# has no owner". Without it every policy computes a zero position and the plan
+# page can say nothing at all; counting it as NAV would hand the first
+# contributor the whole balance.
+[sizing]
+notional_bankroll = 10000.0   # CEO placeholder 2026-07-26; Felix's real figure pending
 
 [marks]
 source = "clob-midpoint"  # a midpoint is NOT a fill price — show mark-to-bid beside it
