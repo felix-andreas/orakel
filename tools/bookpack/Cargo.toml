@@ -1,0 +1,22 @@
+[package]
+name = "bookpack"
+version = "0.1.0"
+edition = "2021"
+description = "Roll a day of hourly book snapshots into one Parquet file in R2."
+
+[dependencies]
+anyhow = "1"
+chrono = "0.4"
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+parquet = { version = "55", default-features = false, features = ["arrow", "zstd"] }
+arrow-array = "55"
+arrow-schema = "55"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Same backend as tools/r2data: pure-sync, honours HTTPS_PROXY and SSL_CERT_FILE,
+# which is what works behind the agent proxy.
+bytes = "1"
+rust-s3 = { version = "0.35", default-features = false, features = ["sync-native-tls"] }
+
+[profile.release]
+strip = true

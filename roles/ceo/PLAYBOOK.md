@@ -34,8 +34,11 @@ and build the firm's tooling. You are autonomous within [`CONSTITUTION.md`](../.
    without its fillable count**; the first batch beat the market 21/21 and was reachable
    2/21 (`wiki/reference/midpoint-is-not-a-fill.md`). Calibration is the research
    product; `exec_edge` is the business.
-9. **Dashboard.** Redeploy if dashboard code changed. Spot-check it renders current state.
-10. **Close.** Re-mirror the watchlist if new applications appeared; Write `ops/runs/<date>.toml` (steps, failures, token spend), update memory
+9. **Compact yesterday's book history.** `tools/bookpack/target/release/bookpack pack --all`
+   then `bookpack verify <yesterday>`. Cheap, idempotent, and it protects the one dataset the
+   firm cannot rebuild if it is lost — see ARCHITECTURE §6.
+10. **Dashboard.** Redeploy if dashboard code changed. Spot-check it renders current state.
+11. **Close.** Re-mirror the watchlist if new applications appeared; Write `ops/runs/<date>.toml` (steps, failures, token spend), update memory
    (prune!), worklog entry, commit + push.
 
 ## Concurrency hygiene (subagents share this working tree)

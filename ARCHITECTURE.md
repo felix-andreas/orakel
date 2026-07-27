@@ -107,6 +107,20 @@ poly committed 70 MB of data snapshots into git; orakel does not.
 
 - **Git**: all markdown, code, configs, and small canonical CSVs (predictions, resolutions,
   scores). Rough threshold: anything over ~100 KB or binary goes to R2.
+- **Book history → Parquet.** The snapshot worker writes one gzipped JSON object per hour
+  (`snapshots/books/<date>/<HH>.json.gz`) — the right shape for *writing*, and the wrong one
+  for every question we ask of it, all of which are "how did this token's book move". At
+  hourly cadence that is **8,760 objects and ~2.4M rows a year**; building one series meant
+  fetching one object per hour. [`tools/bookpack/`](tools/bookpack/) rolls each day into
+  `snapshots/parquet/date=<date>/books.parquet` — 24× fewer objects and ~15× fewer bytes,
+  because `market_slug`, `token_id` and `condition_id` repeat identically 24 times a day and
+  dictionary-compress to nothing. The hourly JSON is **never deleted**: it is the raw record,
+  parquet is a derived view, and a derived view that destroys its source is a migration
+  rather than a cache. `bookpack verify <date>` reconciles the two row for row.
+  Why this dataset and not another: our reachability numbers are a *lower bound* because
+  `fillcheck` replays the trade feed and a resting bid nobody hit leaves no trace there
+  (`wiki/reference/midpoint-is-not-a-fill.md`). A real book history records the bid whether
+  or not anyone took it, and it is the one dataset we cannot reconstruct after the fact.
 - **R2**: every frozen dataset, uploaded via [`tools/r2data/`](tools/r2data/) under an
   **immutable content-addressed key** (`blobs/<sha256>`), with a small manifest JSON
   (`<name>.r2.json`: key, sha256, bytes, source URL, fetched-at) committed to git where the
