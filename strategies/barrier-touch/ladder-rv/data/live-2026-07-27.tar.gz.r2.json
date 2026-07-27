@@ -1,0 +1,11 @@
+{
+  "key": "blobs/a37aed5e0ec314e086f9703ae25e93bbf52be96dabc61ee17e43492b2b3a8c03",
+  "sha256": "a37aed5e0ec314e086f9703ae25e93bbf52be96dabc61ee17e43492b2b3a8c03",
+  "bytes": 41267,
+  "content_type": "application/gzip",
+  "original_name": "live-2026-07-27.tar.gz",
+  "source_url": "gamma-api.polymarket.com/events + clob.polymarket.com/book + data-api.polymarket.com/trades",
+  "note": "ladder-rv live snapshot 2026-07-27 07:27Z: Gamma events + books for the WTI/gold/silver July monthlies, and model rows from the GAP-AWARE cmd_live (new feed_age_h / feed_open / jump_sd columns). Spot CLU6 83.82 (RV14 61.1% total, 49.8% intraday, OVX 68.0), XAU 4099.98, XAG 59.61.",
+  "fetched_at": "2026-07-27T07:29:48Z",
+  "bucket": "orakel"
+}

@@ -1,0 +1,11 @@
+{
+  "key": "blobs/ee46369ed26e37e78d4d87c08de25898a72a09471e6b7fb202e7eb36076232b8",
+  "sha256": "ee46369ed26e37e78d4d87c08de25898a72a09471e6b7fb202e7eb36076232b8",
+  "bytes": 18722923,
+  "content_type": "application/gzip",
+  "original_name": "candles-2026-07-27.tar.gz",
+  "source_url": "benchmarks.pyth.network (Metal.XAU|XAG/USD, Commodities.WTIU6|WTIV6|USOILSPOT, Equity.US.SPY|NVDA via TV-shim; BTC|ETH via data-api.binance.vision) + cdn.cboe.com (OVX/VIX/GVZ/VXSLV) + deribit.com (DVOL)",
+  "note": "ladder-rv daily resolution-feed archive thru 2026-07-27 ~07:15Z, 9 keys. Contains the 2026-07-26 22:00Z WTI Sunday open (CLU6 90.46 Fri close -> 83.68 open, -7.79%) that resolved will-wti-dip-to-85 and will-wti-dip-to-90-from-july-25 YES. 07-25/26/27 force-refetched (07-25 was captured partial on day 3; day 4 skipped the freeze entirely). SUPERSEDES candles-2026-07-25.",
+  "fetched_at": "2026-07-27T07:29:37Z",
+  "bucket": "orakel"
+}

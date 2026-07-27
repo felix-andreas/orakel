@@ -759,6 +759,193 @@ fn realized_vol(db: &CandleDb, key: &str, cal: &SessionCal, class: Class, t: i64
     Some((ssq * min_per_year(class) / minutes).sqrt())
 }
 
+/// The SMOOTH half of `realized_vol`: same 5-minute closes, but only consecutive pairs
+/// that are genuinely 5 minutes apart, so close-to-open gaps (and data holes) are
+/// excluded from both the numerator and the denominator. Pair it with `gap_sd` — the two
+/// together reconstruct total variance without pretending a weekend is smooth.
+fn realized_vol_intraday(
+    db: &CandleDb,
+    key: &str,
+    cal: &SessionCal,
+    class: Class,
+    t: i64,
+    lookback_s: i64,
+) -> Option<f64> {
+    let candles = db.slice(key, t - lookback_s, t);
+    let mut buckets: BTreeMap<i64, f64> = BTreeMap::new();
+    for c in candles {
+        if class == Class::Crypto || cal.is_open(c.t) {
+            buckets.insert(c.t - c.t % 300, c.c);
+        }
+    }
+    if buckets.len() < 100 {
+        return None;
+    }
+    let pts: Vec<(i64, f64)> = buckets.into_iter().collect();
+    let (mut ssq, mut n) = (0.0, 0usize);
+    for w in pts.windows(2) {
+        if w[1].0 - w[0].0 != 300 {
+            continue;
+        }
+        let r = (w[1].1 / w[0].1).ln();
+        ssq += r * r;
+        n += 1;
+    }
+    if n < 100 {
+        return None;
+    }
+    Some((ssq * min_per_year(class) / (n as f64 * 5.0)).sqrt())
+}
+
+// ---------- close-to-open GAP variance ----------
+//
+// `realized_vol` walks consecutive in-session 5-minute closes, so a close->open return
+// IS in its sum of squares — but it is charged only 5 minutes of the denominator and
+// `tau` then re-spreads it smoothly over session time. For a FIRST-PASSAGE question that
+// is the wrong shape: the gap is a lump that lands at a known instant, and a barrier can
+// be jumped clean over.
+//
+// It cost us `will-wti-dip-to-85-in-july-2026` on 2026-07-26 (see
+// results/stale-feed-and-gap-2026-07-27.md). Measured over 2026-04-01..2026-07-27:
+//
+//   feed        weekend-gap rms   overnight rms   intraday (open->close) rms
+//   USOILSPOT        3.78%            0.57%              3.56%
+//   XAUUSD           0.74%            0.13%              1.43%
+//   XAGUSD           1.21%            0.16%              3.08%
+//   SPY              0.73%            0.57%              0.66%
+//   NVDA             1.38%            1.42%              1.83%
+//
+// A WTI weekend gap carries as much variance as a whole trading session, and for the
+// RTH-only equity feeds the overnight gap is ~85% of a session. Crypto never closes, so
+// its gap variance is zero by construction.
+
+/// Session boundaries in `[t0, t1)`: for each, the length of the CLOSED interval in
+/// seconds. Derived from the calendar, so it needs no per-asset table.
+fn session_breaks(cal: &SessionCal, t0: i64, t1: i64) -> Vec<i64> {
+    let a = cal.mins.partition_point(|&m| m < t0);
+    let b = cal.mins.partition_point(|&m| m < t1);
+    let mut out = vec![];
+    for w in cal.mins[a..b].windows(2) {
+        if w[1] - w[0] > 60 {
+            out.push(w[1] - w[0]);
+        }
+    }
+    out
+}
+
+/// If `t` falls inside a closed interval, its length in seconds — i.e. "the market is
+/// shut and the next thing that happens is an open, `n` seconds after the last print".
+fn current_break(cal: &SessionCal, t: i64) -> Option<i64> {
+    if cal.is_open(t) {
+        return None;
+    }
+    let i = cal.mins.partition_point(|&m| m < t);
+    let prev = if i == 0 { None } else { Some(cal.mins[i - 1]) };
+    let next = cal.mins.get(i).copied();
+    match (prev, next) {
+        (Some(p), Some(n)) => Some(n - p),
+        _ => None,
+    }
+}
+
+/// Variance of a close-to-open gap of clock length `dt`, from the measured (short, long)
+/// rms pair. The split is a step, not a curve: an overnight pause and a weekend are
+/// different animals and there is no useful sample in between.
+fn gap_var(dt: i64, sd: (f64, f64)) -> f64 {
+    let s = if dt > 86400 { sd.1 } else { sd.0 };
+    s * s
+}
+
+/// rms close-to-open log return over the trailing `lookback_s`, split into "short" breaks
+/// (an overnight pause) and "long" ones (a weekend / holiday). Returns (short, long).
+/// `None` for a class that never closes.
+fn gap_sd(
+    db: &CandleDb,
+    key: &str,
+    cal: &SessionCal,
+    class: Class,
+    t: i64,
+    lookback_s: i64,
+) -> Option<(f64, f64)> {
+    if class == Class::Crypto {
+        return Some((0.0, 0.0));
+    }
+    // last in-session close before each break, first in-session close after it
+    let candles = db.slice(key, t - lookback_s, t);
+    let mut open: Vec<(i64, f64)> = vec![];
+    for c in candles {
+        if cal.is_open(c.t) {
+            open.push((c.t, c.c));
+        }
+    }
+    if open.len() < 200 {
+        return None;
+    }
+    let (mut sh, mut lg) = (vec![], vec![]);
+    for w in open.windows(2) {
+        let dt = w[1].0 - w[0].0;
+        if dt <= 60 {
+            continue;
+        }
+        let r = (w[1].1 / w[0].1).ln();
+        // > 24h of clock closure == a weekend or a holiday bridge
+        if dt > 86400 { lg.push(r) } else { sh.push(r) }
+    }
+    let rms = |v: &Vec<f64>| {
+        if v.is_empty() {
+            0.0
+        } else {
+            (v.iter().map(|x| x * x).sum::<f64>() / v.len() as f64).sqrt()
+        }
+    };
+    Some((rms(&sh), rms(&lg)))
+}
+
+/// First-passage probability with an explicit INITIAL JUMP before the diffusion starts.
+///
+/// Two situations need it and they compose:
+///   * the resolving feed is shut right now, so the next thing that happens to the
+///     barrier is a close-to-open gap (`gap_sd`), and
+///   * the leg's window has not opened yet, so the level diffuses for `tau_pre` of
+///     session time before the barrier is watched at all.
+///
+/// A path that jumps beyond the barrier touches AT the open — the venue reads the
+/// candle, not our smooth model — so that mass counts in full.
+///
+/// The jump is `exp(jump_sd * Z)` with NO `-jump_sd^2/2` convexity term, because the rest
+/// of this model is driftless in LOG price (`touch_prob` is `2N(-|ln(B/S)|/(sigma sqrt(tau)))`,
+/// which assumes zero log-drift). Using the martingale-in-price convention here instead
+/// would inject a `-jump_sd^2/2` log-drift that makes every DOWN leg likelier and every UP
+/// leg less likely — a systematic tilt in exactly the direction that flatters a seller of
+/// the up wing. `selftest` catches it: with the convexity term the equal-variance
+/// jump-vs-diffusion inequality holds for H legs and is violated for L legs.
+///
+/// Integration: 201-node midpoint rule on the standard normal over +/-6 sd, which
+/// reproduces `touch_prob` to <1e-4 when `jump_sd = 0` (see `selftest`).
+fn touch_prob_jump(
+    s: f64,
+    b: f64,
+    dir: char,
+    sigma: f64,
+    tau_yrs: f64,
+    jump_sd: f64,
+) -> f64 {
+    if jump_sd <= 0.0 {
+        return touch_prob(s, b, dir, sigma, tau_yrs);
+    }
+    let (mut num, mut den) = (0.0, 0.0);
+    let (k, hi) = (201usize, 6.0f64);
+    for i in 0..k {
+        let z = -hi + 2.0 * hi * (i as f64) / (k as f64 - 1.0);
+        let w = (-0.5 * z * z).exp();
+        let sp = s * (jump_sd * z).exp();
+        let beyond = (dir == 'H' && sp >= b) || (dir == 'L' && sp <= b);
+        num += w * if beyond { 1.0 } else { touch_prob(sp, b, dir, sigma, tau_yrs) };
+        den += w;
+    }
+    num / den
+}
+
 // ---------- vol anchors ----------
 
 fn cmd_vol(data: &Path) -> Result<()> {
@@ -1574,7 +1761,7 @@ fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
     );
     let iv = load_iv(data);
     let mut pred_rows = vec![
-        "market_slug,condition_id,outcome,token_id,probability,market_midpoint,bid,ask,dir,barrier,note"
+        "market_slug,condition_id,outcome,token_id,probability,market_midpoint,bid,ask,dir,barrier,feed_age_h,feed_open,jump_sd,note"
             .to_string(),
     ];
     println!("live @ {} UTC", Utc::now().format("%Y-%m-%d %H:%M"));
@@ -1599,17 +1786,47 @@ fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
         let key = asset.live_key();
         let spot = db.spot_at(key, cal, now, 4 * 86400);
         let rv = realized_vol(&db, key, cal, class, now, 14 * 86400);
+        let rv_i = realized_vol_intraday(&db, key, cal, class, now, 14 * 86400);
+        let gsd = gap_sd(&db, key, cal, class, now, 120 * 86400).unwrap_or((0.0, 0.0));
         let ivv = iv_at(&iv, asset, now);
+
+        // How stale is the resolving feed right now? A prediction made while the feed is
+        // shut carries NO information the last print did not already have, while the
+        // book keeps trading. This is what lost `will-wti-dip-to-85-in-july-2026`:
+        // 28.8h stale, the market moved 0.475 -> 0.715 over the closure, the model could
+        // not move at all, and CLU6 opened -7.8% straight through the barrier.
+        let last_print = db
+            .by_key
+            .get(key)
+            .and_then(|v| v.iter().rev().find(|c| cal.is_open(c.t) && c.t <= now).map(|c| c.t));
+        let age_h = last_print.map(|t| (now - t) as f64 / 3600.0).unwrap_or(f64::NAN);
+        let cur_break = current_break(cal, now);
+        let feed_open = cur_break.is_none();
+
         println!(
-            "\n== {slug} | spot[{key}] {} | RV14d {} | IV {} | window ends {} ==",
+            "\n== {slug} | spot[{key}] {} ({} {:.1}h old) | RV14d {} (intraday {}) | gap sd {:.2}%/{:.2}% | IV {} | window ends {} ==",
             spot.map(|s| format!("{s:.2}")).unwrap_or("?".into()),
+            if feed_open { "feed OPEN," } else { "feed SHUT," },
+            age_h,
             rv.map(|v| format!("{:.1}%", v * 100.0)).unwrap_or("n/a".into()),
+            rv_i.map(|v| format!("{:.1}%", v * 100.0)).unwrap_or("n/a".into()),
+            gsd.0 * 100.0,
+            gsd.1 * 100.0,
             ivv.map(|v| format!("{:.1}%", v * 100.0)).unwrap_or("n/a".into()),
             DateTime::from_timestamp(l0.we, 0).unwrap().format("%m-%d %H:%MZ")
         );
+        if let Some(dt) = cur_break {
+            println!(
+                "  !! STALE FEED: shut for {:.1}h, reopens in {:.1}h. Every q below is priced off a\n\
+                 !! frozen spot; the book has been trading the whole time. Treat any disagreement\n\
+                 !! with the market as OUR blind spot until the feed reopens (stale-feed gate).",
+                age_h,
+                (dt as f64 / 3600.0) - age_h
+            );
+        }
         println!(
-            "  {:>3} {:>9} {:>7} {:>7} {:>7} {:>9} {:>7} {:>7} {:>7}",
-            "dir", "barrier", "bid", "ask", "mid", "tob$", "q_rv", "q_iv", "edge"
+            "  {:>3} {:>9} {:>7} {:>7} {:>7} {:>9} {:>7} {:>7} {:>7} {:>7}",
+            "dir", "barrier", "bid", "ask", "mid", "tob$", "jump", "q_rv", "q_iv", "edge"
         );
         for l in &legs {
             if l.closed {
@@ -1639,22 +1856,53 @@ fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
                 bid.map(|(p, s)| p * s).unwrap_or(0.0) + ask.map(|(p, s)| p * s).unwrap_or(0.0);
             let tau_t0 = now.max(l.ws);
             let tau = cal.count(tau_t0, l.we) as f64 / min_per_year(class);
-            let q_rv = match (spot, rv) {
-                (Some(s), Some(v)) => Some(touch_prob(s, l.barrier, l.dir, v, tau)),
+
+            // ---- variance that lands BEFORE the barrier is watched, as one jump ----
+            // (a) the leg's window has not opened yet: the level free-diffuses for
+            //     tau_pre of session time, plus any session breaks in between;
+            // (b) the feed is shut right now: the next event the barrier sees is a
+            //     close-to-open gap, and a path that gaps past the barrier touches AT
+            //     the open. Both were missing before 2026-07-27.
+            let sig_i = rv_i.or(rv).unwrap_or(0.0);
+            let tau_pre = cal.count(now, l.ws.max(now)) as f64 / min_per_year(class);
+            let mut jump_var = sig_i * sig_i * tau_pre;
+            for dt in session_breaks(cal, now, l.ws.max(now)) {
+                jump_var += gap_var(dt, gsd);
+            }
+            if let Some(dt) = cur_break {
+                jump_var += gap_var(dt, gsd);
+            }
+            // remaining in-window breaks stay smooth (they are far away and many)
+            let mut win_gap_var = 0.0;
+            for dt in session_breaks(cal, tau_t0, l.we) {
+                win_gap_var += gap_var(dt, gsd);
+            }
+            let bump = |v: f64| {
+                if tau > 0.0 { (v * v + win_gap_var / tau).sqrt() } else { v }
+            };
+            let jump_sd = jump_var.sqrt();
+
+            let q_rv = match (spot, rv_i.or(rv)) {
+                (Some(s), Some(v)) => {
+                    Some(touch_prob_jump(s, l.barrier, l.dir, bump(v), tau, jump_sd))
+                }
                 _ => None,
             };
             let q_iv = match (spot, ivv) {
-                (Some(s), Some(v)) => Some(touch_prob(s, l.barrier, l.dir, v, tau)),
+                (Some(s), Some(v)) => {
+                    Some(touch_prob_jump(s, l.barrier, l.dir, v, tau, jump_sd))
+                }
                 _ => None,
             };
             println!(
-                "  {:>3} {:>9} {:>7} {:>7} {:>7} {:>9.0} {:>7} {:>7} {:>7}",
+                "  {:>3} {:>9} {:>7} {:>7} {:>7} {:>9.0} {:>6.2}% {:>7} {:>7} {:>7}",
                 l.dir,
                 l.barrier,
                 bid.map(|(p, _)| format!("{p:.3}")).unwrap_or_default(),
                 ask.map(|(p, _)| format!("{p:.3}")).unwrap_or_default(),
                 mid.map(|p| format!("{p:.3}")).unwrap_or_default(),
                 tob,
+                jump_sd * 100.0,
                 q_rv.map(|p| format!("{p:.3}")).unwrap_or_default(),
                 q_iv.map(|p| format!("{p:.3}")).unwrap_or_default(),
                 match (q_rv, mid) {
@@ -1664,7 +1912,7 @@ fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
             );
             if let (Some(q), Some(m)) = (q_rv, mid) {
                 pred_rows.push(format!(
-                    "{},{},Yes,{},{:.4},{:.4},{},{},{},{},spot={:.2};rv={:.3};tau={:.5};ws={}",
+                    "{},{},Yes,{},{:.4},{:.4},{},{},{},{},{:.1},{},{:.4},spot={:.2};rv={:.3};rv_i={:.3};tau={:.5};ws={}",
                     l.market_slug,
                     l.condition_id,
                     l.token_yes,
@@ -1674,8 +1922,12 @@ fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
                     ask.map(|(p, _)| format!("{p:.3}")).unwrap_or_default(),
                     l.dir,
                     l.barrier,
+                    age_h,
+                    feed_open as u8,
+                    jump_sd,
                     spot.unwrap_or(f64::NAN),
                     rv.unwrap_or(f64::NAN),
+                    sig_i,
                     tau,
                     l.ws
                 ));
@@ -1908,7 +2160,7 @@ fn cmd_roll(data: &Path, slug: &str, u0: f64, v0: f64, sigma_v: f64, beta: f64) 
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
-    let usage = "usage: ladderrv <discover|candles|vol|clob|analyze|tape|wash|live|roll> \
+    let usage = "usage: ladderrv <discover|candles|vol|clob|analyze|tape|wash|live|roll|gaps|selftest> \
                  <data_dir> ...\n  roll <board-slug> <u0> <v0> <sigma_v> <beta>";
     if args.len() < 3 {
         bail!("{usage}");
@@ -1955,6 +2207,76 @@ fn main() -> Result<()> {
             let split = touch_prob_roll(100.0, 100.0, 120.0, 'H', sig, 0.0, 0.0, 0.04, 0.04);
             let one = touch_prob(100.0, 120.0, 'H', sig, 0.08);
             println!("  split 0.04+0.04 vs one 0.08: {split:.5} vs {one:.5} diff {:+.6}", split - one);
+            // touch_prob_jump with no jump must reproduce the closed form, and a jump of
+            // sd j must equal free diffusion of the same variance when the barrier is far
+            // enough that the "jumped past it" atom is negligible.
+            for (b, d) in [(110.0, 'H'), (90.0, 'L')] {
+                let z = touch_prob_jump(100.0, b, d, sig, tau, 0.0);
+                let c = touch_prob(100.0, b, d, sig, tau);
+                println!("  jump=0 {d}{b}: {z:.5} vs closed {c:.5} diff {:+.6}", z - c);
+            }
+            // The same variance delivered as a JUMP must give a strictly SMALLER touch
+            // probability than delivering it as extra DIFFUSION time: a jump has no path,
+            // so excursions inside the jump are not observed by the barrier, while a
+            // diffusion of equal variance is watched continuously. (Checked, not assumed —
+            // the first version of this comment asserted the opposite and was wrong.)
+            for (b, d) in [(130.0, 'H'), (75.0, 'L')] {
+                let j = 0.05;
+                let jm = touch_prob_jump(100.0, b, d, sig, tau, j);
+                let sm = touch_prob(100.0, b, d, sig, tau + j * j / (sig * sig));
+                println!(
+                    "  {d}{b} equal variance: JUMP {jm:.5} vs DIFFUSION {sm:.5} ({:+.2}%) {}",
+                    100.0 * (jm / sm - 1.0),
+                    if jm <= sm * (1.0 + 1e-4) { "ok" } else { "VIOLATED" }
+                );
+            }
+            // The regime where the two forms genuinely separate: jump-dominated. With no
+            // diffusion at all the barrier can only be crossed BY the jump, so the answer
+            // must fall to N(-b/j) -- exactly HALF the reflection-principle value, because
+            // reflection counts paths that touched and came back and a jump has no path.
+            let j = 0.30;
+            for (b, d) in [(130.0, 'H'), (75.0, 'L')] {
+                let jm = touch_prob_jump(100.0, b, d, sig * 1e-6, 1e-12, j);
+                let one = ncdf(-(b / 100.0f64).ln().abs() / j);
+                println!(
+                    "  {d}{b} jump-only: {jm:.5} vs N(-|ln(B/S)|/j) {one:.5} diff {:+.6} (reflection would be {:.5})",
+                    jm - one,
+                    2.0 * one
+                );
+            }
+            Ok(())
+        }
+        "gaps" => {
+            // Close-to-open gap statistics per feed: the input to the jump term.
+            let cals: BTreeMap<Class, SessionCal> = [Class::Crypto, Class::Equity, Class::Wti]
+                .into_iter()
+                .map(|c| (c, SessionCal::build(c)))
+                .collect();
+            let keys = ["USOILSPOT", "WTIU6", "WTIV6", "XAUUSD", "XAGUSD", "SPY", "NVDA", "BTCUSDT"];
+            let db = CandleDb::load(&data, &keys);
+            let now = Utc::now().timestamp();
+            println!(
+                "\n  {:<12} {:>10} {:>12} {:>12} {:>14}",
+                "feed", "class", "gap sd o/n", "gap sd wknd", "RV14 intraday"
+            );
+            for k in keys {
+                let class = match k {
+                    "SPY" | "NVDA" => Class::Equity,
+                    "BTCUSDT" => Class::Crypto,
+                    _ => Class::Wti,
+                };
+                let cal = &cals[&class];
+                let g = gap_sd(&db, k, cal, class, now, 120 * 86400);
+                let vi = realized_vol_intraday(&db, k, cal, class, now, 14 * 86400);
+                println!(
+                    "  {:<12} {:>10} {:>11} {:>12} {:>14}",
+                    k,
+                    format!("{class:?}"),
+                    g.map(|x| format!("{:.2}%", x.0 * 100.0)).unwrap_or("n/a".into()),
+                    g.map(|x| format!("{:.2}%", x.1 * 100.0)).unwrap_or("n/a".into()),
+                    vi.map(|v| format!("{:.1}%", v * 100.0)).unwrap_or("n/a".into()),
+                );
+            }
             Ok(())
         }
         _ => bail!("{usage}"),
