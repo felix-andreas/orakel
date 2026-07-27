@@ -4,47 +4,29 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 
 ## Short-term (current run / immediate)
 
-- **2026-07-26 run** (ops/runs/2026-07-26.toml). Slots: 1 = `barrier-touch/ladder-rv`
-  (day 4, **13 rows appended**, ledger 108→121), 2 = **turned over twice in one morning** —
-  `arena-rank/favourite-shrinkage` parked, `tomatometer/arrival-drift` promoted into the
-  same slot within 3 hours and **retired on day 1 by gate 0**. slots_active back to 1.
-- **THE BIG CORRECTION: our 2-of-21 reachability headline was about equity weeklies, not
-  about the variant.** Slot 1 replayed the tape across all 70 predicted markets:
-  BTC 100%, WTI 99%, silver 89%, gold 82%, **SPY/NVDA weeklies 38%**. Always split
-  reachability by BOARD FAMILY before concluding anything about a variant. Gold is the
-  warning case — best Brier edge, thinnest tape, 0/11 markets ever showed a bid at our mid.
-- **New status `parked`** (trial | live | parked | retired). `retired` = a gate killed the
-  thesis; `parked` = the thesis HELD and has no expression. Releases the slot, keeps the
-  clock and evidence, carries `reopen_when` naming an observable condition. Dashboard had
-  to be taught it — the stat strip read 2+0+5 against a total of 8 and the parked variant
-  was invisible. **Any new status is a dashboard change; check the arithmetic reconciles.**
-- **I promoted an idea on its DESCRIPTION of gate 0, not a measurement, and it was dead at
-  filing time.** Kalshi is the primary venue for film-score ladders (1c spread vs our 18c,
-  $7.19M vs $41k on the same film) with an unbiased line. Playbook now requires a named
-  incumbent to be MEASURED before filing; unmeasurable → file `needs-gate-0`, not `backlog`.
-  **Never spend a slot on an unmeasured incumbent.**
-- **Sub-agents can outlive their parent.** Slot 2's Wayback harvester reported 90 min after
-  the run closed, into an already-retired folder. Used it to close the audit the kill left
-  open: the founding drift claim REPLICATED at 8x sample (-4.29 vs -4.14) but its explanation
-  did NOT (thin-denominator ratio 1.26x, not 7.6x). **A correct observation with a wrong
-  explanation that the market already prices is the failure mode to expect from here on** —
-  our screens are good enough that being right is no longer sufficient. Always check for
-  orphaned output before treating a variant folder as finished.
-- **Kalshi publishes free hourly bid/ask HISTORY (`candlesticks`)** — the historical order
-  book we lack. Our fillcheck reachability is a lower bound only because a resting bid nobody
-  hit leaves no trace in a trade feed; a real quote history replaces the bound with a
-  measurement. TOP wiki item next run.
-- **Backlog was EMPTY this morning** (7 ideas in 4 days, 5 killed day 1, 0 available) — that
-  is why slots 3–5 idle, not capacity. Ran a second market researcher; it filed the
-  front-line first-passage idea. **Escalated to Felix: war-market domain ruling**
-  (`roles/felix/inbox/2026-07-26-war-markets-scope.md`) — awaiting his yes/no before a slot.
-- **Next run checklist:** (1) Felix's war-market ruling → promote or mark `discarded-scope`;
-  (2) slot 1 day 5: the leg-sum/null-model re-check is STILL outstanding (2 runs now), plus
-  `cmd_live` doesn't diffuse spot to a future window open (5.9% off for August), plus the
-  skipped R2 archive freeze — don't let it skip twice; (3) 07-31: WTI+gold+silver July
-  boards resolve → ~51 rows scored, the trial's real evidence; (4) archive WTIX6 when it
-  lists (~Aug 20) — WTIQ6 is already delisted; (5) ~08-10: check whether the August arena
-  boards priced, to reopen favourite-shrinkage.
+- **2026-07-27 run** (ops/runs/2026-07-27.toml). Slot 1 = ladder-rv only; 11 rows appended
+  (ledger 132, scored 25). Market researcher filed nothing, correctly.
+- **THE HEADLINE FLIPPED. WTI touched $85 and ladder-rv now LOSES to the market**:
+  +0.000945 (21 rows) → **−0.0172** (25 rows). dip-to-85 alone is −0.4510, more than the total
+  loss; everything else nets +0.0198. Tradeability 2/21 → 6/25 — **where there was liquidity we
+  were wrong; where we were right there was no liquidity.**
+- **Cause is structural, not miscalibration. STALE-FEED GATE ADOPTED.** WTI/metals trade
+  22:00Z–21:00Z Mon–Fri; the feed was shut 28.8h while the book repriced 0.475 → 0.715 during
+  exactly that closure. Our model moved −2.8 points from a vol lookback sliding across closed
+  days — arithmetic that looks like a view. **64 of 95 outstanding rows were priced off a shut
+  feed.** Weekend runs now emit nothing on WTI/gold/silver. `wiki/reference/stale-feed-gate.md`
+  is the FOURTH way a quote misleads and the only one where OUR number is broken, not theirs.
+- **The null/leg-sum check CLEARS** (asked since 07-25, slipped 3 runs). No null beats the
+  market at either checkpoint we use, all seven assets, both anchors. The headline is not an
+  artifact. But the board-CREATION anchor does lose to a null (85% of legs at 45–55c) — never
+  use it. And **gold's window-open claim is withdrawn** (leg-sum gate takes −0.0189 → −0.0001);
+  gold stays tradeable on the daily-checkpoint margin instead. **Stop quoting the pooled
+  window-open edge — it reverses under the gate.**
+- **Scoring now aggregates per MARKET.** Rows are not independent: 19 markets −0.0051 vs 25 rows
+  −0.0173. Report both; the row number flatters and deflates alike.
+- **Eleven ideas, 7 of 9 kills are "somebody already prices it well."** Filed as a hypothesis
+  under test in decisions, no action attached. If the war-market idea dies too, the question
+  becomes "is this the right pond" — Felix's, not mine.
 
 ## Medium-term (bootstrap phase)
 

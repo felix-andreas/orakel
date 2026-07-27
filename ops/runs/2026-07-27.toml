@@ -1,0 +1,171 @@
+date = "2026-07-27"
+trigger = "daily (fired 07:01 UTC, inside the weekday window 00:00-13:00 UTC)"
+model = "claude-opus-5"
+outcome = "ok"
+
+summary = """
+The trial's first real test arrived and we failed it: WTI touched $85 and ladder-rv's headline
+flipped from +0.000945 to -0.0172. The cause turned out to be structural rather than a
+miscalibration — the resolving feed was shut for 28.8 hours while the book repriced, and 64 of
+95 outstanding rows were priced the same way. Adopted a stale-feed gate. The leg-sum/null check
+that had slipped three runs came back CLEAN, so the evidence base is not an artifact. Market
+researcher filed nothing and was right to.
+"""
+
+[[steps]]
+n = 1
+what = "Orient"
+result = "Yesterday's manifest present. CEO inbox empty; 4 open Felix items, none answered. Backlog: 1 idea, blocked on Felix's war-market ruling."
+
+[[steps]]
+n = 2
+what = "Watchlist rebuilt and mirrored"
+result = """
+156 -> 53 markets. The 182 arena legs left with favourite-shrinkage: parking it deactivated its
+applications, which also broke the `reopen_when` I wrote yesterday promising the snapshot worker
+would gather the reopening evidence unattended. It will not, and the August boards are not listed
+yet anyway (checked, all three slugs return nothing) — corrected in the file to a calendar item
+from ~08-10. All 53 remaining markets resolve in July; every market with an unresolved prediction
+is covered; R2 readback byte-identical.
+"""
+
+[[steps]]
+n = 3
+what = "SCORING — two markets resolved, both YES, both against us"
+result = """
+will-wti-dip-to-85 touched: we said no-touch four mornings (0.4937 / 0.3520 / 0.3928 / 0.3650)
+while the market went 0.525 -> 0.715. will-wti-dip-to-90-from-july-25 also touched.
+Mean paired improvement +0.000945 (21 rows) -> -0.0172 (25 rows). dip-to-85 alone is -0.4510,
+larger than the total loss of -0.4312; every other row still nets +0.0198.
+Tradeability 2/21 -> 6/25, because mid-board WTI legs are the reachable ones — so the rows we
+could have traded are the rows we lost on.
+"""
+
+[[steps]]
+n = 4
+what = "Scoring gained a per-MARKET aggregate level"
+result = """
+Rows are not independent: we predict the same market every morning, so one barrier touch is
+scored once per day it was open. Per market: 19 markets, -0.0051. Per row: 25 rows, -0.0173 —
+3.4x worse purely because we predicted the losing market four times. Both negative, so the flip
+is real either way; the magnitude was counting-dependent and is now visible as such. It would
+have deflated the 21/21 headline too.
+"""
+
+[[steps]]
+n = 5
+what = "Slot 1 — barrier-touch/ladder-rv day 5 (claude-opus-5, xhigh)"
+result = """
+LEG-SUM / NULL CHECK CLEARS (asked for since 07-25, slipped three runs). No null beats the
+market at either checkpoint the trial uses, in all seven assets separately, at both anchors,
+stable across clip epsilon. Our model beats the market at both. The headline is not an artifact.
+Two caveats: the board-creation anchor DOES lose to a base-rate null (85% of legs quote 45-55c
+there) but we have never used it; and gold's window-open Brier margin does not survive a leg-sum
+gate (-0.0189 -> -0.0001), so that claim is withdrawn and gold stays tradeable on the
+daily-checkpoint margin instead.
+Also: both cmd_live defects fixed, archive freeze done, 07-31 identity 51/51 clean, epsilon
+screen clear. 11 rows proposed and appended after verification (ledger 121 -> 132).
+"""
+
+[[steps]]
+n = 6
+what = "The 07-26 divergence explained — and it is systemic"
+result = """
+The 07-25 and 07-26 runs read the SAME spot (Fri 20:59Z close, 90.46), sigma and remaining
+sessions. WTI/metals trade 22:00Z-21:00Z Mon-Fri, so the feed was shut 28.8h while the book
+repriced 0.475 -> 0.715 during exactly that closure. Our model moved -2.8 points, caused by a
+14-day realized-vol lookback sliding across two closed days — arithmetic that looks like a view.
+Solving the market's quote for spot gives 87.3-88.0 against our 90.46: it priced a LOWER LEVEL,
+not a wider distribution, and no sigma recovers a level from a Friday close. No feed we hold
+printed during the closure. 64 of 95 outstanding rows were priced this way.
+"""
+
+[[steps]]
+n = 7
+what = "Stale-feed gate ADOPTED (CEO decision)"
+result = """
+Suppress the row, rather than re-price it at the market — a row whose edge is zero by
+construction is not evidence, it is a row that later gets counted as one. Weekend runs now emit
+nothing on WTI/gold/silver, which changes the cadence. wiki/reference/stale-feed-gate.md written
+as the FOURTH way a quoted price misleads and the only one where OUR number is the broken one.
+"""
+
+[[steps]]
+n = 8
+what = "Market researcher (claude-opus-5, max) — filed nothing, correctly"
+result = """
+Worked up and killed box office. Every venue check passed perfectly: 0 of 12,187 Kalshi series,
+Pinnacle Entertainment matchupCount 0, Smarkets empty; feed-stability 98/98, the best measured.
+Killed by the market's own confidence — implied lognormal sigma 0.120 against 0.171 for the best
+model the entire free panel supports scored IN-SAMPLE. Chasing the gap produced the incumbent: a
+former trade analyst posting a free weekly forecast as a PNG in a Substack post, ~10% MAPE. It
+also corrected a claim it had written into the wiki yesterday. Promoted to
+wiki/reference/implied-sigma-names-the-incumbent.md — the cheapest screen we own, and it runs
+BEFORE the modelling.
+"""
+
+[[steps]]
+n = 9
+what = "Health checks + book compaction"
+result = """
+Dashboard 302 without Access headers / 200 with. Snapshot worker responding; token errors down
+166 -> 7 after yesterday's placeholder pruning. bookpack packed all five days and verified each
+against the source JSON (rows, summed midpoints, bid presence — all exact). 27/27 R2 manifests
+resolve. Worklogs current.
+"""
+
+[failures]
+mine = """
+1. Yesterday's `reopen_when` for the parked variant promised the snapshot worker would gather
+   the evidence to reopen on 'without anyone watching'. Parking deactivated its applications, so
+   the legs left the watchlist and the promise was false the moment I wrote it. Corrected to a
+   calendar item.
+2. I have been quoting ladder-rv's pooled window-open edge in summaries. It reverses under a
+   leg-sum gate (-0.00505 -> +0.00417). Withdrawn.
+"""
+theirs = """
+Slot 1 self-reported that day 4's RV14 of 48.8% is NOT reproducible (51.7% from the complete
+archive) because day 4 never froze its inputs — and that the error ran in the flattering
+direction. Unresolvable now. It is the clearest argument for the archive discipline anyone has
+made, and it is why the freeze got done today rather than deferred a third time.
+"""
+tooling = """
+The stop hook fired repeatedly on files owned by live subagents again. Unchanged from yesterday:
+it cannot tell agent-owned in-flight work from neglect, so it fires on every multi-agent run.
+Felix's call, since it lives outside the repo.
+web.archive.org was hard-blocked all run for the market researcher (14 consecutive resets),
+though archive.org/wayback/available worked. Do not plan around Wayback without testing first.
+"""
+
+[spend]
+subagents = 2
+subagent_tokens = 539_509
+note = "slot 1 (341.4k), market researcher (198.1k). Down from 6 agents / 1.39M yesterday — one blocked backlog and one active slot is the honest shape of the day."
+
+[health]
+dashboard_access = "302 without / 200 with — pass"
+snapshot_worker = "pass; 7 token errors, down from 166"
+r2_manifests = "27/27 resolve"
+parquet = "5 days packed, all reconcile against source JSON"
+worklogs = "current"
+slots_producing = "slot 1 yes (11 rows); market researcher filed nothing, deliberately"
+
+[artifacts]
+wiki_added = [
+  "reference/stale-feed-gate.md",
+  "reference/implied-sigma-names-the-incumbent.md",
+]
+decisions = 3
+predictions_appended = 11
+ledger_total = 132
+scored_total = 25
+
+[next_run]
+items = [
+  "07-31 (Friday): WTI+gold+silver July boards resolve, ~48 rows — the trial's real evidence, and the trial review is 08-02",
+  "Score Friday's rows SPLIT BY PRICER VERSION: rows from 2026-07-27 use touch_prob_jump, earlier ones do not, and the change was uniformly downward on the day we were proved wrong as sellers",
+  "RV/IV blend: pre-registered comparison scored on Friday, NOT a live switch — OVX sits above the market on every WTI leg, so a naive switch flips us from seller to buyer and buys lose after fees",
+  "Fold slot 1's correction into wiki/reference/checkpoint-artifact.md: a nested ladder makes literal leg-sum ~ 1 vacuous; the quantity that can be wrong is sum(mid) vs sum(winner)",
+  "Felix: war-market ruling, apply-write decision, bankroll figure, GitHub token scope",
+  "~08-10: check whether the August arena boards priced, to reopen favourite-shrinkage",
+]
