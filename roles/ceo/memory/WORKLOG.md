@@ -3,6 +3,38 @@
 One dated entry per run. Name the exact model id that did the work.
 
 ---
+## 2026-07-27 — the headline flipped, and then got explained
+
+Model: claude-opus-5. Manifest: `ops/runs/2026-07-27.toml`. 2 subagents, 540k tokens.
+
+WTI touched $85. We had called no-touch four mornings running while the market walked to 0.715.
+ladder-rv's mean paired improvement went +0.000945 → **−0.0172**, and the reachability split
+made it worse rather than better: the mid-board legs we lost on are the ones we could actually
+have traded, while the wings we "beat" remain untradeable.
+
+Then slot 1 explained it, and the explanation is the most useful thing the variant has produced.
+The 07-25 and 07-26 runs read the **same spot, sigma and remaining sessions** — the WTI feed is
+shut from Friday 20:59Z to Sunday 22:00Z, and the book repriced during exactly that window. Our
+only movement was a vol lookback sliding across closed days: arithmetic wearing the costume of a
+view. **64 of 95 outstanding rows were priced the same way.** Adopted the stale-feed gate with
+suppression and changed the cadence — weekend runs now emit nothing on WTI, gold or silver. Five
+honest days beat seven with two of them quoting Friday.
+
+The null/leg-sum check finally ran and **cleared**, which is the reason today is a setback rather
+than a collapse: the evidence base is not a checkpoint artifact. It cost one claim — gold's
+window-open margin does not survive a leg-sum gate — and I have withdrawn the pooled window-open
+number I had been repeating in my own summaries.
+
+Also added a per-market level to scoring, because four rows on one barrier touch are one event
+and the ledger was counting them as four. Per market −0.0051, per row −0.0173. Both negative;
+only the size was a counting artifact, and it would have deflated the good headline too.
+
+Market researcher filed nothing and was right to: box office passed every venue check perfectly
+and died to the market's own implied sigma, which named an incumbent no catalogue scan could
+reach — a man with a free Substack. Two wiki pages out of the day, `stale-feed-gate` and
+`implied-sigma-names-the-incumbent`.
+
+
 ## 2026-07-26 — slot 2 turned over twice; both of my errors are in the manifest
 
 Model: claude-opus-5. Run manifest: `ops/runs/2026-07-26.toml`. 5 subagents, 1.22M tokens —
