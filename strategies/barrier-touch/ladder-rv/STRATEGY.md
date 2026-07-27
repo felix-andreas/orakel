@@ -132,8 +132,35 @@ refetch of yesterday, which was partial when captured), `vol`, then `live` on ac
 boards; freeze the candle+vol archive to R2 via r2data before committing the manifest
 (`data/candles-<date>.tar.gz.r2.json`) — that frozen archive is the resolution record.
 
+**Checkpoint discipline (settled 2026-07-27, `results/legsum-null-and-stale-feed-2026-07-27.md`).**
+This family's legs are **nested**, not mutually exclusive, so the wiki's `leg-sum ≈ 1` gate
+is vacuous; the equivalent checkable quantity is `Σmid` (the market's expected YES count)
+against `Σwinner`. Report it beside every headline. **Never anchor a checkpoint at board
+creation** — 85% of legs quote a mid in [45c, 55c] there and a flat base-rate beats the
+market's own log-loss. Window-open and daily-12:00Z both beat every null in every asset,
+so the trial's numbers stand; but gate board-snapshots at `avg_mid ≤ 0.40` before quoting a
+Brier margin, because the **pooled window-open** margin reverses under that gate.
+
+**Stale-feed blindness (found 2026-07-27 by losing `will-wti-dip-to-85-in-july-2026`).**
+`q` is a function of (spot, σ, τ). The WTI/metals feed is shut Fri 21:00Z → Sun 22:00Z, so
+on a Saturday or Sunday run the calendar freezes spot and τ and the model **cannot update**,
+while the CLOB trades throughout. On 2026-07-26 the book moved 0.475 → 0.715 across that
+closure and CLU6 then opened −7.79% through the barrier. Solving the market's quote for spot
+gives 87.3–88.0 against our 90.46: the market was pricing **a lower level**, which no vol
+model recovers from a stale close. Mitigations now in code: `cmd_live` reports feed age and
+prints a `STALE FEED` banner, and `touch_prob_jump` prices the coming close-to-open gap as a
+lump (WTI weekend gap sd **3.78%**, ≈ a whole session's variance; RTH-equity *overnight* gap
+≈ a whole session's variance). **Proposed and awaiting the CEO: a stale-feed gate** — do not
+treat disagreement with the market as edge when the feed has been shut for the whole period
+over which the market moved.
+
 ## Evidence
 
+- `results/legsum-null-and-stale-feed-2026-07-27.md` — the leg-sum / null-model re-check
+  (creation anchor fails, window-open and daily-12Z clear in every asset; gold's window-open
+  margin does not survive the gate, its daily margin does), and the full reconstruction of
+  the `dip-to-85` loss: the stale-feed mechanism, the measured close-to-open gap table, and
+  the jump-aware pricer that closes both `cmd_live` defects.
 - `results/book-and-tape-audit-2026-07-26.md` — the fill question re-asked per board
   family over all 70 markets we have predicted on. Reachable fraction of the scored
   midpoint: **WTI 99%, BTC 100%, silver 89%, gold 82%, SPY/NVDA weekly 38%**. The 2/21
@@ -184,3 +211,11 @@ boards; freeze the candle+vol archive to R2 via r2data before committing the man
   commodity monthlies reach 82–100% of the scored midpoint, the equity weeklies 38%.
   **13 prediction rows** (WTI/gold/silver July monthlies only); **zero** on August and
   zero on every week-of-Jul-27 board.
+- 2026-07-27 — day-5: **leg-sum / null-model re-check run** — no artifact at the anchors we
+  use, but the **creation** anchor fails outright and **gold's window-open Brier margin does
+  not survive a leg-sum gate** (gold stays tradeable on its daily-checkpoint margin,
+  −0.00541, t −3.55). `will-wti-dip-to-85` resolved YES against us: traced to a **shut
+  resolving feed**, not calibration. Both remaining `cmd_live` defects fixed by one
+  `touch_prob_jump` model, with `realized_vol_intraday` + `gap_sd` and a new `ladderrv gaps`
+  subcommand; `cmd_live` now reports feed staleness. Daily archive freeze restored.
+  **8 prediction rows**; identity 51/51 clean for 07-31.

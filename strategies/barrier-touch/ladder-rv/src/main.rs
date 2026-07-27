@@ -806,7 +806,7 @@ fn realized_vol_intraday(
 // be jumped clean over.
 //
 // It cost us `will-wti-dip-to-85-in-july-2026` on 2026-07-26 (see
-// results/stale-feed-and-gap-2026-07-27.md). Measured over 2026-04-01..2026-07-27:
+// results/legsum-null-and-stale-feed-2026-07-27.md). Measured over 2026-04-01..2026-07-27:
 //
 //   feed        weekend-gap rms   overnight rms   intraday (open->close) rms
 //   USOILSPOT        3.78%            0.57%              3.56%

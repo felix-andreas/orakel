@@ -4,6 +4,105 @@ One dated entry per run. Name the model that did the work.
 
 ---
 
+## 2026-07-27 — day 5: the null check clears, and a loss traced to a shut feed (model: claude-opus-5, effort xhigh)
+
+- **The leg-sum / null-model re-check, finally run** (`results/legsum-null-and-stale-feed-2026-07-27.md`).
+  First the honest translation: a Hit Price ladder is **nested**, not mutually exclusive, so
+  the wiki's `leg-sum ≈ 1` gate is vacuous here — the bucket masses sum to 1 by
+  construction. The equivalent quantity that *can* be wrong is **Σmid = the market's
+  expected number of YES legs, against Σwinner**. Measured on 46 fully-resolved boards /
+  760 resolved legs: creation **1.38** (and **85% of legs quote a mid between 45c and 55c**),
+  window-open 1.11, daily-12Z 1.28.
+- **Verdict: not an artifact at the anchors we use.** Log-loss vs four nulls (uniform, flat
+  base-rate in-sample, leave-one-board-out base rate, clairvoyant per-board rate):
+  **at board creation the null WINS** (market 0.6630 vs base-rate 0.6524; gold, WTI, SPY and
+  NVDA all lose individually). **At window-open (0.4226) and daily-12Z (0.2152) the market
+  beats every null in every one of the seven assets**, and those are the only two anchors in
+  the code — gate 1 reads `ws + 3h`, gate 2 walks daily 12:00Z inside the window. Checked in
+  the source, not assumed. Clip sensitivity 1e-4…1e-2 changes nothing.
+- **But the leg-sum gate costs us one claim, and it is gold's.** Gating board-snapshots at
+  `avg_mid ≤ 0.40`, model-minus-market Brier at **window-open** for gold goes
+  **−0.0189 (t −1.96) → −0.0078 (t −0.90) → −0.0001** at ≤0.30. That is the number day 3
+  used to upgrade gold to tradeable, and it does not survive. Gold's **daily-checkpoint**
+  edge does (−0.00541, t −3.55, n=1619), and that is the checkpoint the sell sim and our
+  live rows use — so gold stays tradeable on different evidence and a smaller margin. WTI
+  is gate-invariant (−0.00901, t −6.07). The **pooled** window-open edge reverses
+  (−0.00505 → +0.00417): stop quoting it.
+- **`will-wti-dip-to-85-in-july-2026` — the CEO asked why the model did not move when the
+  market did. It could not.** Reproduced all four runs from the frozen archive: the 07-25
+  and 07-26 runs read the **same spot (Fri 20:59Z close, 90.46), the same σ and the same
+  five remaining sessions**. The WTI/metals session is 22:00Z→21:00Z Mon–Fri, so the feed
+  was shut from Friday 20:59Z to Sunday 22:00Z — **28.8 hours stale at the 07-26 run** — and
+  the Polymarket book moved **0.475 → 0.715 during exactly that closure** (it happened on
+  Saturday 12:00–18:00Z and was stable at 0.71 by the time we quoted 0.365 against it). The
+  model's only movement between the two runs was −2.8 points from the 14-day RV lookback
+  sliding across two closed days. **Our pricer is a function of (spot, σ, τ); the calendar
+  froze two of them and the third moved for a bookkeeping reason.**
+- **No feed we hold saw it, and no vol model reaches it.** WTIU6, USOILSPOT and XAUUSD all
+  printed **zero** times during the closure — there was no input we ignored. CLU6 then
+  opened **−7.79%** (83.68) and printed 83.17 in the first minute, so the barrier was
+  touched in the opening minute; `...-dip-to-90-...-from-july-25` opened *below* its barrier.
+  Re-pricing the 07-26 run under every available fix: as-run 0.3928, OVX instead of RV
+  **0.5156**, RV + a weekend-jump term 0.4445, OVX + jump 0.5432 — **none reaches 0.715**.
+  Solving the market's quote for spot gives **87.3–88.0**: the market was pricing a *lower
+  level*, not a wider distribution. That is information, and no σ recovers it.
+- **Two code defects closed with one model.** `touch_prob_jump` = first-passage with an
+  explicit initial jump, which covers both (a) the pre-window diffusion missing since 07-26
+  and (b) the close-to-open gap a leg faces when priced on a shut feed. Plus
+  `realized_vol_intraday` + `gap_sd` to split total RV into its smooth part and measured
+  gaps, and a new `ladderrv gaps` subcommand. Measured gap sd (weekend / overnight):
+  **USOILSPOT 3.78% / 0.35%**, WTIU6 4.25% / 0.40%, XAUUSD 0.74% / 0.13%, XAGUSD 1.20% /
+  0.18%, SPY 0.74% / **0.59%**, NVDA 1.38% / **1.43%**, BTC 0 / 0. **A WTI weekend gap
+  carries about as much variance as a whole trading session**; for the RTH-only equity feeds
+  the *overnight* gap does, which we have been pricing at zero τ since day 1 and is a
+  plausible cause of the model losing to the market on SPY/NVDA.
+- **`selftest` earned its keep.** `jump_sd = 0` reproduces the closed form to 0.000000, and
+  the jump-only limit converges to `N(−|ln(B/S)|/j)` — exactly **half** the reflection value,
+  because reflection counts paths that touched and came back and a jump has no path. It also
+  caught a live sign error: my first jump used the martingale-in-*price* convention
+  `exp(jZ − j²/2)`, which injects a −j²/2 **log**-drift making every ↓ leg likelier and every
+  ↑ leg less likely — a systematic tilt flattering a seller of the up wing. The inequality
+  failed on L legs only, which is what exposed it. Removed.
+- **Honest flag on the direction of my own fix.** On today's board (Mon→Fri, no weekend
+  left) the change lowers q: WTI ↓75 0.177 → 0.100, ↑95 0.129 → 0.064, ↓80 0.571 → 0.491.
+  Every move is toward "the touch is less likely than the market thinks", on the day the
+  market was proved right against us. I believe it is correct — RV14 is currently inflated
+  by Sunday's gap and the horizon has no weekend in it, and the new σ√τ (6.3%) matches the
+  realised 4-session intraday move (5.9%) far better than the old (7.7%) — but I am not
+  going to let that pass unremarked.
+- **Daily archive freeze done** (skipped on day 4). `data/candles-2026-07-27.tar.gz.r2.json`
+  and `data/live-2026-07-27.tar.gz.r2.json`, both uploaded and verified before the manifest
+  was committed. 07-25/26/27 force-refetched for all 9 keys. It also surfaced a cost of the
+  day-4 skip: **the day-4 run logged RV14 = 48.8%, and a complete archive gives 51.7%** with
+  no truncation of Friday reproducing 48.8%. That candle store was incomplete in a way that
+  can no longer be identified, because its inputs were never snapshotted — and the error ran
+  in the direction that flattered us.
+- **07-31 readiness.** Identity re-check: **51/51 markets clean** (95 outstanding ladder-rv
+  rows), slug → same conditionId, token → `clobTokenIds[0]`, `&closed=true` throughout.
+  Resolution-epsilon screen per leg from its own TRUE window start: nothing inside 0.2%
+  (closest silver ↓54 1.44%, gold ↓3900 1.55%, WTI ↑95 1.59%, WTI ↓80 1.75%).
+- **↓80 inverted and is worth staring at.** Day 4 proposed it as a tier-A sell, q 0.0738
+  against a 0.405 mid. Today the same model says **0.4906 against a 0.490 mid**. The signal
+  did not decay — it inverted, and the entire inversion is spot 90.46 → 83.82. It was never
+  executed. A 33-point "edge" on this variant can be a 33-point spot move in disguise.
+- **8 prediction rows** → `results/proposed-rows-2026-07-27.csv` (run_id `2026-07-27/daily`):
+  WTI ↑95/↑100/↓75/↓80, gold ↑4300/↓3900, silver ↓54/↓52. All clear the two-sided book, the
+  relative spread `≤ min(5c, ½·mid)`, mid ∈ [3c, 97c], the tape gate (bid-side flow over 7
+  days: WTI ↑95 **$147.9k**, ↓80 $46.6k, ↑100 $54.3k, ↓75 $15.2k; gold $1.9–3.3k; silver
+  $1.7–4.6k) and the epsilon screen. Dropped: silver ↑64 (6c spread) and ↑66 (2.8c on a 4.1c
+  mid) on the relative spread gate; WTI ↑105/↓70 and gold ↑4400 on the 3c mid floor. Zero on
+  August and zero on the week-of-Jul-27 boards (not re-read today — day-6 item). Did not
+  touch predictions.csv.
+- **Escalation to the CEO** (`roles/ceo/inbox/2026-07-27-ladder-rv-stale-feed-and-null-check.md`):
+  (1) the null check clears, with the gold window-open correction; (2) a proposed **stale-feed
+  gate** — **64 of our 95 outstanding rows were priced on a shut feed** (day 3 Saturday, day 4
+  Sunday), so this is not one bad row; (3) RV-primary is now the method's weakest link, since
+  the OVX anchor was closer on ↓85 and is above the market on every WTI leg today.
+- Tooling note (CODING.md): the leg-sum/null tables and the divergence reproduction were done
+  in throwaway Python against the frozen CSVs (fast, one-shot, not committed); everything
+  that has to be reproducible went into the Rust crate — `ladderrv selftest` and
+  `ladderrv gaps` are the artifacts.
+
 ## 2026-07-26 — day 4: the August roll, the tape gate, and where our fills actually are (model: claude-opus-5, effort xhigh)
 
 - **The August roll — blocker cleared, with a verdict.** Built and validated a roll-aware

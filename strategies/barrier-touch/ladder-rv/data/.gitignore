@@ -1,0 +1,10 @@
+# Bulk resolution-feed data lives in R2, not git (AGENTS.md): the manifests
+# `*.r2.json` beside this file are the tracked record. These directories are
+# rebuilt by `ladderrv candles|vol|clob|tape|live` and run to tens of MB —
+# ignored so that a stray `git add -A` from a concurrent agent cannot sweep
+# them into a commit.
+candles/
+vol/
+out/
+tape/
+clob*/
