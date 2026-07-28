@@ -75,4 +75,7 @@ cf_access_service_token = "present" # CF_ACCESS_CLIENT_ID/SECRET; verified 2026-
 mcp = "connected"
 r2_bucket = "orakel"          # created 2026-07-22 via MCP, location ENAM
 dashboard_url = "https://orakel-dashboard.felixandreas.workers.dev" # Access ENFORCED (verified 2026-07-22); agents use CF_ACCESS_CLIENT_ID/SECRET headers
+# The worker is orakel-snapshot, SINGULAR. Health-checking "orakel-snapshots" returns a
+# Cloudflare 404/1042 that looks like a broken worker rather than a typo — 2026-07-28.
+snapshot_url = "https://orakel-snapshot.felixandreas.workers.dev" # public, no Access; GET / returns a one-line description
 # NOTE: bucket "hollywood" in the same account belongs to another project — never touch.
