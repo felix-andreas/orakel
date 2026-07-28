@@ -248,8 +248,29 @@ pub async fn repo_text(env: &Env, path: &str) -> Fetched {
         Ok((200, body)) => Fetched { text: body, live: true },
         // The repository answered and the file is not there. That is data.
         Ok((404, _)) => Fetched { text: String::new(), live: true },
-        _ => dead(),
+        // Anything else on a *pinned* read is very likely the propagation race
+        // rather than a real failure: `head()` learned a SHA from one GitHub
+        // replica and this read hit one that has not seen that commit yet, so
+        // the ref is rejected (422 "No commit found for the ref"). We push
+        // constantly during a run, which is exactly when Felix looks at the
+        // dashboard — measured 2026-07-28 as one banner on the first request
+        // after a push and none in the twenty that followed.
+        //
+        // Retry the same path unpinned at `main`. Still a live read, never a
+        // cached copy; the only thing given up is the guarantee that every file
+        // on the page came from one commit. A one-file commit skew of a few
+        // seconds is a far smaller lie than "part of this page is missing"
+        // printed over a page that is in fact complete.
+        _ => match gh_get(&unpinned_url(path), &tok, TTL_HEAD).await {
+            Ok((200, body)) => Fetched { text: body, live: true },
+            Ok((404, _)) => Fetched { text: String::new(), live: true },
+            _ => dead(),
+        },
     }
+}
+
+fn unpinned_url(path: &str) -> String {
+    format!("https://api.github.com/repos/{REPO}/contents/{path}?ref={BRANCH}")
 }
 
 /// All blob paths via one recursive Trees API call, pinned to the same commit
