@@ -38,8 +38,14 @@ and build the firm's tooling. You are autonomous within [`CONSTITUTION.md`](../.
    then `bookpack verify <yesterday>`. Cheap, idempotent, and it protects the one dataset the
    firm cannot rebuild if it is lost — see ARCHITECTURE §6.
 10. **Dashboard.** Redeploy if dashboard code changed. Spot-check it renders current state.
-11. **Close.** Re-mirror the watchlist if new applications appeared; Write `ops/runs/<date>.toml` (steps, failures, token spend), update memory
-   (prune!), worklog entry, commit + push.
+11. **Close. ALWAYS re-mirror the watchlist — not "if applications changed".** Step 3 mirrors
+   before the run; researchers then propose rows on markets nobody was watching yet, and those
+   markets get no book until the next morning. That happened on 2026-07-27: three gold boards
+   were predicted at ~09:00 against a watchlist mirrored at 07:05, so the snapshot worker
+   recorded nothing for them all day. The build is idempotent and takes seconds, so there is no
+   judgement call to get wrong — mirror from active applications UNION every market carrying an
+   unresolved prediction, every time. Then write `ops/runs/<date>.toml` (steps, failures, token
+   spend), update memory (prune!), worklog entry, commit + push.
 
 ## Concurrency hygiene (subagents share this working tree)
 
