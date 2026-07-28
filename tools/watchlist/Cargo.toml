@@ -1,0 +1,24 @@
+[package]
+name = "watchlist"
+version = "0.1.0"
+edition = "2021"
+description = "Rebuild config/watchlist.json from active applications and unresolved predictions, and mirror it to R2."
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+# attohttpc + native-tls is the same stack rust-s3's `sync-native-tls` uses, so
+# the whole tool has ONE TLS implementation. It matters: ureq's default rustls
+# ships its own root bundle and ignores SSL_CERT_FILE, which fails the agent
+# proxy's MITM certificate with `UnknownIssuer`. native-tls reads the system
+# store and SSL_CERT_FILE, and honours HTTPS_PROXY from the environment.
+attohttpc = { version = "0.28", default-features = false, features = ["tls-native", "json"] }
+# Same backend as tools/r2data and tools/bookpack: pure-sync, honours
+# HTTPS_PROXY and SSL_CERT_FILE, which is what works behind the agent proxy.
+rust-s3 = { version = "0.35", default-features = false, features = ["sync-native-tls"] }
+
+[profile.release]
+strip = true
