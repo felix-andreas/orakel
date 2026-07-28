@@ -9,7 +9,7 @@ approaches ~1 MB, mirror to R2 (decision entry required).
 One row per predicted **outcome token** per run:
 
 ```
-timestamp,market_slug,condition_id,outcome,token_id,family,variant,model,prediction,market_price,run_id,status
+timestamp,market_slug,condition_id,outcome,token_id,family,variant,model,prediction,market_price,run_id,status,pricer_version,feed_age_h,feed_open
 ```
 
 - `timestamp` — RFC3339 UTC of the prediction.
@@ -34,6 +34,24 @@ timestamp,market_slug,condition_id,outcome,token_id,family,variant,model,predict
   (thin books: still the midpoint, by convention — see wiki on reading thin markets).
 - `run_id` — `<YYYY-MM-DD>/<trigger>` linking to `ops/runs/`.
 - `status` — the variant's status at prediction time: `trial` | `live`.
+- `pricer_version` — which build of the variant's pricer produced the number (added
+  2026-07-28). A variant that revises its pricer mid-trial is **two experiments sharing a
+  name**, and without this column the revision is visible only to whoever remembers the
+  date it shipped. `scoring/` aggregates it as a `pricer` level in `scores.csv`, so a model
+  change is scored as the change it is rather than averaged into the variant's running
+  number. ladder-rv shipped `touch_prob_jump` on 2026-07-27 — a uniformly *downward*
+  revision, on the day we were proved wrong as sellers — and the 07-31 batch has to be read
+  split by it.
+- `feed_age_h` / `feed_open` — hours between the **resolution feed's** last print and the
+  moment the row was priced, and whether that feed was in session. Required by
+  `wiki/reference/stale-feed-gate.md` rule 1: a row without them cannot be audited later,
+  and this failure is only ever visible in hindsight. 64 of the first 95 rows were priced
+  off a shut feed and nothing in the ledger said so.
+
+Empty in any of these three means **unknown**, not zero — the columns were added on
+2026-07-28 and the 132 rows written before that were backfilled blank. Rows with an empty
+`pricer_version` aggregate under the label `unversioned`, which is a bucket to read, not a
+baseline to compare against.
 
 `edge = prediction − market_price` is derived, never stored.
 
@@ -78,8 +96,15 @@ Appended by the CEO when a market resolves; then run `scoring/` and check trial 
 
 ## scores
 
-`scoring/` writes `scores.csv` (aggregates per variant / family / model / status + market
-baseline) and `scores_detail.csv` (per prediction). Generated — never hand-edit.
+`scoring/` writes `scores.csv` (aggregates per variant / family / model / status / horizon
+/ market / pricer + overall) and `scores_detail.csv` (per prediction). Generated — never
+hand-edit.
+
+Read the **market** level before quoting any headline: rows are not independent
+observations. We predict the same market every morning, so a single barrier touch is
+scored once per day the market was open. On 2026-07-27 four rows on one WTI market moved
+the firm's whole number from +0.0009 to −0.0172; they are one event. Per market that batch
+is −0.0051 over 19 markets, per row −0.0173 over 25 — 3.4× worse purely from counting.
 
 Both carry tradeability columns when `fills.csv` is present: `n_known_fill` / `n_fillable`
 / `mean_exec_edge` on aggregates, `best_price` / `fillable` / `exec_edge` per row.

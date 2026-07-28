@@ -27,7 +27,7 @@ use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, NaiveDate, Utc};
 
-const DETAIL_HEADER: [&str; 18] = [
+const DETAIL_HEADER: [&str; 19] = [
     "timestamp",
     "market_slug",
     "outcome",
@@ -36,6 +36,7 @@ const DETAIL_HEADER: [&str; 18] = [
     "model",
     "status",
     "horizon",
+    "pricer_version",
     "prediction",
     "market_price",
     "actual",
@@ -62,7 +63,8 @@ const SCORES_HEADER: [&str; 10] = [
 ];
 
 /// Output order of aggregate levels in scores.csv.
-const LEVEL_ORDER: [&str; 7] = ["variant", "family", "model", "status", "horizon", "market", "overall"];
+const LEVEL_ORDER: [&str; 8] =
+    ["variant", "family", "model", "status", "horizon", "market", "pricer", "overall"];
 
 struct Prediction {
     timestamp_raw: String,
@@ -76,6 +78,9 @@ struct Prediction {
     prediction: f64,
     market_price: f64,
     status: String,
+    /// Which build of the variant's pricer produced this number. Empty for
+    /// rows written before the column existed (2026-07-28).
+    pricer_version: String,
 }
 
 struct Resolution {
@@ -101,6 +106,10 @@ struct ScoredRow {
     model: String,
     status: String,
     horizon: String,
+    /// Which build of the variant's pricer produced this number; empty for
+    /// rows predating the column. Aggregated as its own level so a mid-trial
+    /// model change is scored separately instead of averaged away.
+    pricer_version: String,
     prediction: f64,
     market_price: f64,
     actual: f64,
@@ -246,6 +255,7 @@ fn run(dir: &Path) -> Result<RunStats, String> {
             model: p.model.clone(),
             status: p.status.clone(),
             horizon: horizon_bucket(p.timestamp, res.resolved_at).to_string(),
+            pricer_version: p.pricer_version.clone(),
             prediction: p.prediction,
             market_price: p.market_price,
             actual,
@@ -424,6 +434,8 @@ fn load_predictions(path: &Path, malformed: &mut usize) -> Result<Vec<Prediction
     let i_pred = col(&headers, "prediction", path)?;
     let i_price = col(&headers, "market_price", path)?;
     let i_status = col(&headers, "status", path)?;
+    // Optional: added 2026-07-28, so archived CSVs and fixtures without it stay readable.
+    let i_pricer = col(&headers, "pricer_version", path).ok();
     let ncols = headers.len();
 
     for rec in rdr.records() {
@@ -476,6 +488,7 @@ fn load_predictions(path: &Path, malformed: &mut usize) -> Result<Vec<Prediction
             prediction,
             market_price,
             status: field(i_status),
+            pricer_version: i_pricer.map(field).unwrap_or_default(),
         });
     }
     Ok(out)
@@ -544,7 +557,15 @@ fn aggregate(rows: &[ScoredRow]) -> Vec<AggRow> {
             // event. Read the per-market level to see how many EVENTS a
             // conclusion rests on, not how many rows.
             (5, r.market_slug.clone()),
-            (6, "overall".to_string()),
+            // Per PRICER VERSION, so a model change is scored as the change it
+            // is rather than absorbed into the variant's running average. A
+            // variant that revises its pricer mid-trial is two experiments
+            // sharing a name; without this level the revision is only visible
+            // to whoever remembers the date it shipped. Rows written before
+            // the column existed aggregate under "unversioned" — an honest
+            // label, not a bucket to compare against.
+            (6, if r.pricer_version.is_empty() { "unversioned".into() } else { r.pricer_version.clone() }),
+            (7, "overall".to_string()),
         ];
         for k in keys {
             let e = acc.entry(k).or_default();
@@ -634,6 +655,7 @@ fn write_detail(path: &Path, rows: &[ScoredRow]) -> Result<(), String> {
             r.model.as_str(),
             r.status.as_str(),
             r.horizon.as_str(),
+            r.pricer_version.as_str(),
             &fmt_f(r.prediction),
             &fmt_f(r.market_price),
             &fmt_f(r.actual),
