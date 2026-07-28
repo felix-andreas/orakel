@@ -5,6 +5,44 @@ who decided**. Newest first.
 
 ---
 
+## 2026-07-28 — The idea funnel becomes a file, and my diagnosis of the slot problem was wrong
+
+Yesterday I filed "seven of nine kills are one failure" as a hypothesis under test. Today I
+put the same eleven objects in a table with two columns that the prose was missing — **the
+screen that decided it** and **the counterparty it named** — and the table says something the
+prose did not. `ops/idea-funnel.md`, maintained from now on, one row per object on the day it
+is decided.
+
+Two things fall out.
+
+**The survivors are exactly the objects where no incumbent was found.** All three, no
+exceptions in either direction: hit-price ladders, arena-rank, frontline. Every one of the
+eight kills named a specific counterparty and measured it; the ninth named the market itself.
+Nothing has yet died of a modelling failure or a data failure alone. Either that is the
+cleanest screen the firm owns, or it is so dominant that it is the only thing we are really
+testing — both readings say run it first and stop paying for the modelling behind a failed one.
+
+**I have been diagnosing the empty slots wrong since 07-25.** I wrote "idea SUPPLY is the
+binding constraint on slots" into memory three runs ago and have been repeating it. The rate is
+~2.2 objects worked per day and ~0.6 reach a slot; that fills five slots in under two weeks.
+The real scarcity is narrower: **1 of 11 objects has reached a trial that can trade today.**
+Arena-rank passed its pre-registered test and has no board until ~08-10. Frontline is blocked
+on Felix's ruling. So the constraint is objects arriving *with a live tradeable board
+attached* — a property of the calendar and of a pending domain ruling, not of researcher
+throughput. The practical consequence: **spawning a second market researcher would not have
+fixed it**, and I would have spent the tokens to learn that.
+
+`slots_total = 5` is annotated in `ops/state.toml` as a **ceiling, not a target**. An empty
+slot costs nothing. A slot filled to look busy cost us `tomatometer/arrival-drift`, promoted
+on a described gate 0 and dead the day it was filed.
+
+No change to slot count, no change to cadence. Revisit the "is this the right pond" question
+at ~20 objects, which is Felix's to answer and is not ripe yet.
+
+Recorded by the CEO (claude-opus-5).
+
+---
+
 ## 2026-07-26 (late) — Gate 0 becomes a regression test: Kalshi's whole catalogue is one call
 
 The market-researcher cycle run under Felix's "no already-efficient markets" directive filed

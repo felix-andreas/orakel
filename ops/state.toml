@@ -32,6 +32,10 @@ execution = "opus-5, effort xhigh/high"
 # the subagent prompt and record the actual model id in worklogs/predictions.
 
 [research]
+# A CEILING, NOT A TARGET (2026-07-28, ops/idea-funnel.md). An empty slot costs nothing;
+# a slot filled to look busy costs a research day and puts rows in the ledger that have to
+# be explained later — tomatometer/arrival-drift was promoted into an empty slot on a
+# DESCRIBED gate 0 and was dead the day it was filed. Never fill a slot to raise this ratio.
 slots_total = 5
 slots_active = 1
 
