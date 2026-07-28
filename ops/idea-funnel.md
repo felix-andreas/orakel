@@ -2,7 +2,7 @@
 
 _Every object the market researcher has worked, and the screen that decided it. Maintained
 by the CEO; one row per object, appended on the day it is decided. Started 2026-07-28 from
-the eleven ideas filed 07-23 → 07-27._
+the eleven ideas filed 07-23 → 07-27, and extended the same day by the twelfth._
 
 Why this file exists: "somebody already prices it well" had been sitting in my memory as a
 one-line worry for three runs. A worry is not evidence. This is the same claim as a table
@@ -24,6 +24,7 @@ you can count, and counting it changed what I think the firm's constraint is.
 | 9 | 07-26 | Frontline first-passage (war) | **backlog — blocked on Felix** | no bookmaker takes war bets; no institution publishes probabilities | none found |
 | 10 | 07-26 | Rotten Tomatoes score ladders | retired | primary venue with an unbiased line — **and it was dead at filing** | **Kalshi** |
 | 11 | 07-27 | Weekend box-office ladders | discarded at idea stage | implied σ **0.120** vs our best in-sample model **0.171** | **a free weekly Substack**, ~10% MAPE |
+| 12 | 07-28 | Mention markets ("will X say WORD") | discarded at idea stage | **executable-price decomposition** — the +5pp crowd bias *is* the spread | **none — and that is the point** |
 
 ## What the table says that the worry didn't
 
@@ -39,6 +40,20 @@ Not "mostly" — all three, with no exceptions in either direction. That is eith
 cleanest screen the firm owns or a filter so dominant it is the only thing we are actually
 testing. Both readings are worth acting on and they point the same way: **run the incumbent
 screen first, always, and stop paying for the modelling that follows a failed one.**
+
+**2b. Object 12 breaks the pattern, and that is the most useful row in the table.**
+Mention markets found **no incumbent** — no venue, no bookmaker, no specialist, because
+nobody publishes utterance probabilities — and were killed anyway, by a screen no earlier
+object reached: the crowd's +5pp bias (t=+6.93, holding to T−48h) **is the bid-ask spread**.
+Both trade directions lose at executable prices simultaneously, which is only arithmetically
+possible if what you measured was the spread. So "no incumbent" is necessary, not
+sufficient, and the funnel now has a second wall behind the first.
+
+It also refutes a thing we half-believed: this family passes the tape gate better than
+anything screened so far — 0 of 30 live legs with no tape, ~127 taker trades per leg, 1–2c
+spreads, 1–2 day resolution — **and still has no edge**. Liquidity is not the binding
+constraint. Nine kills said "someone prices it"; this one says "you can reach it, and it is
+still correctly priced."
 
 **3. Idea supply is not the constraint I said it was.** I have been writing "idea SUPPLY is
 the binding constraint on slots" in memory since 07-25. The rate is ~2.2 objects worked per
@@ -58,11 +73,17 @@ explained later.
 
 ## The open question this hands to Felix
 
-If the incumbent screen keeps firing at this rate, the question stops being "which idea
-next" and becomes **"is this the right pond"** — whether Polymarket's recurring families
-are, as a population, objects that someone else already prices. That is not a question I
+If the kills keep firing at this rate, the question stops being "which idea next" and
+becomes **"is this the right pond"** — whether Polymarket's recurring families are, as a
+population, either priced by someone else or priced correctly. That is not a question I
 should answer alone: it goes to what the firm is for. The evidence to answer it is this
 table, and it needs more rows before it is worth putting to him. Revisit at ~20 objects.
+
+One live thread that is *not* dead: mention markets are only dead **taker-side**. Polymarket
+charges no fee on resting orders, and the whole kill was executable-price arithmetic. A
+maker-side construction is untested — but it is an execution idea, not a research one, and
+the firm cannot place a resting order at all (`CONSTITUTION.md` §5). Parked as a note, not
+a slot.
 
 ## How to use it
 
