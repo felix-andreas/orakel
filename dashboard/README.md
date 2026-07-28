@@ -125,20 +125,31 @@ title instead of being printed twice (`render::md_title` / `markdown_body`).
   timestamp, and a red banner names the cause (no token / 401 / 403 rate limit / 5xx).
   Transient failures (network, 5xx) are retried once — a retry costs one subrequest and no
   staleness, unlike serving an old copy. 401/403/404 are definitive and never retried.
-- **The pinning has one race, and it fires exactly when the dashboard is being read.**
-  `head()` learns a SHA from one GitHub API replica; a content read moments later can hit
-  a replica that has not seen that commit yet and rejects the ref, which fails *every*
-  read on the page at once and prints "Some of this page is missing" over content that is
-  perfectly fine. Measured 2026-07-28: the banner appeared on the **first request after a
-  push, twice, and in none of the 56 requests made outside that window**. The firm pushes
-  constantly during a run, which is when Felix is most likely to be looking.
+- **KNOWN, UNFIXED: pages lose reads on the first request after a push.** The
+  "Some of this page is missing" banner appears over content that is perfectly fine,
+  naming a few files that exist and are committed. Measured 2026-07-28: it fires on the
+  **first request after a push** and in **none of 120 requests made outside that window**.
+  The firm pushes constantly during a run, which is when Felix is most likely to be looking.
 
-  A pinned read that fails with anything other than 200/404 therefore **retries the same
-  path unpinned at `main`**. That is still a live read — the no-fallback rule is intact.
-  What it gives up is the guarantee that every file on a page came from one commit, and a
-  few seconds of one-file skew is a much smaller lie than a missing-content banner over a
-  complete page. If the unpinned retry also fails, the banner is real and the file is
-  named.
+  Two hypotheses were tried and **both are disproved** — recorded so nobody spends the
+  afternoon again:
+
+  | tried | result |
+  |---|---|
+  | SHA-propagation race (`head()` learns a commit one replica hasn't got), patched with an unpinned retry at `main` | **No.** The failure reason is `pinned no response, unpinned no response` — no status at all, so the subrequest never happened. A rejected ref returns a status. The retry also *costs* two subrequests per failure, and was reverted. |
+  | Burst concurrency, patched by capping in-flight reads at 6 | **No, and it made things worse** — `/runs` went from 3 lost files to 6 while `/` stayed at 2. Do not bound `read_all`; see its doc comment. |
+
+  What survives: a **per-request subrequest budget** that only a cold cache can exhaust.
+  Cache hits don't spend it; a push changes the SHA, so every pinned URL changes and every
+  read on the page becomes a real subrequest at once.
+
+  **The fix is fewer reads per page, not different reads.** `/runs` reads every manifest
+  and `/` reads ~20 files, and both grow as the firm accumulates history — so this gets
+  worse on its own. Candidates: read only the N most recent manifests, or derive more from
+  the single Trees call. Needs a dashboard cycle.
+
+  Failures record *why* (`path (pinned no response)`), which is the only reason any of the
+  above is known. Keep that.
 - **R2 binding `ORAKEL`** (`src/snapshots.rs`): hourly
   `snapshots/books/<YYYY-MM-DD>/<HH>.json.gz` objects. Binding gets return the stored
   gzipped bytes verbatim (the `content_encoding=gzip` metadata is HTTP-layer only), so
