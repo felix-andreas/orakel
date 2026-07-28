@@ -4,6 +4,81 @@ One dated entry per run. Name the model that did the work.
 
 ---
 
+## 2026-07-28 — day 6: first run under the gate, and two silent data bugs (model: claude-opus-5, effort xhigh)
+
+- **The gate ran, and it bit.** Feed status at 01:21Z: WTI/gold/silver **OPEN, 0.1h old**
+  (Monday's session opened 07-27 22:00Z); SPY/NVDA **SHUT, 5.4h old, reopens in 12.1h**.
+  All **22 equity legs suppressed**, not re-priced. **14 rows proposed** from 93 two-sided
+  legs across 8 boards (`results/proposed-rows-2026-07-28.csv`, run_id `2026-07-28/daily`,
+  15-column schema): WTI ↑100/↑95/↓75/↓80/↑90-from-jul-27, gold ↑4300/↓3900, silver ↓54,
+  gold-weekly ↑4250/↑4200/↓4000/↓3950, silver-weekly ↑63/↓55. Suppressions: 22 stale-feed,
+  34 mid<3c, 18 relative spread, 3 weekly/monthly de-dup, 2 tape gate. Epsilon clear
+  (closest gold-weekly ↓4000 at 1.37%). Did not write predictions.csv.
+- **The equity suppression is structural, and that is the finding.** The RTH feed trades
+  13:30–20:00Z; the daily trigger fires ~01:07Z. There is no hour of the daily cadence at
+  which an equity board is legally predictable. **The daily run can never emit an equity
+  row.** Either equity gets a second run inside RTH or it leaves the trial — CEO's call. The
+  model was −12c to −22c against the SPY down wing today, i.e. the ↓85 shape exactly, which
+  is what the gate is for.
+- **`cmd_candles` was silently keeping a partial yesterday — for four days.** Only `today`
+  was force-refetched; yesterday's file, written mid-day by yesterday's run, reported
+  "cached" forever after. Today's archive held WTIU6 2026-07-27 at **21.9KB against a true
+  69.7KB**, and **52-byte `no_data`** files for SPY and NVDA — Monday's whole RTH session
+  missing from the σ inputs. This is the same failure that made day-4 log RV14 48.8% against
+  a true 51.7%, and it had been silently re-arming every day since. Fixed: a day-file is
+  refetched unless it was written after that day ended. Archive re-frozen and verified
+  (`candles-2026-07-28`, 18.9MB, supersedes 07-27).
+- **`live` takes ONE comma-separated argument.** My first three invocations used spaces and
+  each priced only the *first* board while writing a complete-looking prediction file;
+  `cmd_live` also overwrites `data/out/predictions_<date>.csv` per call. Caught by noticing
+  the last slug of every run was missing. Documented in STRATEGY.md — this is a silent
+  wrong-answer path, not an error path.
+- **Gamma's `closed` is a FILTER defaulting to `false`, not an override.** Measured:
+  `?condition_ids=<cid>` returns an OPEN market and `[]` for a closed one; `&closed=true` is
+  the exact reverse. **No single query finds a market in both states.** My first identity run
+  came back 0/58 because of it. Friday's set will be *mixed* — boards close 21:00Z, UMA lags
+  — so a one-form scorer silently drops half. Worse: **`?condition_id=` singular is ignored
+  rather than rejected**, returning an arbitrary market (it handed back "New Rihanna Album
+  before GTA VI?" for a WTI condition id). Re-run both ways: **identity 58/58 clean.**
+- **Backfill for the CEO, measured rather than estimated**
+  (`results/ledger-backfill-2026-07-28.csv`): `feed_age_h` / `feed_open` / `pricer_version`
+  for all 132 pre-existing rows, computed per row from the frozen candle archive and the
+  session calendars. Confirms 07-26 at 28.8h; **corrects 07-25 from "4.5h" to 4.9h**. New
+  and uncomfortable: **days 1–2 emitted 20 equity rows on a shut RTH feed as well** (14.1h
+  and 5.7h), so the true count is **68 of 132 rows — 52% — priced off a shut feed**, not
+  64/95, and **every equity row we have ever emitted was stale.** They resolved NO and scored
+  well; that was luck, not cleanliness.
+- **Pricer version, and the confound that decides how to score it.** Outstanding rows split
+  `touch-prob` 50 open / **45 shut** against `touch-prob-jump` **25 open / 0 shut** — every
+  stale row is also an old-pricer row, so on the shut side the two factors cannot be
+  separated at all. **The pricer comparison must be run within `feed_open=1` only: 50 vs 25.**
+  The jump arm is below the n≥30 floor, so Wednesday's and Thursday's runs are load-bearing:
+  skip either and the split cannot be decided on Friday.
+- **RV/IV pre-registered, not switched** (`results/prereg-rv-iv-blend-2026-07-28.md`). The IV
+  anchor sits **above** realized vol on **62 of 62** WTI/gold/silver legs (OVX 60.6 vs 49.7,
+  GVZ 24.1 vs 20.0, VXSLV 47.6 vs 40.2). A higher σ raises every touch probability, and we
+  are sell-only, so IV *removes* sell signals rather than adding them: on today's 27 fundable
+  legs **RV 4, blend 3, IV 1**. Decision rule, blend weight (w=0.5, never tuned), power floor
+  and a tradeability veto are all fixed before the outcome; my stated expectation is on
+  record too. `cmd_live` now records `q_iv`, `q_blend`, `sigma_rv`, `sigma_iv` per leg so
+  Friday scores it from the frozen archive. One fairness fix made first, before any outcome:
+  `q_iv` used raw IV where `q_rv` used the gap-bumped σ.
+- **Wiki**: folded my own correction into `checkpoint-artifact.md` — the leg-sum gate assumes
+  a *partition*, a one-touch ladder is *nested*, and there `leg-sum ≈ 1` **cannot fail**, so
+  it returns CLEAN however badly the book is priced. The general form is `Σmid` vs `Σwinner`
+  (1.38 at creation, 1.11 window-open, 1.28 daily). The page had been telling a future
+  researcher to run a check that passes for free.
+- **Friday readiness** written up (`results/friday-2026-07-31-readiness.md`): 120 outstanding
+  rows over 58 markets, identity 58/58; 104 resolve Fri 21:00Z, 16 BTC Sat 04:00Z; Gamma's
+  `endDate` for the monthlies (Aug 1 03:59Z) is **not** the resolution window (07-31 21:00Z).
+- Applications updated: WTI-weekly and metals-weekly flipped to `active = true` (books are
+  real now); WTI-weekly still yields **zero** rows because every fundable barrier duplicates
+  a live monthly leg. Silver-weekly ↑62/↑61 failed the tape gate despite an actively traded
+  board — zero taker trades within 5c in 7 days.
+- Escalation to CEO: (a) the equity/RTH scheduling decision; (b) apply the backfill before
+  Friday or 95 rows aggregate as `unversioned`; (c) Wed+Thu runs are required for the pricer
+  split. Nothing blocking today's rows.
+
 ## 2026-07-27 — day 5: the null check clears, and a loss traced to a shut feed (model: claude-opus-5, effort xhigh)
 
 - **The leg-sum / null-model re-check, finally run** (`results/legsum-null-and-stale-feed-2026-07-27.md`).

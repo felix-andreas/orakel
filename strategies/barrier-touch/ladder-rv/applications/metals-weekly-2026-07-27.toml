@@ -5,7 +5,7 @@ market_slug = "will-xauusd-hit-week-of-july-27-2026"
 market_slug_secondary = "will-xagusd-hit-week-of-july-27-2026"
 condition_id = ""
 added = "2026-07-25"
-active = false               # LISTED BUT NOT PREDICTABLE YET — no book, see note
+active = true                # book alive from 2026-07-27; gold tradeable, silver prediction-only
 
 [params]
 tier = "weekly"
@@ -36,3 +36,12 @@ backtest = "metals earned trades day-3 (see results/metals-backtest-2026-07-25.m
 # DAY-4 RE-READ (2026-07-26 ~01:35Z): still dead. Gold 13/14 legs at 0.01/0.99 (only
 # up-4400 differs, at 0.01/0.50). Silver 14/14 legs at 0.01/0.99 — the whole ladder is
 # unlisted in all but name. ZERO rows again. Re-read Monday.
+
+# DAY-6 RE-READ (2026-07-28 01:21Z, feed OPEN 0.1h). Both ladders are genuinely priced now
+# (gold 13 two-sided legs, silver 12). Gold spot 4056.89, silver 57.40. Six rows emitted:
+# gold H4250/H4200/L4000/L3950 and silver H63/L55. None of those barriers exist on the
+# corresponding monthly, so none are de-dup duplicates.
+# SUPPRESSED here and worth remembering: silver H62 and H61 pass spread AND mid AND have
+# recent trades on the board — but ZERO taker trades within 5c of the quote in 7 days, so
+# they fail the tape gate. That is the tape gate doing exactly the job it was added for:
+# an actively traded ladder can still have individual legs nobody has ever transacted at.

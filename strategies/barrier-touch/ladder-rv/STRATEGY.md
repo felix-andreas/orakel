@@ -127,10 +127,16 @@ ladderrv live <data> <board-slugs>              # books + model -> prediction ro
 ```
 
 Daily: pull candles for **yesterday+today** (all keys incl. WTIU6 — expired Pyth
-contract feeds are DELETED, we must archive the active month ourselves; force a complete
-refetch of yesterday, which was partial when captured), `vol`, then `live` on active
-boards; freeze the candle+vol archive to R2 via r2data before committing the manifest
-(`data/candles-<date>.tar.gz.r2.json`) — that frozen archive is the resolution record.
+contract feeds are DELETED, we must archive the active month ourselves), `vol`, then `live`
+on active boards; freeze the candle+vol archive to R2 via r2data before committing the
+manifest (`data/candles-<date>.tar.gz.r2.json`) — that frozen archive is the resolution
+record. Since 2026-07-28 the refetch of an incomplete yesterday is **automatic**: a day-file
+is re-pulled unless it was written after that day ended.
+
+**`live` takes ONE comma-separated argument**, not a space-separated list —
+`ladderrv live data "slug-a,slug-b"`. Space-separated silently prices only the first board
+and writes a prediction file that looks complete. `cmd_live` also **overwrites**
+`data/out/predictions_<date>.csv` on every invocation, so run every board in one call.
 
 **Checkpoint discipline (settled 2026-07-27, `results/legsum-null-and-stale-feed-2026-07-27.md`).**
 This family's legs are **nested**, not mutually exclusive, so the wiki's `leg-sum ≈ 1` gate
@@ -219,3 +225,14 @@ over which the market moved.
   `touch_prob_jump` model, with `realized_vol_intraday` + `gap_sd` and a new `ladderrv gaps`
   subcommand; `cmd_live` now reports feed staleness. Daily archive freeze restored.
   **8 prediction rows**; identity 51/51 clean for 07-31.
+- 2026-07-28 — day-6: first run under the **stale-feed gate**. WTI/gold/silver feed OPEN
+  (0.1h) → priced; SPY/NVDA feed SHUT (5.4h) → **all 22 equity legs suppressed**, and
+  structurally: the RTH feed is *always* shut at the 01:07Z trigger, so the daily run can
+  never predict an equity board. **14 prediction rows** (WTI 5, gold 2, silver 1, gold-weekly
+  4, silver-weekly 2). Two code fixes: `cmd_candles` silently kept a **partial yesterday**
+  forever (07-27 WTIU6 21.9KB vs a true 69.7KB; SPY/NVDA were 52-byte `no_data`) — a day-file
+  is now refetched unless written after that day ended; and rows carry `pricer_version`,
+  plus `q_iv`/`q_blend`/`sigma_*` for the pre-registered RV/IV comparison
+  (`results/prereg-rv-iv-blend-2026-07-28.md` — a comparison scored 07-31, **not** a switch:
+  IV sits above RV on 62/62 legs, which for a sell-only variant cuts sell signals 4 → 1).
+  Friday readiness: `results/friday-2026-07-31-readiness.md`, identity **58/58**, 120 rows.

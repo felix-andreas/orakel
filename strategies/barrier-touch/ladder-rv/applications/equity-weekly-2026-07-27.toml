@@ -48,3 +48,15 @@ iv_source = "none (RV14d 38.6% only) — wider internal spread required"
 #        STRATEGY.md today. Zero rows.
 # Standing: weekly equity ladders are research-only for this variant (CEO, 2026-07-25) —
 # they may be predicted but cannot appear in a promotion case without fill evidence.
+
+# DAY-6 (2026-07-28 01:21Z): SUPPRESSED BY THE STALE-FEED GATE, and structurally so.
+# SPY/NVDA resolve on Pyth RTH 13:30-20:00Z. At the daily trigger hour (~01:07-01:30Z) that
+# feed has been SHUT for ~5.4h and reopens in ~12.1h, so the gate suppresses every equity
+# leg. This is not a bad day; it is EVERY day: **the daily run can never legally predict an
+# equity board.** All 22 legs read today were suppressed (SPY 12, NVDA 10) despite several
+# passing spread, mid and tape - the model was -12c to -22c against the book on the SPY down
+# wing, which is the exact shape of the dip-to-85 loss.
+# Escalated to the CEO: either equity boards get a second run inside 13:30-20:00Z, or the
+# equity family leaves the trial. Note the backfill found that ALL 20 equity rows we have
+# ever emitted (2026-07-23 at 14.1h stale, 2026-07-24 at 5.7h) were priced off a shut RTH
+# feed too. They resolved NO and scored well, but they were lucky, not clean.
