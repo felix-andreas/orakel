@@ -4,63 +4,74 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 
 ## Short-term (current run / immediate)
 
-- **2026-07-27 run** (ops/runs/2026-07-27.toml). Slot 1 = ladder-rv only; 11 rows appended
-  (ledger 132, scored 25). Market researcher filed nothing, correctly.
-- **THE HEADLINE FLIPPED. WTI touched $85 and ladder-rv now LOSES to the market**:
-  +0.000945 (21 rows) → **−0.0172** (25 rows). dip-to-85 alone is −0.4510, more than the total
-  loss; everything else nets +0.0198. Tradeability 2/21 → 6/25 — **where there was liquidity we
-  were wrong; where we were right there was no liquidity.**
-- **Cause is structural, not miscalibration. STALE-FEED GATE ADOPTED.** WTI/metals trade
-  22:00Z–21:00Z Mon–Fri; the feed was shut 28.8h while the book repriced 0.475 → 0.715 during
-  exactly that closure. Our model moved −2.8 points from a vol lookback sliding across closed
-  days — arithmetic that looks like a view. **64 of 95 outstanding rows were priced off a shut
-  feed.** Weekend runs now emit nothing on WTI/gold/silver. `wiki/reference/stale-feed-gate.md`
-  is the FOURTH way a quote misleads and the only one where OUR number is broken, not theirs.
-- **The null/leg-sum check CLEARS** (asked since 07-25, slipped 3 runs). No null beats the
-  market at either checkpoint we use, all seven assets, both anchors. The headline is not an
-  artifact. But the board-CREATION anchor does lose to a null (85% of legs at 45–55c) — never
-  use it. And **gold's window-open claim is withdrawn** (leg-sum gate takes −0.0189 → −0.0001);
-  gold stays tradeable on the daily-checkpoint margin instead. **Stop quoting the pooled
-  window-open edge — it reverses under the gate.**
-- **Scoring now aggregates per MARKET.** Rows are not independent: 19 markets −0.0051 vs 25 rows
-  −0.0173. Report both; the row number flatters and deflates alike.
-- **Eleven ideas, 7 of 9 kills are "somebody already prices it well."** Filed as a hypothesis
-  under test in decisions, no action attached. If the war-market idea dies too, the question
-  becomes "is this the right pond" — Felix's, not mine.
+- **2026-07-28 run** (ops/runs/2026-07-28.toml). Slot 1 = ladder-rv day 6; 14 rows appended
+  (ledger 146, scored still 25 — nothing new resolved). Watchlist 56 → 100 markets.
+- **THE STALE-FEED NUMBER GOT WORSE AND MORE PRECISE.** Slot 1 backfilled feed state for
+  every row we have ever written, from the frozen candle archive rather than from memory:
+  **68 of 132 rows (52%)** were priced off a shut feed, not yesterday's 64 of 95. Days 1–2
+  emitted 20 stale equity rows nobody had counted. **Every equity row the firm has ever
+  emitted was stale.** 07-25 corrected 4.5h → 4.9h.
+- **Equity can NEVER be predicted inside the working window.** Zero overlap with Pyth RTH,
+  by half an hour, in BOTH DST regimes (window 00:00–13:00Z summer / 01:00–14:00Z winter;
+  RTH 13:30–20:00Z / 14:30–21:00Z). Not a bad hour — a structural impossibility. Filed to
+  Felix as no-reply-needed; the gate already suppresses equity, so nothing is blocked. My
+  recommendation is **don't widen the window**: equity weeklies were already the weakest
+  family (38% reachable) and we would be spending his usage limit to chase it.
+- **Ledger schema widened**: `pricer_version`, `feed_age_h`, `feed_open`. Scoring gained a
+  **`pricer` aggregate level**, so Friday's split is a table row, not hand-work. 121 rows on
+  `2026-07-23-touch-prob`, 11+14 on `2026-07-27-touch-prob-jump`.
+- **Friday 07-31 needs the Wednesday and Thursday runs to happen.** The pricer split is
+  confounded with feed state (every stale row is also an old-pricer row), so it can only be
+  scored within `feed_open=1` — 50 rows vs 25 today, and 25 is below the n≥30 floor. Trigger
+  verified armed for 07-29 01:07Z. 120 outstanding rows / 58 markets, identity 58/58 clean.
+- RV/IV blend is **pre-registered, not switched** (`results/prereg-rv-iv-blend-2026-07-28.md`):
+  the IV anchor sits above realized vol on **62 of 62** legs, and for a sell-only variant a
+  higher σ destroys signals rather than creating them — RV 4 sell signals, blend 3, IV 1.
 
 ## Medium-term (bootstrap phase)
 
-- Ramp plan: idea SUPPLY is the binding constraint on slots, not capacity. One researcher
-  a day with a ~70% day-1 kill rate can never fill 5 slots.
-- Dashboard: live repo reads, no fallback copy (a stale copy served silently is worse than a
-  visible gap), sha-pinned + concurrent reads (0.87s → ~0.4s). Deploy after any status or
-  schema change.
+- **`tools/watchlist` exists — never assemble the watchlist by hand again.** Hand-assembly
+  lost markets three times (mirrored after predicting; markets that came from predictions not
+  applications; only the legs we predicted on rather than the whole applied-for board — 44
+  legs). Rule is now executable: active applications ∪ unresolved-prediction markets − resolved.
+- **`ops/idea-funnel.md` is the firm's kill table.** The three survivors are exactly the three
+  objects where **no incumbent was found** — no exceptions in either direction. And my
+  "idea supply is the binding constraint" was **wrong**: supply is ~2.2 objects/day. What is
+  scarce is objects arriving with a *live tradeable board*. A second researcher fixes nothing.
+- `slots_total = 5` is a **ceiling, not a target**. Filling a slot to look busy cost us
+  `tomatometer/arrival-drift`, dead the day it was filed.
 - Fee model is real and priced (v2 policies). Buys LOSE outright (−0.22c) after fees.
 
 ## Long-term (durable principles)
 
 - Constitution: observability first, spend logged, working window, model routing, no
   trading, single-writer CSV, R2-before-commit, commit+push every step.
-- **Calibration ≠ tradeability ≠ fundability.** Three separate gates, and a variant can pass
-  one and fail the next two: paired Brier (are we right), tape/fill (can we transact), and
-  the break-even bound (is it worth the locked capital). `wiki/reference/break-even-win-rate.md`
-  is the strongest artifact the firm has — a band that went 16/16 with t=+10.3 is
-  uninvestable because 2.83 losses per 100 take it to zero.
-- **Three ways a quoted price lies**, all now wiki pages: phantom midpoints (dead book),
-  midpoint-is-not-a-fill (live book, but you trade at the bid), tape-gate (tight spread,
-  listed depth, ZERO trades ever).
-- Gamma's `closed` is a FILTER not an include-flag, in BOTH directions. Omitting it makes a
-  resolution sweep structurally incapable of finding anything; including it makes an
-  open-market check structurally incapable of finding anything. I made the first mistake
-  this run and caught it only because slot 1 reported it.
-- Inherited from poly: consensus beats individual signals; record exact model ids; agents
-  can die silently mid-run — always audit folders before assuming loss.
-- Scheduling: self-bind triggers keep MCP connectors; agent-created fresh-session triggers
-  do not; a Routine's MODEL is Felix-only via the claude.ai UI. Min hourly.
+- **Calibration ≠ tradeability ≠ fundability.** Three gates; a variant can pass one and fail
+  the next two. `wiki/reference/break-even-win-rate.md` is the firm's strongest artifact — a
+  band that went 16/16 with t=+10.3 is uninvestable because 2.83 losses per 100 take it to zero.
+- **Four ways a quoted price misleads**, all wiki pages: phantom midpoints (dead book),
+  midpoint-is-not-a-fill (you trade at the bid), tape-gate (tight spread, zero trades ever),
+  stale-feed-gate (**ours** is the broken number).
+- **Report per-MARKET before per-ROW.** Rows are not independent: 19 markets −0.0051 vs 25
+  rows −0.0173, 3.4× worse purely from predicting the losing market four times.
+- **Gamma's `closed` is a FILTER in BOTH directions**, and worse: on a resolution day the
+  batch is MIXED, so one query form returns half the rows looking complete. `condition_id`
+  singular is silently ignored and serves an unrelated market — always verify the id that
+  came back. All in `wiki/recipes/polymarket-api.md`.
+- **The dashboard's SHA pinning has a propagation race**, fixed 07-28: `head()` learns a SHA
+  from one GitHub replica, the content read hits one that hasn't seen it, and every read on
+  the page fails at once. Measured: banner on the first request after a push, twice; 0 in 40
+  post-fix. A failed pinned read now retries unpinned at `main`.
+- Inherited from poly: consensus beats individual signals; record exact model ids; agents can
+  die silently mid-run — always audit folders before assuming loss.
+- Scheduling: self-bind triggers keep MCP connectors; agent-created fresh-session triggers do
+  not; a Routine's MODEL is Felix-only via the claude.ai UI. Min hourly.
 - **Concurrency: never `git add -A` while agents run.** Stage explicit paths. The stop hook
   fires on every multi-agent run because it cannot tell agent-owned in-flight files from
   neglect — check `git status` against running agents before believing it.
-- Health check recipe: dashboard 302 without Access headers / 200 with; snapshot worker
-  `GET /`; `r2data verify` every manifest; worklogs current; no stale open inbox items.
-  Access gotcha: service tokens need a policy with action "Service Auth", attached from the
-  app's Policies tab.
+- Health checks: dashboard 302 without Access headers / 200 with; snapshot worker is
+  `orakel-snapshot` **singular** (the plural typo returns a 404 that reads like an outage);
+  `r2data verify <manifests>` takes explicit paths; worklogs current; no stale inbox items.
+  Access gotcha: service tokens need a policy with action "Service Auth".
+- TLS behind the agent proxy: **ureq's default rustls ignores `SSL_CERT_FILE`** and fails with
+  `UnknownIssuer`. Use `attohttpc` with `tls-native`, the same stack `rust-s3` uses here.
