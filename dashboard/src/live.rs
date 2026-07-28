@@ -72,11 +72,19 @@ pub async fn begin_request(env: &Env) {
     let _ = head(env).await;
 }
 
-fn note_failure(path: &str) {
+/// Record a failed read as `path (why)`. The `why` is the point: on 2026-07-28
+/// a banner named three files and nothing else, and "three of seven reads
+/// failed" cannot be diagnosed from a path list. Three of seven is already
+/// informative — a bad pinned ref would fail *every* read on the page, since
+/// they all use one SHA — but distinguishing a rate limit from a transport
+/// error needs the status, and guessing at it is exactly what we make
+/// researchers stop doing.
+fn note_failure(path: &str, why: &str) {
+    let entry = format!("{path} ({why})");
     FAILED.with(|f| {
         let mut f = f.borrow_mut();
-        if !f.iter().any(|p| p == path) {
-            f.push(path.to_string());
+        if !f.iter().any(|p| p == &entry) {
+            f.push(entry);
         }
     });
 }
@@ -231,12 +239,12 @@ pub async fn head(env: &Env) -> std::result::Result<Head, String> {
 /// A repo file at request time. A failed read yields empty text and
 /// `live: false` — the page renders the error, never a stale copy.
 pub async fn repo_text(env: &Env, path: &str) -> Fetched {
-    let dead = || {
-        note_failure(path);
+    let dead = |why: String| {
+        note_failure(path, &why);
         Fetched { text: String::new(), live: false }
     };
     let (Some(tok), Ok(h)) = (token(env), head(env).await) else {
-        return dead();
+        return dead("no token, or HEAD could not be resolved".into());
     };
     // Pinned to the SHA, not to `main`: the URL then names one immutable blob,
     // which is what lets it cache for a day instead of a minute.
@@ -261,16 +269,28 @@ pub async fn repo_text(env: &Env, path: &str) -> Fetched {
         // on the page came from one commit. A one-file commit skew of a few
         // seconds is a far smaller lie than "part of this page is missing"
         // printed over a page that is in fact complete.
-        _ => match gh_get(&unpinned_url(path), &tok, TTL_HEAD).await {
+        pinned => match gh_get(&unpinned_url(path), &tok, TTL_HEAD).await {
             Ok((200, body)) => Fetched { text: body, live: true },
             Ok((404, _)) => Fetched { text: String::new(), live: true },
-            _ => dead(),
+            // Both attempts failed. Name both statuses: if the pinned read was
+            // rejected and the unpinned one succeeded we never get here, so
+            // seeing the same status twice points away from the ref and toward
+            // the request itself (throttling, transport).
+            unpinned => dead(format!("pinned {}, unpinned {}", why(&pinned), why(&unpinned))),
         },
     }
 }
 
 fn unpinned_url(path: &str) -> String {
     format!("https://api.github.com/repos/{REPO}/contents/{path}?ref={BRANCH}")
+}
+
+/// A read outcome as a short reason, for the banner.
+fn why(r: &Result<(u16, String)>) -> String {
+    match r {
+        Ok((status, _)) => format!("HTTP {status}"),
+        Err(_) => "no response".to_string(),
+    }
 }
 
 /// All blob paths via one recursive Trees API call, pinned to the same commit
