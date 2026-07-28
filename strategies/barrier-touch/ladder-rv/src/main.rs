@@ -1784,7 +1784,7 @@ fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
     );
     let iv = load_iv(data);
     let mut pred_rows = vec![
-        "market_slug,condition_id,outcome,token_id,probability,market_midpoint,bid,ask,dir,barrier,feed_age_h,feed_open,jump_sd,pricer,note"
+        "market_slug,condition_id,outcome,token_id,probability,market_midpoint,bid,ask,dir,barrier,feed_age_h,feed_open,jump_sd,pricer,sigma_rv,sigma_iv,q_iv,q_blend,note"
             .to_string(),
     ];
     println!("live @ {} UTC", Utc::now().format("%Y-%m-%d %H:%M"));
@@ -1913,8 +1913,26 @@ fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
             };
             let q_iv = match (spot, ivv) {
                 (Some(s), Some(v)) => {
-                    Some(touch_prob_jump(s, l.barrier, l.dir, v, tau, jump_sd))
+                    Some(touch_prob_jump(s, l.barrier, l.dir, bump(v), tau, jump_sd))
                 }
+                _ => None,
+            };
+            // PRE-REGISTERED COMPARISON, not a live switch (results/prereg-rv-iv-blend-2026-07-28.md).
+            // Recorded so 2026-07-31 can score RV-primary against IV-primary and a fixed
+            // 50/50 sigma blend on the SAME legs. `sigma_blend` is fixed at w = 0.5 and is
+            // never tuned; tuning it after seeing the outcome is what this file exists to
+            // prevent. The live trade signal continues to read q_rv only.
+            let sigma_rv = rv_i.or(rv).map(bump);
+            let sigma_iv = ivv.map(bump);
+            let q_blend = match (spot, sigma_rv, sigma_iv) {
+                (Some(s), Some(a), Some(b)) => Some(touch_prob_jump(
+                    s,
+                    l.barrier,
+                    l.dir,
+                    0.5 * (a + b),
+                    tau,
+                    jump_sd,
+                )),
                 _ => None,
             };
             println!(
@@ -1935,7 +1953,7 @@ fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
             );
             if let (Some(q), Some(m)) = (q_rv, mid) {
                 pred_rows.push(format!(
-                    "{},{},Yes,{},{:.4},{:.4},{},{},{},{},{:.1},{},{:.4},{},spot={:.2};rv={:.3};rv_i={:.3};tau={:.5};ws={}",
+                    "{},{},Yes,{},{:.4},{:.4},{},{},{},{},{:.1},{},{:.4},{},{},{},{},{},spot={:.2};rv={:.3};rv_i={:.3};tau={:.5};ws={}",
                     l.market_slug,
                     l.condition_id,
                     l.token_yes,
@@ -1949,6 +1967,10 @@ fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
                     feed_open as u8,
                     jump_sd,
                     PRICER_VERSION,
+                    sigma_rv.map(|v| format!("{v:.4}")).unwrap_or_default(),
+                    sigma_iv.map(|v| format!("{v:.4}")).unwrap_or_default(),
+                    q_iv.map(|v| format!("{v:.4}")).unwrap_or_default(),
+                    q_blend.map(|v| format!("{v:.4}")).unwrap_or_default(),
                     spot.unwrap_or(f64::NAN),
                     rv.unwrap_or(f64::NAN),
                     sig_i,

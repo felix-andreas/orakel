@@ -11,6 +11,42 @@ In a mutually-exclusive family the de-vigged legs should sum to ≈1.0 (a little
 vig). **Compute the leg-sum at your checkpoint.** Values well above 1.0 mean the book is
 not priced yet.
 
+> ### First check that your ladder is actually mutually exclusive
+>
+> **Correction, 2026-07-28 (barrier-touch/ladder-rv).** The rule above is stated for a
+> *partition* — "how many quakes", "which bucket does the close land in" — where exactly one
+> leg wins and the masses must sum to one. Many ladders are not partitions. A **one-touch**
+> ladder is **nested**: "WTI touches 75" implies "WTI touches 80" implies "WTI touches 85".
+> Several legs win together, the true sum is whatever the nesting implies, and there is no
+> reason for it to be 1.
+>
+> On such a family `leg-sum ≈ 1` is not a gate that is hard to pass — **it is a gate that
+> cannot fail**, because the bucket masses it implicitly refers to sum to 1 by construction
+> however badly the book is priced. Running it returns CLEAN and tells you nothing. That is
+> worse than having no gate, because you write "leg-sum check clear" in a worklog and
+> believe the checkpoint has been audited.
+>
+> **The quantity that can actually be wrong is the expected winner count.** Sum the legs'
+> midpoints at your checkpoint — for a nested ladder that is the market's expected number of
+> YES legs, `Σmid` — and compare it to the realised `Σwinner`. It is the same idea (does the
+> book's total mass match reality?) in the one form that survives non-exclusivity, and it
+> works for a partition too, where it reduces to the original leg-sum.
+>
+> Measured on 46 fully-resolved boards / 760 resolved legs:
+>
+> | checkpoint | `Σmid / Σwinner` | verdict |
+> |---|---:|---|
+> | board creation | **1.38** | unpriced — 85% of legs quote a mid in [45c, 55c] |
+> | window-open | 1.11 | usable |
+> | daily 12:00Z in-window | 1.28 | usable |
+>
+> The creation anchor fails here exactly as it failed for quake-etas, and it was caught by
+> `Σmid/Σwinner` and by rule 2 below (the null model won), **not** by the literal leg-sum.
+>
+> **So: before computing any leg-sum, ask whether one leg wins or several.** If several,
+> compute `Σmid` vs `Σwinner` instead and say which one you ran. A gate that passes for free
+> is not evidence.
+
 Measured (quake-etas kill, 2026-07-25):
 
 | checkpoint | leg-sum | apparent edge |
@@ -28,8 +64,10 @@ A deliberately naive benchmark winning by two sigma is never good news about you
 
 ## Rules
 
-1. **Gate every checkpoint on leg-sum ≤ ~1.05** (or the family's normal vig level). Report
-   the leg-sum beside every headline number.
+1. **Gate every checkpoint on leg-sum ≤ ~1.05** (or the family's normal vig level) **when
+   the family is mutually exclusive** — and on `Σmid` vs `Σwinner` when it is nested, which
+   is the general form. Report whichever you ran, by name, beside every headline number.
+   "Leg-sum clear" on a nested ladder is a statement about nothing.
 2. **Always run a null model** (Poisson, uniform, the empirical marginal, the previous
    instance) through the same pipeline. It should lose. If it wins, stop and audit the
    checkpoint before anything else.
