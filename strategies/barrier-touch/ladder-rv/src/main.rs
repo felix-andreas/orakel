@@ -624,15 +624,28 @@ struct Candle {
 fn cmd_candles(data: &Path, key: &str, from: NaiveDate, to: NaiveDate) -> Result<()> {
     let (provider, sym) = key_url(key);
     let dir = data.join("candles").join(key);
-    let today = Utc::now().date_naive();
     let mut jobs = vec![];
     let mut d = from;
     while d <= to {
         let t0 = ts(d, 0, 0);
-        if d == today {
-            // partial day: always refetch
-            let _ = fs::remove_file(dir.join(format!("{d}_a.json")));
-            let _ = fs::remove_file(dir.join(format!("{d}_b.json")));
+        // A day's file is COMPLETE only if it was written after that day ended. `d == today`
+        // is the obvious case, but the dangerous one is YESTERDAY: a run at 07:00Z writes a
+        // file covering 00:00-07:00Z, and every later run then reports it "cached" and keeps
+        // the truncation forever. That is how day-4 logged RV14 48.8% against a true 51.7%,
+        // and on 2026-07-28 it was found holding a 52-byte `no_data` SPY/NVDA file for the
+        // whole of Monday's RTH session. Refetch whenever the file predates the day's end.
+        let day_end = t0 + 86400;
+        for suf in ["a", "b"] {
+            let p = dir.join(format!("{d}_{suf}.json"));
+            let complete = fs::metadata(&p)
+                .and_then(|m| m.modified())
+                .ok()
+                .and_then(|m| m.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|dur| dur.as_secs() as i64 >= day_end)
+                .unwrap_or(false);
+            if !complete {
+                let _ = fs::remove_file(&p);
+            }
         }
         match provider {
             "pyth" => {
@@ -1748,6 +1761,16 @@ fn cmd_wash(data: &Path, boards: &[String]) -> Result<()> {
 
 // ---------- live ----------
 
+/// Which pricer produced a row. The ledger (`predictions/predictions.csv`) has no column
+/// for this, and on 2026-07-27 the pricer changed mid-trial: rows up to and including
+/// 2026-07-26 used plain `touch_prob` (first passage, no jump term), rows from 2026-07-27
+/// use `touch_prob_jump` (explicit pre-window / closed-feed jump). The change was uniformly
+/// DOWNWARD in q, i.e. it flatters a seller, and it landed on the very day the trial's
+/// headline flipped — so the 07-31 scoring must be splittable by it or it cannot say
+/// whether the fix helped. Stamp it on every row from here on; the historical mapping is
+/// `memory/pricer-versions.csv`.
+const PRICER_VERSION: &str = "touch_prob_jump";
+
 fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
     let client = mk_client();
     let now = Utc::now().timestamp();
@@ -1761,7 +1784,7 @@ fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
     );
     let iv = load_iv(data);
     let mut pred_rows = vec![
-        "market_slug,condition_id,outcome,token_id,probability,market_midpoint,bid,ask,dir,barrier,feed_age_h,feed_open,jump_sd,note"
+        "market_slug,condition_id,outcome,token_id,probability,market_midpoint,bid,ask,dir,barrier,feed_age_h,feed_open,jump_sd,pricer,note"
             .to_string(),
     ];
     println!("live @ {} UTC", Utc::now().format("%Y-%m-%d %H:%M"));
@@ -1912,7 +1935,7 @@ fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
             );
             if let (Some(q), Some(m)) = (q_rv, mid) {
                 pred_rows.push(format!(
-                    "{},{},Yes,{},{:.4},{:.4},{},{},{},{},{:.1},{},{:.4},spot={:.2};rv={:.3};rv_i={:.3};tau={:.5};ws={}",
+                    "{},{},Yes,{},{:.4},{:.4},{},{},{},{},{:.1},{},{:.4},{},spot={:.2};rv={:.3};rv_i={:.3};tau={:.5};ws={}",
                     l.market_slug,
                     l.condition_id,
                     l.token_yes,
@@ -1925,6 +1948,7 @@ fn cmd_live(data: &Path, slugs: &[String]) -> Result<()> {
                     age_h,
                     feed_open as u8,
                     jump_sd,
+                    PRICER_VERSION,
                     spot.unwrap_or(f64::NAN),
                     rv.unwrap_or(f64::NAN),
                     sig_i,

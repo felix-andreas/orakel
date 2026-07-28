@@ -1,0 +1,11 @@
+{
+  "key": "blobs/9ccc8e667d43841451bfcbd558198abf9a22e0d1958d4c68fb7c4d47303674ba",
+  "sha256": "9ccc8e667d43841451bfcbd558198abf9a22e0d1958d4c68fb7c4d47303674ba",
+  "bytes": 18920457,
+  "content_type": "application/gzip",
+  "original_name": "candles-2026-07-28.tar.gz",
+  "source_url": "benchmarks.pyth.network (Metal.XAU|XAG/USD, Commodities.WTIU6|WTIV6|USOILSPOT, Equity.US.SPY|NVDA via TV-shim; BTC|ETH via data-api.binance.vision) + cdn.cboe.com (OVX/VIX/GVZ/VXSLV) + deribit.com (DVOL)",
+  "note": "ladder-rv daily resolution-feed archive thru 2026-07-28 ~01:20Z, 9 keys. 2026-07-27 FORCE-REFETCHED: the cached copy was captured at 07:12Z and was truncated — WTIU6 21.9KB -> 69.7KB, and SPY/NVDA were 52-byte no_data files, i.e. Monday's entire RTH session was missing. cmd_candles now refetches any day-file written before that day ended, so this class of silent truncation cannot recur. Contains the WTI slide to 81.84 (Fri close 90.46 -> Mon open 83.68 -> Tue 81.84). SUPERSEDES candles-2026-07-27.",
+  "fetched_at": "2026-07-28T01:27:27Z",
+  "bucket": "orakel"
+}
