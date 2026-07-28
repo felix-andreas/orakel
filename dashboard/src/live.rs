@@ -256,34 +256,28 @@ pub async fn repo_text(env: &Env, path: &str) -> Fetched {
         Ok((200, body)) => Fetched { text: body, live: true },
         // The repository answered and the file is not there. That is data.
         Ok((404, _)) => Fetched { text: String::new(), live: true },
-        // Anything else on a *pinned* read is very likely the propagation race
-        // rather than a real failure: `head()` learned a SHA from one GitHub
-        // replica and this read hit one that has not seen that commit yet, so
-        // the ref is rejected (422 "No commit found for the ref"). We push
-        // constantly during a run, which is exactly when Felix looks at the
-        // dashboard — measured 2026-07-28 as one banner on the first request
-        // after a push and none in the twenty that followed.
+        // I spent 2026-07-28 assuming this arm was a SHA-propagation race —
+        // `head()` learning a commit from one GitHub replica and the read
+        // hitting another that had not seen it — and added an unpinned retry
+        // at `main` to paper over it. The retry did not help, and the reason
+        // string it produced is why: **"pinned no response, unpinned no
+        // response"**. No status at all, both times. A rejected ref returns a
+        // status; this returns nothing, so the subrequest never happened.
         //
-        // Retry the same path unpinned at `main`. Still a live read, never a
-        // cached copy; the only thing given up is the guarantee that every file
-        // on the page came from one commit. A one-file commit skew of a few
-        // seconds is a far smaller lie than "part of this page is missing"
-        // printed over a page that is in fact complete.
-        pinned => match gh_get(&unpinned_url(path), &tok, TTL_HEAD).await {
-            Ok((200, body)) => Fetched { text: body, live: true },
-            Ok((404, _)) => Fetched { text: String::new(), live: true },
-            // Both attempts failed. Name both statuses: if the pinned read was
-            // rejected and the unpinned one succeeded we never get here, so
-            // seeing the same status twice points away from the ref and toward
-            // the request itself (throttling, transport).
-            unpinned => dead(format!("pinned {}, unpinned {}", why(&pinned), why(&unpinned))),
-        },
+        // It fires only on the first request after a push, when the SHA
+        // changes and every cache entry misses at once — cache hits do not
+        // spend a subrequest budget, real reads do. Retrying therefore made it
+        // worse, not better: each failure cost two subrequests out of the same
+        // exhausted budget. The retry is gone.
+        //
+        // The real fix is fewer reads per page, and the pages that fan out
+        // over a directory (`/runs` reads every manifest) grow as the firm
+        // accumulates history — so this gets worse on its own. Tracked for a
+        // dashboard cycle rather than patched at the end of a run.
+        other => dead(why(&other)),
     }
 }
 
-fn unpinned_url(path: &str) -> String {
-    format!("https://api.github.com/repos/{REPO}/contents/{path}?ref={BRANCH}")
-}
 
 /// A read outcome as a short reason, for the banner.
 fn why(r: &Result<(u16, String)>) -> String {

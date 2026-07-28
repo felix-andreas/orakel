@@ -40,36 +40,29 @@ pub async fn text(env: &Env, path: &str) -> Doc {
     Doc { text: f.text, live: f.live }
 }
 
-/// How many repo reads may be in flight at once.
-///
-/// Unbounded `join_all` cost us reads. Measured 2026-07-28: on the first
-/// request after a push — when the SHA changes, so *every* cache entry misses
-/// and every read becomes a real subrequest — reads at the tail of the batch
-/// came back with **no response at all**, not a status. `/` lost two run
-/// manifests and `/runs` lost three, always the oldest, i.e. the ones issued
-/// last. Nothing failed in 120 requests made outside that window.
-///
-/// The pages that hurt are the ones that fan out over a directory (`/runs`
-/// reads every manifest, `/` reads ~20 files), and those are exactly the pages
-/// that grow as the firm accumulates history — so this gets worse on its own.
-/// Bounding in-flight reads keeps most of the parallel win (the original serial
-/// version was 0.87s warm / 2.9s cold for ~20 reads) without the burst.
-const MAX_IN_FLIGHT: usize = 6;
-
-/// Several repo files at once, in the order asked for, at most
-/// `MAX_IN_FLIGHT` concurrently.
+/// Several repo files at once, in the order asked for.
 ///
 /// Reads on one page are independent of each other — nothing in a run manifest
 /// decides which strategy TOML to fetch — so awaiting them one at a time turns
-/// N independent round trips into N sequential ones.
+/// N independent round trips into N sequential ones. Measured before this
+/// existed: the homepage's ~20 reads cost 0.87s warm and 2.9s on a cache miss,
+/// with latency scaling linearly in the number of reads.
+///
+/// **Do not bound this to fix the cold-cache read failures.** Tried on
+/// 2026-07-28 and it made them worse, which is the useful part of the result:
+/// capping in-flight reads at 6 took `/runs` from 3 lost files to 6 while `/`
+/// stayed at 2. Concurrency is therefore not the variable — a per-request
+/// *subrequest budget* is, and cache hits do not spend it, which is why this
+/// only ever fires on the first request after a push. The fix is fewer reads
+/// per page, not slower ones.
 pub async fn read_all(env: &Env, paths: impl IntoIterator<Item = String>) -> Vec<Doc> {
-    use futures::stream::StreamExt;
-    // `buffered` preserves input order, which callers rely on to zip results
-    // back against the paths they asked for.
-    futures::stream::iter(paths.into_iter().map(|p| async move { text(env, &p).await }))
-        .buffered(MAX_IN_FLIGHT)
-        .collect()
-        .await
+    futures::future::join_all(
+        paths
+            .into_iter()
+            .map(|p| async move { text(env, &p).await })
+            .collect::<Vec<_>>(),
+    )
+    .await
 }
 
 /// Every repo path. An unreadable listing yields no paths and `false`, so the
