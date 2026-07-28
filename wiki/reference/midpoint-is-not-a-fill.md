@@ -44,8 +44,47 @@ The wings are stark on their own terms: `will-spy-reach-760` was scored at a mid
 2.55c against a best-observed bid of 0.12c. `will-nvda-dip-to-188` never traded on the
 bid at any price at all.
 
+## The one-line diagnostic: if both sides lose, you measured the spread
+
+**Measured 2026-07-28 (mention markets), and it is the cheapest form of this check we have
+found.** Re-price your claimed edge twice — once as "buy YES at the ask", once as "buy NO at
+the bid" — and look at the signs:
+
+| priced at | buy NO (`bid − y`) | buy YES (`y − ask`) |
+|---|---:|---:|
+| last traded price | *+5.13pp, t = +5.27* | — |
+| **executable** | **−2.51pp, t = −2.48** | **−7.92pp, t = −7.97** |
+
+A real mispricing is one-sided by construction: if YES is too dear, selling it must pay. When
+**both** directions lose simultaneously, no mispricing exists and the number you were
+admiring is the distance from your quote to the executable price. Here that identity closed
+to the cent, on 3,996 legs:
+
+```
+mean spread                8.70c
+mean (last trade − mid)   +1.83c
+mean (last trade − bid)   +6.18c
+last-trade edge (p − y)   +4.56pp
+executable edge (bid − y) −1.63pp
+                           ------
+difference                 6.18pp   ==  mean(last trade − bid)
+```
+
+Two things this adds to the pages above:
+
+- **A last-traded price is not a fill either.** This page and
+  [phantom-midpoints](phantom-midpoints.md) both warn about *quotes*. A trade print looks
+  immune — someone really did transact there — but on a one-sided book the prints cluster at
+  the ask, and scoring against them flatters the sell side by the full half-spread plus the
+  order-flow imbalance (+1.83c of it here).
+- **Run it before the modelling, not after.** It costs one extra column. It killed a family
+  that had already passed the catalogue scan, the specialist search, the tape gate and the
+  feed-stability gate.
+
 ## Rules
 
+0. **Report the edge on both sides at executable prices.** If both are negative, stop —
+   there is nothing there, whatever the t-statistic on the quoted price says.
 1. **Never report a Brier improvement without its fillable count.** `scoring/` now
    prints `n_fillable / n_known_fill` on every aggregate row and refuses to stay quiet
    about it. A headline improvement with 2/21 fillable is a calibration result, and must

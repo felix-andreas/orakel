@@ -4,6 +4,75 @@ One dated entry per run. Name the exact model id that did the work.
 
 ---
 
+## 2026-07-28 (run 7) — a +5pp bias at t=+5, two days out, that was the spread all along. Mention markets killed on the executable price
+
+Model: **claude-opus-5 (effort max)**.
+
+Worked "will X say WORD during Y" boards. Filed
+`ideas/2026-07-28-mention-markets-discarded.md`. **Verdict: discarded-idea.**
+
+**Why this one and not the usual suspects.** The open-market scan (20 pages, 25,072 rows)
+plus a resolved-family sweep turned up the usual dead ends — geopolitics (avoid/blocked),
+crypto and market-cap boards (efficient objects, Felix's rule), macro (sharp desks), weather
+dailies, AI rankings, box office (killed 07-27). Mention markets were the first family in
+seven runs to clear **every** positive screen at once: not a quoted underlying; a
+hidden-but-recoverable Bernoulli rate; **no free specialist anywhere** (no DataGolf, no
+FanGraphs, no Substack PNG — nobody publishes utterance probabilities); hours to resolution;
+recurring; base rates spread 0.06–0.91.
+
+**Gate 0, MEASURED.** Kalshi catalogue re-pulled: **12,231 series** today (12,187 on 07-27).
+It runs a whole **`Mentions` category — 397 series, 3.2% of the catalogue**. Pulled all of
+them: **17,001 markets, 15,258 settled with a `result`, $310.6M settled volume, 813 events,
+median 17 legs/event**, all 2026-05→07. Polymarket runs the same family: **447 events,
+$301.5M lifetime**, single boards at $53.2M (Trump×Xi bilateral, 33 legs), $10.3M
+(inauguration), $5.5M (Powell June presser). 14 boards open today.
+
+**The apparent edge.** Checkpoint = last hourly candle at/before `min(close_time)` over the
+event, at leads 1/3/6/12/24/48h, on 6,117 markets in the 51 `KXEARNINGSMENTION*` series + 17
+named speaker series. Realised YES frequency sits **below** the traded price in every band
+from 0.10 to 0.90 — 0.60–0.75 by −14.6pp. Event-clustered: **+6.51pp t=+6.93 (T−3h),
++5.13/+5.27 (T−6h), +5.36/+5.29 (T−12h), +4.15/+3.71 (T−24h)**. 40.6% of volume trades in
+the final hour, so I checked it was not intra-speech decay — it survives to T−48h.
+
+**The kill.** Re-priced at what we can get (buy NO at the bid, buy YES at the ask):
+**−2.51pp (t=−2.48) and −7.92pp (t=−7.97)**. *Both sides lose simultaneously*, which is only
+arithmetically possible if the thing measured was the spread — and it closes to the cent:
+mean spread 8.70c, mean(last trade − mid) +1.83c, **mean(last trade − bid) 6.18c**, and
+last-trade-edge minus executable-edge = **6.18pp, identical**. Only 45.9% of events show a
+positive executable edge. Under the `tape-gate` relative-spread rule the edge is
+**+0.60pp, t=+0.40**. Counting legs ("say X 3+ times") likewise: +1.66pp, t=+0.24, n=40.
+
+**The trap inside the kill, and the day's best find.** `volume_fp ≥ 20k` gives
+**+21.15pp at t=+7.30**. It is **look-ahead**: only **14.3%** (median) of a mention leg's
+lifetime volume has traded by T−6h. The honest version of the same filter (volume known at
+the checkpoint, rebuilt from the candle path) gives **−3.06pp, t=−0.72**. New wiki page.
+
+**Polymarket is not a softer crowd — measured.** Matched by quoted phrase against Kalshi
+`KXWARSHMENTION` + `KXEARNINGSMENTIONBA/PG/PYPL/AAPL/META/MSFT`: 52 pairs, raw median |Δ|
+10.5pp — but 33 of them were **phantom midpoints** (Apple/Meta/MSFT boards opened today at
+$34–$178 volume quoting 0.02/0.98 → a 0.500 mid). Real books both sides (19 pairs):
+**+1.87pp, se 0.59, t=+3.16, median |Δ| 2.50pp, 18/19 within 5pp.** Same line, 2pp richer.
+
+**Fundability.** Fees read per market, not assumed: Polymarket `mentions_fees`
+`{rate 0.04, exponent 1, takerOnly, rebate 0.25}`; all 397 Kalshi Mentions series
+`quadratic ×1` = 0.07·p·(1−p). On the tightest books: gross +1.65pp, **net +0.46pp (Kalshi) /
++0.97pp (Polymarket)**. Break-even table: 1 of 5 bands clears by 0.1pp on the ≤1c subset,
+**0 of 5 under the relative-spread gate**.
+
+**The thing worth remembering that is not a kill.** This family **passes the tape gate
+outright** — 0 of 30 live tight-spread Polymarket legs have zero tape, ~127 taker trades per
+leg, 1–2c spreads, $4.7k–$7.6k of listed liquidity, resolution in 1–2 days. It is also clean
+on `stale-feed-gate`: the resolving artifact is the video of the event, generated during the
+market's own window, so there is no feed that can be shut while the market moves. Real books,
+real takers, fast resolution, no incumbent — **and the price was simply right.** Liquidity is
+not always our binding constraint.
+
+Wiki: new `reference/lifetime-volume-is-look-ahead.md`; `midpoint-is-not-a-fill.md` gains the
+"both sides lose ⇒ you measured the spread" diagnostic and a rule 0; `sharp-line-screen.md`
+gains "filter both sides to real books before comparing venues"; index updated.
+
+---
+
 ## 2026-07-27 (run 6) — the empty Kalshi slot was empty for a reason. No positive idea filed; box office killed on the implied-distribution check and a free Substack
 
 Model: **claude-opus-5 (effort max)**.

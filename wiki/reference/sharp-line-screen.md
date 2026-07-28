@@ -86,6 +86,34 @@ Rules that follow:
    is tighter than anything your data supports, someone published the number. Fit the sigma
    first; it tells you a specialist exists before you have found them.
 
+## Filter both sides to REAL books before comparing venues
+
+**Measured 2026-07-28 (mention markets).** Matching Kalshi's live `Mentions` legs to
+Polymarket's by quoted phrase gave **52 pairs**, and the raw comparison read as chaos: mean
++3.67pp but a **median |Δ| of 10.5pp**, with individual legs at ±40pp.
+
+Every one of those extremes was a **phantom midpoint** on the Polymarket side. The Apple,
+Meta and Microsoft earnings boards had opened hours earlier with **$34–$178** of volume and
+quoted **0.02 / 0.98** — a 0.500 mid by construction, which "disagrees" enormously with any
+real Kalshi price and does so in whichever direction Kalshi happens to sit.
+
+Requiring a real book on **both** sides (spread ≤ 10c each, ≥$200 traded) left 19 pairs:
+
+> **Polymarket mid − Kalshi mid = +1.87pp, se 0.59, t = +3.16. Median |Δ| 2.50pp,
+> 18/19 within 5pp.**
+
+The same family, the same instant: raw it looks like two unrelated markets, filtered it is
+one line quoted twice. The rule is the same one [phantom-midpoints](phantom-midpoints.md)
+states for our own edges, applied to the *screen itself*: **an unpriced leg does not vote.**
+A freshly-opened board is the most likely thing to be unpriced, and a cross-venue scan run
+on today's markets is exactly where fresh boards live.
+
+Corollary for the arb-shaped reading: 11 of those 19 pairs nominally **cross** (e.g. Boeing
+"Tariff", Kalshi 0.29/0.30 vs Polymarket 0.33/0.34). That is not free money — the two venues
+settle the same utterance under different rules and different adjudicators, so both legs can
+lose together. Treat a crossing quote across venues as evidence the *settlement definitions
+differ*, until you have read both rulebooks.
+
 ## Free, read-only sources (verified working from our environment)
 
 - **Kalshi** — see above; open, unauthenticated, and the single highest-yield check we own.
