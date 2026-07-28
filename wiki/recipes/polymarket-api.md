@@ -143,6 +143,28 @@ both of which actually happened:
 **Query both, or query on the state you expect and treat an empty result as "wrong filter"
 before treating it as "no such market".**
 
+### On a resolution day the batch is MIXED, and one form drops half of it silently
+
+The two bullets above are about a *homogeneous* set. The dangerous case is a batch that
+spans both states, which is exactly what a resolution day looks like: UMA settles legs over
+hours, so at any moment some of the board is closed and the rest is not. A single-form query
+over that batch returns a partial answer **that looks complete** — no error, no gap, just
+half the rows. Run both forms and union them; the row count is the only signal you get.
+
+Concretely, 2026-07-28: 120 outstanding rows over 58 markets resolve across Friday 21:00Z
+and Saturday 04:00Z. A one-form scorer would have silently scored about half of them.
+
+### `condition_id` singular is IGNORED, not rejected — and returns someone else's market
+
+`/markets?condition_ids=<cid>` (plural) filters. `/markets?condition_id=<cid>` (singular) is
+**not an error**: Gamma discards the unknown parameter and serves the unfiltered default
+list, so you get a 200 and a plausible-looking market row that has nothing to do with what
+you asked for. It returned *"New Rihanna Album before GTA VI?"* for a WTI condition id.
+
+Any lookup by id must **verify the identity of what came back** — assert the returned
+`conditionId` equals the one you asked for — rather than trusting that a 200 with one row
+means a match.
+
 ## Neg-risk boards: placeholder legs exist only in `/events`
 
 A neg-risk group lists unnamed placeholder outcomes — `will-company-a-…` through

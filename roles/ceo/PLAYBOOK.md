@@ -9,14 +9,16 @@ and build the firm's tooling. You are autonomous within [`CONSTITUTION.md`](../.
    yesterday's run manifest exists — if a day silently failed, diagnose first.
 2. **Inbox.** Handle `roles/ceo/inbox/` (and check `roles/felix/inbox/` for unanswered
    items you owe him). Escalate what's Felix's to `roles/felix/inbox/`.
-3. **Mirror the watchlist FIRST — before spawning anyone.** Rebuild
-   `config/watchlist.json` in R2 from the union of **active applications**
-   (`strategies/*/*/applications/*.toml`), not from yesterday's predictions. Reason
-   (execution engine, 2026-07-25): the watchlist used to be mirrored *after* the run that
-   produced predictions, so the snapshot worker had no book for the markets we had just
-   predicted on — 18 of our first 21 scored signals were unusable for execution
-   simulation. Any market a variant tracks must be snapshotted from the moment it is
-   onboarded, well before we predict on it.
+3. **Mirror the watchlist FIRST — before spawning anyone.** `tools/watchlist/target/release/watchlist`
+   (from the repo root). Do not assemble it by hand: hand-assembly lost markets three times —
+   mirrored after the predicting run (2026-07-25, 18 of the first 21 scored signals had no
+   book), missed markets that came from predictions rather than applications (2026-07-27,
+   three gold boards), and carried only the legs we happened to predict on rather than the
+   whole applied-for board (2026-07-28, 44 WTI/gold/silver legs never snapshotted at all).
+   The tool implements the rule: every market of every **active application**, UNION every
+   market carrying an **unresolved prediction**, MINUS everything resolved. It is idempotent,
+   reports additions *and* drops, and refuses to write an empty list. A book that was not
+   recorded at the time cannot be recovered afterwards.
 4. **Market researcher.** Spawn it (model per routing policy). It returns today's idea →
    `ideas/` backlog.
 5. **Research slots.** For each active slot, spawn its researcher (variant folder tells it
@@ -27,7 +29,12 @@ and build the firm's tooling. You are autonomous within [`CONSTITUTION.md`](../.
    on scored evidence (`scoring/`, backtests) → update `strategy.toml` status,
    `ops/state.toml`, `ops/decisions.md`. Free slots: fill from `ideas/` backlog (your
    pick, with reason).
-8. **Scoring.** If any market resolved: append `predictions/resolutions.csv`, then run
+8. **Scoring.** Sweep for resolutions with **both** Gamma query forms and union them — on a
+   resolution day the batch is mixed (UMA settles over hours) and a single-form query returns
+   half the rows with no error, looking complete. Verify each returned `conditionId` is the
+   one you asked for; `condition_id` singular is silently ignored and serves an unrelated
+   market. Both in `wiki/recipes/polymarket-api.md`.
+   If any market resolved: append `predictions/resolutions.csv`, then run
    **`tools/fillcheck` first and `scoring/` second** — fillcheck writes
    `predictions/fills.csv` and scoring joins it, so running scoring alone silently drops
    the tradeability column. Note headline movements. **Never report a Brier improvement
@@ -38,14 +45,13 @@ and build the firm's tooling. You are autonomous within [`CONSTITUTION.md`](../.
    then `bookpack verify <yesterday>`. Cheap, idempotent, and it protects the one dataset the
    firm cannot rebuild if it is lost — see ARCHITECTURE §6.
 10. **Dashboard.** Redeploy if dashboard code changed. Spot-check it renders current state.
-11. **Close. ALWAYS re-mirror the watchlist — not "if applications changed".** Step 3 mirrors
+11. **Close. ALWAYS re-run `tools/watchlist` — not "if applications changed".** Step 3 mirrors
    before the run; researchers then propose rows on markets nobody was watching yet, and those
    markets get no book until the next morning. That happened on 2026-07-27: three gold boards
    were predicted at ~09:00 against a watchlist mirrored at 07:05, so the snapshot worker
-   recorded nothing for them all day. The build is idempotent and takes seconds, so there is no
-   judgement call to get wrong — mirror from active applications UNION every market carrying an
-   unresolved prediction, every time. Then write `ops/runs/<date>.toml` (steps, failures, token
-   spend), update memory (prune!), worklog entry, commit + push.
+   recorded nothing for them all day. Running it twice is idempotent and takes seconds, so
+   there is no judgement call to get wrong. Then write `ops/runs/<date>.toml` (steps, failures,
+   token spend), update memory (prune!), worklog entry, commit + push.
 
 ## Concurrency hygiene (subagents share this working tree)
 
