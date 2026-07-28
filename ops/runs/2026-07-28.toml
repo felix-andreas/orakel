@@ -1,0 +1,223 @@
+date = "2026-07-28"
+trigger = "daily (fired 01:09 UTC, inside the weekday window 00:00-13:00 UTC)"
+model = "claude-opus-5"
+outcome = "ok"
+
+summary = """
+An infrastructure day that produced two corrections to things I had asserted. The
+stale-feed damage is worse and more precise than yesterday's write-up: 68 of 132 rows, not
+64 of 95, and every equity row the firm has ever emitted was priced off a shut feed — which
+turns out to be structural, because the working window and US equity hours have no overlap
+at all in either DST regime. Separately, the ledger gained the columns the stale-feed gate
+had been demanding since it was adopted, the watchlist stopped being assembled by hand
+after a third data loss, and the idea funnel became a table that corrected my own diagnosis
+of why four slots are empty. The market researcher killed its object with a screen no
+previous idea reached: the crowd's bias WAS the spread.
+"""
+
+[[steps]]
+n = 1
+what = "Orient"
+result = "Yesterday's manifest present. CEO inbox: no open items. 3 open Felix items (07-25 GitHub token scope, 07-26 apply-write + bankroll, 07-26 war-market ruling), oldest 3 days — under the 7-day threshold."
+
+[[steps]]
+n = 2
+what = "Resolutions — 0 new"
+result = """
+Swept all 56 watchlist markets with `&closed=true`. Two closed rows came back and both were
+already in resolutions.csv and already scored (the WTI dip-to-85 and dip-to-90 legs from
+yesterday). Nothing new resolved, so scoring is unchanged at 25 rows / -0.0172. They were
+still being polled hourly, which the new watchlist tool then dropped.
+"""
+
+[[steps]]
+n = 3
+what = "Ledger schema widened — pricer_version, feed_age_h, feed_open"
+result = """
+The stale-feed gate adopted yesterday requires every row to record the age of the input it
+was priced from, and the schema had nowhere to put it; Friday's batch also has to be read
+split by pricer version, since touch_prob_jump shipped mid-trial. Both are now columns
+instead of things somebody has to remember. 12 -> 15 columns, 132 rows backfilled empty
+(= unknown, not zero). scoring/ resolves columns by header name so the widening was
+transparent: 25 rows still score to -0.0172, nothing dropped. Added a `pricer` aggregate
+level, so the 07-31 split is a table row rather than a manual analysis.
+"""
+
+[[steps]]
+n = 4
+what = "Slot 1 — barrier-touch/ladder-rv day 6 (claude-opus-5, xhigh)"
+result = """
+14 rows proposed and appended after verification (ledger 132 -> 146); 79 of 93 legs read
+were suppressed — 22 stale-feed, 34 mid < 3c, 18 relative spread, 3 de-dup, 2 tape gate.
+Feed state recorded per row: WTI/gold/silver open at 0.1h, SPY/NVDA shut at 5.4h.
+It backfilled feed state and pricer identity for ALL 132 prior rows from the frozen candle
+archive rather than estimating: 07-25 corrected 4.5h -> 4.9h, and days 1-2 turn out to have
+emitted 20 stale equity rows nobody had counted. True figure 68 of 132 (52%), not 64 of 95.
+Also found and fixed three silent data bugs of its own: cmd_candles only force-refetched
+today, so yesterday's partial file reported "cached" forever (WTIU6 21.9 KB against a true
+69.7 KB, and 52-byte no_data files for SPY/NVDA — Monday's whole RTH session missing from
+sigma); `ladderrv live` takes a COMMA-separated argument, so space-separated calls priced
+only the first board and wrote a complete-looking file.
+"""
+
+[[steps]]
+n = 5
+what = "Equity boards are structurally unpredictable — escalated to Felix"
+result = """
+Checked the arithmetic myself rather than taking the report: the working window (Berlin
+02:00-15:00) and Pyth equity RTH have ZERO overlap, missing by exactly half an hour in both
+DST regimes (00:00-13:00Z vs 13:30-20:00Z summer; 01:00-14:00Z vs 14:30-21:00Z winter).
+There is no hour of the daily cadence at which an equity board can be legally predicted.
+Filed as no-reply-needed: the gate already suppresses equity, so nothing is blocked, and my
+recommendation is NOT to widen the window — equity weeklies were already the weakest family
+at 38% reachability, so we would be spending Felix's usage limit to chase it.
+"""
+
+[[steps]]
+n = 6
+what = "tools/watchlist built — hand-assembly retired after a third data loss"
+result = """
+On its first run it found the third instance of the failure it exists to prevent: the hand
+list carried only the legs we happened to predict on, not the boards we hold ACTIVE
+applications for. 44 WTI, gold and silver legs had never been snapshotted at all. 56 -> 98
+markets, and it dropped the two resolved WTI markets still being polled. Re-run at close per
+step 11 and it caught two more silver legs introduced by today's own rows — precisely the
+2026-07-27 failure mode, this time automatically. 100 markets / 200 tokens, R2 readback
+byte-identical.
+"""
+
+[[steps]]
+n = 7
+what = "Market researcher (claude-opus-5, max) — mention markets killed"
+result = """
+"Will X say WORD during Y" — Kalshi 397 series / 17,001 markets / $310.6M in three months,
+Polymarket 447 events / $301.5M lifetime. First family in seven runs to clear every positive
+screen at once: not a quoted object, no free specialist anywhere, hours to resolution,
+recurring, base rates spread 0.06-0.91, immune to the stale-feed gate.
+Killed by a screen no earlier idea reached — the executable-price decomposition, run BEFORE
+the modelling. The crowd looks 4.6-6.5pp too rich in every band (t up to +6.93, surviving to
+T-48h, so not intra-speech decay), and that bias IS the spread: buy NO at the bid -2.51pp,
+buy YES at the ask -7.92pp. Both sides losing at once is only possible if you measured the
+spread, and it closes to the cent (mean last-trade minus bid 6.18c; last-trade edge minus
+executable edge 6.18pp). 0 of 5 bands clear break-even.
+"""
+
+[[steps]]
+n = 8
+what = "Idea funnel becomes a maintained table — and corrects me"
+result = """
+ops/idea-funnel.md: twelve objects with the screen that decided each and the counterparty it
+named. Two findings the prose version missed. The three survivors are EXACTLY the three
+objects where no incumbent was found, no exceptions in either direction. And "idea supply is
+the binding constraint on slots", which I had been repeating in memory since 07-25, is
+wrong: supply is ~2.2 objects/day. What is scarce is objects arriving with a LIVE TRADEABLE
+BOARD attached — arena-rank has no board until ~08-10, frontline is blocked on a ruling — so
+a second market researcher would have fixed nothing and I would have paid to learn that.
+slots_total = 5 annotated as a ceiling, not a target.
+Object 12 then broke the pattern usefully: no incumbent, killed anyway, and it passes the
+tape gate better than anything we have screened. Liquidity is not our binding constraint.
+"""
+
+[[steps]]
+n = 9
+what = "Dashboard: two hypotheses tried, both disproved, one diagnostic kept"
+result = """
+Felix's "Some of this page is missing" banner reproduced: it fires on the FIRST request
+after a push and in none of 120 requests outside that window. I assumed a SHA-propagation
+race and shipped an unpinned retry; then assumed burst concurrency and capped in-flight
+reads at 6. Neither worked and both are reverted — capping made /runs worse (3 lost files ->
+6). The failure reasons settled it: "pinned no response, unpinned no response", no status at
+all, so the subrequest never happened. What survives is a per-request subrequest budget that
+only a cold cache can exhaust, which is why a push (new SHA -> every pinned URL changes ->
+every cache entry misses) triggers it. The retry was actively counterproductive there.
+Kept: failed reads now record WHY, not just which file. That is the only reason any of this
+is known, and it turned an afternoon of guessing into a measurement.
+"""
+
+[[steps]]
+n = 10
+what = "Health checks + book compaction + fills"
+result = """
+Dashboard 302 without Access headers / 200 with. Snapshot worker 200 (it is orakel-snapshot,
+SINGULAR — the plural typo returns a Cloudflare 404 that reads like an outage; recorded in
+state.toml so the next run does not repeat it). 33/33 R2 manifests resolve. bookpack packed
+all six days; 07-27 verified against source JSON exactly (2791 rows, sum midpoints 823.900,
+2258 with a bid). Zero snapshot token errors today (106 rows from 53 tokens x 2 hours,
+exact), down from 7 yesterday. fillcheck refreshed all 146 rows ahead of Friday: 76/146 have
+ever seen a bid at or above the midpoint they were scored against, and the summed best
+reachable bid is 90% of the summed midpoint. Worklogs current.
+"""
+
+[failures]
+mine = """
+1. I asserted a SHA-propagation race as the cause of the dashboard banner and shipped a fix
+   for it. It was wrong, and the second attempt (bounded concurrency) was wrong too and made
+   one page worse. Both reverted. The thing that actually worked was recording the failure
+   reason instead of hypothesising about it — which is the discipline I require of
+   researchers and had not applied to my own tooling.
+2. I had been carrying "idea supply is the binding constraint on slots" in memory for three
+   runs without checking it. It is wrong by a factor of about four.
+3. The hand-built watchlist had been systematically under-covering every applied-for board,
+   for six days, and I did not notice until I wrote the tool that made the rule executable.
+"""
+theirs = """
+Slot 1 reported that its own day-4 archive discipline had still not caught a partial-file
+bug: cmd_candles force-refetched only today, so a file written mid-day by the previous run
+reported "cached" forever and Monday's whole equity RTH session was silently missing from
+sigma. Self-reported, fixed, and the same class of error as the day-4 RV discrepancy.
+The market researcher corrected a claim of its own: filtering on lifetime volume yields
++21.15pp at t=+7.30 and is look-ahead, because only 14.3% of a mention leg's lifetime volume
+has traded by the checkpoint. Rebuilt honestly it is -3.06pp, t=-0.72. Promoted to
+wiki/reference/lifetime-volume-is-look-ahead.md — it generalises to volumeNum, liquidityNum,
+open_interest and any "did this book ever move?" statistic, so it was very close to
+poisoning future work.
+"""
+tooling = """
+ureq's default rustls ignores SSL_CERT_FILE and fails the agent proxy's certificate as
+UnknownIssuer; attohttpc with tls-native (the stack rust-s3 already uses here) works. Cost
+one build cycle on the new tool and is now in memory.
+Python's urllib gets 403 from the Gamma API through the proxy where curl gets 200 — use
+curl or a native-tls client, not urllib.
+The stop hook fired on files owned by live subagents again. Unchanged, and outside the repo.
+"""
+
+[spend]
+subagents = 2
+subagent_tokens = 415_414
+note = "slot 1 (204.5k), market researcher (210.9k). Two agents, both productive; the CEO did the tooling work itself rather than spawning a third."
+
+[health]
+dashboard_access = "302 without / 200 with — pass"
+snapshot_worker = "pass (orakel-snapshot, singular); 0 token errors today"
+r2_manifests = "33/33 resolve"
+parquet = "6 days packed; 07-27 verified exactly against source JSON"
+worklogs = "current"
+slots_producing = "slot 1 yes (14 rows); market researcher filed a kill with a new screen"
+watchlist = "100 markets / 200 tokens, built by tools/watchlist, R2 readback byte-identical"
+
+[artifacts]
+wiki_added = [
+  "reference/lifetime-volume-is-look-ahead.md",
+]
+wiki_revised = [
+  "reference/midpoint-is-not-a-fill.md (rule 0: if both sides lose, you measured the spread)",
+  "reference/sharp-line-screen.md (filter both sides to real books before comparing venues)",
+  "reference/checkpoint-artifact.md (a nested ladder makes leg-sum ~ 1 vacuous)",
+  "recipes/polymarket-api.md (mixed-state batches; condition_id singular is ignored)",
+]
+tools_added = ["tools/watchlist"]
+decisions = 1
+predictions_appended = 14
+ledger_total = 146
+scored_total = 25
+
+[next_run]
+items = [
+  "07-31 (Friday): 104 rows resolve 21:00Z + 16 BTC Sat 04:00Z, over 58 markets, identity 58/58 clean. Sweep resolutions with BOTH Gamma query forms and union them — the batch will be mixed as UMA lags, and one form returns half the rows looking complete",
+  "Score Friday SPLIT BY PRICER VERSION, but only within feed_open=1: the split is confounded with feed state, since every stale row is also an old-pricer row. Wednesday and Thursday runs are therefore load-bearing — 50 rows vs 25, and 25 is below the n>=30 floor. Trigger verified armed for 07-29 01:07Z",
+  "RV/IV blend: score the pre-registered comparison in results/prereg-rv-iv-blend-2026-07-28.md. Decision rule is fixed and the live pricer is untouched. The IV anchor sits above realized vol on 62 of 62 legs, and for a sell-only variant that destroys signals rather than creating them (RV 4 sell signals, blend 3, IV 1)",
+  "08-02: ladder-rv trial review",
+  "Dashboard needs a cycle for the cold-cache read loss: fewer reads per page, not different ones. /runs reads every manifest and grows with the firm's history",
+  "Felix: war-market ruling, apply-write decision + bankroll figure, GitHub token scope. The equity/working-window item is no-reply-needed",
+  "~08-10: check whether the August arena boards priced, to reopen favourite-shrinkage",
+]

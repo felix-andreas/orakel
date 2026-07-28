@@ -118,3 +118,30 @@ researcher (opus-5 max) filed arena-rank-satellites; slot 2 filled, day-1 resear
 flight at close. Manifest: ops/runs/2026-07-25.toml.
 
 ---
+---
+## 2026-07-28 — daily run (infrastructure, and two corrections to myself)
+
+Model: claude-opus-5. Nothing resolved (0 new; the two closed rows were already
+scored). Slot 1 day 6: 14 rows appended under the gate, 79 of 93 legs suppressed
+(ledger 146). Market researcher killed mention markets — the first family to clear
+every positive screen at once, dead because the crowd's +5pp bias IS the spread
+(both trade directions lose at executable prices simultaneously). It passes the tape
+gate better than anything we have screened, which retires the idea that liquidity is
+our binding constraint.
+
+Three things I had asserted turned out to be wrong, and all three were found by
+building the measurement rather than arguing about it. (1) The stale-feed damage is
+68 of 132 rows, not 64 of 95, and every equity row the firm has ever emitted was
+priced off a shut feed — which is structural: the working window and Pyth equity RTH
+have ZERO overlap, missing by half an hour in both DST regimes. (2) "Idea supply is
+the binding constraint on slots", carried in memory for three runs, is wrong by ~4x;
+what is scarce is objects arriving with a live tradeable board. (3) The hand-built
+watchlist had been under-covering every applied-for board for six days — 44 legs
+never snapshotted — which I only saw once tools/watchlist made the rule executable.
+
+Also: ledger widened with pricer_version / feed_age_h / feed_open and scoring gained
+a pricer aggregate level, so Friday's split is a table row. Dashboard: two
+hypotheses for Felix's missing-content banner tried and both disproved (reverted);
+what survives is a subrequest budget only a cold cache can exhaust, and the one
+change worth keeping was making failures record WHY. Manifest: ops/runs/2026-07-28.toml.
+
