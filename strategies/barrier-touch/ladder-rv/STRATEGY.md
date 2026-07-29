@@ -133,6 +133,13 @@ manifest (`data/candles-<date>.tar.gz.r2.json`) — that frozen archive is the r
 record. Since 2026-07-28 the refetch of an incomplete yesterday is **automatic**: a day-file
 is re-pulled unless it was written after that day ended.
 
+**The daily freeze must include `out/` and `events_live/`, not just candles.** `data/.gitignore`
+ignores `candles/ vol/ out/ tape/ clob*/`, so anything not in a tarball exists nowhere. Cut
+**both** freezes every day: `candles-<date>` (candles+vol) **and** `live-<date>`
+(events_live+out). Day-6 cut only the first and `predictions_2026-07-28.csv` — the per-leg
+record the RV/IV pre-registration is scored from — survived in one container only
+(`results/archive-audit-2026-07-29.md`). `r2data verify` cannot see inside a tarball.
+
 **`live` takes ONE comma-separated argument**, not a space-separated list —
 `ladderrv live data "slug-a,slug-b"`. Space-separated silently prices only the first board
 and writes a prediction file that looks complete. `cmd_live` also **overwrites**

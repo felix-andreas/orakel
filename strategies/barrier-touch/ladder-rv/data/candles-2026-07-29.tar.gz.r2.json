@@ -1,0 +1,11 @@
+{
+  "key": "blobs/678a56c66b242183fc1a99f258a8f0e79bf7fa3e04881dd82f88b9fc79641a59",
+  "sha256": "678a56c66b242183fc1a99f258a8f0e79bf7fa3e04881dd82f88b9fc79641a59",
+  "bytes": 19174393,
+  "content_type": "application/gzip",
+  "original_name": "candles-2026-07-29.tar.gz",
+  "source_url": "benchmarks.pyth.network (Metal.XAU|XAG/USD, Commodities.WTIU6|WTIV6|USOILSPOT, Equity.US.SPY|NVDA via TV-shim; BTC|ETH via data-api.binance.vision) + cdn.cboe.com (OVX/VIX/GVZ/VXSLV) + deribit.com (DVOL)",
+  "note": "ladder-rv daily resolution-feed archive thru 2026-07-29 ~01:14Z, 9 keys. 2026-07-28 was captured partial by day-6 and is now COMPLETE via the mtime refetch rule: WTIU6 3998B -> 69796B, SPY 52B no_data -> 20436B, NVDA likewise. Contains the WTI bounce (Tue low 77.80, now 82.71). SUPERSEDES candles-2026-07-28.",
+  "fetched_at": "2026-07-29T01:29:42Z",
+  "bucket": "orakel"
+}

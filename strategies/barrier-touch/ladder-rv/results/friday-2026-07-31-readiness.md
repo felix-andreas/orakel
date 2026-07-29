@@ -61,6 +61,33 @@ Thursday's runs are the only chance to fix that — at ~14 rows/run it reaches ~
 **If either run is skipped, the pricer split cannot be decided on Friday**, and that is the
 main operational risk between now and then.
 
+### UPDATE 2026-07-29 (day 7) — the numbers above are superseded
+
+Two things moved. **`will-wti-dip-to-80-in-july-2026` resolved YES**, taking 6 rows out of
+the outstanding set — including **2 jump-arm `feed_open=1` rows**, which the table above
+counted as outstanding. And Wednesday's run added 12. Measured from the ledger today:
+
+| arm (within `feed_open = 1`) | rows | distinct markets |
+|---|---:|---:|
+| `2026-07-23-touch-prob` | 53 | 39 |
+| `2026-07-27-touch-prob-jump` — before today | 25 | 15 |
+| `2026-07-27-touch-prob-jump` — **after today** | **37** | **19** |
+| `2026-07-27-touch-prob-jump` — projected after Thursday | ~49 | ~20 |
+
+**Clears n ≥ 30 in rows today. Does not clear it in markets, and will not by Friday.**
+Checklist item 7 below says repeated daily rows on one market are one correlated observation,
+not six — so 49 rows on ~20 markets is the honest reading, and ~20 < 30. The floor was stated
+in rows (this document, above) and the prereg says "resolved **legs**". **These give different
+verdicts and the difference must be settled before Friday, not after.** Note also that the
+board universe is nearly exhausted: today's 12 rows added only **4** new markets, so a third
+and fourth run buy repeats, not power.
+
+**The RV/IV pre-registration is a separate n and is not affected.** It scores every leg in
+`data/out/predictions_<date>.csv`, not the emitted rows: today's file alone carries **67 legs**
+with `q_rv`/`q_iv`/`q_blend`, all `feed_open=1`, all resolving 07-31 21:00Z. Floor met.
+But it can only be scored from **07-29 and 07-30** — the 07-28 file predates those columns
+(`results/archive-audit-2026-07-29.md` §2), and its anchor question is flagged there too.
+
 ## Checklist for Friday
 
 1. **Runs happen Wed 07-29 and Thu 07-30.** Not optional — see above.

@@ -1,0 +1,11 @@
+{
+  "key": "blobs/58eed7288464f0d38daa9f909d79f5becc09298c3fadc5d1c65a616b71178356",
+  "sha256": "58eed7288464f0d38daa9f909d79f5becc09298c3fadc5d1c65a616b71178356",
+  "bytes": 92074,
+  "content_type": "application/gzip",
+  "original_name": "live-2026-07-29.tar.gz",
+  "source_url": "gamma-api.polymarket.com/events + clob.polymarket.com/book",
+  "note": "ladder-rv live snapshot 2026-07-29 01:14Z: Gamma events + books for all 8 active boards, and out/predictions_{2026-07-27,2026-07-28,2026-07-29}.csv. RESCUE FREEZE: predictions_2026-07-28.csv had NEVER been frozen anywhere (data/out/ is gitignored and the day-6 freeze was candles+vol only), so the day-6 per-leg record existed in one container only. Also note 07-28's file predates the q_iv/q_blend columns - the RV/IV pre-registration can only be scored from the 07-29 and 07-30 files. Spot CLU6 82.71 (RV14 62.7%, intraday 50.7%, OVX 57.1), XAU 4013.82, XAG 57.00.",
+  "fetched_at": "2026-07-29T01:29:55Z",
+  "bucket": "orakel"
+}

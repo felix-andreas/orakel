@@ -1038,9 +1038,34 @@ fn iv_at(iv: &HashMap<&'static str, BTreeMap<NaiveDate, f64>>, asset: Asset, t: 
 
 // ---------- clob prices ----------
 
+/// True when `path` was written after `period_end`, i.e. after the series it holds stopped
+/// growing. This is the ONLY safe meaning of "cached" for an append-only record.
+///
+/// `fetch_all` skips any path that merely EXISTS. That is correct for an immutable blob and
+/// silently wrong for a growing one: CLOB `prices-history` and the trade tape both keep
+/// accumulating until the market closes, so a file first written mid-window freezes the
+/// series at that instant and every later run reports it "cached". Nothing errors, the file
+/// parses, `load_series` returns a perfectly good series — it just stops early, and
+/// `price_at`'s max-age guard then drops the later checkpoints one by one instead of
+/// complaining. Rows leave the scored set without anyone being told.
+///
+/// This is the same defect that `cmd_candles` carried until 2026-07-28 (a partial yesterday
+/// kept forever), found again on 2026-07-29 in `cmd_clob` and `cmd_tape`. The rule for all
+/// three is identical: existence is not completeness — compare mtime against the end of the
+/// period the file claims to cover.
+fn complete_through(path: &Path, period_end: i64) -> bool {
+    fs::metadata(path)
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|m| m.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|dur| dur.as_secs() as i64 >= period_end)
+        .unwrap_or(false)
+}
+
 fn cmd_clob(data: &Path, fidelity: u32, filter: Option<Vec<String>>) -> Result<()> {
     let legs = load_legs(data)?;
     let mut jobs = vec![];
+    let mut refreshed = 0usize;
     for l in &legs {
         if let Some(f) = &filter {
             if !f.contains(&l.board) {
@@ -1052,13 +1077,22 @@ fn cmd_clob(data: &Path, fidelity: u32, filter: Option<Vec<String>>) -> Result<(
             "https://clob.polymarket.com/prices-history?market={}&startTs={start}&fidelity={fidelity}",
             l.token_yes
         );
-        jobs.push((
-            url,
-            data.join(format!("clob{fidelity}")).join(&l.board).join(format!("{}.json", l.condition_id)),
-        ));
+        let path = data
+            .join(format!("clob{fidelity}"))
+            .join(&l.board)
+            .join(format!("{}.json", l.condition_id));
+        // The price series keeps growing until the leg's window closes. Drop any file
+        // written before that instant so `fetch_all` re-pulls it.
+        if path.exists() && !complete_through(&path, l.we) {
+            let _ = fs::remove_file(&path);
+            refreshed += 1;
+        }
+        jobs.push((url, path));
     }
     let (fetched, skipped, failed) = fetch_all(jobs, 6);
-    println!("clob f{fidelity}: fetched {fetched}, cached {skipped}, failed {failed}");
+    println!(
+        "clob f{fidelity}: fetched {fetched} (of which {refreshed} stale refreshes), cached {skipped}, failed {failed}"
+    );
     Ok(())
 }
 
@@ -1666,7 +1700,13 @@ fn cmd_tape(data: &Path, boards: &[String]) -> Result<()> {
     for board in boards {
         for l in legs.iter().filter(|l| &l.board == board) {
             let out = data.join("tape").join(board).join(format!("{}.json", l.condition_id));
-            if out.exists() {
+            // Same growing-series trap as `cmd_clob` (see `complete_through`): the tape
+            // accumulates until the leg's window closes, so a file written mid-window is a
+            // truncated trade history, not a cached one. The tape gate reads exactly this
+            // file to ask "has anyone traded near our quote in the last 7 days" — against a
+            // stale file that question silently becomes "...in the 7 days before whenever we
+            // happened to fetch", which is a different and unanswerable question.
+            if out.exists() && complete_through(&out, l.we) {
                 continue;
             }
             let mut trades = vec![];

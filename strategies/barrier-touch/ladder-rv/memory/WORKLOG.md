@@ -4,6 +4,87 @@ One dated entry per run. Name the model that did the work.
 
 ---
 
+## 2026-07-29 — day 7: the third data bug was not in the code (model: claude-opus-5, effort xhigh)
+
+- **Feed verified open, not assumed.** 01:14Z: WTI/gold/silver **OPEN, 0.0h** (Tuesday's session
+  opened 07-28 22:00Z); SPY/NVDA **SHUT, 5.3h**, reopens in 12.3h. **12 rows proposed** from 89
+  two-sided legs across 8 boards (`results/proposed-rows-2026-07-29.csv`, run_id
+  `2026-07-29/daily`, header byte-identical to the ledger): WTI ↑95/↓75/↑85-from-jul-27/
+  ↑90-from-jul-27, gold ↓3900, silver ↓54/↓52, gold-weekly ↑4200/↑4150, silver-weekly ↑62/↓56/↓55.
+  **77 suppressed**: 22 stale-feed (all equity, again), 44 mid<3c, 10 relative spread, 1 tape gate.
+  Zero de-dup this time — no surviving weekly barrier duplicates a live monthly. Did not write
+  predictions.csv. CLU6 **82.71** (RV14 62.7%, intraday 50.7%, OVX 57.1), gold 4013.82, silver 57.00.
+- **OVX has fallen below RV for the first time in the trial** (57.1 vs 62.7 total / 50.7 intraday).
+  The pre-registration's premise — IV sits above RV on 62/62 legs — is already softening. It does
+  not change the prereg (the decision rule is fixed and stays fixed), but Friday should not be
+  surprised by it.
+- **THE THIRD SILENT-DATA BUG WAS NOT IN CODE, AND IT IS THE WORST ONE**
+  (`results/archive-audit-2026-07-29.md`). `data/.gitignore` ignores `out/`; the daily freeze tars
+  `candles vol`. The freeze that carries `out/` is `live-*`, and **day-6 never cut one**. So
+  `data/out/predictions_2026-07-28.csv` — the per-leg record behind day-6's 14 ledger rows — was
+  frozen **nowhere** and existed in exactly one container. Verified by pulling
+  `candles-2026-07-28.tar.gz` and listing it rather than reading its note. **Rescue-frozen today**
+  in `live-2026-07-29` (with 07-27 and 07-29). The lesson generalises past fetchers: *a freeze is
+  only as complete as the hand-written `tar` line that built it*, and `r2data verify` cannot see
+  inside the tarball — it verified `candles-2026-07-27` OK every day while that archive held a
+  WTIU6 file truncated to 21.9KB of 69.7KB.
+- **And the 07-28 file does not contain what the pre-registration says it does.** Written
+  01:21:59Z; `main.rs` and the binary rebuilt 01:30Z the same morning, after the `q_iv`/`q_blend`
+  columns were added. Never regenerated. The prereg states those numbers are "already frozen in
+  the daily archive" — they are not. **RV/IV is scorable from 07-29 and 07-30 only.** I did **not**
+  re-derive 07-28's IV columns: the inputs exist in the frozen archive, but re-deriving them now,
+  after seeing today's numbers, is a change to the comparison made by the person who scores it.
+  Its power floor is met regardless — today's file alone carries **67 legs** with all three
+  pricers, all `feed_open=1`, all resolving 07-31 21:00Z, against n ≥ 30.
+- **Flagged pre-outcome, deliberately unresolved:** the prereg fixes the metric at the **daily
+  12:00Z** checkpoint, but `cmd_live` fires ~01:1xZ and that is the timestamp the recorded q's
+  carry ("12:00Z" was inherited from the backtest's gate-2 anchor). Scoring at 01:14Z needs no
+  re-derivation; scoring at a true 12:00Z does. Both defensible; **choosing after Friday's outcome
+  is not.** The CEO should pick blind, before 21:00Z.
+- **Two more `exists()`-means-cached bugs, both fixed.** `cmd_clob` and `cmd_tape` fetch **growing**
+  series and `fetch_all` skips any path that exists. Stale `clob60` would have scored Friday against
+  a price history stopping **2026-07-25** — and it would not have errored: the file parses,
+  `load_series` returns a valid series, and `price_at`'s max-age guard then drops each later
+  checkpoint silently, so legs leave the scored set one at a time. `cmd_tape`'s version turns "any
+  taker trade in the last 7 days" into "...in the 7 days before whenever we fetched". Both now use
+  one shared `complete_through(path, l.we)`. `selftest` passes; **the pricer is untouched.**
+- **CEO's question — calibration or directional exposure? Measured answer: neither**
+  (`results/trend-exposure-2026-07-29.md`). Restored the 633-leg / 5,927-checkpoint backtest from
+  R2; `cmd_analyze` prices it with plain `touch_prob`, the **same pricer as every losing row**, so
+  it is apples-to-apples. The model **beats** the market on the **touched** legs (−0.01152, t −1.99)
+  and is flat on the untouched (−0.00046). WTI ↓ legs with the underlying trending **≥5% into the
+  barrier** are the variant's **best** bucket (−0.01259, t −4.66); r(err, trend) = −0.031. **The
+  "structurally short downside touches" story is refuted on this data.** What is real is a
+  **one-sided tail**: per-leg sd 0.062, p99 +0.173, and **the 8 worst legs in the whole backtest are
+  all `dip-to` legs** — across silver, NVDA, SPY and gold, so it is a down-barrier fact, not a WTI
+  one. dip-to-80 is a p98.7 draw and dip-to-85 a p97 draw, nested on one contract over one selloff,
+  i.e. ~1 observation not 2. On the trial rows themselves the concentration is total: the 12 touched
+  rows pool to +0.1391 and the 20 untouched to **−0.0011**, no row outside ±0.004. So 08-02 should
+  ask **"is this tail acceptable at our size, given how correlated the legs we hold are"** — a
+  sizing/correlation question (`break-even-win-rate` q*/q/q⁻ + RoLC), not a Brier one. Two caveats
+  stated in the write-up: the backtest is the sample the method was gated on, and `trend` is
+  computed ex post and **must never become a filter** — that is `lifetime-volume-is-look-ahead`
+  exactly.
+- **Friday's power, corrected — and the two n≥30 questions disagree.** `dip-to-80` resolving YES
+  took 6 rows out of the outstanding set including **2 jump-arm `feed_open=1` rows** the readiness
+  table had counted as outstanding. Measured today: jump arm 25 → **37 rows / 19 markets**, ~49/~20
+  after Thursday. **Clears 30 in rows; does not clear it in markets and will not by Friday** — and
+  the readiness doc's own item 7 says markets is the honest unit. Today's 12 rows added only **4**
+  new markets: the board universe is exhausted, so further runs buy repeats, not power. Escalated
+  rather than silently picking the flattering unit.
+- **Tape gate suppressed gold-weekly ↓3950** — 26 trades in 24h, but all at 0.32 or 0.61+, none
+  within 5c of the 0.380 bid. It fires correctly **as written**, for a reason it was not designed
+  for (the leg repriced; it is not an empty room). Applied unchanged and logged: retuning a gate
+  mid-trial, after seeing which leg it catches, is the thing the prereg exists to prevent.
+- Archive: 07-28 was captured partial by day-6 and the mtime rule refetched it today —
+  WTIU6 3998B → 69796B, SPY 52B `no_data` → 20436B. Froze and verified `candles-2026-07-29`
+  (19.2MB, supersedes 07-28) and `live-2026-07-29` (92KB).
+- Escalation to CEO: (a) **pick the pricer-split unit, rows or markets, before Friday**;
+  (b) **pick the RV/IV anchor, 01:1xZ or 12:00Z, blind**; (c) the equity/RTH scheduling decision
+  is still open and 22 legs were suppressed again; (d) one row of discrepancy between my
+  reconstruction (32 rows / 21 markets) and the CEO's scoring run (31 / 20), worth a minute before
+  the numbers are quoted.
+
 ## 2026-07-28 — day 6: first run under the gate, and two silent data bugs (model: claude-opus-5, effort xhigh)
 
 - **The gate ran, and it bit.** Feed status at 01:21Z: WTI/gold/silver **OPEN, 0.1h old**
