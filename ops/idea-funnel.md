@@ -25,6 +25,7 @@ you can count, and counting it changed what I think the firm's constraint is.
 | 10 | 07-26 | Rotten Tomatoes score ladders | retired | primary venue with an unbiased line — **and it was dead at filing** | **Kalshi** |
 | 11 | 07-27 | Weekend box-office ladders | discarded at idea stage | implied σ **0.120** vs our best in-sample model **0.171** | **a free weekly Substack**, ~10% MAPE |
 | 12 | 07-28 | Mention markets ("will X say WORD") | discarded at idea stage | **executable-price decomposition** — the +5pp crowd bias *is* the spread | **none — and that is the point** |
+| 13 | 07-29 | Post-count ladders (Elon / Trump weekly) | discarded at idea stage | **leg-level depth** — median **$7** at the ask; q⁻ 0.0709 vs q\* 0.1204 at $500 | **Kalshi `KXTRUTHSOCIAL`** — live, and it re-cut the cap Polymarket left stale |
 
 ## What the table says that the worry didn't
 
@@ -55,6 +56,25 @@ spreads, 1–2 day resolution — **and still has no edge**. Liquidity is not th
 constraint. Nine kills said "someone prices it"; this one says "you can reach it, and it is
 still correctly priced."
 
+**2c. There is a SECOND wall behind the incumbent wall, and objects 12 and 13 both hit it.**
+Two consecutive families have now died *past* gate 0 — not to a counterparty who prices the
+object better, but to **execution**. Object 12: the apparent edge was the bid-ask spread.
+Object 13: the edge was real and survived the mirror test, and then died on **leg-level
+depth** — a $1.5M board, honest mid, real tape, and a **median $7 resting at the ask on the
+legs where the mispricing lives**. Walking the book costs +1.72c at $100 and +14.36c at
+$2,000, which takes the break-even bound from "clears by nothing" to "fails by 13pp".
+
+The generalisation is now a wiki page (`reference/depth-lives-where-the-edge-is-not.md`) and
+it is nastier than the first wall, because **board-level gates structurally cannot see it**:
+depth concentrates at the mode, mispricing lives in the wings, and the two are
+anti-correlated. The property that makes a leg mispriced is the property that makes it
+unquoted. Every liquidity screen we own measures the board.
+
+**And both survivors of that second wall are the same thing: a maker-side construction.**
+Polymarket charges no fee on resting orders, so in both cases the one untested version is to
+*post* liquidity rather than take it. That is worth stating plainly rather than discovering a
+third time — see the open question below.
+
 **3. Idea supply is not the constraint I said it was.** I have been writing "idea SUPPLY is
 the binding constraint on slots" in memory since 07-25. The rate is ~2.2 objects worked per
 day and ~0.6 reach a slot — that would fill five slots in under two weeks. The real number
@@ -79,11 +99,19 @@ population, either priced by someone else or priced correctly. That is not a que
 should answer alone: it goes to what the firm is for. The evidence to answer it is this
 table, and it needs more rows before it is worth putting to him. Revisit at ~20 objects.
 
-One live thread that is *not* dead: mention markets are only dead **taker-side**. Polymarket
-charges no fee on resting orders, and the whole kill was executable-price arithmetic. A
-maker-side construction is untested — but it is an execution idea, not a research one, and
-the firm cannot place a resting order at all (`CONSTITUTION.md` §5). Parked as a note, not
-a slot.
+**And a second question, now that it has happened twice.** Objects 12 and 13 are both dead
+*taker-side only*. In both, the single untested version is maker-side — resting orders,
+which Polymarket does not charge a fee on. Two consecutive families arriving at the same
+untested construction is a pattern, not a coincidence, and it deserves an answer before a
+third one does.
+
+The distinction that matters, and which I had blurred: `CONSTITUTION.md` §5 forbids
+**executing** — no wallets, no order signing, no exchange keys. It does not forbid
+**researching** a maker-side strategy; a fill-probability model for resting orders is a
+research object like any other, and we already hold the book history to build one. So the
+question is not "may we", it is **"is it worth a slot to research a class of strategy the
+firm can never deploy without Felix lifting §5?"** That is his to answer, because it decides
+whether the reachable opportunity set is the one we have been searching.
 
 ## How to use it
 
