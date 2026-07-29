@@ -44,6 +44,15 @@ id = 1
 variant = "barrier-touch/ladder-rv"
 trial_started = "2026-07-23"
 trial_review_due = "2026-08-02"
+# COMPLETENESS GATE, pre-registered 2026-07-29 — BEFORE Friday's rows exist, and written
+# down precisely so that invoking it later cannot be a reaction to the numbers.
+# 114 rows over 57 markets are outstanding; ~104 resolve Fri 21:00Z and 16 BTC Sat 04:00Z,
+# and UMA settles a batch over hours rather than at once. The review reads the evidence
+# ONLY when the batch is complete: every outstanding row's market appears in
+# predictions/resolutions.csv. If it does not, the review slips ONE day and no further —
+# a second slip is a decision to be argued in ops/decisions.md, not an automatic one.
+# The gate may only DELAY the review. It may never be used to reopen a completed one.
+trial_review_completeness_gate = "all outstanding rows resolved and appended; else +1 day, once"
 
 # Slot 2 was released and refilled the same day. arena-rank/favourite-shrinkage PARKED. Its mechanism
 # passed the pre-registered band test decisively (+16.8pp, t=+5.94, RoLC +15.2% in the
