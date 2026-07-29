@@ -44,35 +44,39 @@ pub async fn page(env: &Env) -> String {
     let (metas, metas_live) = data::variant_metas(env, &paths).await;
     let mut all_live = tree_live && preds.live && resolutions.live && detail.live && metas_live;
 
-    // Idea files carry a frontmatter date; read them once for the story.
-    let mut ideas: Vec<(String, String)> = Vec::new(); // (date, name)
-    let idea_paths: Vec<String> = data::files_in(&paths, "ideas", ".md")
+    // Idea date and name come from the FILENAME, not from reading the file.
+    //
+    // This page used to fetch every idea file whole to pull two frontmatter
+    // fields out of it. That was the fastest-growing read set on the dashboard
+    // — one more file per day, forever — and the page has a hard budget:
+    // reads at the tail of a cold-cache request come back with no response at
+    // all, which is the "Some of this page is missing" banner over content
+    // that is fine (see `live.rs`). Thirteen reads today, and the only reason
+    // for them was a date that `ideas/YYYY-MM-DD-slug.md` already states.
+    //
+    // The displayed name is now the filename stem rather than the frontmatter
+    // `slug`. Six of thirteen differ, and every difference is the filename
+    // being MORE informative — `mention-markets-discarded` against
+    // `mention-markets`, `quake-ladder-overdispersion-3` against
+    // `quake-ladder-overdispersion`. On a timeline of ideas, knowing one was
+    // discarded is the point.
+    let ideas: Vec<(String, String)> = data::files_in(&paths, "ideas", ".md")
         .into_iter()
         .filter(|p| !p.ends_with("README.md"))
+        .filter_map(|p| {
+            let stem = p.trim_start_matches("ideas/").trim_end_matches(".md");
+            // Anything not named `YYYY-MM-DD-…` has no date to place it on the
+            // timeline, so it is skipped rather than guessed at.
+            let (date, name) = stem.split_at_checked(10)?;
+            let name = name.strip_prefix('-')?;
+            date.chars()
+                .all(|c| c.is_ascii_digit() || c == '-')
+                .then(|| (date.to_string(), name.to_string()))
+        })
         .collect();
+
     let run_paths = data::run_paths(&paths);
-    // Ideas and run manifests are independent of each other and of everything
-    // already read, so both sets go out together.
-    let (idea_docs, run_docs) = futures::join!(
-        data::read_all(env, idea_paths.iter().cloned()),
-        data::read_all(env, run_paths.iter().cloned())
-    );
-    for (path, f) in idea_paths.iter().zip(&idea_docs) {
-        all_live &= f.live;
-        let (fields, _) = render::split_frontmatter(&f.text);
-        let get = |k: &str| {
-            fields
-                .iter()
-                .find(|(a, _)| a == k)
-                .map(|(_, v)| v.clone())
-                .unwrap_or_default()
-        };
-        let date = get("date");
-        let slug = get("slug");
-        if !date.is_empty() {
-            ideas.push((date, if slug.is_empty() { path.clone() } else { slug }));
-        }
-    }
+    let run_docs = data::read_all(env, run_paths.iter().cloned()).await;
 
     let mut runs: Vec<(String, toml::Table)> = Vec::new();
     for (path, doc) in run_paths.iter().zip(&run_docs) {

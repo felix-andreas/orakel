@@ -44,6 +44,17 @@ pub async fn page(env: &Env) -> String {
 
     // Wave 2: everything the tree told us to read — strategy manifests and run
     // manifests together, since neither depends on the other.
+    // NOTE: this reads EVERY run manifest, and that is the page's remaining
+    // unbounded read set — one more subrequest per day, forever, on a page
+    // with a hard budget (a cold-cache request that runs past it loses its
+    // tail reads with no response at all; see `live.rs`).
+    //
+    // It cannot simply be capped to the 6 the strip displays: the "tokens
+    // spent" headline stat is a CUMULATIVE sum over all runs, so reading a
+    // suffix would silently understate it — a wrong number that looks right,
+    // which is worse than the banner. Bounding this needs either that stat to
+    // change meaning ("last N runs") or a running total kept outside the
+    // manifests. Both are product decisions, not a patch.
     let run_paths = data::run_paths(&paths);
     let ((metas, metas_live), run_docs) = futures::join!(
         data::variant_metas(env, &paths),
