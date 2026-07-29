@@ -243,28 +243,50 @@ fn read_dirs(dir: &Path) -> Result<Vec<PathBuf>> {
     Ok(out)
 }
 
-/// Every OPEN market of one event. `closed=false` is a filter (see module
-/// docs): closed legs simply do not come back, which is what we want.
+/// Every OPEN market of one event.
+///
+/// **`closed=false` on `/events` filters EVENTS, not the markets inside them.**
+/// An open board is one open event whose nested `markets` array still contains
+/// every leg that has already resolved — measured 2026-07-29 on the July WTI
+/// board: 30 nested markets, 20 open and **10 closed**. The first version of
+/// this tool trusted the query and put 18 long-resolved legs into the
+/// watchlist, some of which had settled on 2026-07-01. They cost an hourly CLOB
+/// call each and recorded a dead book, and they made the next morning's
+/// resolution sweep report 19 "newly closed" markets when exactly one was new.
+///
+/// So filter each nested market on its own `closed` flag.
 fn event_markets(slug: &str) -> Result<Vec<WatchMarket>> {
     let url = format!("{GAMMA}/events?slug={slug}&closed=false&limit=100");
     let events: serde_json::Value = get_json(&url)?;
     let mut out = Vec::new();
+    let mut skipped = 0usize;
     for ev in events.as_array().cloned().unwrap_or_default() {
         for m in ev["markets"].as_array().cloned().unwrap_or_default() {
+            if m["closed"].as_bool() == Some(true) {
+                skipped += 1;
+                continue;
+            }
             if let Some(w) = to_market(&m) {
                 out.push(w);
             }
         }
     }
+    if skipped > 0 {
+        println!("    {slug}: {skipped} resolved legs skipped");
+    }
     Ok(out)
 }
 
+/// Here `closed=false` really does filter markets, but check the flag anyway —
+/// the same assumption cost us 18 dead entries via `/events`, and verifying is
+/// one comparison.
 fn market_by_slug(slug: &str) -> Result<Option<WatchMarket>> {
     let url = format!("{GAMMA}/markets?slug={slug}&closed=false&limit=10");
     let markets: serde_json::Value = get_json(&url)?;
     Ok(markets
         .as_array()
         .and_then(|a| a.first())
+        .filter(|m| m["closed"].as_bool() != Some(true))
         .and_then(to_market))
 }
 
