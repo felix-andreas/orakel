@@ -4,6 +4,77 @@ One dated entry per run. Name the exact model id that did the work.
 
 ---
 
+## 2026-07-29 (run 8) — a $1.5M board, a real +11pp edge, and $7 at the ask. Post-count ladders killed on leg depth
+
+Model: **claude-opus-5 (effort max)**.
+
+Object: **post-count ladders** — "how many times will @elonmusk post on X this week" and the
+Trump Truth Social equivalent, priced as 10–30 leg bucket ladders. Filed
+`ideas/2026-07-29-post-count-ladders-discarded.md`, status `discarded-idea`.
+
+Chosen deliberately against `ops/idea-funnel.md`: it is the canonical instance of the one
+glanceable-state structure my long-term memory claimed survives — a **partially-realised
+cumulative count**, where the visible running number is an anchor and the bias in it is
+supposed to be the edge. That hypothesis had been sitting in memory unmeasured since 07-26.
+It is now measured. Distinct from the 07-28 mention kill: integer count of a counting process,
+not a Bernoulli on utterance content.
+
+**Screens, in the order the playbook demands.**
+
+1. **Kalshi catalogue** (12,298 series today, up from 12,231). The object splits:
+   `KXELONTWEETS` is a **dormant shell with 0 markets** — no venue incumbent on Elon;
+   `KXTRUTHSOCIAL` is a **live incumbent on Trump** — 102 markets / 92 settled, 100–300k
+   contracts and 57–158k OI per week, 1c spreads, identical bucket cuts. And the decisive
+   detail: Kalshi **re-cut its cap `>220` → `>240`** as the underlying drifted, while
+   Polymarket has cut at `200+` since May. The incumbent had already fixed the exact staleness
+   my backtest would later find. Best incumbent result yet — not "their line is unbiased" but
+   "their board design already corrects your edge."
+2. **Data.** 129 settled boards back to 2024 (Elon weeklies $3–32M each), 1,153 legs of hourly
+   `prices-history`. Checkpoint integrity: leg-sums 1.066 → 1.004 monotone from T−168h to
+   T−12h, gated to [0.90, 1.15]. Also verified Polymarket's `prices-history` `p` **is the book
+   midpoint** (median diff vs live mid = 0.00c) — yesterday's print-at-the-ask trap does not
+   apply here.
+3. **Calibration.** Pooled edge −0.05 / −0.39 / −0.29 / +1.21pp at T−120/72/48/24h. Calibrated.
+4. **The one live band, and its decomposition.** 0.02–0.10 held the same sign at all five
+   checkpoints: pooled **+3.28pp, board-clustered t=+2.46**, Wilson lower 0.0684 > mid 0.0531.
+   The **mirror test did not fire** (buy-NO on the same legs loses hard), so unlike 07-28 this
+   was not the spread and had to be decomposed. Splitting by **leg type** killed it:
+   open-ended top bucket **+15.89pp (n=57)** vs interior **+2.31pp (n=747)**. The interior
+   residue fails break-even at both measured half-spreads (−0.21pp at 0.55c, −1.20pp at 1.50c).
+   The open-HIGH residue is **5 board-wins, all the same leg (Trump `200+`), all May–July** —
+   a stale bucket cut, one regime, already fixed by the rival.
+5. **The kill that would have sufficed alone.** Walking the live book on legs in the edge band:
+   **+1.72c at $100, +6.54c at $500, +14.36c at $2,000** on a 2.65c-mid leg. Median notional
+   resting at the best ask: **$7**. Against +11.14pp, q⁻=0.0709 clears q* by +0.07pp at $100
+   and fails by −4.95pp at $500 and −13.04pp at $2,000.
+
+**Graduated to the wiki:** `wiki/reference/depth-lives-where-the-edge-is-not.md` — the fourth
+way a quote lies, and the one that survives phantom-midpoints, the tape gate and
+midpoint-is-not-a-fill all three. The board is genuinely liquid, the tape is real, the mid is
+honest, and the leg your edge sits on has $7 behind it. **Depth concentrates at the mode;
+mispricing lives in the wings; the two are anti-correlated**, because the property that makes
+a leg mispriced is the property that makes it unquoted. Board-level gates are structurally
+incapable of seeing this. New standing step: walk the book at your own price band, for your
+own size, before any modelling.
+
+Live illustration worth keeping: the Elon `500+` leg shows **$96,266 of lifetime volume and no
+quote on either side**; Trump `160-179` quotes 0.050/0.110 (6c on a 5c leg) and `180-199`
+quotes 0.200/0.350 (11c) — while the same boards' interior legs quote 1c wide on $74–79k.
+
+Also scanned and rejected before working up: US primary boards (Kalshi runs **175** primary
+series — downgraded my best parked candidate), Clacton by-election (Kalshi + Smarkets),
+`largest-company-end-of-month` / `grvt-fdv` (live quoted price → Felix's standing
+instruction), `highest-grossing-movie-2026` (box office, dead). Noted for the CEO: the
+top-volume non-sports tape on 07-29 is overwhelmingly Iran/Hormuz/ceasefire, i.e.
+**war-adjacent and blocked pending the domain ruling** — the block is now materially
+constraining what I can scan, not just what I can file.
+
+Two consecutive families have now died *behind* the incumbent wall, to execution rather than a
+counterparty, and both leave the same single live thread: a **maker-side** construction, which
+`CONSTITUTION.md` §5 forbids. That is a pattern worth a decision rather than a third instance.
+
+---
+
 ## 2026-07-28 (run 7) — a +5pp bias at t=+5, two days out, that was the spread all along. Mention markets killed on the executable price
 
 Model: **claude-opus-5 (effort max)**.
