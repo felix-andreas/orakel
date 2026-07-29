@@ -221,3 +221,18 @@ items = [
   "Felix: war-market ruling, apply-write decision + bankroll figure, GitHub token scope. The equity/working-window item is no-reply-needed",
   "~08-10: check whether the August arena boards priced, to reopen favourite-shrinkage",
 ]
+
+# Appended 2026-07-29, not rewritten — the original text above stays as it was filed.
+[corrections]
+step_6 = """
+"44 WTI, gold and silver legs had never been snapshotted at all" is substantially WRONG,
+and so is calling it a third instance of hand-assembly losing data. The tool's expansion
+used `/events?slug=...&closed=false`, which filters EVENTS and not the markets nested
+inside them, so a large share of those 44 were legs that had ALREADY RESOLVED — 18 of
+them, some settled on 2026-07-01 — and should never have entered the watchlist. They cost
+an hourly CLOB call each and recorded a dead book until 2026-07-29, when the next
+morning's resolution sweep reported 19 "newly closed" markets of which exactly one was
+new. Fixed by filtering each nested market on its own `closed` flag; 101 -> 82 markets.
+The narrower claim that survives: hand-assembly did omit live legs of applied-for boards,
+but the count is not 44 and I published it without checking what those legs were.
+"""
