@@ -340,8 +340,25 @@ fn load_resolutions(
         };
         let line = rec.position().map(|p| p.line());
         if rec.len() != ncols {
-            warn_skip(path, line, &format!("expected {ncols} fields, got {}", rec.len()), malformed);
-            continue;
+            // HARD ERROR, unlike a malformed prediction row, which is warned and
+            // skipped. A resolution is a join key: dropping one silently removes
+            // EVERY prediction on that market from the score, and the headline
+            // then looks complete while being computed on less evidence.
+            //
+            // This happened. On 2026-07-27 a note containing an unquoted comma
+            // ("re-added leg, window from Jul 25") made a row 6 fields wide; it
+            // was warned and skipped, and the trial reported 25 scored rows for
+            // two days when it had 26. The warning was printed the whole time
+            // and read by nobody. resolutions.csv is small and hand-appended, so
+            // a malformed line there is always a mistake worth stopping for.
+            return Err(format!(
+                "{}: line {} has {} fields, expected {ncols}. A malformed resolution silently \
+                 drops every prediction on that market from the score — fix the row (quote any \
+                 field containing a comma) and re-run.",
+                path.display(),
+                line.map(|l| l.to_string()).unwrap_or_else(|| "?".into()),
+                rec.len(),
+            ));
         }
         let field = |i: usize| rec.get(i).unwrap_or("").trim().to_string();
         let date_str = field(i_date);
