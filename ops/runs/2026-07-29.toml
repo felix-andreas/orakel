@@ -1,0 +1,208 @@
+date = "2026-07-29"
+trigger = "daily (fired 01:09 UTC, inside the weekday window 00:00-13:00 UTC)"
+model = "claude-opus-5"
+outcome = "ok"
+
+summary = """
+The day the measurements went against the people who made the claims, including me twice.
+WTI dipped to $80 and the trial's headline worsened; I proposed that the variant is
+structurally short downside touch, and slot 1 refuted it on 633 legs — the model beats the
+market on touched legs, and the real problem is a tail on one draw, which makes 08-02 a
+sizing question rather than a Brier one. A resolution lost to an unquoted comma turned out
+to have been silently dropping a scored row since 07-27, with the warning printed on every
+run and read by nobody. The watchlist tool I shipped yesterday was adding already-resolved
+legs. Three calls that had to be made blind were made blind, and one of them costs us the
+pricer conclusion we wanted.
+"""
+
+[[steps]]
+n = 1
+what = "Orient + watchlist mirrored first"
+result = "Yesterday's manifest present. CEO inbox empty; 4 open Felix items, oldest 4 days. Watchlist rebuilt and mirrored before spawning, per playbook step 3."
+
+[[steps]]
+n = 2
+what = "Resolutions — 1 new, and 18 that should never have been watched"
+result = """
+Swept with BOTH Gamma query forms and unioned them, per the step-8 change made yesterday.
+19 came back closed; exactly ONE was new: will-wti-dip-to-80-in-july-2026, YES, 6 rows.
+The other 18 were markets my own watchlist tool added yesterday, some settled 2026-07-01.
+Cause: `closed=false` on /events filters EVENTS, not the markets nested inside them — the
+July WTI board returns 30 nested markets, 20 open and 10 closed. Each cost an hourly CLOB
+call and recorded a dead book. Fixed by filtering each nested market on its own flag;
+101 -> 82. Yesterday's manifest annotated with a [corrections] block rather than rewritten:
+the "44 legs never snapshotted" claim I filed was substantially wrong.
+"""
+
+[[steps]]
+n = 3
+what = "A resolution had been silently dropped since 2026-07-27"
+result = """
+Slot 1 reported reconstructing 32 resolved rows against my 31 and flagged the discrepancy
+rather than assuming its own number. It was right. resolutions.csv line 22 carried a note
+containing a comma ("re-added leg, window from Jul 25"), making the row six fields wide;
+scoring warned and skipped it. A resolution is a JOIN KEY, so dropping one removes every
+prediction on that market from the score — the trial reported 25 then 31 scored rows when it
+had 26 and 32. The warning was printed on every run since 07-27 and read by nobody, twice
+today by me, because I grepped for the headline and filtered it out.
+Re-quoted. A malformed RESOLUTION is now a hard error with a non-zero exit (a malformed
+prediction row stays a warning): that file is small and hand-appended, so a bad line is
+always a mistake, and its blast radius is every row on the market. Verified on a fixture.
+"""
+
+[[steps]]
+n = 4
+what = "Scoring — the headline worsened and its shape sharpened"
+result = """
+-0.0172 over 25 rows -> -0.0452 over 32. Per market -0.0051 over 19 -> -0.0133 over 20.
+The loss is not spread: dip-to-80 (-0.1690, 6/6 fillable) and dip-to-85 (-0.1127, 4/4)
+carry all of it while 18 of 20 markets sit at or above zero. By horizon, 0-1d is -0.0001
+over 19 rows and 2/19 fillable; 1-3d is -0.1211 and 3-7d -0.1190, both nearly fully
+fillable. Where we could trade, we were wrong; where we were right, nobody would fill us.
+"""
+
+[[steps]]
+n = 5
+what = "Slot 1 — day 7 (claude-opus-5, xhigh); MY hypothesis refuted"
+result = """
+12 rows appended (ledger 146 -> 158), all feed_open=1, 77 of 89 legs suppressed — 22
+stale-feed (equity, structural again), 44 mid<3c, 10 relative spread, 1 tape gate.
+I had proposed that the two losses meant a sell-touch variant is short downside touch by
+construction, and asked for measurement rather than reasoning. Measured on 633 resolved legs
+/ 5,927 checkpoints with the SAME pricer as the losing rows: the model BEATS the market on
+touched legs (-0.01152, t -1.99), and WTI down legs trending >=5% into the barrier are its
+BEST bucket (-0.01259, t -4.66). Refuted.
+What is real is a one-sided tail: the 8 worst legs of all 633 are dip-to legs, across
+silver/NVDA/SPY/gold — a down-barrier property, not a WTI one. dip-to-80 is p98.7 and
+dip-to-85 p97, nested on one contract, so ~1 draw not 2. 08-02 is therefore a SIZING
+question, not a Brier question.
+"""
+
+[[steps]]
+n = 6
+what = "Three calls made blind, before Friday's outcomes exist"
+result = """
+(a) The pricer split reaches n>=30 in ROWS (37, ~49 Thursday) and not in MARKETS (19, ~20).
+Markets is the unit our own readiness doc named in advance, and the board universe is
+exhausted so no schedule reaches 30. Reported INCONCLUSIVE; the row number is descriptive
+only; the 08-02 decision may not rest on it. Switching units would be choosing the answer.
+(b) RV/IV anchored at the EMISSION time (~01:1xZ) rather than the prereg's 12:00Z — we have
+never traded at 12:00Z. 12:00Z becomes a robustness check. Also scorable from only two days,
+because the prereg's claim that q_iv/q_blend were frozen is false, so expect it underpowered
+and report it so. OVX (57.1) has fallen below RV14 (62.7) for the first time, weakening the
+premise — a result, not grounds to re-specify.
+(c) Completeness gate pre-registered on the 08-02 review: it proceeds only when every
+outstanding row's market is resolved, else slips one day, once. Written while Friday's
+numbers were unknown so that invoking it later cannot be a reaction to them.
+"""
+
+[[steps]]
+n = 7
+what = "Market researcher (claude-opus-5, max) — post-count ladders killed on a NEW screen"
+result = """
+"How many times will @elonmusk post this week" and the Trump Truth Social equivalent, as
+10-30 leg bucket ladders. Chosen deliberately against the funnel: the canonical
+partially-realised cumulative count, a structure its own memory claimed survives, unmeasured
+since 07-26.
+Incumbent screen ran first and split the object: KXELONTWEETS is a 0-market shell (a listed
+series is not a live one) but KXTRUTHSOCIAL is live — 92 settled, 100-300k contracts/week,
+1c spreads — and Kalshi has re-cut its cap >220 -> >240 while Polymarket still cuts at 200+.
+Crowd is calibrated (-0.05 to +1.21pp over 129 boards / 1,153 legs). The one live band
+(+3.28pp, t +2.46) survived the mirror test that killed yesterday's object, so it had to be
+decomposed rather than dismissed: 100% of it is the open-ended top bucket, and that residue
+is 5 board-wins on ONE leg (Trump 200+), May-July, a stale cap the rival already fixed.
+Killed on DEPTH: median $7 resting at the ask on the legs the edge lives on; walking the
+book costs +1.72c at $100, +6.54c at $500, +14.36c at $2,000, taking q- from 0.0709 (clears
+by nothing) to 0.1204 at $500 (fails by 4.95pp).
+"""
+
+[[steps]]
+n = 8
+what = "A second wall behind the incumbent wall"
+result = """
+Objects 12 and 13 both died PAST gate 0 — not to a counterparty, but to execution. The new
+wiki page (depth-lives-where-the-edge-is-not.md) is the nastier one: depth concentrates at
+the mode, mispricing lives in the wings, and the two are anti-correlated, so the property
+that makes a leg mispriced is the one that makes it unquoted. Every liquidity gate we own
+measures the BOARD, and every board we have measured passes.
+Both survivors of that wall are the same untested construction: maker-side. Escalated to
+Felix with the distinction I had blurred — CONSTITUTION §5 forbids EXECUTING, not
+researching — so the question is whether a strategy class we cannot deploy is worth a slot.
+Recommendation: not yet, wait for 08-02. Also told him the war ruling now gates the SCAN
+rather than one idea: today's top-volume non-sports tape is overwhelmingly
+Iran/Hormuz/ceasefire, so the open state costs a cycle a day.
+"""
+
+[[steps]]
+n = 9
+what = "Health checks + book compaction"
+result = """
+Dashboard 302 without Access headers / 200 with. Snapshot worker 200. 34/34 R2 manifests
+resolve. bookpack packed six days; 07-28 verified exactly against source JSON (4506 rows,
+sum midpoints 1843.074, 3524 with a bid). Worklogs current. Watchlist re-mirrored at close:
+84 markets / 168 tokens, R2 readback byte-identical.
+Dashboard: removed 13 idea-file reads from /runs by deriving date and name from the
+filename — the fastest-growing read set. It did NOT fix the cold-cache banner; a third
+hypothesis died. Written up in the CEO inbox for a focused cycle rather than patched again.
+"""
+
+[failures]
+mine = """
+1. The watchlist tool I shipped yesterday was adding already-resolved legs, because
+   `closed=false` on /events filters events and not their nested markets. 18 dead entries,
+   and the "44 legs never snapshotted" claim in yesterday's manifest was substantially wrong.
+   I published a number without checking what those legs were.
+2. I proposed a structural explanation for two losses instead of measuring it, and it was
+   refuted on 633 legs. Asking for the measurement was right; asserting the story first was
+   not necessary.
+3. I read past "1 malformed skipped" in the scoring output twice today. The tool told me the
+   truth on every run since 07-27 and I filtered it out of my own grep.
+4. Third dashboard hypothesis, third revert-or-null result. I should have instrumented a cold
+   request on day one instead of patching from inference.
+"""
+theirs = """
+Slot 1 found the third silent-partial-data bug in three days, and the worst one had NO CODE
+to fix: `data/out/` is gitignored and the daily freeze tars candles and vol only, so day-6's
+per-leg record was frozen NOWHERE — one container away from being lost. `r2data verify`
+passed every day on an archive missing a directory. Rescue-frozen today. It also declined to
+re-derive the missing q_iv/q_blend columns after seeing today's numbers, which was the right
+call — that is a change to the comparison made by the person who scores it.
+The market researcher's memory is 206 lines against a ~150 target; it compressed three prior
+runs and still grew net. Worth watching rather than acting on.
+"""
+tooling = """
+The stop hook fired on 8 files owned by the live slot-1 agent. Correctly not acted on —
+committing them would have repeated the 07-25 and 07-26 incidents. Unchanged, outside the repo.
+"""
+
+[spend]
+subagents = 2
+subagent_tokens = 402_115
+note = "slot 1 (219.8k), market researcher (182.3k)."
+
+[health]
+dashboard_access = "302 without / 200 with — pass"
+snapshot_worker = "pass"
+r2_manifests = "34/34 resolve"
+parquet = "6 days packed; 07-28 verified exactly against source JSON"
+worklogs = "current"
+slots_producing = "slot 1 yes (12 rows); market researcher filed a kill on a new screen"
+watchlist = "84 markets / 168 tokens; 19 resolved legs removed"
+
+[artifacts]
+wiki_added = ["reference/depth-lives-where-the-edge-is-not.md"]
+decisions = 3
+predictions_appended = 12
+ledger_total = 158
+scored_total = 32
+
+[next_run]
+items = [
+  "Thursday is the last run before Friday. It does NOT change the pricer-split verdict — that is already settled as inconclusive in markets — but it is the last chance to catch an archive gap before the evidence is frozen",
+  "07-31 (Friday): sweep with BOTH Gamma query forms and union; the batch will be mixed as UMA lags. Verify every returned conditionId matches the one asked for — condition_id singular is silently ignored and serves an unrelated market",
+  "08-02 trial review is a SIZING question, not a Brier one: the 8 worst legs of 633 are all dip-to, and our two losses are ~one draw. Bring the break-even bound and the correlation of concurrent positions, not another calibration table",
+  "The completeness gate applies: the review proceeds only when every outstanding row's market is resolved, else +1 day, once",
+  "Felix: war ruling (now gating the scan), maker-side slot question (no reply needed before 08-02), apply-write + bankroll, GitHub token scope",
+  "Dashboard cold-cache read loss: instrument a cold request before changing anything else (roles/ceo/inbox/2026-07-29-dashboard-cold-cache-reads.md)",
+  "~08-10: check whether the August arena boards priced, to reopen favourite-shrinkage",
+]

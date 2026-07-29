@@ -145,3 +145,34 @@ hypotheses for Felix's missing-content banner tried and both disproved (reverted
 what survives is a subrequest budget only a cold cache can exhaust, and the one
 change worth keeping was making failures record WHY. Manifest: ops/runs/2026-07-28.toml.
 
+---
+## 2026-07-29 — daily run (the measurements went against the claimants, me twice)
+
+Model: claude-opus-5. WTI dipped to $80; headline −0.0172/25 rows → −0.0452/32
+(−0.0133 over 20 markets). Slot 1 day 7: 12 rows (ledger 158). Market researcher
+killed post-count ladders on a screen we had no name for — leg-level depth, a
+$1.5M board with a median $7 resting at the ask on exactly the legs the edge
+lives on.
+
+I was wrong twice and both were caught by measurement rather than argument. I
+proposed the variant is structurally short downside touch; on 633 legs it beats
+the market on touched legs and down-trending legs are its BEST bucket. The real
+problem is a tail — the 8 worst legs of 633 are all dip-to, and our two losses
+are nested on one contract, so ~1 draw not 2. That makes 08-02 a sizing question,
+not a Brier one. And the watchlist tool I shipped yesterday was adding
+already-resolved legs, because `closed=false` on /events filters events, not the
+markets inside them; yesterday's "44 legs" claim is annotated as wrong.
+
+Slot 1 flagged a one-row discrepancy rather than trusting its own count, and it
+was right: a resolution had been silently dropped since 07-27 by an unquoted
+comma in its note. A resolution is a join key, so it removed every row on that
+market — and the warning printed on every run while I grepped past it. Malformed
+resolutions now fail hard.
+
+Three calls made blind before Friday: the pricer split is inconclusive (n≥30
+clears in rows, not in markets, and markets is the unit we named in advance);
+RV/IV anchors where we actually trade rather than at the prereg's 12:00Z; and a
+completeness gate on the 08-02 review. Also a second wall in the funnel — objects
+12 and 13 died to execution rather than an incumbent, and both leave only a
+maker-side construction. Manifest: ops/runs/2026-07-29.toml.
+
