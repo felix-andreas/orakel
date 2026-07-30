@@ -53,6 +53,18 @@ trial_review_due = "2026-08-02"
 # a second slip is a decision to be argued in ops/decisions.md, not an automatic one.
 # The gate may only DELAY the review. It may never be used to reopen a completed one.
 trial_review_completeness_gate = "all outstanding rows resolved and appended; else +1 day, once"
+# DECISION RULE pre-registered 2026-07-30, before any 07-31 resolution — ops/decisions.md.
+# Judged PER MARKET (rows are not independent). Promotion needs all four gates: calibration
+# (per-market improvement > 0, 95% interval excluding zero), tradeability (>50% fillable AND
+# positive exec_edge on that subset), fundability (95% lower bound of the win rate above q*),
+# and tail-at-size (effective independent sample after correlation among concurrent legs).
+# Discard if the interval lies entirely below zero. EXTEND IS A HIGH BAR: the July board
+# universe is exhausted, so an extension means the August cohort — a new trial with a new
+# pre-registration, not a continuation.
+# The tail is NOT excludable: the two losses were 100% fillable while the flat majority was
+# 2/19, so dropping them keeps only the rows nobody would fill. And "we would have no live
+# strategies left" is disqualified as an argument, in advance, on purpose.
+trial_review_rule = "four gates, per market, pre-registered 2026-07-30; see ops/decisions.md"
 
 # Slot 2 was released and refilled the same day. arena-rank/favourite-shrinkage PARKED. Its mechanism
 # passed the pre-registered band test decisively (+16.8pp, t=+5.94, RoLC +15.2% in the

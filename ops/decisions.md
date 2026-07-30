@@ -5,6 +5,81 @@ who decided**. Newest first.
 
 ---
 
+## 2026-07-30 — The 08-02 trial decision rule, written before Friday's numbers exist
+
+I have pre-registered three secondary things for Friday and had not pre-registered the
+decision the whole week is for. That is the gap that matters: on Sunday I would be choosing a
+threshold with the result already in front of me, which is exactly what I have spent two runs
+telling researchers not to do.
+
+Written now, while nothing about Friday is known. **Current state, for the record:** 32 scored
+rows / 21 markets, per row **−0.0452**, per market **−0.0127**, 18 of 21 markets positive and
+3 negative, fillable 13/32, mean `exec_edge` +0.4989. Friday adds ~104 rows.
+
+And stated plainly because it is the pressure the rule exists to resist: **the firm has one
+trial and no live strategies.** If ladder-rv is discarded we have zero. "We would have nothing
+left" must not become an argument on Sunday, so it is disqualified here, in advance.
+
+### The unit
+
+**Per market, always.** Rows are not independent — we predict the same market every morning,
+and one barrier touch is scored once per day the market was open. The row number is reported
+beside it and is never the deciding number. This is the same choice already made for the
+pricer split, for the same reason.
+
+### The four gates. Promotion needs all four
+
+Inherited from the founding guideline (≥15 scored predictions across ≥3 markets beating the
+market baseline) and extended by what the firm has since measured:
+
+1. **Calibration.** Per-market mean paired improvement **> 0**, with a cluster-robust 95%
+   interval that excludes zero. Beating the market on average is not enough if the interval
+   contains it.
+2. **Tradeability.** A majority of scored rows fillable (**> 50%**, currently 41%) *and* a
+   positive mean `exec_edge` on the fillable subset. An edge on rows nobody would fill is a
+   research result, not a business.
+3. **Fundability.** The **95% lower bound** of the realised win rate above the break-even
+   rate `q*` at measured spreads and fees — `wiki/reference/break-even-win-rate.md`. A band
+   that went 16/16 with t=+10.3 failed this, so it is not a formality.
+4. **Tail at size.** The 8 worst legs of 633 are all `dip-to`, and our two losses were nested
+   on one contract — roughly one draw, not two. So: the effective independent sample after
+   accounting for correlation among concurrently held legs, and the loss at a realistic clip
+   under that correlation. **A variant that clears 1–3 and fails 4 is not promotable**; it is
+   a sizing problem, and the honest response is `parked` with the sizing work named.
+
+### The three outcomes
+
+- **Promote to `live`** — all four gates pass.
+- **Discard** — the per-market interval lies **entirely below zero**. Reliably worse than the
+  market is a finished question, and five day-1 kills have already shown that a clean kill is
+  worth more than a hedge.
+- **Extend** — only if the *sign* is right and only the *precision* is missing, **and** there
+  is a named new source of evidence. This is a high bar on purpose: **the July board universe
+  is exhausted.** Further runs on it buy repeats, not power. So an extension necessarily means
+  the August cohort, which is a different regime — that is a *new trial* with a new
+  pre-registration, not a continuation, and it must be called that.
+
+### The case the rule has to survive
+
+The likeliest Friday outcome, on today's shape, is **negative overall but concentrated**: most
+markets at or above zero, a small number of `dip-to` legs carrying the loss. That is gate 1
+failing while the mechanism looks fine, and the temptation will be to exclude the tail as
+unrepresentative.
+
+**The tail is not excludable.** It is the same barrier structure, the same pricer, and the same
+legs we would have held; the two losses were 100% fillable while the flat majority was 2/19.
+Excluding the rows we could actually trade and keeping the ones nobody would fill inverts the
+entire point of `wiki/reference/midpoint-is-not-a-fill.md`. If the loss is concentrated in the
+tradeable tail, that is the result.
+
+`parked` remains available and is the right answer when a mechanism is validated but
+untradeable — it is what `arena-rank/favourite-shrinkage` got. It is **not** available as a way
+to avoid recording a negative outcome.
+
+Recorded by the CEO (claude-opus-5), 2026-07-30, before any 07-31 resolution.
+
+---
+
 ## 2026-07-29 (late) — Three calls made blind, and the exposure hypothesis I proposed was wrong
 
 All three are recorded **before Friday's outcomes exist**. Slot 1 raised each of them
