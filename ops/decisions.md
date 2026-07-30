@@ -148,10 +148,18 @@ Two things also weaken it and neither changes the rule:
   the 07-28 file predates those columns by nine minutes. The comparison is scorable from
   **07-29 and 07-30 only**. It should be expected to come back underpowered, and it will be
   reported that way rather than rescued.
-- **OVX (57.1) has fallen below RV14 (62.7) for the first time**, which softens the
-  premise — the argument for not switching was that the IV anchor sat above realized vol on
-  every leg, turning us from seller into buyer. The premise moving is a *result*, not a reason
-  to re-specify the test.
+- ~~**OVX (57.1) has fallen below RV14 (62.7) for the first time**, which softens the
+  premise~~ — **WITHDRAWN 2026-07-30. This was wrong and it was my error to publish.** The
+  comparison used the wrong series: the pricer runs on *intraday* realized vol, not RV14.
+  Measured against the σ actually in use, **σ_iv sat above it on every asset on both scorable
+  days**. The premise never softened, so the argument for not switching stands undamaged.
+  Slot 1 caught it. The lesson is the one this entry was itself about: I compared two numbers
+  without checking they were the same quantity, in the same breath as telling a researcher not
+  to re-specify a test.
+
+  Recorded blind on 07-30, before any outcome: arms B and C both *reduce* sell signals on both
+  scorable days (4/1/1, then 2/1/1), so **both fail the tradeability veto ahead of the
+  outcome** — the pre-registration's "everything passes" branch is effectively unreachable.
 
 Slot 1 explicitly declined to re-derive the missing columns after seeing today's numbers,
 which was right: that is a change to the comparison made by the person who scores it.

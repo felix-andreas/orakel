@@ -29,12 +29,19 @@ and build the firm's tooling. You are autonomous within [`CONSTITUTION.md`](../.
    on scored evidence (`scoring/`, backtests) → update `strategy.toml` status,
    `ops/state.toml`, `ops/decisions.md`. Free slots: fill from `ideas/` backlog (your
    pick, with reason).
-8. **Scoring.** Sweep for resolutions with **both** Gamma query forms and union them — on a
-   resolution day the batch is mixed (UMA settles over hours) and a single-form query returns
-   half the rows with no error, looking complete. Verify each returned `conditionId` is the
-   one you asked for; `condition_id` singular is silently ignored and serves an unrelated
-   market. Both in `wiki/recipes/polymarket-api.md`.
-   If any market resolved: append `predictions/resolutions.csv`, then run
+8. **Scoring.** Run `python3 tools/resolve-sweep/sweep.py`. **Never sweep the watchlist —
+   sweep the ledger.** Step 3 mirrors the watchlist, and `tools/watchlist` correctly drops
+   markets that have resolved; a sweep that then reads the mirrored watchlist is structurally
+   incapable of finding anything that resolved since the last run, because mirroring removed
+   exactly those markets. That is not hypothetical: on 2026-07-30 it hid two markets and three
+   rows that had resolved YES the previous day and gone *against* us, so the omission
+   flattered the headline. The tool sweeps markets carrying an **unresolved prediction**,
+   queries both Gamma forms and unions them (a resolution-day batch is mixed as UMA settles
+   over hours), and asserts every returned `conditionId` is one it asked for. It prints and
+   never writes — you append.
+   If any market resolved: append `predictions/resolutions.csv` (**quote any note containing
+   a comma** — a malformed resolution is now a hard error, because it is a join key and
+   silently drops every row on that market), then run
    **`tools/fillcheck` first and `scoring/` second** — fillcheck writes
    `predictions/fills.csv` and scoring joins it, so running scoring alone silently drops
    the tradeability column. Note headline movements. **Never report a Brier improvement
