@@ -57,10 +57,27 @@ GET https://clob.polymarket.com/prices-history?market=<clobTokenId>&interval=max
 ```
 
 - `prices-history` returns `{"history": [{"t": unix_s, "p": price}, ...]}`.
-- **Gotchas:** `interval=max` silently caps at ~30d — for the full series use
-  `startTs=<epoch>&fidelity=60` *alone* (adding `endTs` → 400). Sometimes returns empty
-  `history`: retry with explicit `startTs`, drop `fidelity`, or rebuild the series from
-  the Data API trades. These gaps are why orakel snapshots prices itself.
+- Its `p` **is the book midpoint**, not a last trade — verified 2026-07-29 on a live board,
+  median(p − live mid) = 0.00c. An honest starting point; still not a fill.
+- **THE WINDOW TRAP (measured 2026-07-30, and it silently fakes "no history at all").**
+  A window wider than **~14 days returns an EMPTY array — not a truncated one**, at every
+  fidelity. Bisected on one live token, `startTs`/`endTs` explicit:
+
+  | window | 168h (7d) | 336h (14d) | **504h (21d)** | 720h (30d) |
+  |---|---:|---:|---:|---:|
+  | points returned | 168 | 336 | **0** | **0** |
+
+  It is a pure time-span limit, not a point cap: at `fidelity=1` a 7-day window happily returns
+  ~9,998 points. `interval=max` is the same failure by another name.
+
+  **So `history: []` means your window is too wide — it does NOT mean the market has no
+  history.** On 2026-07-30 this scored **0 of 125 legs** and read exactly like "this family is
+  unbacktestable", which would have been a wrong kill. **Chunk every read at ≤14 days** and
+  concatenate. `endTs` works fine alongside `startTs` (an earlier note here claimed it 400s;
+  it does not, as of 07-30).
+- Per-leg deadlines come from Gamma **`endDate`**, never the question text — many settled
+  boards omit the year, and a wrong year moves your checkpoint silently outside the board's
+  life. `closedTime` / `umaEndDate` give when it actually resolved.
 
 ## Trades — Data API
 

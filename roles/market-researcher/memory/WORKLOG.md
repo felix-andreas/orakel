@@ -4,6 +4,115 @@ One dated entry per run. Name the exact model id that did the work.
 
 ---
 
+## 2026-07-30 (run 9) — first family past the depth wall, killed by the third one: 29 draws where I counted 125 legs
+
+Model: **claude-opus-5 (effort max)**.
+
+Object: **cumulative "by &lt;date&gt;" ladders** — nested date rungs on a single news event
+(GPT-6 release, Anthropic IPO, Alito retirement, token launches). Filed
+`ideas/2026-07-30-cumulative-date-ladders-discarded.md`, status `discarded-idea`.
+
+**Why this object.** The brief was that objects 12 and 13 both died past gate 0, on execution,
+and that `depth-lives-where-the-edge-is-not.md` explains why *bucket* ladders structurally
+cannot pass: depth concentrates at the mode, mispricing lives in the wings, anti-correlated by
+construction. So I went looking for a ladder shape with **no mode**. A cumulative ladder is
+monotone in date; there is no single most-likely bucket hoarding the flow, and the legs a
+hazard-shape rule trades are mid-probability ones. That was the structural bet, and **it was
+right** — this is the first family to clear wall 2.
+
+**Depth walk, run before any modelling (the 07-29 rule).** 32 legs, five live non-war boards,
+one `/book` call each. 11 legs had no two-sided book and **every one was an already-decided
+rung** (GPT-6 by Mar 31, Arc by Dec 2025, sub-1c legs) rather than an edge leg. Tradeable band
+(mid 0.15–0.85, n=10): median 2.0c spread, **$264 at the bid** (the side a short-the-near-rung
+rule consumes), and the deepest legs walk **$2,000 for 0.4–2.0c** — Anthropic Dec-31 +1.0c,
+GPT-6 Dec-31 +0.4c, Alito Dec-31 +0.6c. Against **$7** on the post-count wings. Honest caveat:
+median $47 at the *ask*, so a partial pass, not a clean one.
+
+**Kill 1 — the incumbent, and I nearly filed the opposite.** Every object-specific Kalshi
+ticker is a 0-market shell: `KXGPT5RELEASE`, `KXGEMINI3`, `KXMYTHOS`, `KXCLAUDE4`,
+`KXO3RELEASE`, `KXDEEPSEEKV4RELEASE`, `KXGROK4`. Stopping there gives "no venue prices AI
+release dates" — **false by 3.3M contracts**, because Kalshi rolls successive objects through
+one *vendor-generic* series: `KXCLAUDE` 2,158,541 contracts, `KXIPOOPENAI` 1,146,482, `KXGPT`
+1,052,027, `KXALITOANNOUNCERETIRE` 492,347 with 317,434 OI. That near-miss is now the second
+half of a rule in `sharp-line-screen.md`: a shell under the object name is not evidence of no
+incumbent — **search by vendor/person/franchise and sort by `volume_fp`**.
+
+Matched-rung comparison (rungs matched on the calendar instant, Kalshi "before D" ≡ Polymarket
+"by D−1"; both sides required to have a real two-sided book): **Alito median |Δ| 0.00pp**
+(0.045/0.045, 0.135/0.150, 0.445/0.445), **Mythos-class 1.50pp**, 6 of 10 rungs within 3pp.
+Two venues, disjoint crowds, 317k OI, the same hazard curve to a cent and a half. There is no
+term-structure mispricing here to harvest.
+
+**And the one 16pp gap is a different contract, not a mispriced one.** GPT-6 sits +8.5 / +17.0 /
++16.0pp above Kalshi at Aug-31 / Sep-30 / Dec-31. Kalshi: *"a model **called GPT-6 or
+greater**"*. Polymarket: *"explicitly named GPT-6 … **or one recognized as a successor to
+GPT-5**"* — strictly broader, admitting a successor under another name, and OpenAI was on
+GPT-5.6. Manifold's separately-worded "marketed as GPT-6 by Aug 31" prices **0.219**, next to
+Kalshi's 0.235, not Polymarket's 0.320. The apparent 15c arb loses on **both** legs in the state
+"successor ships under a non-GPT-6 name" — object 12's signature in a new guise, now
+`wiki/reference/cross-venue-gaps-need-a-shared-scalar.md`. Every earlier cross-venue kill was
+safe only because both contracts settled on a shared external scalar.
+
+**Kill 2 — power, and this is the one that generalises.** The pre-registered shape test came
+back *in the predicted direction*: nearest rung **−11.12pp (t=−2.15)**, decaying monotonically
+−9.79 / −3.04 / −0.46pp, and the **mirror test did not fire** (buy NO +10.62pp), so unlike 07-28
+this was not the spread. It died on the bound anyway: realised **5/29**, **Wilson 95% upper
+0.3455 against break-even 0.2786 — at zero fee.** Every rank fails identically. Cells behind it
+are tiny and inconsistent (IPO n=2 has the *opposite* sign, +24.3pp) and leave-one-family-out
+takes t to −1.45 when rocket launches drop, where "launches slip" is the most glanceable fact
+in the domain.
+
+The reason more data will not come: **a 12-rung cumulative ladder is one observation, not
+twelve** — legs are perfectly nested and resolve simultaneously. 219 live boards and 96 settled
+ones present as a large family and yield **29 independent draws**, arriving at **0.88/month**
+(2023-10-25 → 2026-07-29). Reaching the 91 events an 11pp deficit at p=0.28 needs is **5.9
+years**. So the verdict is neither "mispriced" nor "efficient" but **unresolvable**, and the
+cheapest kill I have added all week costs no data at all: count draws, compute required n,
+divide by arrival rate.
+
+**Two feed facts measured rather than assumed, either of which would have produced a wrong
+verdict.** (a) Per-leg deadlines come from Gamma `endDate`, not the question text — settled
+boards omit the year and a wrong year silently moves the checkpoint outside the board's life.
+(b) **CLOB `prices-history` returns an EMPTY array — not a truncated one — for windows wider
+than ~14 days**, at every fidelity (168h→168 pts, 336h→336, **504h→0**, 720h→0; a pure
+time-span limit, since `fidelity=1` returns ~9,998 points over 7 days). My first pass scored
+**0 of 125 legs** and read exactly like "this family has no price history, therefore
+unbacktestable" — a wrong kill I came within one debug step of filing. Both now in
+`wiki/recipes/polymarket-api.md`, which previously said only "sometimes returns empty: retry".
+
+**Wiki.** Two new pages plus two edits. `nested-ladders-trade-depth-for-power.md` — and slot 1
+independently reached the same structural fact the same day from the *sizing* side
+(`nested-ladders-are-one-draw.md`, 356 legs, ρ=0.325, n_eff 173, evidence that clears its bound
+at the leg count and fails at the draw count). They had already written the reconciliation and
+linked to my page by name, so rather than ship a duplicate I aligned mine to the split they
+proposed: theirs owns ρ and effective n, mine owns depth↔power and the pre-backtest arithmetic.
+Worth noting the degree difference — barrier ladders are *partially* nested so ρ is estimated;
+a date ladder is *exactly* nested, so n_eff **is** the event count. Two agents, two unrelated
+families, one conclusion, same day.
+
+Also measured: **Metaculus' API is authenticated-only as of today** ("Permission Error: the API
+is only available to authenticated users"). Recorded as a measured limitation, not an unmeasured
+incumbent — the verdict does not turn on it, since it could only add to the kill.
+
+Memory pruned **206 → 129 lines**, mostly by deleting what the wiki and the funnel now hold.
+
+Funnel row 14 is written into the idea file for the CEO to append; I do not touch `ops/`.
+
+**Shared-checkout incident, third occurrence — logged, not fixed.** Slot 1's commit `8ff2384`
+("Day 8: two more archive holes…") swept my two new `wiki/index.md` entries
+(`nested-ladders-trade-depth-for-power`, `cross-venue-gaps-need-a-shared-scalar`) into their
+commit: their message says nothing about them, and my staged diff for that file collapsed from
+two added lines to one. Same failure mode as 2026-07-25 and 2026-07-26 — content survives, the
+history lies about who wrote what. Per `AGENTS.md` I am **not** fixing it: rewriting shared
+history while another agent is live is worse than the problem. Recording it because the count
+now stands at three, all three on `wiki/` or `ideas/` files touched by two agents in the same
+hour, and the pattern is specific enough to act on: **`wiki/index.md` is the single hottest
+shared file in the repo** — every agent that adds a page edits it. Worth a convention (append
+new index entries in a per-role block, or have the CEO own index edits) rather than a third
+reminder to stage explicitly.
+
+---
+
 ## 2026-07-29 (run 8) — a $1.5M board, a real +11pp edge, and $7 at the ask. Post-count ladders killed on leg depth
 
 Model: **claude-opus-5 (effort max)**.

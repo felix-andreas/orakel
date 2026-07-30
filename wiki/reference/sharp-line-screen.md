@@ -34,6 +34,36 @@ GET /trade-api/v2/series/<T>/markets/<ticker>/candlesticks?start_ts=&end_ts=&per
 point-in-time vintage record of the resolution source (see
 [first-print-vintages](first-print-vintages.md)).
 
+### A 0-market series is not "no incumbent" — check the VENDOR-GENERIC ticker
+
+Two halves of the same rule, both measured:
+
+- **2026-07-29:** `KXELONTWEETS` is *listed* but has **0 markets**. A listed series is not a
+  live one — always call `/markets` before calling it an incumbent.
+- **2026-07-30, the inverse, and it is the more dangerous half.** Every *object-specific*
+  AI-release ticker is a 0-market shell: `KXGPT5RELEASE`, `KXGEMINI3`, `KXMYTHOS`,
+  `KXCLAUDE4`, `KXO3RELEASE`, `KXDEEPSEEKV4RELEASE`, `KXGROK4`. Stopping there gives "no venue
+  prices AI model release dates" — **false by 3.3M contracts.** The volume lives on the
+  *vendor-generic* tickers, which name the vendor and not the object:
+
+  | ticker | title | markets | live | volume (contracts) |
+  |---|---|---:|---:|---:|
+  | `KXCLAUDE` | Claude Model Release | 24 | 10 | **2,158,541** |
+  | `KXIPOOPENAI` | When will OpenAI announce IPO? | 13 | 11 | **1,146,482** |
+  | `KXGPT` | ChatGPT Release Date | 21 | 5 | **1,052,027** |
+  | `KXGEMINI` | Gemini release date | 8 | 3 | 93,271 |
+
+  Kalshi rolls successive objects through **one** series (`KXGPT` carried GPT-5.6 and now
+  GPT-6), so searching for your object's name finds the abandoned stub. **Search by vendor,
+  venue, person or franchise — not only by the specific event — and sort candidates by
+  `volume_fp` before concluding anything.**
+
+**Also compare their BUCKET CUTS and their RULES, not just their line.** A rival that has
+re-cut a ladder cap our venue left stale has already priced away the mispricing you are about
+to "find" (2026-07-29, `KXTRUTHSOCIAL` `>220`→`>240`). And on news-resolved objects a matching
+line is not even a matching contract — see
+[cross-venue-gaps-need-a-shared-scalar](cross-venue-gaps-need-a-shared-scalar.md).
+
 **Measured 2026-07-26 (chokepoint-transit-ladders kill).** Polymarket's Strait-of-Hormuz
 weekly ladders looked untouched — a free IMF feed, no bookmaker, zero taker fee, 174 distinct
 wallets on a 1-2c book. One call showed Kalshi's `KXHORMUZWEEKLY` declaring
