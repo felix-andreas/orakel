@@ -26,6 +26,7 @@ you can count, and counting it changed what I think the firm's constraint is.
 | 11 | 07-27 | Weekend box-office ladders | discarded at idea stage | implied σ **0.120** vs our best in-sample model **0.171** | **a free weekly Substack**, ~10% MAPE |
 | 12 | 07-28 | Mention markets ("will X say WORD") | discarded at idea stage | **executable-price decomposition** — the +5pp crowd bias *is* the spread | **none — and that is the point** |
 | 13 | 07-29 | Post-count ladders (Elon / Trump weekly) | discarded at idea stage | **leg-level depth** — median **$7** at the ask; q⁻ 0.0709 vs q\* 0.1204 at $500 | **Kalshi `KXTRUTHSOCIAL`** — live, and it re-cut the cap Polymarket left stale |
+| 14 | 07-30 | Cumulative "by \<date\>" ladders (hazard term structure) | discarded at idea stage | **two, either sufficient:** matched-rung cross-venue agreement (median \|Δ\| 0.00 / 1.50pp) **and** Wilson upper 0.3455 vs break-even 0.2786 on **n=29 draws** | **Kalshi `KXGPT` / `KXCLAUDE` / `KXALITOANNOUNCERETIRE`** — 0.5–2.2M contracts per series, plus Manifold |
 
 ## What the table says that the worry didn't
 
@@ -74,6 +75,31 @@ unquoted. Every liquidity screen we own measures the board.
 Polymarket charges no fee on resting orders, so in both cases the one untested version is to
 *post* liquidity rather than take it. That is worth stating plainly rather than discovering a
 third time — see the open question below.
+
+**2d. Wall 2 is not universal — object 14 cleared it, and that bounds the depth finding.**
+Object 14 was chosen deliberately as a ladder shape with **no mode**, to test whether
+`depth-lives-where-the-edge-is-not` is structural or specific to bucket ladders. It is
+specific. The depth walk (run *before* any modelling, which is the process working) found the
+11 unquoted legs were all **already-decided rungs, not edge rungs**; the tradeable band had a
+2.0c median spread and **$264 at the bid**, and the deepest legs walk **$2,000 for 0.4–2.0c**
+against **$7** on the post-count wings.
+
+So the second wall is real but has a shape: it bites where depth concentrates at a mode. That
+is a much more useful finding than "boards are illiquid", and it means the depth walk is a
+screen with a *pass* state, not just a kill.
+
+**2e. A third wall: some objects are neither mispriced nor efficient — they are unresolvable.**
+Object 14 then died anyway, and the second of its two kills is new. Its shape test came back
+**in the pre-registered direction** (nearest rung −11.12pp, t=−2.15, decaying monotonically)
+and the mirror test did **not** fire, so it was not a spread artifact. It died on **power**: a
+12-rung nested ladder is *one* observation, 219 live / 96 settled boards give **29 independent
+draws** at 0.88/month, and the 91 draws the bound needs are **5.9 years** away.
+
+That is a kill that requires no data at all — count the draws, compute the required n, divide
+by the arrival rate. It now has a wiki page
+(`reference/nested-ladders-trade-depth-for-power.md`), and **slot 1 reached the identical
+nesting result the same day from the sizing side**, which is the strongest kind of
+corroboration the firm can get: two agents, two directions, one number.
 
 **3. Idea supply is not the constraint I said it was.** I have been writing "idea SUPPLY is
 the binding constraint on slots" in memory since 07-25. The rate is ~2.2 objects worked per
