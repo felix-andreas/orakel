@@ -5,6 +5,22 @@ specific notes stay in variant folders. The market researcher maintains this wik
 promoting long-term memory bullets and retirement post-mortems that generalize, merging
 overlaps, pruning stale pages. One concept per file.
 
+## THIS FILE HAS ONE OWNER: the market researcher
+
+**Any other agent may add or edit a wiki _page_, and must not edit `index.md`.** Report the
+index line you want in your final message; the market researcher or the CEO adds it.
+
+This is not tidiness. `index.md` is the hottest shared file in the repo — every agent that
+learns something durable wants to append one line to it, on the same day, in the same
+checkout. It has now been swept three times, most recently on 2026-07-30 when a variant
+researcher's commit removed two entries the market researcher had added hours earlier. Each
+time the *pages* survived and the index silently lost its pointers to them, which is the worst
+shape of the failure: knowledge that exists and cannot be found. And per `AGENTS.md` the
+history does not get rewritten to fix it, because another agent is always live.
+
+Two agents cannot both append to one list concurrently and both win. Sole ownership is the
+cheapest rule that actually holds.
+
 ## Selection
 
 - [market-selection.md](market-selection.md) — where edge is findable (and where it isn't)
@@ -17,6 +33,7 @@ overlaps, pruning stale pages. One concept per file.
 - [reference/phantom-midpoints.md](reference/phantom-midpoints.md) — a dead book quotes 0.05/0.95 and the API calls it 0.51; pooling those fabricated +14pp of fake edge
 - [reference/midpoint-is-not-a-fill.md](reference/midpoint-is-not-a-fill.md) — our own first batch beat the market 21/21 and was reachable 2/21; always report the fillable count next to the Brier. **A last-traded price is not a fill either, and the one-line diagnostic is: price both sides — if buying AND selling both lose, you measured the spread (+4.56pp became −1.63pp and −7.92pp, the gap identical to mean(last trade − bid))**
 - [reference/lifetime-volume-is-look-ahead.md](reference/lifetime-volume-is-look-ahead.md) — the gate that cheats in OUR favour: "keep the liquid legs" read off a settled record turned −3.06pp into +21.15pp at t=+7.30, because only 14% of the family's volume had traded by the checkpoint
+- [reference/existence-is-not-completeness.md](reference/existence-is-not-completeness.md) — never ask "is the file there", ask "was it written after the thing it describes stopped changing". **Five instances in one week**, four in a variant's archive and one in the firm's own tooling: a truncated `fills.csv` from a crashed run read as 38% tradeable against the true 43%, and it parsed cleanly every time
 - [reference/tape-gate.md](reference/tape-gate.md) — a 1c spread with listed depth and ZERO trades ever; the third way a quote lies, and the one that revised our own 2-of-21 headline
 - [reference/depth-lives-where-the-edge-is-not.md](reference/depth-lives-where-the-edge-is-not.md) — the way a quote lies that survives all three other checks: the board is genuinely liquid, the tape is real, the mid is honest, and the *leg* your edge sits on has **$7** at the ask. Depth concentrates at the mode, mispricing lives in the wings, so the two sets are anti-correlated and a board-level gate cannot see it — walk the book at your own price band, for your own size
 - [reference/nested-ladders-trade-depth-for-power.md](reference/nested-ladders-trade-depth-for-power.md) — a 12-leg nested ladder is ONE observation, not twelve. Cumulative "by &lt;date&gt;" boards are the first family to beat the depth wall — no mode, so the unquoted legs are the already-decided ones — and they die on power instead: 219 live boards, 96 settled, **29 independent draws** arriving at 0.88/month against the 91 needed. Count events, compute required n, then divide by the arrival rate — all before the backtest. **Companion to `nested-ladders-are-one-draw.md`** (converged on independently the same day): that page owns ρ and effective n, this one owns the depth/power tradeoff
