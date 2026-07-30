@@ -8,3 +8,11 @@ vol/
 out/
 tape/
 clob*/
+# `events/` (raw Gamma events written by `ladderrv discover`) was NOT listed until 2026-07-30,
+# so 1.1 MB of bulk JSON sat outside the ignore list that exists precisely to stop a
+# concurrent agent's blanket add from sweeping bulk data in. `legs.csv` is derived and
+# regenerated every run. Both are frozen to R2 in `live-<date>.tar.gz`.
+# NOTE: `events_live/` is deliberately NOT ignored — it is small, it is the per-board fine
+# print we reason about, and it is already tracked.
+events/
+legs.csv

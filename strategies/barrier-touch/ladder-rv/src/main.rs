@@ -444,8 +444,34 @@ struct Leg {
     closed_time: i64,
 }
 
+/// Parse the timestamp formats Polymarket actually emits.
+///
+/// Gamma is not consistent: `endDate` / `startDate` come back as strict RFC3339
+/// (`2026-08-01T03:59:59.999Z`) but **`closedTime` comes back as
+/// `2026-07-29 16:10:11+00`** — a space instead of `T` and a two-digit offset.
+/// `parse_from_rfc3339` rejects that, and the old one-line version swallowed the
+/// error into `.unwrap_or(0)` at the call site, so **`closed_time` was silently 0
+/// for every resolved leg in every `legs.csv` this variant has ever written** (74/74
+/// on 2026-07-30). Nothing errored and nothing computed a wrong number — the field
+/// is only reported — but it is the same shape as the three fetch bugs: a column
+/// that is present, parses as an integer, and carries no information. Friday's
+/// scorer is exactly who would reach for it to ask "has UMA settled this leg yet",
+/// so it is fixed rather than documented. Covered by `ladderrv selftest`.
 fn parse_iso(s: &str) -> Option<i64> {
-    DateTime::parse_from_rfc3339(s).ok().map(|d| d.timestamp())
+    if let Ok(d) = DateTime::parse_from_rfc3339(s) {
+        return Some(d.timestamp());
+    }
+    let mut t = s.trim().replace(' ', "T");
+    // widen a bare-hour or compact UTC offset to RFC3339's ±HH:MM
+    if let Some(pos) = t.rfind(['+', '-']).filter(|&p| p > 10) {
+        let off = &t[pos + 1..];
+        match off.len() {
+            2 => t.push_str(":00"),
+            4 => t.insert(pos + 3, ':'),
+            _ => {}
+        }
+    }
+    DateTime::parse_from_rfc3339(&t).ok().map(|d| d.timestamp())
 }
 
 fn extract_legs(slug: &str, ev: &serde_json::Value) -> Result<Vec<Leg>> {
@@ -2329,6 +2355,23 @@ fn main() -> Result<()> {
                     jm - one,
                     2.0 * one
                 );
+            }
+            // `closedTime` regression guard. Gamma emits THREE shapes across fields and
+            // only the first is RFC3339; the other two silently produced closed_time = 0
+            // for every resolved leg until 2026-07-30. Assert, do not print-and-hope.
+            for (s, want) in [
+                ("2026-07-29T16:10:11Z", 1785341411),
+                ("2026-07-29 16:10:11+00", 1785341411),
+                ("2026-07-29 16:10:11+0000", 1785341411),
+            ] {
+                let got = parse_iso(s);
+                println!(
+                    "  parse_iso({s:?}) -> {got:?} {}",
+                    if got == Some(want) { "ok" } else { "FAILED" }
+                );
+                if got != Some(want) {
+                    bail!("parse_iso regression on {s:?}: got {got:?}, want {want}");
+                }
             }
             Ok(())
         }

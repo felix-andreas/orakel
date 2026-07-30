@@ -4,6 +4,130 @@ One dated entry per run. Name the model that did the work.
 
 ---
 
+## 2026-07-30 — day 8: the last run before the freeze; two more archive holes, one unrecoverable (model: claude-opus-5, effort xhigh)
+
+- **Feed verified open, not assumed.** 01:13Z: WTI/gold/silver **OPEN, 0.0h**; SPY/NVDA **SHUT,
+  5.3h**. **5 rows proposed** from 83 two-sided legs (`results/proposed-rows-2026-07-30.csv`,
+  run_id `2026-07-30/daily`, header md5-identical to the ledger): WTI ↑95, WTI ↑90-from-jul-27,
+  **WTI ↓80-from-jul-29 (a NEW relisted market**, cid 0x604939…, private window start
+  2026-07-29 16:27:11Z verified against Gamma's `startDate`, identity-asserted, distinct from the
+  ↓80 that resolved YES**)**, silver-weekly ↓56/↓55. **78 suppressed**: 19 stale-feed (all equity),
+  47 mid∉[3c,97c], 12 relative spread, **0** tape, **0** epsilon, **0** de-dup. CLU6 **83.86**
+  (RV14 64.0%, intraday 52.2%, OVX 67.6), gold 4080.60, silver 58.44. Did not write predictions.csv.
+- **Validated my own gate reconstruction before trusting it**: replaying it on 07-29 reproduces the
+  recorded counts exactly (44 mid / 10 spread / 22 stale → 13 survivors, minus 1 tape gate = 12).
+  Day-6's published suppression counts don't balance (they imply 13, the entry claims 14 rows) — a
+  bookkeeping slip, not a data problem, logged rather than fixed.
+- **12 rows → 5, because everything rallied and the books emptied.** Worth recording: the gold book
+  *degenerated at end of life* — weekly ↑4200 quoting 0.040/0.660, monthly ↓3900 at 0.003/0.672,
+  two days from resolution. Phantom-midpoint spreads appear at a board's **death** as well as its
+  birth. The gate caught all of it; nothing retuned mid-trial.
+- **THE FOURTH SILENT-DATA BUG: `closed_time` has been `0` for every resolved leg, always.** Gamma
+  emits `endDate` as strict RFC3339 but **`closedTime` as `2026-07-29 16:10:11+00`** — space
+  separator, two-digit offset. `parse_iso` used `parse_from_rfc3339` only and the call site was
+  `.unwrap_or(0)`, so the failure was swallowed: **74 of 74 closed legs, in every `legs.csv` this
+  variant has ever written, including both backtest freezes.** It survived eight days precisely
+  because nothing computes with it — and it is exactly the field Friday would reach for to ask "has
+  UMA settled this yet", which would have made every leg look like it settled at the epoch. **Fixed**
+  (accepts the space separator and widens `+00`/`+0000`), with a **selftest assertion on all three
+  formats** so it cannot regress silently. `legs.csv` regenerated: 74/74 now parse. Pricer untouched;
+  every selftest pricing number byte-identical.
+- **THE ONE I DID NOT EXPECT: 3 ledger rows on 2 markets resolved YES on 07-29 and are in neither
+  `resolutions.csv` nor anyone's plan.** `will-wti-reach-85-in-july-2026-from-july-27` (1 row) and
+  `will-xauusd-dip-to-4000-by-july-27-2026` (2 rows). Confirmed two independent ways: Gamma
+  (`closed=true`, `outcomePrices ["1","0"]`, `umaResolutionStatus: resolved`, conditionId asserted)
+  **and** our own frozen candles (WTIU6 max **85.56** ≥ 85; XAUUSD min **3996.19** ≤ 4000). Both went
+  **against** us and one is a `dip-to` leg, i.e. the tail family — so omitting them flatters the
+  headline and removes two tail draws. They would also have made the completeness gate read *unmet*
+  on Friday for a bookkeeping reason rather than a UMA one. **The generalisation is new and is the
+  real finding: every completeness check we had asked "is the archive complete as of the last run".
+  None asked "did something resolve while we weren't looking."** A market can leave the outstanding
+  set without any run touching it. `scripts/resolve_sweep.py` now asks it, and should run daily.
+- **`data/out/predictions_2026-07-26.csv` is permanently lost.** Enumerated every `predictions_*.csv`
+  across all eight R2 archives, local disk and git: 07-23/24/25/27/28/29/30 are covered, **07-26 is
+  in none of them.** Day 4 cut no `live-*` freeze at all and the 07-29 rescue was already too late.
+  Stated narrowly: what is lost is the book snapshot for day-4's ~80 **suppressed** legs, so those
+  suppression counts can never be re-audited. What is **not** lost — its 13 emitted rows
+  (`proposed-rows-2026-07-26.csv` + the ledger, both in git), `fills.csv`, candles, resolutions. **No
+  Friday or 08-02 number depends on it.** A real permanent hole with a bounded blast radius.
+- **Fixed the day-6 root cause, which was still unfixed.** Only that day's damage had been repaired;
+  the duty was still a `tar` line retyped every morning. `scripts/freeze.sh` now holds the
+  required-contents manifest **in git**, builds both archives, and **re-reads each tarball it just
+  built**, failing on any missing promised entry; it also counts sub-60-byte JSON stubs. Added
+  `tape/` and `clob*/` to the live freeze — both gitignored, `tape/` is the only evidence behind a
+  tape-gate suppression, `clob60/` is what `cmd_analyze` reads for every checkpoint Brier.
+- **Archives cut AND read back out of R2**, not merely verified: `candles-2026-07-30` (912 entries,
+  19.4MB — read back `WTIU6/2026-07-29` as `s=ok`, **1379 candles**, i.e. yesterday's 74-minute stub
+  correctly refetched by the mtime rule) and `live-2026-07-30` (64 entries, 4.4MB — read back today's
+  predictions file, 83 legs, columns 15–18 = `sigma_rv,sigma_iv,q_iv,q_blend`).
+- **`r2data verify` FAILed on a transient HTTP 500** for `candles-2026-07-25`; `pull` fetched the
+  object intact, sha256 and all, minutes later. Nastier than it looks under time pressure: a FAIL on
+  the resolution record invites re-freezing, and re-freezing over an archive you *wrongly* believe is
+  broken is how a good archive gets replaced by a worse one. **Retry and confirm with `pull`.**
+- **Checked the candle archive properly and found nothing — reported as a result.** Opened, parsed and
+  counted every day-file from 07-20 in `candles-2026-07-29`. Every apparent hole is a session-calendar
+  artifact (Saturday zeros; Sunday's 120-minute 22:00Z open; Friday's 1261; the 74-minute
+  freeze-time stub; SPY/NVDA `no_data` before that day's RTH). WTIV6 07-21 is 1359 of 1382 — genuine
+  thin-feed gaps in the deferred contract, and no July answer depends on it. Local 07-29 now complete
+  on every key. **Standing exposure: no run after 07-31 21:00Z ⇒ the 07-31 record is a 74-minute stub
+  and gate 0 for the whole batch is unanswerable.** Made the loudest item in the runbook.
+- **I WAS WRONG ON 07-29, AND IT IS IN `ops/decisions.md`.** "OVX (57.1) has fallen below RV14 (62.7)
+  for the first time — the prereg's premise is softening" compared OVX to the wrong series: the
+  pricer's effective σ is **intraday** realized vol, not RV14. Measured from the frozen files, σ_iv
+  sat **above** the σ actually in use on every asset on **both** scorable days (WTI 0.5773 vs 0.5133
+  on 07-29; 0.6793 vs 0.5261 today; gold and silver likewise). **The premise never softened.** Also
+  OVX went 57.15 → **67.59** on 07-29, with VIX 18.21→20.66 and a VXSLV 54.10 high — a real
+  cross-asset vol event, not a data artifact. Changes no rule and re-specifies nothing; corrects a
+  fact we had recorded wrongly, before the outcome.
+- **Friday's power, measured, including today's rows** (within `feed_open=1`): jump arm **40 rows /
+  19 markets**, old arm 48 / 36, `feed_open=0` 43 / 33 on its own line. **Clears 30 in rows, not in
+  markets** — 13 of the 19 jump markets carry more than one row. Reported **INCONCLUSIVE in the
+  market unit** per `ops/decisions.md`; did **not** go looking for a unit or subset that clears.
+  Today bought 5 rows and **exactly 1 new market**: the exhaustion prediction was right.
+  **131 outstanding rows over 62 markets** go into Friday.
+- **RV/IV prereg**: 67 legs (07-29) + 64 (07-30), **union 68 distinct legs**, 63 in both days. Clears
+  n≥30 in legs *and* markets — unlike the pricer split, so its real limitation is **two days and one
+  regime, not small n**, and I said it that way rather than calling it underpowered. Tradeability
+  veto baseline recorded blind: A_rv/B_iv/C_blend = **4/1/1** (07-29), **2/1/1** (07-30) → **B and C
+  both fail the veto on both scorable days**, so the "everything passes" branch is effectively
+  unreachable and the expected recorded conclusion is the "better calibrated, unusable by a
+  sell-only variant" one.
+- **08-02 PREPARED AS THE SIZING QUESTION IT IS** (`results/sizing-2026-08-02-prep.md`). Selling YES
+  at `p` is **buying NO at `c = 1−p`**, so every legal trade is a favourite-side buy at 50–97c — the
+  regime `break-even-win-rate` calls uninvestable. On 356 sell-signal legs: `q*` 0.822, `q` 0.868,
+  **`q⁻` 0.829 clears at nominal n=356 and 0.808 FAILS at effective n=173.** Effective n from
+  **ρ = 0.325** (intraclass correlation of the loss indicator within a monotone family), 4.24
+  legs/family, design effect 2.05. **The same evidence clears its bound at the leg count and fails
+  it at the draw count** — which is the day-7 "two losses ≈ one draw" observation generalised into a
+  number. Edge lives at **both ends** (3–10c clears; 35–50c clears at +30.9% RoLC) and is **absent in
+  10–35c**. Caught a look-ahead error in my own first cut: entering at the *last* qualifying
+  checkpoint gave −66% RoLC in the 20–35c band, because a touching leg's mid **rises toward 1** first
+  — re-cut on the **first** qualifying checkpoint.
+- **And the tail is a CLIFF, not a tail.** The outstanding WTI down-ladder collected **1.15** across
+  21 rows; at the realised −14.0% low (77.80) it loses 0.66 and is net **+0.49**; at 75 it loses
+  **6.96**, net **−5.81**. The next 5% down costs **+6.30 = 548% of that family's entire premium.**
+  90% of the premium sits on the two rungs nearest spot — the first two a continuing move takes —
+  while the deep wings ↓45–↓65 are 4.7% of premium and 5.92 of loss exposure. Worst single family's
+  full loss is **1.98× the premium on the whole book**. **Size by family, never by leg.**
+  Scoped what is missing: between-family ρ (so **173 is an upper bound** on effective n), fees and
+  fills folded into `q*`, and a capital model — the firm has set no bankroll.
+- **Wiki**: new `reference/nested-ladders-are-one-draw.md` (a ladder is one bet on how far the
+  underlying travels, paid k times; the ρ/effective-n arithmetic, the clears-vs-fails table, the
+  premium-on-the-near-rungs cliff, and the families it generalises to), indexed. Extended
+  `existence-is-not-completeness.md` with the fifth instance — presence-is-not-completeness at the
+  **field** level, where a fallible parse defaulting to a valid-looking sentinel carries no
+  information — plus the transient-verify-FAIL corollary.
+- **Deliverable for whoever runs Friday**: `results/friday-2026-07-31-runbook.md` — two freeze
+  moments (Fri 21:00Z, Sat 04:00Z for BTC), exact commands in order, the completeness check with
+  explicit STOP thresholds on candle counts, `scripts/resolve_sweep.py` for the both-ways
+  identity-asserted lookup, what to do when a leg has not settled (including: never substitute a
+  price or our own candles for an outcome), the exact numbers and labels to report, and a
+  14-row appendix of every silent wrong-answer path found so far.
+- Escalation to the CEO: (a) **append the 3 already-settled rows before judging the completeness
+  gate**; (b) the equity/RTH scheduling decision is still open — 19 legs suppressed again, and it is
+  structural; (c) 08-02 should read the sizing doc, not another calibration table; (d) my 07-29
+  OVX-vs-RV claim in `ops/decisions.md` needs the correction above attached to it.
+
 ## 2026-07-29 — day 7: the third data bug was not in the code (model: claude-opus-5, effort xhigh)
 
 - **Feed verified open, not assumed.** 01:14Z: WTI/gold/silver **OPEN, 0.0h** (Tuesday's session

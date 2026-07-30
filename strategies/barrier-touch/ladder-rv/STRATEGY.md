@@ -133,12 +133,27 @@ manifest (`data/candles-<date>.tar.gz.r2.json`) — that frozen archive is the r
 record. Since 2026-07-28 the refetch of an incomplete yesterday is **automatic**: a day-file
 is re-pulled unless it was written after that day ended.
 
-**The daily freeze must include `out/` and `events_live/`, not just candles.** `data/.gitignore`
-ignores `candles/ vol/ out/ tape/ clob*/`, so anything not in a tarball exists nowhere. Cut
-**both** freezes every day: `candles-<date>` (candles+vol) **and** `live-<date>`
-(events_live+out). Day-6 cut only the first and `predictions_2026-07-28.csv` — the per-leg
-record the RV/IV pre-registration is scored from — survived in one container only
-(`results/archive-audit-2026-07-29.md`). `r2data verify` cannot see inside a tarball.
+**Do not hand-write the freeze. Run `bash scripts/freeze.sh <date>`.** `data/.gitignore` ignores
+`candles/ vol/ out/ tape/ clob*/`, so anything not in a tarball exists nowhere. The script holds
+the required-contents manifest in git, cuts **both** archives (`candles-<date>` = candles+vol,
+`live-<date>` = events_live+out+legs.csv+tape+clob), and **re-reads each tarball it just built**,
+failing if a promised entry is missing — because `r2data verify` cannot see inside a tarball.
+This exists because the duty used to be a `tar` line retyped every morning, and it went wrong
+twice: day-6 cut only the candles freeze, so `predictions_2026-07-28.csv` survived in one
+container (`results/archive-audit-2026-07-29.md`), and **day-4 cut no `live-*` freeze at all, so
+`predictions_2026-07-26.csv` is permanently lost** (`results/archive-audit-2026-07-30.md`).
+
+**Run `python3 scripts/resolve_sweep.py` daily, not just on resolution day.** It unions both
+Gamma query forms, asserts the returned `conditionId` matches the one asked for, and treats
+`closed` with non-final `outcomePrices` as UNSETTLED. On 2026-07-30 it found **3 ledger rows on 2
+markets that had resolved YES on 07-29** and were in no plan and no `resolutions.csv`: every
+completeness check we had asked "is the archive complete as of the last run", and none asked
+**"did something resolve while we weren't looking"**. A market can leave the outstanding set
+without any run touching it.
+
+**A `verify` FAIL can be a transient R2 500.** Retry it and confirm with `r2data pull` before
+concluding an archive is lost — re-freezing over an archive you wrongly believe is broken is the
+destructive reflex.
 
 **`live` takes ONE comma-separated argument**, not a space-separated list —
 `ladderrv live data "slug-a,slug-b"`. Space-separated silently prices only the first board
@@ -243,3 +258,29 @@ over which the market moved.
   (`results/prereg-rv-iv-blend-2026-07-28.md` — a comparison scored 07-31, **not** a switch:
   IV sits above RV on 62/62 legs, which for a sell-only variant cuts sell signals 4 → 1).
   Friday readiness: `results/friday-2026-07-31-readiness.md`, identity **58/58**, 120 rows.
+- 2026-07-29 — day-7: **the third data bug was not in code** — `data/out/` is gitignored and the
+  day-6 freeze was candles+vol only, so `predictions_2026-07-28.csv` was frozen nowhere
+  (`results/archive-audit-2026-07-29.md`); rescue-frozen. `cmd_clob` and `cmd_tape` had
+  `cmd_candles`' `exists()`-means-cached bug — both fixed via `complete_through`. The
+  "structurally short downside touch" hypothesis **refuted** on 633 legs / 5,927 checkpoints
+  (`results/trend-exposure-2026-07-29.md`): the model **beats** the market on touched legs and
+  WTI ↓ legs trending into the barrier are its **best** bucket; what is real is a one-sided tail
+  whose 8 worst legs are all `dip-to`. **12 prediction rows.**
+- 2026-07-30 — day-8, **last run before the evidence froze**. **5 prediction rows** (WTI 3 incl. a
+  newly relisted ↓80-from-jul-29, silver-weekly 2) from 83 legs; 78 suppressed, 19 of them the
+  structurally-shut equity feed. Two more archive holes
+  (`results/archive-audit-2026-07-30.md`): **3 ledger rows on 2 markets had resolved YES on 07-29
+  and were in no `resolutions.csv`** — nothing was watching for a leg that settles between runs —
+  and **`predictions_2026-07-26.csv` is permanently lost** (day 4 cut no `live-*` freeze).
+  **Fourth silent-data bug fixed**: Gamma's `closedTime` is not RFC3339, so `closed_time` had been
+  `0` for all 74 closed legs forever; `parse_iso` widened, selftest asserts all three formats,
+  pricer untouched. Root-caused the hand-written `tar` line into `scripts/freeze.sh` (verifies its
+  own contents) and the both-ways lookup into `scripts/resolve_sweep.py` (asserts identity).
+  Corrected my own 07-29 claim: **OVX never fell below the σ the pricer actually uses** (intraday
+  RV, not RV14) — the prereg premise never softened. Pricer split reaches **40 rows / 19 markets**
+  in the jump arm: clears 30 in rows, not in markets, reported **INCONCLUSIVE** as pre-settled.
+  **08-02 prepared as a sizing question** (`results/sizing-2026-08-02-prep.md`): the sell-side
+  break-even bound **clears at nominal n=356 and fails at effective n=173** (ρ = 0.325 within
+  monotone families), and the tail is a **cliff** — the WTI down-ladder is net +0.49 at the realised
+  −14% and −5.81 three points lower. Friday procedure: `results/friday-2026-07-31-runbook.md`.
+  Wiki: new `nested-ladders-are-one-draw`, extended `existence-is-not-completeness`.

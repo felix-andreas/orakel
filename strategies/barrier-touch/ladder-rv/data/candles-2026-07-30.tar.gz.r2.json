@@ -1,0 +1,9 @@
+{
+  "key": "blobs/8705358cbe09e471f4cbfdd5d1eac84b708136a1308272ffca24e7b9aff3b1cd",
+  "sha256": "8705358cbe09e471f4cbfdd5d1eac84b708136a1308272ffca24e7b9aff3b1cd",
+  "bytes": 19429963,
+  "content_type": "application/gzip",
+  "original_name": "candles-2026-07-30.tar.gz",
+  "fetched_at": "2026-07-30T01:34:25Z",
+  "bucket": "orakel"
+}

@@ -4,152 +4,145 @@ _Keep under ~150 lines; prune every run._
 
 ## Short-term
 
-- **Day-7 (2026-07-29): 12 proposed rows**, `results/proposed-rows-2026-07-29.csv`, run_id
-  `2026-07-29/daily`, 15-col schema, header byte-identical to the ledger. WTI ↑95/↓75/↑85-from-jul-27/
-  ↑90-from-jul-27, gold ↓3900, silver ↓54/↓52, gold-weekly ↑4200/↑4150, silver-weekly ↑62/↓56/↓55.
-  89 two-sided legs read, **77 suppressed**: 22 stale-feed (all equity), 44 mid<3c, 10 relative
-  spread, 1 tape gate. Zero de-dup (no surviving weekly barrier duplicates a live monthly).
-  Inputs @01:14Z, **feed OPEN 0.0h**: CLU6 **82.71** (RV14 62.7%, intraday 50.7%, OVX 57.1),
-  gold **4013.82** (18.8/18.1, GVZ 24.6), silver **57.00** (39.4/37.9, VXSLV 47.8).
-- **WTI bounced: 81.84 → low 77.80 Tue → 82.71.** ↓80 touched at the Tuesday low and resolved
-  YES; ↓75 survived. **OVX fell 60.6 → 57.1 and is now BELOW RV14 (62.7%)** for the first time
-  in the trial — the IV-above-RV premise of the prereg is asset-specific and already softening.
-- **FRIDAY POWER: the two n≥30 questions have DIFFERENT answers — say both.**
-  (a) *Pricer split* (ledger rows, within `feed_open=1`): jump arm 25 → **37 rows / 19 markets**
-  after today, ~49/~20 after Thursday. **Clears 30 in rows, NOT in markets**, and the readiness
-  doc's own item 7 says markets is the honest unit. Today's 12 rows added only **4 new markets** —
-  the board universe is exhausted, so more runs buy repeats, not power. **Settle rows-vs-markets
-  before Friday, not after.** (b) *RV/IV prereg*: scores all legs in `data/out/predictions_*.csv`,
-  not emitted rows — today's file alone has **67 legs** with q_rv/q_iv/q_blend, floor met.
-- **dip-to-80 resolved YES: headline −0.0172/25 → −0.0466/31 rows** (CEO). It carried **2 jump-arm
-  feed_open=1 rows**, which the readiness table had counted as outstanding — that is why (a) above
-  is 37 and not 39.
-- **CEO'S QUESTION ANSWERED: NOT exposure, NOT calibration — a one-sided TAIL**
-  (`results/trend-exposure-2026-07-29.md`). On 5,927 checkpoints / 633 resolved legs, same
-  `touch_prob` pricer as the losing rows: model **beats** market on **touched** legs (−0.01152,
-  t −1.99) and is flat on untouched (−0.00046). WTI ↓ legs **trending ≥5% into the barrier** are
-  the variant's **best** bucket (−0.01259, t −4.66). r(err, trend) = −0.031. The "structurally
-  short downside touches" story is **refuted**. What IS real: per-leg sd 0.062, p99 +0.173, and
-  **the 8 worst legs in the whole backtest are all `dip-to` legs** (silver/NVDA/SPY/gold — not a
-  WTI fact). dip-to-80 = p98.7, dip-to-85 = p97; nested on one contract, so ~1 draw not 2.
-  → 08-02 asks **"is this tail acceptable at our size, given how correlated the legs we hold are"**,
-  which is a sizing/correlation question (`break-even-win-rate` q*/q/q⁻ + RoLC), not a Brier one.
-  Caveats: backtest is the sample the method was gated on; `trend` is ex-post and **must never
-  become a filter** (that is `lifetime-volume-is-look-ahead` exactly).
-- **THE THIRD DATA BUG WAS NOT IN CODE** (`results/archive-audit-2026-07-29.md`).
-  `data/out/` is **gitignored**, and the daily freeze is candles+vol only — so
-  `predictions_2026-07-28.csv` was frozen **nowhere**, existing in one container. The `live-*`
-  freeze is the one that carries `out/`, and day-6 never cut one. **Rescue-frozen today** in
-  `live-2026-07-29`. A freeze is only as complete as the hand-written `tar` line that built it.
-- **07-28's predictions file PREDATES q_iv/q_blend** — written 01:21:59Z, binary rebuilt 01:30Z,
-  never regenerated. The prereg says those numbers are "already frozen"; they are not.
-  **RV/IV is scorable from 07-29 + 07-30 only.** Did NOT re-derive: doing so after seeing today's
-  numbers is a change to the comparison by the person who scores it.
-  Also flagged pre-outcome: prereg says the anchor is **daily 12:00Z**, but `cmd_live` fires
-  ~01:1xZ and that is what the q's carry. **Pick the anchor blind, before Friday 21:00Z.**
-- **`cmd_clob` AND `cmd_tape` had the `cmd_candles` bug — both fixed today.** `fetch_all` skips on
-  `p.exists()`; both fetch **growing** series. Stale clob60 would have scored Friday against a
-  price history stopping **2026-07-25**, dropping legs one at a time via `price_at`'s max-age
-  guard — no error, just a smaller n. Now one shared `complete_through(path, l.we)`. Selftest
-  passes; **pricer untouched**.
-- **Tape gate suppressed gold-weekly ↓3950** — 26 trades in 24h but all at 0.32 / 0.61+, none
-  within 5c of the 0.380 bid. Fires correctly **as written** but for a reason it was not designed
-  for (repricing, not an empty room). Applied unchanged; **do not retune it mid-trial**. Method
-  question for after 08-02.
-- **STALE-FEED GATE IS STRUCTURAL FOR EQUITY.** SPY/NVDA resolve on Pyth RTH 13:30–20:00Z; the
-  daily trigger fires ~01:07Z, feed 5.3h shut. **The daily run can NEVER legally predict an equity
-  board.** 22 legs suppressed again today. Still awaiting the CEO's call: second in-RTH run, or
-  equity leaves the trial.
-- **GAMMA `closed` IS A FILTER DEFAULTING TO `false`, NOT AN OVERRIDE.** `?condition_ids=<cid>`
-  returns an OPEN market and `[]` for a closed one; `&closed=true` is the exact reverse. **No
-  single query finds both — try both.** Friday's set will be MIXED. `?condition_id=` (singular) is
-  silently ignored and returns an arbitrary market.
-- **Day-8 queue**: (1) run Thursday — but know it adds ~0–3 new markets, not power; (2) daily
-  archive **and a `live-*` freeze, every day** — candles alone loses `out/`; (3) settle
-  rows-vs-markets for the pricer floor; (4) settle the RV/IV anchor (01:1xZ vs 12:00Z) blind;
-  (5) fresh `discover` + `clob 60` after 07-31 21:00Z.
+- **Day-8 (2026-07-30): 5 proposed rows**, `results/proposed-rows-2026-07-30.csv`, run_id
+  `2026-07-30/daily`, 15 cols, header md5-identical to the ledger. WTI ↑95, WTI ↑90-from-jul-27,
+  **WTI ↓80-from-jul-29 (a NEW relisted market)**, silver-weekly ↓56/↓55. 83 two-sided legs read,
+  **78 suppressed**: 19 stale-feed (all equity, structural), 47 mid∉[3c,97c], 12 relative spread,
+  0 tape, 0 epsilon, 0 de-dup. Inputs @01:13Z, **feed OPEN 0.0h**: CLU6 **83.86** (RV14 64.0%,
+  intraday 52.2%, OVX 67.6), gold **4080.60**, silver **58.44**. Did not write predictions.csv.
+- **Everything rallied and the boards emptied**: 12 rows → 5. The gold book *degenerated* at
+  end-of-life (weekly ↑4200 quoting 0.040/0.660, monthly ↓3900 at 0.003/0.672) — phantom-midpoint
+  spreads appear at a board's **death** as well as its birth. Gate did its job; nothing to retune.
+- **Gate replay validated**: my reconstruction reproduces 07-29 exactly (44 mid / 10 spread /
+  22 stale → 13, minus 1 tape = the recorded 12). Day-6's published suppression counts don't
+  balance (13 vs the 14 claimed) — bookkeeping slip, not data.
+- **THE FOURTH BUG: `closed_time` was 0 for all 74 closed legs, always.** Gamma's `closedTime` is
+  `2026-07-29 16:10:11+00` — space separator, 2-digit offset, **not RFC3339**; `parse_iso` rejected
+  it and `.unwrap_or(0)` swallowed it. Never used in a calculation, which is why it lived 8 days —
+  and it is exactly the field Friday reaches for to ask "has UMA settled this". **Fixed + selftest
+  asserts all 3 formats. Pricer untouched, selftest numbers identical.**
+- **3 ROWS ON 2 MARKETS RESOLVED YES ON 07-29 AND ARE NOT IN `resolutions.csv`**:
+  `will-wti-reach-85-in-july-2026-from-july-27` (1 row) and `will-xauusd-dip-to-4000-by-july-27-2026`
+  (2 rows). Confirmed by Gamma (identity-asserted) **and** our own candles (WTIU6 max 85.56;
+  XAUUSD min 3996.19). Both went **against** us, so omitting them flatters the headline, and they
+  would have made the completeness gate read unmet for a bookkeeping reason. **The general lesson
+  is new: every check we had asked "is the archive complete as of the last run", none asked "did
+  something resolve while we weren't looking". Run `scripts/resolve_sweep.py` DAILY.**
+- **`predictions_2026-07-26.csv` is permanently lost** — no archive, no container, not in git (day 4
+  cut no `live-*`; the 07-29 rescue was already too late). Lost: day-4's ~80 suppressed legs' book
+  snapshots. **Not** lost: its 13 emitted rows, fills, candles. No Friday/08-02 number depends on it.
+- **New tooling, both in git**: `scripts/freeze.sh` (contents manifest in git, re-reads the tarball
+  it just built and fails on a missing entry — the actual fix for the hand-written `tar` line; now
+  also freezes `tape/` + `clob*/`) and `scripts/resolve_sweep.py` (unions both Gamma query forms,
+  asserts `conditionId` identity per market, treats closed-without-final-`outcomePrices` as
+  UNSETTLED). Both archives cut today and **read back out of R2** (not just verified).
+- **`r2data verify` can FAIL on a transient HTTP 500** — candles-2026-07-25 FAILed on HEAD and
+  `pull` fetched it intact. **Retry a FAIL before believing it**; re-freezing over a good archive
+  is the destructive reflex.
+- **The candle archive's holes are all session-calendar artifacts** — checked every day-file from
+  07-20 (weekend zeros, Sunday 120-min opens, Friday 1261, the 74-min freeze-time stub). Local
+  07-29 now complete (WTIU6 1379, SPY/NVDA 390 RTH). **Standing risk: no run after 07-31 21:00Z
+  ⇒ the 07-31 resolution record is a 74-min stub and gate 0 is unanswerable.**
+- **I WAS WRONG ON 07-29 ABOUT OVX FALLING BELOW RV.** It compared OVX to **RV14 total**; the pricer
+  uses **intraday** RV. σ_iv sat ABOVE the σ actually used on every asset on **both** scorable days
+  (WTI 0.5773 vs 0.5133 on 07-29; 0.6793 vs 0.5261 today). **The prereg's premise never softened.**
+  OVX went 57.15 → 67.59 on 07-29 with VIX 18.21→20.66 and a VXSLV 54.10 high — a real vol event.
+- **Friday's power, measured after today** (incl. my 5 rows), within `feed_open=1`: jump arm
+  **40 rows / 19 markets**; old arm 48 / 36; `feed_open=0` 43 / 33 (own line, never pooled).
+  **Clears 30 in rows, not in markets — INCONCLUSIVE, and markets is the honest unit** (13 of 19
+  jump markets carry >1 row). Today bought 5 rows and **exactly 1 new market**: exhaustion
+  confirmed, as predicted. **131 outstanding rows / 62 markets** go into Friday.
+- **RV/IV prereg power**: 67 legs (07-29) + 64 (07-30), **union 68 distinct legs**, 63 in both.
+  Clears n≥30 in legs *and* in markets — unlike the pricer split. **Its limitation is two days and
+  one regime, not small n.** Tradeability veto baseline, recorded blind: A_rv/B_iv/C_blend =
+  4/1/1 (07-29) and 2/1/1 (07-30) → **B and C both fail the veto on both days**, so the prereg's
+  "everything passes" branch is effectively unreachable.
+- **Day-9/Friday queue**: `results/friday-2026-07-31-runbook.md` is the whole procedure —
+  freeze first, `resolve_sweep.py`, both freeze moments (Fri 21:00Z and Sat 04:00Z for BTC).
 
 ## Medium-term
 
-- **Where the edge is**: sell overpriced wings/extension legs; delayed sim beats instant for
-  sells. Model beats market Brier on **WTI and GOLD only** — use the **daily-checkpoint,
-  leg-sum-gated** numbers (WTI −0.00901 t −6.07; gold −0.00541 t −3.55), never the window-open
-  ones, which do not survive the gate. spy +0.0089, nvda +0.0052, btc +0.0083 (model worse),
-  silver ~0. Sells by asset (delayed, per trade): wti +14.4c, spy +19.6c(n=18), gold +7.1c,
-  eth +8.3c, btc +6.4c, silver +3.0c, nvda −4.8c. **Cents/trade is the wrong unit**
-  (`execution/DESIGN.md` §3): report return on locked capital, and `break-even-win-rate`'s
-  q*/q/q⁻ table, before any promotion claim.
-- **The variant's risk is a fat one-sided tail on `dip-to` legs, not a calibration error.**
-  Mean edge is real and comes from the touched legs. See day-7 above; do not re-derive.
-- **A model whose only inputs are a closed feed cannot update; the market can.**
-  `wiki/reference/stale-feed-gate.md`, firm-wide. Every row carries `feed_age_h` / `feed_open`.
-- **Checkpoint hygiene.** Anchor gate 1 at window-open and gate 2 at daily 12:00Z in-window,
-  **never at board creation** (85% of legs quote ~0.50 there and a flat base-rate beats the
-  market). This family is **nested**, so a literal leg-sum is vacuous — report `Σmid` vs
-  `Σwinner`. Gate board-snapshots on `avg_mid ≤ 0.40` before quoting a Brier margin.
-- **Resolution epsilon** (`wiki/reference/venue-resolution-epsilon.md`): 279/279 feed-touches
-  resolved YES; 2/7 feed-*misses* within 0.10% resolved YES anyway → never sell a barrier
-  within **0.2% of that leg's running window extreme**, from its TRUE window start. It screens
-  *adjudication* risk, not price proximity — ↓85 sat 1.32% clear and touched anyway.
-- **Five ways a quoted price can mislead**: dead book at 0.02/0.98 (`phantom-midpoints`);
-  live-but-wide, mid ≠ bid (`midpoint-is-not-a-fill`); live-and-tight with no counterparty
-  (`tape-gate`); an honest quote against **our** stale feed (`stale-feed-gate`); and a venue
-  API that answers a filtered query with `[]` rather than an error.
-- **FILL PICTURE SPLITS BY BOARD FAMILY**: reachable fraction of the scored midpoint = WTI 99%,
-  BTC 100%, silver 89%, gold 82%, **SPY/NVDA weekly 38%**. **The reachable legs are the ones we
-  lost on** — mid-board WTI legs at 0.4–0.7 are the liquid ones. Book gate: relative spread
-  `≤ min(5c, ½·mid)`, mid ∈ [3c,97c], tape ≥1 taker trade on our side within 5c in 7 days.
-- **Buys: unrescuable by drift/jump** (255-leg sample). Failure is 100% crypto — the crypto
-  market over-prices barrier touches ~4×. Class-gated WTI+equity buys are positive but only
-  12/39 legs → **buys stay OFF**.
-- **GAP SD, MEASURED** (weekend / overnight): USOILSPOT **3.78% / 0.35%**, WTIU6 4.25% / 0.40%,
-  XAUUSD 0.74% / 0.13%, XAGUSD 1.20% / 0.18%, SPY 0.74% / **0.59%**, NVDA 1.38% / **1.43%**,
-  BTC 0/0. A WTI weekend gap ≈ a whole session's variance; for RTH equity the **overnight** gap
-  ≈ a whole session.
-- **Roll calendar / August**: CLQ6→CLU6 at the **Fri 17 Jul** session, CLU6→CLV6 **Tue 18 Aug**,
-  CLV6→CLX6 **Fri 18 Sep**. **Archive WTIX6 the day it appears (~Aug 20)**; WTIQ6 is delisted
-  forever. August is priceable (`ladderrv roll` validated) but not predictable, and resolves
-  after the review.
-- **Fine print (gate-0 verified 756/760)**: crypto monthlies resolve on BINANCE USDT;
-  "calendar month" legs resolve from listing; re-added strikes carry private window starts
-  ("after market creation"); equity RTH-only; WTI/metals weeklies use the session clock, not
-  the calendar week; WTI boards resolve on the **active month**, which rolls mid-board.
-  **CLU6 traded ~69.8 on Jul 1 while the board resolved on CLQ6** — never reconstruct a July
-  touch from WTIU6 before the 07-16 22:00Z roll.
-- **Data traps**: Pyth carries exactly **two** CL contracts and deletes expired ones — archive
-  daily. USOILSPOT is a CFD near the front, not the spliced active month — never settle a
-  near-barrier WTI question off it. Pyth rate-limits ~1 req/s. Polymarket headline volumeNum on
-  WTI ≈ 20× real taker notional. **data-api.polymarket.com 403s without a User-Agent header.**
-- **`r2data verify` checks the blob, not the contents.** It HEADs the object and compares size.
-  `candles-2026-07-27` verified OK daily while holding a WTIU6 file truncated to 21.9KB of 69.7KB.
-  "Frozen and verified" means the bytes we uploaded are there — nothing more.
+- **08-02 IS A SIZING QUESTION AND THE ANSWER IS MEASURED** (`results/sizing-2026-08-02-prep.md`).
+  Selling YES at `p` = **buying NO at `c = 1−p`**, so every legal trade is a favourite-side buy at
+  50–97c. Pooled sell-signal band: `q*` 0.822, `q` 0.868, `q⁻` **0.829 clears at nominal n=356** and
+  **0.808 FAILS at effective n=173**. Effective n from **ρ = 0.325** intraclass correlation of the
+  loss indicator within a monotone family, 4.24 legs/family, design effect 2.05.
+  Edge is at **both ends** (3–10c clears, 35–50c clears at +30.9% RoLC) and **absent in 10–35c**.
+- **The tail is a CLIFF.** WTI down-ladder: 1.15 premium over 21 rows; at the realised −14.0% low
+  (77.80) it loses 0.66 → net **+0.49**; at 75 it loses 6.96 → net **−5.81**. Next 5% down costs
+  **548% of the family's entire premium**. 90% of premium sits on the two rungs nearest spot — the
+  first two a continuing move takes. Deep wings = 4.7% of premium, 5.92 of loss exposure.
+  **Size by family (asset,dir,window), never by leg.** Missing: between-family ρ (so 173 is an
+  UPPER bound on effective n), fees/fills folded into `q*`, and a capital model.
+- **Where the edge is**: sell overpriced wings/extension legs; delayed sim beats instant for sells.
+  Model beats market Brier on **WTI and GOLD only**, on the **daily-checkpoint, leg-sum-gated**
+  numbers (WTI −0.00901 t −6.07; gold −0.00541 t −3.55) — never the window-open ones.
+  spy +0.0089, nvda +0.0052, btc +0.0083, silver ~0. **Cents/trade is the wrong unit**; report RoLC
+  and the `q*`/`q`/`q⁻` table.
+- **Risk is a fat one-sided tail on `dip-to` legs, not a calibration error.** The "structurally
+  short downside touch" story is **REFUTED** (633 legs / 5,927 checkpoints): model **beats** market
+  on touched legs (−0.01152, t −1.99), and WTI ↓ legs trending ≥5% into the barrier are its **best**
+  bucket. `trend` is ex-post and **must never become a filter**. Do not re-derive.
+- **Entry selection must use the FIRST qualifying checkpoint, not the last.** My own first cut of
+  the break-even table used the last and produced −66% RoLC in the 20–35c band: for a leg that
+  eventually touches the mid **rises toward 1**, so "last checkpoint still under 50c" selects the
+  moment before the loss. `lifetime-volume-is-look-ahead` in a new costume.
+- **A model whose only inputs are a closed feed cannot update; the market can.** Every row carries
+  `feed_age_h`/`feed_open`. **Equity is structurally unpredictable on the daily cadence** — RTH is
+  13:30–20:00Z, the trigger fires ~01:1xZ, so the feed is always shut. 19–22 legs suppressed every
+  run. Still awaiting the CEO: second in-RTH run, or equity leaves the trial.
+- **Checkpoint hygiene.** Daily 12:00Z in-window for gate 2, window-open for gate 1, **never board
+  creation** (85% of legs quote ~0.50 there and a flat base rate beats the market). Nested family ⇒
+  literal leg-sum is vacuous; report `Σmid` vs `Σwinner` (1.38 creation / 1.11 open / 1.28 daily).
+  Gate board-snapshots on `avg_mid ≤ 0.40` before quoting a Brier margin.
+- **Resolution epsilon**: 279/279 feed-touches resolved YES; 2/7 feed-*misses* within 0.10% resolved
+  YES anyway → never sell a barrier within **0.2%** of that leg's running extreme, from its TRUE
+  window start. Screens *adjudication* risk, not proximity — ↓85 sat 1.32% clear and touched.
+- **Five ways a quoted price misleads**: dead book at 0.02/0.98 (`phantom-midpoints`); live-but-wide
+  (`midpoint-is-not-a-fill`); tight with no counterparty (`tape-gate`); honest quote against **our**
+  stale feed (`stale-feed-gate`); and an API answering a filtered query with `[]` rather than error.
+- **Fill picture splits by board family**: reachable fraction of the scored midpoint = WTI 99%,
+  BTC 100%, silver 89%, gold 82%, **SPY/NVDA weekly 38%**. **The reachable legs are the ones we lost
+  on.** Book gate: rel spread `≤ min(5c, ½·mid)`, mid ∈ [3c,97c], ≥1 taker trade on our side within
+  5c in 7d.
+- **Buys: unrescuable** by drift/jump (255 legs). Failure is 100% crypto (~4× over-priced touches).
+  Class-gated WTI+equity buys are positive but only 12/39 legs → **buys stay OFF**.
+- **GAP SD (weekend / overnight)**: USOILSPOT **3.78% / 0.35%**, WTIU6 4.25% / 0.40%, XAU 0.74% /
+  0.13%, XAG 1.20% / 0.18%, SPY 0.74% / **0.59%**, NVDA 1.38% / **1.43%**, BTC 0/0.
+- **Roll calendar**: CLQ6→CLU6 at the **Fri 17 Jul** session, CLU6→CLV6 **Tue 18 Aug**, CLV6→CLX6
+  **Fri 18 Sep**. **Archive WTIX6 the day it appears (~Aug 20)**; WTIQ6 delisted forever. Never
+  reconstruct a July touch from WTIU6 before the 07-16 22:00Z roll — and note the July monthly's
+  epsilon screen inherits that limitation (USOILSPOT is a CFD proxy, not the spliced active month).
+  August is priceable (`ladderrv roll` validated), not predictable, and resolves after the review.
+- **Fine print (gate-0 756/760)**: crypto monthlies resolve on BINANCE USDT; "calendar month" legs
+  resolve from listing; re-added strikes carry private window starts ("after market creation") —
+  today's ↓80-from-jul-29 starts 2026-07-29 16:27:11Z; equity RTH-only; WTI/metals weeklies use the
+  session clock, not the calendar week; WTI resolves on the **active month**, which rolls mid-board.
+- **Data traps**: Pyth carries exactly **two** CL contracts and deletes expired ones. USOILSPOT is a
+  CFD near the front, never settle a near-barrier WTI question off it. Pyth ~1 req/s.
+  Polymarket headline volumeNum on WTI ≈ 20× real taker notional. data-api.polymarket.com 403s
+  without a User-Agent. **`ladderrv live` takes ONE comma-separated arg** — space-separated silently
+  prices only the first board. `cmd_live` **overwrites** `predictions_<date>.csv` per call.
 - Vol anchors verified free: CBOE OVX/VIX/GVZ/VXSLV CSVs, Deribit DVOL. NVDA has none.
-- Session calendars assume EDT + 2026 US holidays (May 25, Jun 19, Jul 3, **Sep 7**);
-  Columbus Day is NOT a closure. Revisit before the 2026-11-01 EST transition.
+- Session calendars assume EDT + 2026 US holidays (May 25, Jun 19, Jul 3, **Sep 7**); Columbus Day
+  is NOT a closure. Revisit before the 2026-11-01 EST transition.
 
 ## Long-term (wiki candidates)
 
-- **A cache whose key is "does the file exist" silently freezes partial data.** Now found in
-  three places in one crate (`cmd_candles`, `cmd_clob`, `cmd_tape`) and, worse, **once outside
-  code**: a daily freeze whose `tar` line omits a directory. The general rule is
-  `complete_through(file, period_end)` — and the audit question is not "is the file there" but
-  **"was this file written after the thing it describes stopped changing?"** Ask it of archives
-  and of freeze scripts, not just fetchers.
-- **A mean edge and a fat one-sided tail are different promotion questions.** Brier and
-  cents/trade both average; neither sees that the 8 worst legs in 633 share a direction. Any
-  sell-only variant needs its p99 leg and its holdings' correlation reported beside the mean.
-- **Session-time vol models must carry a close-to-open gap term.** Amortising gap variance
-  across session minutes gets the total roughly right and the *shape* wrong, and shape is what
-  a first-passage question is about. The same variance delivered as a jump gives a strictly
-  smaller touch probability than as diffusion — in the jump-only limit exactly half.
-- **"Active month" ladders spanning a CME roll contain a deterministic price gap** equal to the
-  calendar spread, on a date known in advance. Model it as one diffusion with a **stepped
-  barrier** plus absorption at the roll instant; the naive one-spot model errs 40–110% and
-  always in the direction that flatters a seller of the down wing.
-- **A gate that cannot fail is worse than no gate**, because it gets written down as passed.
-- ALREADY GRADUATED, don't re-derive: `stale-feed-gate`, `tape-gate`,
+- ALREADY GRADUATED, don't re-derive: `nested-ladders-are-one-draw` (**new today**),
+  `existence-is-not-completeness` (**extended today**: a *field* that parses and carries no
+  information, and a verify FAIL that is transient), `stale-feed-gate`, `tape-gate`,
   `venue-resolution-epsilon`, `midpoint-is-not-a-fill`, `phantom-midpoints`,
   `favorite-longshot-bias`, `delayed-execution-test`, `checkpoint-artifact`,
-  `lifetime-volume-is-look-ahead`.
-- Resolution-feed archaeology matters: resolution sources get deleted. Archive the resolving
-  feed while the market is live, or lose gate-0 forever.
+  `lifetime-volume-is-look-ahead`, `break-even-win-rate`, `depth-lives-where-the-edge-is-not`.
+- **A mean edge and a fat one-sided tail are different promotion questions.** Brier and
+  cents/trade both average; neither sees that the 8 worst legs of 633 share a direction.
+- **Session-time vol models must carry a close-to-open gap term.** Amortising gap variance across
+  session minutes gets the total right and the *shape* wrong, and shape is what a first-passage
+  question is about. The same variance as a jump gives a strictly smaller touch probability than as
+  diffusion — in the jump-only limit exactly half.
+- **"Active month" ladders spanning a CME roll contain a deterministic price gap** on a known date.
+  One diffusion with a **stepped barrier** plus absorption at the roll; the naive one-spot model
+  errs 40–110%, always flattering a seller of the down wing.
+- **A gate that cannot fail is worse than no gate**, because it gets written down as passed.
+- Resolution sources get deleted. Archive the resolving feed while the market is live.

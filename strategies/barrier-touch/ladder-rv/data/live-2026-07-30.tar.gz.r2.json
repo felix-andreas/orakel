@@ -1,0 +1,9 @@
+{
+  "key": "blobs/2a910502b31294b9172a5ebfe3b984515033aa5ce4c332658deba5a016438ab7",
+  "sha256": "2a910502b31294b9172a5ebfe3b984515033aa5ce4c332658deba5a016438ab7",
+  "bytes": 4413735,
+  "content_type": "application/gzip",
+  "original_name": "live-2026-07-30.tar.gz",
+  "fetched_at": "2026-07-30T01:34:28Z",
+  "bucket": "orakel"
+}

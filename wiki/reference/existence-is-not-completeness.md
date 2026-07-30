@@ -68,6 +68,43 @@ Two rules follow:
    It cannot see inside the tarball. An archive containing a truncated file verifies clean
    every day of its life.
 
+## The same failure one level down: a *field* that parses and means nothing
+
+2026-07-30, same crate, fifth instance — and it is not a file at all.
+
+```rust
+closed_time: parse_iso(m["closedTime"].as_str().unwrap_or_default()).unwrap_or(0)
+```
+
+The venue emits `endDate` as strict RFC3339 (`2026-08-01T03:59:59.999Z`) and `closedTime` as
+`2026-07-29 16:10:11+00` — space separator, two-digit offset. The parser accepted only the
+first, the error was swallowed by `unwrap_or(0)`, and the column came out **`0` for 74 of 74
+resolved legs, in every file the project had ever written, for eight days**.
+
+It survived because it was *never used in a calculation*. It survived being **looked at**,
+because `0` is a plausible-looking integer in a column of integers — `unwrap_or(0)` says
+"unknown" and renders as "the epoch". Had the default been `None`, or had one assertion
+existed, it would have been caught the first day.
+
+So the audit question generalises past files:
+
+> **Could this value be wrong in a way that produces no error?** A parsed field, a default, a
+> swallowed `Result` — presence is not information.
+
+Two habits close it: never let a fallible parse of external data default to a valid-looking
+sentinel, and **put one assertion on each external format in the self-test**, because the
+formats a vendor emits are not consistent across that vendor's own fields.
+
+## A verification FAIL is not proof of loss
+
+A corollary worth its own line, because it invites the destructive fix. Object-store
+verification can fail *transiently*: `r2data verify` returned `HTTP 500` on a HEAD for an
+archive that a `pull` fetched intact, sha256 and all, minutes later.
+
+**Retry a FAIL and confirm with a real read before concluding an archive is lost.** The
+instinct on seeing FAIL on a resolution record is to re-freeze — and re-freezing over an
+archive you wrongly believe is broken is how a good archive gets replaced by a worse one.
+
 ## The audit question
 
 Ask it of every cached artifact, and then — the step that is actually skipped — of every
