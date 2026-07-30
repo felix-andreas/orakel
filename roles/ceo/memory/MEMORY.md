@@ -4,31 +4,32 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 
 ## Short-term (current run / immediate)
 
-- **2026-07-29 run** (ops/runs/2026-07-29.toml). Slot 1 day 7: 12 rows (ledger 158). Market
-  researcher killed post-count ladders. Watchlist 84 markets.
-- **HEADLINE −0.0452 over 32 rows / −0.0133 over 20 markets.** WTI dipped to $80. Two
-  markets carry all of it — dip-to-80 and dip-to-85, both **fully fillable** — while 18 of 20
-  sit at or above zero. By horizon: 0–1d **−0.0001** (2/19 fillable), 1–3d −0.1211, 3–7d
-  −0.1190, both nearly fully fillable. **Where we could trade we were wrong.**
-- **MY exposure hypothesis was REFUTED.** I proposed the variant is structurally short
-  downside touch; measured on 633 legs it **beats** the market on touched legs (t −1.99) and
-  down legs trending into the barrier are its **best** bucket (t −4.66). What is real is a
-  tail: the 8 worst legs of 633 are all `dip-to`, and our two losses are nested on one
-  contract — **~1 draw, not 2**. **08-02 is a SIZING question, not a Brier one.**
-- **Three calls made blind before Friday** (ops/decisions.md): the pricer split is
-  **INCONCLUSIVE** — n≥30 clears in rows (37) and not in markets (19), markets is the unit we
-  named in advance, and the board universe is exhausted so no schedule reaches 30; the 08-02
-  decision may not rest on it. RV/IV anchors at the **emission time (~01:1xZ)**, not the
-  prereg's 12:00Z, and is scorable from only two days so expect it underpowered. A
-  **completeness gate** on the review: proceeds only when every outstanding row is resolved,
-  else +1 day, once.
-- **A resolution was silently dropped for two days** by an unquoted comma in its note (6
-  fields, skipped as malformed). A resolution is a JOIN KEY — it removed every row on that
-  market. The warning printed on every run and I grepped past it twice. Malformed
-  *resolutions* are now a hard error with non-zero exit; malformed prediction rows stay a
-  warning.
-- Equity still can NEVER be predicted in the working window (zero overlap with Pyth RTH, both
-  DST regimes). Gate suppresses it automatically; Felix item is no-reply-needed.
+- **2026-07-30 run** (ops/runs/2026-07-30.toml). Slot 1 day 8: 5 rows (ledger 163). Market
+  researcher killed object 14 twice over. **Tomorrow is Friday: follow
+  `strategies/barrier-touch/ladder-rv/results/friday-2026-07-31-runbook.md`.**
+- **Trial entering Friday: 35 rows / 23 markets, per market −0.0094, CI [−0.0280, +0.0092].**
+  Contains zero → neither promotable nor discardable. Projection recorded in advance: Friday
+  takes 23 → ~90 markets, narrowing to ~±0.010; today's estimate sits outside that, so **if
+  the mean holds the rule says DISCARD**.
+- **THE 08-02 DECISION RULE IS PRE-REGISTERED** (ops/decisions.md, written before any 07-31
+  resolution). Four gates, all required, judged **per market**: calibration (interval excludes
+  zero), tradeability (>50% fillable AND positive exec_edge on that subset), fundability (95%
+  lower bound above q*), tail-at-size. Discard if the interval lies entirely below zero.
+  Extend is a high bar — the July universe is exhausted, so extending means the August cohort,
+  a **new trial**. Disqualified in advance: excluding the tail (our losses were 100% fillable
+  while the flat majority was 2/19), and "we would have no live strategies left".
+- **THE SIZING ANSWER, and it decides gates 3 and 4.** Selling YES at p **is** buying NO at
+  1−p, so every legal trade is a favourite-side buy at 50–97c. q* 0.822, q 0.868 — **q⁻ 0.829
+  CLEARS at nominal n=356 and 0.808 FAILS at effective n=173** (ρ=0.325 within monotone
+  families). *The same evidence clears at the leg count and fails at the draw count, and the
+  draw count is the honest one.* The tail is a cliff: WTI down-ladder +0.49 at the realised
+  −14%, **−5.81** three points lower.
+- **MY RESOLUTION SWEEP WAS CIRCULAR** — mirroring drops resolved markets and I swept the
+  mirrored list, so it could never see what resolved since the last run. Three rows missing,
+  both markets against us. Fixed: `tools/resolve-sweep/sweep.py` sweeps the **ledger**.
+  **Never sweep the watchlist.**
+- Two agents derived the same nesting result the same day from opposite directions (sizing:
+  ρ=0.325, n_eff 173; depth: 29 draws from 96 boards). Strongest corroboration we can get.
 
 ## Medium-term (bootstrap phase)
 
@@ -73,9 +74,19 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
   (retry reverted, and harmful), burst concurrency (capping made `/runs` worse, reverted),
   and simply "too many reads" (removed 13, still fails). **Instrument a cold request before
   changing anything else.** Kept: failures record *why* — the only reason any of it is known.
-- **Read the tool's own warning lines.** Scoring printed "1 malformed skipped" on every run
-  for two days while I grepped for the headline. A number that looks complete and is computed
-  on less evidence is the failure mode this firm keeps rediscovering.
+- **Read the tool's own warning lines, and never move past a backtrace.** Scoring printed "1
+  malformed skipped" on every run for two days while I grepped for the headline. On 07-30 I
+  read a fillcheck crash and ran scoring anyway — it had left a truncated `fills.csv` that read
+  38% tradeable against a true 43%.
+- **EXISTENCE IS NOT COMPLETENESS — five instances in one week**
+  (`wiki/reference/existence-is-not-completeness.md`), four in a variant's candle archive and
+  one in our own tooling. Files now written `.partial` then renamed. A number computed on less
+  evidence than it claims is the failure this firm keeps rediscovering, and it always parses.
+- **`wiki/index.md` has ONE owner** (the market researcher). Swept three times; the pages
+  survive and the index loses its pointers, which is knowledge that exists and cannot be found.
+  Other agents add pages and *report* the index line.
+- **Malformed resolutions are a hard error** (non-zero exit): a resolution is a join key, so
+  one bad row silently drops every prediction on that market. Quote any note with a comma.
 - Inherited from poly: consensus beats individual signals; record exact model ids; agents can
   die silently mid-run — always audit folders before assuming loss.
 - Scheduling: self-bind triggers keep MCP connectors; agent-created fresh-session triggers do

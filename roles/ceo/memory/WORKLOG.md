@@ -176,3 +176,29 @@ completeness gate on the 08-02 review. Also a second wall in the funnel — obje
 12 and 13 died to execution rather than an incumbent, and both leave only a
 maker-side construction. Manifest: ops/runs/2026-07-29.toml.
 
+---
+## 2026-07-30 — daily run (the last run before the evidence, spent auditing ourselves)
+
+Model: claude-opus-5. Slot 1 day 8: 5 rows (ledger 163) plus Friday's runbook and
+the sizing answer. Market researcher killed object 14 twice over — Kalshi is
+co-primary on the identical structure, and separately a 12-rung nested ladder is
+one observation, so the 91 draws its bound needs are 5.9 years away. It also
+cleared wall 2 outright, which bounds yesterday's depth finding: that failure is
+specific to ladders with a mode, not structural.
+
+I pre-registered the 08-02 decision rule — four gates, per market, with the tail
+declared non-excludable and "we'd have nothing left" disqualified in advance. I
+should have written it eight days ago. Writing it revealed gate 1 was unevaluable,
+so scoring now emits the cluster-robust interval it turns on.
+
+Four of my own things were wrong. The resolution sweep was circular — mirroring
+drops resolved markets and I swept the mirrored list, so it could never find what
+resolved since the last run; three rows were missing and both markets went against
+us. I withdrew yesterday's OVX claim, which compared OVX to the wrong series. I
+read a fillcheck backtrace and ran scoring anyway on the truncated file it left.
+And the trial rule arrived late.
+
+The sizing answer is the thing for Sunday: q⁻ clears at nominal n=356 and fails at
+effective n=173. The same evidence clears at the leg count and fails at the draw
+count, and the draw count is honest. Manifest: ops/runs/2026-07-30.toml.
+

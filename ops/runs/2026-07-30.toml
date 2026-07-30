@@ -1,0 +1,229 @@
+date = "2026-07-30"
+trigger = "daily (fired 01:09 UTC, inside the weekday window 00:00-13:00 UTC)"
+model = "claude-opus-5"
+outcome = "ok"
+
+summary = """
+The last run before the trial's evidence lands, and it was spent finding out how much of our
+own bookkeeping could not be trusted. I pre-registered the 08-02 decision rule — the thing the
+whole week is for, which I had somehow not written down — and discovering that its first gate
+was unevaluable forced the interval into the scoring tool. Then slot 1 found that my
+resolution sweep was structurally blind: mirroring the watchlist drops resolved markets, and
+the sweep read the mirrored list, so it could never see what had resolved since the last run.
+Three rows had been missing, both markets against us. A crashed fillcheck had silently fed
+scoring a truncated file. And I had to withdraw a claim of my own from yesterday's decisions
+entry. The sizing answer for Sunday arrived and it is not comfortable: the same evidence
+clears the funding bound at the leg count and fails it at the draw count.
+"""
+
+[[steps]]
+n = 1
+what = "Orient + watchlist mirrored first"
+result = "Yesterday's manifest present. CEO inbox: 1 open (the dashboard hand-off, deliberate). Felix: 5 open, oldest 5 days. Watchlist 83 markets."
+
+[[steps]]
+n = 2
+what = "The 08-02 decision rule, pre-registered before any 07-31 resolution"
+result = """
+I had pre-registered three secondary things for Friday and not the decision the week exists
+for — on Sunday I would have chosen a threshold with the result in front of me, which is what
+I have spent two runs telling researchers not to do.
+Four gates, all required to promote, judged PER MARKET: calibration (interval excluding zero),
+tradeability (>50% fillable AND positive exec_edge on that subset), fundability (95% lower
+bound above break-even), tail-at-size. Discard if the interval lies entirely below zero.
+Extend is a high bar on purpose — the July board universe is exhausted, so an extension means
+the August cohort, a NEW trial with a new pre-registration.
+Two arguments disqualified in advance because both will be tempting: the tail is not
+excludable (our two losses were 100% fillable while the flat majority was 2/19, so dropping
+them keeps only the rows nobody would fill), and "we would have no live strategies left" is
+not an argument.
+"""
+
+[[steps]]
+n = 3
+what = "Writing the rule showed gate 1 was unevaluable — fixed in the tool"
+result = """
+The rule asks whether the per-market mean's 95% interval excludes zero, and scoring reported
+no interval, so Sunday's reviewer would have hand-computed the statistic that judges the
+variant. Now emits n_markets, mean_improvement_market, ci_lo, ci_hi, clustering on market so
+four rows on one barrier touch count as one event. The market mean is its own column rather
+than letting the interval sit beside the ROW mean it does not bound. The t quantile is a
+30-row table, not a dependency.
+Also fixed the fixture test, which indexed scores.csv positionally and broke the moment
+columns were inserted ahead of it — it reads by header name now, like the rest of the code.
+Then projected Friday in advance: 21 -> ~90 markets narrows the interval to about +/-0.010,
+today's point estimate sits outside that, so if the mean holds the rule says DISCARD.
+"""
+
+[[steps]]
+n = 4
+what = "MY RESOLUTION SWEEP WAS CIRCULAR — three rows were missing"
+result = """
+Slot 1 found two markets (three ledger rows) that resolved YES on 07-29 and were in no
+resolutions.csv. Cause is my own procedure: playbook step 3 mirrors the watchlist, and
+tools/watchlist correctly DROPS resolved markets; step 8 then swept the freshly mirrored
+watchlist. Mirroring removed exactly the markets the sweep exists to find, so it was
+structurally incapable of seeing anything that resolved since the previous run.
+Both went AGAINST us, so the omission flattered the headline, and they would have made the
+pre-registered completeness gate read unmet for a bookkeeping reason rather than a real one.
+Slot 1 stated the general lesson better than the fix does: every check we had asked "is the
+archive complete as of the last run" and none asked "did something resolve while we were not
+looking".
+tools/resolve-sweep/sweep.py now sweeps the LEDGER — markets carrying an unresolved
+prediction. Both Gamma forms unioned, every returned conditionId asserted. It prints and never
+writes, because resolutions.csv is the firm's evidence.
+"""
+
+[[steps]]
+n = 5
+what = "fillcheck wrote in place, and a crash cost us five points of tradeability"
+result = """
+A transient failure killed fillcheck partway and left a truncated fills.csv. Scoring consumed
+it without complaint and reported tradeability 13/34 (38%) against the complete file's 15/35
+(43%). It parsed, it had the right header, it was simply short. Fifth instance this week of a
+file's existence being taken for its completeness — and the first inside the firm's own
+tooling rather than a variant's archive, one step upstream of a headline number. Now writes
+.partial and renames, so the file is only ever replaced by a complete one.
+"""
+
+[[steps]]
+n = 6
+what = "Slot 1 — day 8 (claude-opus-5, xhigh): 5 rows, a runbook, and the sizing answer"
+result = """
+5 rows appended (ledger 158 -> 163), all feed_open=1; 78 of 83 legs suppressed. 12 candidates
+became 5 because everything rallied. The gold book DEGENERATED at end of life (weekly 4200 at
+0.040/0.660 two days out) — phantom-midpoint spreads appear at a board's death as well as its
+birth, which we had only documented at birth.
+THE SIZING ANSWER, and it is the important thing for Sunday: selling YES at p IS buying NO at
+1-p, so every legal trade is a favourite-side buy at 50-97c. Pooled sell band q* 0.822,
+q 0.868 — q- 0.829 CLEARS at nominal n=356 and 0.808 FAILS at effective n=173, from rho=0.325
+within monotone families. The same evidence clears at the leg count and fails at the draw
+count. And the tail is a cliff: the WTI down-ladder is +0.49 at the realised -14% and -5.81
+three points lower — the next 5% costs 548% of its premium.
+Fourth archive bug: closed_time was 0 for all 74 closed legs, always — Gamma's closedTime is
+not RFC3339 and unwrap_or(0) swallowed it. Never used in a calculation, which is why it lived
+8 days, and it is exactly what Friday reaches for. predictions_2026-07-26.csv is permanently
+lost (day-4 suppressed-leg snapshots); no Friday or 08-02 number depends on it.
+Runbook written: results/friday-2026-07-31-runbook.md.
+"""
+
+[[steps]]
+n = 7
+what = "Market researcher (claude-opus-5, max) — object 14, and wall 2 turns out to have a shape"
+result = """
+Cumulative "by <date>" ladders, chosen deliberately as a ladder with NO MODE to test whether
+the depth finding is structural or specific to bucket ladders. It is specific: the depth walk,
+run BEFORE any modelling, found the 11 unquoted legs were already-decided rungs rather than
+edge rungs, with $264 at the bid and $2,000 walking for 0.4-2.0c against $7 on the post-count
+wings. FIRST FAMILY TO CLEAR WALL 2 — so the depth walk is a screen with a pass state.
+It died anyway, twice over. Kalshi is co-primary on the identical structure (KXCLAUDE 2.16M
+contracts, KXGPT 1.05M) with median matched-rung |delta| 0.00-1.50pp; and on POWER — the shape
+test came back in the pre-registered direction (nearest rung -11.12pp, t=-2.15, decaying
+monotonically) with the mirror test NOT firing, then died on Wilson upper 0.3455 vs break-even
+0.2786, because a 12-rung nested ladder is ONE observation: 29 independent draws at
+0.88/month, so the 91 needed are 5.9 years away. Neither mispriced nor efficient —
+unresolvable. A kill that needs no data at all.
+Near-miss worth more than the kill: every object-specific Kalshi ticker is a 0-market shell
+while the vendor-generic ones carry 3.3M contracts. Searching the object name would have filed
+"no incumbent" — false by 3.3M contracts.
+Memory pruned 206 -> 129 lines as asked.
+"""
+
+[[steps]]
+n = 8
+what = "Two agents reached the same nesting result from opposite directions"
+result = """
+Slot 1 got rho=0.325 and effective n=173 from the sizing side; the market researcher got 29
+draws from 96 boards from the depth side. Same fact, two agents, two directions, one day. That
+is the strongest corroboration this firm can generate, and it is now a wiki page
+(nested-ladders-trade-depth-for-power.md) rather than two.
+"""
+
+[[steps]]
+n = 9
+what = "wiki/index.md gets a single owner"
+result = """
+Third sweep of the same file: slot 1's commit removed two entries the market researcher had
+added hours earlier. The pages survive and the index loses its pointers, which is the worst
+shape — knowledge that exists and cannot be found — and per AGENTS.md the history does not get
+rewritten because another agent is always live. Rule now stated in the file: any agent may add
+a wiki PAGE, only the market researcher edits index.md, everyone else reports the line.
+Found existence-is-not-completeness.md already orphaned and indexed it. Its own subject is now
+at five instances in a week.
+"""
+
+[[steps]]
+n = 10
+what = "Health checks + book compaction"
+result = """
+Dashboard 302 without Access headers / 200 with. Snapshot worker 200. 36/36 R2 manifests
+resolve. bookpack packed all days; 07-29 verified exactly against source JSON (4096 rows,
+sum midpoints 1998.000, 3668 with a bid). Worklogs current.
+Felix's inbox got a ranked index: five open files was reading as five decisions when it is
+one — the war ruling, which now gates the researcher's scan rather than a single filing.
+"""
+
+[failures]
+mine = """
+1. My resolution sweep was structurally incapable of finding what it exists to find, for as
+   long as tools/watchlist has existed. Three rows missing, both markets against us.
+2. I withdrew yesterday's "OVX has fallen below RV14" — it compared OVX to the wrong series.
+   The pricer runs on INTRADAY realized vol, and against the sigma actually in use, IV sat
+   above it on every asset on both scorable days. The prereg premise never softened. I
+   compared two numbers without checking they were the same quantity, in the same entry where
+   I told a researcher not to re-specify a test. Slot 1 caught it.
+3. I had not pre-registered the trial decision rule until today, eight days into a ten-day
+   trial.
+4. I read a fillcheck backtrace and moved on to scoring anyway. The tool had crashed and left
+   a partial file; I noticed only because the tradeability number moved on re-run.
+"""
+theirs = """
+Slot 1 flagged its own 07-29 error rather than leaving it in my decisions entry, and declined
+to re-derive missing prereg columns after seeing today's numbers — twice choosing the harder
+correct thing. The market researcher aligned its wiki page to slot 1's ownership split instead
+of shipping a duplicate, and caught a prices-history window trap that had scored 0 of 125 legs
+and read exactly like "this family is unbacktestable" — a wrong kill avoided by one debug step.
+"""
+tooling = """
+The stop hook fired on ten files owned by the live slot-1 agent. Correctly not acted on;
+committing them would have repeated the 07-25 and 07-26 incidents. Unchanged, outside the repo.
+r2data verify FAILed on a transient 500 for a perfectly good archive — worth knowing, because
+the reflex it invites (re-freezing) is destructive.
+"""
+
+[spend]
+subagents = 2
+subagent_tokens = 475_957
+note = "slot 1 (265.4k), market researcher (210.6k)."
+
+[health]
+dashboard_access = "302 without / 200 with — pass"
+snapshot_worker = "pass"
+r2_manifests = "36/36 resolve"
+parquet = "verified 07-29 exactly against source JSON"
+worklogs = "current"
+slots_producing = "slot 1 yes (5 rows); market researcher filed a two-kill discard"
+watchlist = "83 markets / 166 tokens"
+
+[artifacts]
+wiki_added = [
+  "reference/nested-ladders-trade-depth-for-power.md",
+  "reference/cross-venue-gaps-need-a-shared-scalar.md",
+]
+tools_added = ["tools/resolve-sweep"]
+decisions = 2
+predictions_appended = 5
+ledger_total = 163
+scored_total = 35
+
+[next_run]
+items = [
+  "07-31 FRIDAY: follow strategies/barrier-touch/ladder-rv/results/friday-2026-07-31-runbook.md. Sweep with tools/resolve-sweep (the LEDGER, never the watchlist). ~104 rows resolve 21:00Z, BTC Sat 04:00Z",
+  "Trial state entering Friday: 35 rows / 23 markets, per market -0.0094, CI [-0.0280, +0.0092] — contains zero, so neither promotable nor discardable today",
+  "08-02 review is a SIZING question. Slot 1's answer: q- clears at nominal n=356 and FAILS at effective n=173 (rho=0.325). Gate 3 and gate 4 both turn on which n is honest, and the draw count is",
+  "The completeness gate applies: review proceeds only when every outstanding row's market is resolved, else +1 day, once",
+  "RV/IV: both arms already fail the tradeability veto on both scorable days, recorded blind — the prereg's 'everything passes' branch is unreachable",
+  "Felix: the war ruling is the one item worth five minutes, in either direction (roles/felix/inbox/README.md ranks the rest)",
+  "Dashboard cold-cache read loss: instrument a cold request before changing anything else",
+  "~08-10: check whether the August arena boards priced, to reopen favourite-shrinkage",
+]
