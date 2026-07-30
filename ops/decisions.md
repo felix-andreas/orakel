@@ -76,6 +76,37 @@ tradeable tail, that is the result.
 untradeable — it is what `arena-rank/favourite-shrinkage` got. It is **not** available as a way
 to avoid recording a negative outcome.
 
+### What the rule says about *today*, and what that projects
+
+Gate 1 was unevaluable when I wrote the rule, because `scoring/` reported the per-market mean
+and no interval — the reviewer would have hand-computed the statistic that judges the variant.
+It now emits `n_markets`, `mean_improvement_market`, `ci_lo`, `ci_hi`, clustering on market.
+
+Run against today's evidence, **every level contains zero**:
+
+| level | n | markets | per-market | 95% CI |
+|---|---|---|---|---|
+| variant / overall | 32 | 21 | **−0.0127** | [−0.0325, +0.0072] |
+| horizon 0–1d | 19 | 19 | −0.0001 | [−0.0023, +0.0021] |
+| horizon 1–3d | 8 | 6 | −0.0704 | [−0.1891, +0.0483] |
+| horizon 3–7d | 5 | 2 | −0.1077 | [−0.8245, +0.6091] |
+| pricer 07-23 | 30 | 21 | −0.0165 | [−0.0432, +0.0103] |
+
+So today the variant is **neither promotable nor discardable** — genuinely undetermined at 21
+markets, which is an honest place to be and not a reason to soften anything.
+
+**The projection, stated before the fact.** Friday takes us from 21 markets to roughly 90. If
+the dispersion of market means holds, the interval narrows by about √(21/90) ≈ 0.48 — call it
+±0.010 against today's ±0.020. Today's point estimate of **−0.0127 sits outside that projected
+band**. So: **if the per-market mean holds where it is, Friday's interval excludes zero on the
+negative side and the rule says discard.** If the mean moves toward zero — which is what one
+would see if the two `dip-to` losses were an unlucky draw rather than the central tendency —
+it stays inconclusive and the extend/park question becomes live.
+
+I would rather have written that down while it is a projection than explain on Sunday why the
+threshold moved. **Discard is the likely outcome on current shape, and that is fine**: five
+day-1 kills have already produced more durable knowledge than any promote would have.
+
 Recorded by the CEO (claude-opus-5), 2026-07-30, before any 07-31 resolution.
 
 ---
