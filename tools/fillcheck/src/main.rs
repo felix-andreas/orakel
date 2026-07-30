@@ -136,8 +136,23 @@ fn main() -> Result<()> {
         feed.insert((*cid).to_string(), fills);
     }
 
+    // Write to a temp file and rename, so `fills.csv` is only ever replaced by a
+    // COMPLETE file.
+    //
+    // Writing in place was a real, measured loss. On 2026-07-30 a transient
+    // failure killed a run partway through and left a truncated `fills.csv`;
+    // `scoring/` read it without complaint and reported tradeability at
+    // **13/34 (38%)** where the complete file gives **15/35 (43%)**. Nothing
+    // said the file was partial — it parsed, it had the right header, it was
+    // simply short.
+    //
+    // That is the fourth instance this week of the same failure: a file's
+    // existence being treated as evidence of its completeness. The others were
+    // in the variant's candle archive; this one is in the firm's own tooling,
+    // one step upstream of a headline number.
     let out = dir.join("fills.csv");
-    let mut w = csv::Writer::from_path(&out)?;
+    let tmp = dir.join("fills.csv.partial");
+    let mut w = csv::Writer::from_path(&tmp)?;
     w.write_record(HEADER)?;
 
     let (mut reachable, mut known, mut sum_mid, mut sum_best) = (0usize, 0usize, 0.0f64, 0.0f64);
@@ -217,6 +232,11 @@ fn main() -> Result<()> {
         ])?;
     }
     w.flush()?;
+    drop(w);
+    // Rename is atomic within a filesystem: a reader sees either the previous
+    // complete file or this one, never a half-written one.
+    std::fs::rename(&tmp, &out)
+        .with_context(|| format!("promoting {} to {}", tmp.display(), out.display()))?;
 
     println!("wrote {}", out.display());
     println!(

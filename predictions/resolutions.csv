@@ -20,3 +20,5 @@ will-nvda-dip-to-176-by-july-20-2026,0x782ad54af79b232375e4996fc1bc15316c1d0c338
 will-wti-dip-to-85-in-july-2026,0x574897029f416bf4b0a30b51b2ffcc512f2d5f940557913189cff2205f27c08d,Yes,2026-07-27,WTI touched $85; closedTime 2026-07-27T00:03:33Z
 will-wti-dip-to-90-in-july-2026-from-july-25,0xc01ab4e58e374a875a84d0800090e8b858abaacd34ba0ac202ed9807686334f5,Yes,2026-07-27,"WTI touched $90 (re-added leg, window from Jul 25); closedTime 2026-07-27T00:12:10Z"
 will-wti-dip-to-80-in-july-2026,0x6b382feeb97121c8bd5fe0fe0ab8272b955e741ac7117ee691a2460896f43ee7,Yes,2026-07-28,WTI touched $80; closedTime 2026-07-28T13:44:13Z; umaResolutionStatus resolved
+will-xauusd-dip-to-4000-by-july-27-2026,0x6f59efaf62086529d090ef494989f0153deeaa12547db753bfcc2b8ff229796a,Yes,2026-07-29,"gold dipped to 4000; closedTime 2026-07-29T16:10:11Z; found 07-30 by the ledger-driven sweep, invisible to the watchlist-driven one"
+will-wti-reach-85-in-july-2026-from-july-27,0xe694b9d67a28d66b3e0abbbc4c310e8d86533cde4f48bba31634cd62315a7579,Yes,2026-07-29,"WTI reached 85 (re-added leg, window from Jul 27); closedTime 2026-07-29T16:32:12Z; same sweep"
