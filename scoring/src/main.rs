@@ -49,10 +49,21 @@ const DETAIL_HEADER: [&str; 19] = [
     "exec_edge",
 ];
 
-const SCORES_HEADER: [&str; 10] = [
+const SCORES_HEADER: [&str; 14] = [
     "level",
     "key",
     "n",
+    // Distinct markets, and the cluster-robust interval taken across them.
+    // `n` counts mornings; `n_markets` counts events, and gate 1 of the
+    // pre-registered trial rule turns on whether [ci_lo, ci_hi] excludes zero.
+    "n_markets",
+    // `mean_improvement_market` is the point estimate the interval belongs to.
+    // Emitted separately because `mean_improvement` below is the mean over
+    // ROWS, and printing an interval next to a mean it is not an interval for
+    // is exactly how a headline gets misread.
+    "mean_improvement_market",
+    "ci_lo",
+    "ci_hi",
     "mean_improvement",
     "mean_brier",
     "mean_market_brier",
@@ -145,6 +156,59 @@ struct AggRow {
     /// Mean per-share edge over the fillable rows only — what the trade paid
     /// when the trade existed. `NaN` when none did.
     mean_exec_edge: f64,
+    /// Distinct markets in this bucket — the number of independent-ish
+    /// observations, as opposed to `n`, which counts mornings.
+    n_markets: u64,
+    /// Cluster-robust 95% interval for the mean improvement, **clustering on
+    /// market**. Each market contributes one observation (its own mean), so a
+    /// market predicted four times cannot count as four.
+    ///
+    /// Gate 1 of the pre-registered trial rule (`ops/decisions.md`, 2026-07-30)
+    /// asks whether this interval excludes zero. Without it the reviewer has to
+    /// hand-compute the number that judges the variant, which is the reviewer
+    /// judging themselves. `NaN` when fewer than two markets.
+    ci_lo: f64,
+    ci_hi: f64,
+    /// Mean improvement over MARKETS — each market collapsed to its own mean
+    /// first. This is the quantity `ci_lo`/`ci_hi` bound, and the one the
+    /// pre-registered trial rule judges. `mean_improvement` is the row mean and
+    /// is reported beside it, never instead of it.
+    mean_improvement_market: f64,
+}
+
+/// Two-sided 95% Student-t quantiles by degrees of freedom, 1..=30, then the
+/// normal limit. A table rather than a dependency: it is eleven lines, exact
+/// where it matters (small samples), and auditable by eye.
+fn t_crit_95(df: usize) -> f64 {
+    const T: [f64; 30] = [
+        12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228,
+        2.201, 2.179, 2.160, 2.145, 2.131, 2.120, 2.110, 2.101, 2.093, 2.086,
+        2.080, 2.074, 2.069, 2.064, 2.060, 2.056, 2.052, 2.048, 2.045, 2.042,
+    ];
+    match df {
+        0 => f64::NAN,
+        d if d <= 30 => T[d - 1],
+        _ => 1.960,
+    }
+}
+
+/// Mean and cluster-robust 95% interval of per-cluster means.
+///
+/// Deliberately the simple thing: collapse each cluster to its own mean, then a
+/// t-interval across clusters. With one prediction per market per morning that
+/// is the honest treatment — four rows on one barrier touch are one event, and
+/// on 2026-07-27 four such rows moved the firm's headline from +0.0009 to
+/// −0.0172 while being a single draw.
+fn cluster_ci(per_cluster: &[f64]) -> (f64, f64) {
+    let k = per_cluster.len();
+    if k < 2 {
+        return (f64::NAN, f64::NAN);
+    }
+    let mean = per_cluster.iter().sum::<f64>() / k as f64;
+    let var = per_cluster.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / (k as f64 - 1.0);
+    let se = (var / k as f64).sqrt();
+    let t = t_crit_95(k - 1);
+    (mean - t * se, mean + t * se)
 }
 
 struct RunStats {
@@ -556,6 +620,9 @@ fn aggregate(rows: &[ScoredRow]) -> Vec<AggRow> {
         n_known_fill: u64,
         n_fillable: u64,
         exec_edge: f64,
+        /// Per-market sums, so each market can be collapsed to its own mean
+        /// before the interval is taken across markets.
+        by_market: HashMap<String, (u64, f64)>,
     }
 
     let mut acc: HashMap<(usize, String), Acc> = HashMap::new();
@@ -587,6 +654,9 @@ fn aggregate(rows: &[ScoredRow]) -> Vec<AggRow> {
         for k in keys {
             let e = acc.entry(k).or_default();
             e.n += 1;
+            let m = e.by_market.entry(r.market_slug.clone()).or_insert((0, 0.0));
+            m.0 += 1;
+            m.1 += r.improvement;
             e.improvement += r.improvement;
             e.brier += r.brier;
             e.market_brier += r.market_brier;
@@ -606,6 +676,16 @@ fn aggregate(rows: &[ScoredRow]) -> Vec<AggRow> {
         .into_iter()
         .map(|((lvl, key), a)| {
             let nf = a.n as f64;
+            // Collapse each market to its own mean, then take the interval
+            // across markets — never across rows.
+            let per_market: Vec<f64> =
+                a.by_market.values().map(|(c, s)| s / *c as f64).collect();
+            let (ci_lo, ci_hi) = cluster_ci(&per_market);
+            let mean_improvement_market = if per_market.is_empty() {
+                f64::NAN
+            } else {
+                per_market.iter().sum::<f64>() / per_market.len() as f64
+            };
             (
                 lvl,
                 AggRow {
@@ -623,6 +703,10 @@ fn aggregate(rows: &[ScoredRow]) -> Vec<AggRow> {
                     } else {
                         f64::NAN
                     },
+                    n_markets: a.by_market.len() as u64,
+                    ci_lo,
+                    ci_hi,
+                    mean_improvement_market,
                 },
             )
         })
@@ -706,6 +790,10 @@ fn write_scores(path: &Path, rows: &[AggRow]) -> Result<(), String> {
             r.level.as_str(),
             r.key.as_str(),
             &r.n.to_string(),
+            &r.n_markets.to_string(),
+            &if r.mean_improvement_market.is_finite() { fmt_f(r.mean_improvement_market) } else { String::new() },
+            &if r.ci_lo.is_finite() { fmt_f(r.ci_lo) } else { String::new() },
+            &if r.ci_hi.is_finite() { fmt_f(r.ci_hi) } else { String::new() },
             &fmt_f(r.mean_improvement),
             &fmt_f(r.mean_brier),
             &fmt_f(r.mean_market_brier),
@@ -821,20 +909,35 @@ mod tests {
             rdr.headers().unwrap().iter().collect::<Vec<_>>(),
             SCORES_HEADER.to_vec()
         );
+        // By NAME, not by position. This test used to index r[3..7] and broke
+        // the moment three columns were inserted ahead of them — the same
+        // schema-shift bug the rest of the codebase addresses columns by name
+        // to avoid. A fixture that has to be edited whenever a column is added
+        // is a fixture that will eventually be edited wrongly.
+        let at = |name: &str| {
+            SCORES_HEADER.iter().position(|h| *h == name).expect("column in SCORES_HEADER")
+        };
+        let (i_lvl, i_key, i_n) = (at("level"), at("key"), at("n"));
+        let (i_imp, i_br, i_mbr, i_ll) = (
+            at("mean_improvement"),
+            at("mean_brier"),
+            at("mean_market_brier"),
+            at("mean_logloss"),
+        );
         let mut order = Vec::new();
         let mut map = HashMap::new();
         for rec in rdr.records() {
             let r = rec.unwrap();
-            let key = (r[0].to_string(), r[1].to_string());
+            let key = (r[i_lvl].to_string(), r[i_key].to_string());
             order.push(key.clone());
             map.insert(
                 key,
                 (
-                    r[2].parse::<u64>().unwrap(),
-                    r[3].parse::<f64>().unwrap(),
-                    r[4].parse::<f64>().unwrap(),
-                    r[5].parse::<f64>().unwrap(),
-                    r[6].parse::<f64>().unwrap(),
+                    r[i_n].parse::<u64>().unwrap(),
+                    r[i_imp].parse::<f64>().unwrap(),
+                    r[i_br].parse::<f64>().unwrap(),
+                    r[i_mbr].parse::<f64>().unwrap(),
+                    r[i_ll].parse::<f64>().unwrap(),
                 ),
             );
         }
