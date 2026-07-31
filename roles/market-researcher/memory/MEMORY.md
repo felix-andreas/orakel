@@ -8,20 +8,46 @@ what is live, unfinished, or not yet generalisable.
 
 ## Short-term
 
+- 2026-07-31 (run 10). Killed **same-venue nested-board dominance** —
+  `ideas/2026-07-31-nested-board-dominance-discarded.md`. Chosen *because* it is a dominance
+  claim and therefore immune to wall 3's draw-count kill (needs n=1, not 91). It died on the
+  other three walls instead.
+- **Population (wall 3 as opportunity count, free, before any book):** full 6,788-event open
+  universe → **1** rule-implied cross-board nesting and **4** hard Σ=N>1 boards. 85 US races list
+  both a primary and a general board; **81 of 85 general boards are 2-leg PARTY boards**.
+  Alaska is the only nestable race (top-4 jungle primary ⇒ multi-candidate general), recurring
+  ~once per 4-year cycle.
+- **Executable:** AK-gov cross-board **0 violations of 19** (best +0.0000, median −0.0300).
+  Σ=N baskets: 3 of 4 lose in **both** directions. The 4th (France 2nd round, 36 legs) is the
+  **firm's first genuine executable dominance arb**: +23.90c on a \$33.76 basket, guaranteed.
+- **It died twice more.** (a) Depth: survives 100 baskets, gone by 250 — binding legs held
+  1,244–1,352 shares against a 75,760-share headline leg. **Total extractable \$8.88.**
+  (b) **Carry: +0.35% annualised** on capital locked to Apr-2027 vs ~4% risk-free = **−3.7pp/yr**.
+- **NEW GATE, arithmetic only, no backtest:** `executable = |Σmid − N| − K·s̄/2`. Reproduced the
+  fillable number **to 4 decimals on all 4 boards**. → `wiki/reference/leg-sum-edge-scales-with-leg-count.md`.
+- **Kalshi: 12,355 series** (12,329 on 07-30, +26/day). 11 twin series across these races —
+  `KXGOVAK`, `KXBRPRESADVANCE`, `KXBRPRES`, `KXBRBALLOT`, `KXAKSENATE`, `SENATEAK`, `KXAKMOV`,
+  `KXBRPRES1MOV`, `KXBRDEP`, `KXGOVPARTYAK`, `KXAKSENGOVCOMBO` — **all 0 volume / 0 OI**, with
+  `close_time` a full year after the election (auto-listing signature). **No incumbent**, and the
+  object died anyway — 3rd time (12, 14, 15). Mirror of 07-30: there the generic ticker held the
+  contracts, here the generic ticker is empty too. **Always check both.**
+- **TRAP that cost me a wrong census:** party boards carry `Will A win…`/`Will B win…` —
+  single capital letters, which the `Person [A-Z]` filter misses. Gate on
+  `volumeNum==0 && liquidityNum==0`, never on the name pattern. First pass said "0 party-only
+  boards"; truth was 81. Dormant boards also rank LAST by `volume24hr` — the 1,600-event
+  volume-ranked scan found **4 of 85** races. Population counts need the full universe, and
+  offset paging caps at 2,000 → date-windowed paging is mandatory.
+- Withdrew my own assumption mid-run: Polymarket's `Earn 4%` tag is **not** a venue yield on idle
+  USDC, it is `Rewards Automation …` (maker liquidity rewards). The carry comparator is external.
 - 2026-07-30 (run 9). Killed **cumulative "by &lt;date&gt;" ladders** (hazard term structure) —
   `ideas/2026-07-30-cumulative-date-ladders-discarded.md`. Universe 219 live / 96 settled;
   non-war live examples GPT-6, Anthropic IPO, Alito, Mythos-class, Arc token.
-- **Two kills, either sufficient.** (a) **Kalshi is co-primary** on the identical structure —
-  `KXCLAUDE` 2.16M contracts, `KXIPOOPENAI` 1.15M, `KXGPT` 1.05M, `KXALITOANNOUNCERETIRE` 492k
-  / 317k OI. Where the contracts truly match, median |Δ| **0.00pp** (Alito) and **1.50pp**
-  (Mythos); 6/10 matched rungs within 3pp. (b) **Power:** nearest rung −11.12pp t=−2.15,
-  mirror test did NOT fire (buy NO +10.62pp) — and **Wilson upper 0.3455 vs break-even 0.2786
-  at zero fee**. Need 91 events, have 29, arriving 0.88/month = **5.9 years**.
-- **FIRST FAMILY TO CLEAR THE DEPTH WALL, and the reason is reusable:** a cumulative ladder has
-  **no mode** (price monotone in date), so the unquoted legs are the *already-decided* ones, not
-  the edge legs. Tradeable band median 2.0c spread, $264 at the bid, deepest legs walk $2,000
-  for 0.4–2.0c — vs $7 on post-count wings. Only a *partial* pass ($47 median at the ask).
-  → `wiki/reference/nested-ladders-trade-depth-for-power.md`.
+- **Two kills, either sufficient.** (a) Kalshi co-primary, matched rungs agree to median |Δ|
+  0.00–1.50pp. (b) **Power:** Wilson upper 0.3455 vs break-even 0.2786; need 91 events, have 29
+  at 0.88/month = **5.9 years**. Full numbers in `ops/idea-funnel.md` row 14.
+- **First family to clear the depth wall, and the reason is reusable:** a cumulative ladder has
+  **no mode**, so the unquoted legs are the *already-decided* ones. Detail in
+  `wiki/reference/nested-ladders-trade-depth-for-power.md`.
 - **The near-miss worth remembering: `KXGPT5RELEASE`, `KXGEMINI3`, `KXMYTHOS`, `KXCLAUDE4`,
   `KXO3RELEASE`, `KXDEEPSEEKV4RELEASE`, `KXGROK4` are ALL 0-market shells** — while
   `KXGPT`/`KXCLAUDE`/`KXGEMINI` carry 3.3M contracts. Kalshi rolls successive objects through
@@ -31,13 +57,9 @@ what is live, unfinished, or not yet generalisable.
 - **Metaculus API is authenticated-only as of 07-30** ("Permission Error"). A free specialist we
   can no longer measure cheaply — public HTML pages remain. Didn't force `needs-gate-0` because
   two other incumbents were measured and decided it.
-- 2026-07-29 (run 8). Killed **post-count ladders** on **leg-level depth** — $1.56M board,
-  median **$7** at the ask on the legs the rule buys; +11.14pp edge, q⁻ 0.0709 vs q* 0.1204 at
-  $500. `wiki/reference/depth-lives-where-the-edge-is-not.md`. The residue was 5 board-wins on
-  **one leg** (Trump `200+`), a cap Kalshi had already re-cut.
-- 2026-07-28 (run 7). Killed **mention markets**: crowd looked 4.6–6.5pp rich at t=+6.93; at
-  executable prices **both directions lose** (−2.51 / −7.92pp) → I measured the spread.
-  `wiki/reference/midpoint-is-not-a-fill.md`.
+- 07-29 post-count ladders (leg depth, median **$7** at the ask) and 07-28 mention markets (both
+  directions lose ⇒ I measured the spread). Numbers in `ops/idea-funnel.md`; method in
+  `wiki/reference/depth-lives-where-the-edge-is-not.md` and `midpoint-is-not-a-fill.md`.
 - **Scanned + rejected 07-30 before working up:** Fed decision/cut/hike ladders and all non-US
   central-bank decisions (rates desks on OIS); `largest-company-end-of-*`, `*-valuation-hit-__`,
   Bitcoin/ETH/Solana/gold/Hyperliquid "hit __ by" (quoted-price underlying → Felix's standing
@@ -100,9 +122,14 @@ what is live, unfinished, or not yet generalisable.
   object. (2) Does a specialist publish the simulation free — read the PAGE SOURCE, check
   newsletters/forums, and try Manifold as a cheap third quote. (3) Fit the implied σ.
   (4) **Count independent DRAWS, compute required n, divide by arrival rate** — before any
-  modelling; this is the cheapest kill I have added and it needs no data. (5) **Walk the live
-  book at the price band and size the rule would buy**, report VWAP not top-of-book.
-  (6) Price both sides at executable prices. (7) Rebuild ≥3 settled instances from the feed.
+  modelling; this is the cheapest kill I have added and it needs no data. **For a DOMINANCE
+  object substitute the opportunity count: n=1 suffices for truth, so count live instances and
+  the arrival rate of new ones instead.** (4b) On any Σ=N board compute **K·s̄/2** before
+  anything else — arithmetic, one book fetch. (5) **Walk the live book at the price band and
+  size the rule would buy**, report VWAP not top-of-book; on a BASKET the **thinnest leg sizes
+  all K legs**. (6) Price both sides at executable prices. (7) **Divide by the capital lock-up
+  and compare to the risk-free rate** — a guaranteed profit is not an edge until it clears the
+  hurdle (France: +0.35%/yr over 9 months). (8) Rebuild ≥3 settled instances from the feed.
 - **Report the bound, never the point estimate.** 07-30's −11.12pp at t=−2.15 with the mirror
   test passing still died because Wilson upper 0.3455 > break-even 0.2786. A monotone gradient
   in the pre-registered direction is not a pass. `wiki/reference/break-even-win-rate.md`.
@@ -110,10 +137,18 @@ what is live, unfinished, or not yet generalisable.
   aren't comparable to interior buckets at the same price (07-29: they carried 100% of a
   +3.28pp edge, 747 interior legs carried none). 07-30: dropping rocket launches took t from
   −2.15 to −1.45, and "launches slip" is the most glanceable fact in that domain.
-- **The walls, in the order they now fire:** (1) someone already prices it — 9 of 14 objects;
-  (2) taker-side reachability (spread 07-28, leg depth 07-29); (3) **statistical power / draw
-  count (07-30)**. Absence of a counterparty removes our cheapest *check*, it does not create
-  edge. Full analysis in `ops/idea-funnel.md`.
+- **The walls, in the order they now fire:** (1) someone already prices it — 9 of 15 objects;
+  (2) taker-side reachability (spread 07-28, leg depth 07-29, basket-thinnest-leg 07-31);
+  (3) **statistical power / draw count (07-30)**, or for a dominance object its analogue, the
+  **opportunity count (07-31: 1 nesting and 4 boards in 6,788 events)**; (4) **carry — the
+  hurdle rate on locked capital (07-31)**, which only bites once an object survives far enough
+  to be *true*, and had therefore never been asked. Absence of a counterparty removes our
+  cheapest *check*, it does not create edge — now 4 objects with "none found" and 3 dead.
+  Full analysis in `ops/idea-funnel.md`.
+- **KILLED 07-31, do not re-propose:** primary⊂general dominance pairs, Σ=N basket coherence,
+  cross-board leg-sum arbitrage. The venue is coherent to within its own spread on every board
+  that carries the constraint, and negRisk mechanically enforces Σ=1 so only N>1 boards can
+  even drift.
 - **Does the crowd have an observation channel our pipeline lacks?** (GISTEMP upstream inputs;
   Netflix in-app list; METAR.) Mirror failure: **if the state is hidden from EVERYONE that is
   not edge either** — it is irreducible noise and a wide crowd distribution is correct (Hormuz:

@@ -4,6 +4,75 @@ One dated entry per run. Name the exact model id that did the work.
 
 ---
 
+## 2026-07-31 (run 10) — the first real arbitrage the firm has ever found, worth $8.88
+
+Model: **claude-opus-5 (effort max)**.
+
+Object: **same-venue nested-board dominance** — pairs of Polymarket boards whose resolution
+rules nest (`P(win general) ≤ P(advance from primary)`), and single boards where exactly N of
+K legs must resolve Yes (`Σpᵢ = N`). Filed
+`ideas/2026-07-31-nested-board-dominance-discarded.md`, **status `discarded-idea`**.
+
+**Why this object.** Deliberately chosen to be immune to the wall that killed 07-30. A
+dominance claim is deterministic, so it needs **n=1**, not 91 — the draw-count gate cannot
+touch it. If the funnel's third wall was going to be dodged, this was the shape that dodges
+it. It was, and the object died on the other three walls plus a new one.
+
+**Order run, per the brief.**
+
+1. **Wall 3 first, free, no books fetched.** For a dominance object the draw count becomes an
+   *opportunity* count. Harvested the full **6,788-event** open universe (the volume-ranked
+   1,600-event scan finds **4 of 85** races — dormant Nov-2026 boards rank last on
+   `volume24hr`; offset paging caps at 2,000 so this needed date-windowed paging). Result:
+   **1** rule-implied cross-board nesting and **4** hard Σ=N>1 boards. 85 US races carry both
+   a primary and a general board and **81 of the 85 general boards are 2-leg party boards**.
+   Alaska is the sole exception because its top-4 jungle primary is what makes a general board
+   multi-candidate. Not a kill on its own — n=1 — but it capped the family at 5 instances
+   before I spent anything.
+2. **Wall 2, before any modelling** (there was none to do — the edge is read off the book).
+   Cross-board: **0 violations of 19** on Alaska governor; best exactly +0.0000, median
+   −0.0300, worst −0.6510, and general-leg bid depth a median \$46. Σ=N baskets: **3 of 4 lose
+   in both directions simultaneously**, the `midpoint-is-not-a-fill` signature.
+3. **The exception, and it is genuine.** The 36-leg French 2nd-round board: selling the basket
+   at top of book yields **+23.90c on \$33.76, guaranteed** (rule-checked, including the
+   no-election branch, which pays the seller *more*). The firm's first executable dominance
+   arb. It survives **100 baskets and is gone by 250** — the binding legs held 1,244–1,352
+   shares while the headline Le Pen leg held 75,760. **Total extractable: \$8.88.** On a
+   basket the thinnest leg sizes all K.
+4. **Wall 1.** Kalshi catalogue, one call: **12,355 series** (+26/day). Searched by
+   jurisdiction and then re-checked the vendor-generic tickers underneath, per my own 07-30
+   near-miss. **11 twin series, all 0-volume / 0-OI**, `close_time` a full year after the
+   election — auto-listed shells. **No incumbent**, and the object died anyway: the third time
+   (12, 14, 15). Mirror of 07-30 — there the generic ticker held 3.3M contracts, here it is
+   empty too, so the rule is *check both*, not *prefer the generic*.
+
+**The kill that actually decides it, and it is new to the funnel: carry.** Taking the \$8.88
+at face value, the capital is locked to April 2027 — **+0.262% over ~9 months = +0.35%
+annualised** against a ~4% risk-free rate, i.e. **−3.7pp/yr**. Every prior object was a
+statistical claim where the question was "is the edge real"; a dominance arb is real by
+construction, so size and time are all that is left, and the funnel had never had to ask.
+**A guaranteed profit is not an edge until it clears the hurdle rate on the capital it locks.**
+
+**Graduated to the wiki:** `reference/leg-sum-edge-scales-with-leg-count.md` — on a Σ=N board
+the mid-based leg-sum carries an artifact of exactly **K·s̄/2**, so `executable = |Σmid − N| −
+K·s̄/2`. It reproduced the fillable number **to four decimals on four independent boards, both
+signs of the trade**. Like the draw-count gate, it needs no backtest and no history. Index line
+added (I own `wiki/index.md`).
+
+**Two process errors caught mid-run, both worth more than the object.**
+
+- My first census reported "**0 party-only general boards**"; the truth was **81**. Party
+  boards carry legs named `Will A win…` through `Will E win…` — single capital letters that
+  the documented `Person [A-Z]` placeholder filter does not match. The volume/liquidity gate
+  catches them correctly; the name pattern never will. I only found this because the result
+  contradicted an earlier run of the same count and I went to look at a raw board.
+- I asserted to myself that Polymarket's `Earn 4%` tag meant a venue-paid yield on idle USDC,
+  which would have made the carry comparison internal and much more damning. It does not —
+  those tags are `Rewards Automation …`, the maker liquidity-rewards programme. Checked before
+  it reached the idea file; the comparator is external and the number is unchanged.
+
+---
+
 ## 2026-07-30 (run 9) — first family past the depth wall, killed by the third one: 29 draws where I counted 125 legs
 
 Model: **claude-opus-5 (effort max)**.
