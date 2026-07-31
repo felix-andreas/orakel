@@ -1,0 +1,195 @@
+date = "2026-07-31"
+trigger = "daily (fired 01:10 UTC, inside the weekday window 00:00-13:00 UTC)"
+model = "claude-opus-5"
+outcome = "ok"
+
+summary = """
+The last predicting day. The July boards close at 21:00Z tonight, so nothing resolved and
+tomorrow does the scoring — which made today's job preparation rather than measurement, and
+the preparation found more than the measurement would have. Slot 1 dry-ran its own Friday
+runbook against live data and found four wrong steps, two of which fail silently with exit 0;
+tomorrow I would have run a broken procedure. It also closed the sizing work, and the decisive
+number turns out not to need Friday's resolutions at all: the edge is smaller than the spread.
+I sent that to the independent reviewer anyway, which is the rule I made this morning being
+tested twelve hours later in the one direction where breaking it would have felt free.
+"""
+
+[[steps]]
+n = 1
+what = "Orient + watchlist mirrored first"
+result = "Yesterday's manifest present, tree clean. CEO inbox: 1 open (the dashboard hand-off, deliberate). Felix: 5 open, ranked in his inbox README. Watchlist 84 markets / 168 tokens."
+
+[[steps]]
+n = 2
+what = "Resolutions — 0, as expected"
+result = """
+tools/resolve-sweep against the LEDGER (never the watchlist, per yesterday's fix): 60 markets /
+128 rows outstanding, 0 closed, 0 unaccounted. The July boards close 21:00Z tonight, ~20 hours
+after this run fired. Tomorrow's Saturday run is the first scoring pass; BTC settles Sat 04:00Z
+so Sunday catches those.
+"""
+
+[[steps]]
+n = 3
+what = "The trial review gets an independent evaluator (CEO decision)"
+result = """
+The rule is pre-registered and gate 1's interval is computed by the tool, but I would still have
+been the one applying it — having run the trial nine days, written the rule, and presiding over
+a firm with one trial and zero live strategies. Three reasons to read a marginal number
+generously, none visible from the inside; and I was caught twice this week asserting things I
+had not measured, both times by someone else.
+Gate evaluation goes to an independent agent with the rule, the data and the sizing work, and no
+context about what the firm would prefer. ops/reviews/2026-08-02-ladder-rv.md is the form:
+thresholds verbatim, values blank, PASS/FAIL/UNEVALUABLE per gate, prose in place of a verdict
+counts as a failure of the review. Reviewer brief written today so Sunday — the heaviest run of
+the trial, in a four-hour weekend window — spends its time on evidence, not wording.
+"""
+
+[[steps]]
+n = 4
+what = "Slot 1 dry-ran the Friday runbook and found four broken steps"
+result = """
+Two failed SILENTLY with exit 0, which is the whole reason the dry-run was worth a day:
+1. `discover` is cached on file existence with no completeness guard — it printed "fetched 0,
+   cached 12" and re-read Thursday's JSON, so every July board would have read closed:false.
+   Clearing the cache moved legs.csv 207 -> 209 and surfaced two overnight relists and a BTC leg
+   already flipped to ["1","0"]. This is the SIXTH instance of existence-is-not-completeness.
+2. `tape`/`wash` take SPACE-separated args while `discover`/`live` take one comma-separated arg,
+   and the appendix stated the comma rule generally. The comma form matches no board, loops zero
+   times and exits 0. It cost a row today: a stale tape read 0 trades within 5c on silver, which
+   became a suppression; refetched it was 4, and the row is in the emission.
+3. "selftest must print ok on every line" — only 5 of 15 do. Judge by exit code.
+4. The Saturday BTC pass reused Friday's completeness block, which omits BTCUSDT — it would have
+   stopped on 7 weekend-closed keys and checked BTC nowhere.
+Verified working and not to be re-tested: candle refetch, resolve_sweep, vol, clob, analyze,
+freeze.sh (read back out of R2), scoring. Two steps are untestable until boards close, with
+substitute checks named.
+"""
+
+[[steps]]
+n = 5
+what = "Rows — 4 on 4 markets, and zero new markets"
+result = """
+Ledger 163 -> 167. Header byte-identical, feed verified open at 01:21Z (WTI/gold/silver 0.1h;
+equity shut 5.4h, structural as every day this week). 73 of 77 legs suppressed. Emitted exactly
+as policy says — changing emission on the final day of a trial, on the basis of what it would do
+to the trial's own numbers, is what pre-registration exists to prevent. But they add ROWS and
+not MARKETS, and the rule judges per market, so they do not move gate 1 either way.
+"""
+
+[[steps]]
+n = 6
+what = "Sizing closed — and the decisive number does not need Friday at all"
+result = """
+All three gaps from 07-30 closed, after reproducing 07-30 exactly first.
+THE EDGE IS SMALLER THAN THE SPREAD. Nominal margin +0.73pp; median half-spread on the 65
+gate-passing legs 1.00c. Selling at the BID gives q* 0.8316 against q- 0.8289 — failing by
+0.27pp at nominal n, at ZERO fee, before any correlation argument. Break-even half-spread is
+0.73c against a median book 2.0c wide.
+Between-family rho measured: n_eff in [118, 173], failing across the whole range. Two subtleties
+recorded: direction is the clustering unit (board-level rho 0.073 is a quarter of family-level
+0.326 because pooling up and down legs averages the correlation against its own opposite), and
+rho=0.000 at asset level is seven clusters failing to identify an ICC, not independence — the
+only level that "clears" and the one that must not be quoted.
+Kelly at the 95% lower bound is negative (-6.8% / -14.9%), which answers "at our size" without
+the bankroll figure Felix has not set.
+"""
+
+[[steps]]
+n = 7
+what = "The independence rule tested on its first day"
+result = """
+Slot 1 reported that 08-02 is decidable on the sizing doc — a verdict, twelve hours after I ruled
+that slot 1 supplies analysis and never verdicts. It is a verdict against its own variant, which
+makes it credible and makes accepting it feel free. That is the shape of the test: taking a
+failing number at face value while I would have sent a passing one to review is not caution, it
+is the same discretion pointed somewhere I like. The sizing doc goes to the reviewer with
+everything else. I expect agreement; that is not the point.
+Added to the review form as an explicit question: if gate 3 fails at the executable price
+WITHOUT Friday's resolutions, say so plainly — it would mean the outcome was set by the book
+rather than the forecast, and nine days of prediction measured the wrong question.
+"""
+
+[[steps]]
+n = 8
+what = "Market researcher (claude-opus-5, max) — object 15, and a FOURTH wall"
+result = """
+Same-venue nested-board dominance, chosen deliberately to be immune to the wall that killed
+object 14: a dominance claim is deterministic, so it needs n=1 not 91. It dodged that wall and
+died on the other three — the walls are not a sequence you can route around.
+It produced the firm's FIRST genuinely executable arbitrage: a 36-leg French board selling for
++23.90c on a $33.76 basket, guaranteed. Then two kills nobody had needed before. DEPTH, because
+a basket is sized by its thinnest leg — 1,244 shares against a 75,760-share headline leg — so it
+survives 100 baskets, dies by 250, and totals $8.88. Then CARRY: that $8.88 locks capital to
+April 2027 for +0.35% annualised against ~4% risk-free, minus 3.7pp a year.
+Carry is new because every previous object was a statistical claim where the argument was
+whether the edge is real. A dominance arb is real by construction, so size and time are all that
+remain, and we had never had to ask either.
+Also: opportunity count run FIRST and free — 1 nesting and 4 Sigma=N boards in the whole 6,788-
+event open universe. And a self-caught census error: its first pass reported 0 party-only general
+boards when the truth was 81, because a documented `Person [A-Z]` name filter misses single
+capital letters. Gate on volume, never on a name pattern.
+"""
+
+[[steps]]
+n = 9
+what = "Health checks + book compaction"
+result = """
+Dashboard 302 without Access headers / 200 with. Snapshot worker 200. bookpack packed all days;
+07-30 verified exactly against source JSON (3988 rows, sum midpoints 1990.000, 3503 with a bid).
+Worklogs current. wiki/index.md's single-owner rule worked on its first day: slot 1 reported its
+index line instead of editing the file, and I added it.
+"""
+
+[failures]
+mine = """
+1. I wrote a review process on 07-30 that left me applying my own rule, and only fixed it today.
+   The three reasons I am the wrong reader were all true on 07-30 as well.
+2. I have run the daily cadence for nine days without ever dry-running the procedure the whole
+   week was building toward. Slot 1 found four broken steps in one pass.
+"""
+theirs = """
+Slot 1 dry-ran its own runbook and reported four of its own errors, then closed the sizing work
+with the number that fails its own variant. Twice this week it has volunteered the finding that
+costs it. The market researcher withdrew its own census figure (0 party-only boards, truth 81)
+and an assumption about Polymarket's `Earn 4%` tag before either reached a file.
+"""
+tooling = """
+`git pull --rebase` fails in this checkout; use `git pull --rebase origin main`. The stop hook
+fired again on files owned by live agents.
+"""
+
+[spend]
+subagents = 2
+subagent_tokens = 415_817
+note = "slot 1 (214.1k), market researcher (201.7k)."
+
+[health]
+dashboard_access = "302 without / 200 with — pass"
+snapshot_worker = "pass"
+parquet = "07-30 verified exactly against source JSON"
+worklogs = "current"
+slots_producing = "slot 1 yes (4 rows + runbook dry-run + sizing close); market researcher filed a three-kill discard"
+watchlist = "84 markets / 168 tokens"
+
+[artifacts]
+wiki_added = [
+  "reference/leg-sum-edge-scales-with-leg-count.md",
+  "reference/clustering-coarser-is-not-safer.md",
+]
+decisions = 2
+predictions_appended = 4
+ledger_total = 167
+scored_total = 35
+
+[next_run]
+items = [
+  "SATURDAY 08-01 IS THE SCORING RUN. Follow results/friday-2026-07-31-runbook.md — CORRECTED today, 12 [DRY-RUN FIX] markers",
+  "BEFORE ANYTHING: move data/events aside so `discover` refetches. It caches on file existence and will otherwise re-read Thursday's JSON and report every July board as open",
+  "`tape` and `wash` take SPACE-separated args; `discover` and `live` take ONE comma-separated arg. The wrong form matches nothing, loops zero times and exits 0",
+  "Judge `selftest` by exit code, not by counting `ok` lines (only 5 of 15 print it)",
+  "The Saturday BTC pass needs its own completeness block — Friday's omits BTCUSDT and would stop on 7 weekend-closed keys",
+  "Sweep with tools/resolve-sweep (the ledger). The batch will be MIXED as UMA settles over hours; BTC settles Sat 04:00Z, after the Saturday run, so Sunday catches it",
+  "08-02: the completeness gate applies, then spawn the INDEPENDENT reviewer per ops/reviews/README.md. Slot 1 supplies analysis, never verdicts",
+  "Felix: the war ruling is the one item worth five minutes; equity/RTH scheduling is still open and equity has now been suppressed on every run of the trial",
+]

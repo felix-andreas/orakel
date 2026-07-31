@@ -4,32 +4,28 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 
 ## Short-term (current run / immediate)
 
-- **2026-07-30 run** (ops/runs/2026-07-30.toml). Slot 1 day 8: 5 rows (ledger 163). Market
-  researcher killed object 14 twice over. **Tomorrow is Friday: follow
-  `strategies/barrier-touch/ladder-rv/results/friday-2026-07-31-runbook.md`.**
-- **Trial entering Friday: 35 rows / 23 markets, per market −0.0094, CI [−0.0280, +0.0092].**
-  Contains zero → neither promotable nor discardable. Projection recorded in advance: Friday
-  takes 23 → ~90 markets, narrowing to ~±0.010; today's estimate sits outside that, so **if
-  the mean holds the rule says DISCARD**.
-- **THE 08-02 DECISION RULE IS PRE-REGISTERED** (ops/decisions.md, written before any 07-31
-  resolution). Four gates, all required, judged **per market**: calibration (interval excludes
-  zero), tradeability (>50% fillable AND positive exec_edge on that subset), fundability (95%
-  lower bound above q*), tail-at-size. Discard if the interval lies entirely below zero.
-  Extend is a high bar — the July universe is exhausted, so extending means the August cohort,
-  a **new trial**. Disqualified in advance: excluding the tail (our losses were 100% fillable
-  while the flat majority was 2/19), and "we would have no live strategies left".
-- **THE SIZING ANSWER, and it decides gates 3 and 4.** Selling YES at p **is** buying NO at
-  1−p, so every legal trade is a favourite-side buy at 50–97c. q* 0.822, q 0.868 — **q⁻ 0.829
-  CLEARS at nominal n=356 and 0.808 FAILS at effective n=173** (ρ=0.325 within monotone
-  families). *The same evidence clears at the leg count and fails at the draw count, and the
-  draw count is the honest one.* The tail is a cliff: WTI down-ladder +0.49 at the realised
-  −14%, **−5.81** three points lower.
-- **MY RESOLUTION SWEEP WAS CIRCULAR** — mirroring drops resolved markets and I swept the
-  mirrored list, so it could never see what resolved since the last run. Three rows missing,
-  both markets against us. Fixed: `tools/resolve-sweep/sweep.py` sweeps the **ledger**.
-  **Never sweep the watchlist.**
-- Two agents derived the same nesting result the same day from opposite directions (sizing:
-  ρ=0.325, n_eff 173; depth: 29 draws from 96 boards). Strongest corroboration we can get.
+- **2026-07-31 run** (ops/runs/2026-07-31.toml). Last predicting day; boards closed 21:00Z
+  tonight. Slot 1 day 9: 4 rows (ledger 167). Market researcher killed object 15.
+- **SATURDAY 08-01 IS THE SCORING RUN.** Follow `results/friday-2026-07-31-runbook.md`, which
+  slot 1 dry-ran and **corrected today — four steps were wrong, two failing silently with exit
+  0.** Before anything: **move `data/events` aside** so `discover` refetches (it caches on file
+  existence — the SIXTH existence-is-not-completeness instance). `tape`/`wash` take **space**-
+  separated args; `discover`/`live` take **one comma**-separated arg; the wrong form matches
+  nothing and exits 0. Judge `selftest` by exit code. The Saturday BTC pass needs its own
+  completeness block (Friday's omits BTCUSDT).
+- **THE EDGE IS SMALLER THAN THE SPREAD, and this does not depend on Friday.** Nominal margin
+  **+0.73pp** against a median half-spread of **1.00c**; selling at the bid gives q* 0.8316 vs
+  q⁻ 0.8289 — failing by 0.27pp at nominal n, zero fee, before any correlation argument.
+  Break-even half-spread 0.73c against a median 2.0c-wide book. n_eff ∈ **[118, 173]**, failing
+  across the range. Kelly at the 95% lower bound is **negative**.
+- **THE REVIEW IS EVALUATED BY AN INDEPENDENT AGENT, not me and not slot 1** (decided 07-31,
+  before any board closed). Form: `ops/reviews/2026-08-02-ladder-rv.md`, thresholds verbatim,
+  PASS/FAIL/UNEVALUABLE per gate. Brief: `ops/reviews/README.md`. **Slot 1 supplies analysis,
+  never verdicts** — it handed me one twelve hours after the rule and I did not take it, because
+  accepting an unfavourable verdict establishes that it gives verdicts at all.
+- Ask the reviewer explicitly: **is gate 3 decidable without Friday's resolutions?** If so, the
+  outcome was set by the book rather than the forecast, and nine days of prediction measured the
+  wrong question.
 
 ## Medium-term (bootstrap phase)
 
@@ -37,15 +33,22 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
   applications ∪ unresolved-prediction markets − resolved. **`closed=false` on `/events`
   filters EVENTS, not their nested markets** — my first version added 18 resolved legs, some
   settled 07-01. Filter each nested market on its own flag.
-- **`ops/idea-funnel.md` is the firm's kill table — 13 objects, and there are TWO walls.**
-  Wall 1 (9 kills): somebody already prices it; the 3 survivors are exactly the 3 with no
-  incumbent. **Wall 2 (objects 12 and 13, consecutive): execution.** 12's edge *was* the
-  spread; 13's was real and died on **leg-level depth** — $1.5M board, honest mid, real tape,
-  **median $7 at the ask on the legs the mispricing lives on**. Board-level gates cannot see
-  it: depth sits at the mode, mispricing in the wings, anti-correlated.
-  Both wall-2 survivors are the same untested thing: **maker-side**. §5 forbids *executing*,
-  not *researching* — so the open question is whether a class we cannot deploy is worth a
-  slot. With Felix; my recommendation is not before 08-02.
+- **`ops/idea-funnel.md` is the kill table — 15 objects, FOUR walls.** Run them cheapest first.
+  **W1 incumbent** (9 kills): somebody already prices it. The 3 survivors are exactly the 3 with
+  no incumbent found. *Vendor-generic tickers carry millions of contracts while object-specific
+  ones are 0-market shells — search both.*
+  **W2 execution** (12, 13): 12's edge *was* the spread; 13 died on leg-level depth, median $7
+  at the ask. Object 14 **cleared** it, so the depth walk has a pass state and is specific to
+  ladders with a mode.
+  **W3 power** (14): a 12-rung nested ladder is ONE observation — 29 draws at 0.88/month against
+  91 needed. **Needs no data at all**; run it first.
+  **W4 carry** (15): a guaranteed profit is not an edge until it beats the risk-free rate. The
+  firm's first real arb was +23.90c, died on depth at **$8.88** total, then on carry at **+0.35%
+  annualised vs ~4%**.
+  Object 15 was built to dodge W3 and died on the other three — the walls are not a sequence you
+  can route around. Both W2 survivors are the same untested thing, **maker-side**: §5 forbids
+  *executing*, not *researching*, so the open question is whether a class we cannot deploy is
+  worth a slot. With Felix; not before 08-02.
 - "Idea supply is the binding constraint" was **wrong** (supply ~2.2 objects/day); what is
   scarce is objects with a *live tradeable board*. A second researcher fixes nothing.
 - `slots_total = 5` is a **ceiling, not a target**. Filling a slot to look busy cost us
@@ -78,10 +81,11 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
   malformed skipped" on every run for two days while I grepped for the headline. On 07-30 I
   read a fillcheck crash and ran scoring anyway — it had left a truncated `fills.csv` that read
   38% tradeable against a true 43%.
-- **EXISTENCE IS NOT COMPLETENESS — five instances in one week**
+- **EXISTENCE IS NOT COMPLETENESS — SIX instances in one week**
   (`wiki/reference/existence-is-not-completeness.md`), four in a variant's candle archive and
-  one in our own tooling. Files now written `.partial` then renamed. A number computed on less
-  evidence than it claims is the failure this firm keeps rediscovering, and it always parses.
+  one in our own tooling, and on 07-31 `discover` caching on `p.exists()` with no completeness
+  guard. Files now written `.partial` then renamed. A number computed on less evidence than it
+  claims is the failure this firm keeps rediscovering, and it always parses.
 - **`wiki/index.md` has ONE owner** (the market researcher). Swept three times; the pages
   survive and the index loses its pointers, which is knowledge that exists and cannot be found.
   Other agents add pages and *report* the index line.
