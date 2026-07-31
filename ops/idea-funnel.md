@@ -27,6 +27,7 @@ you can count, and counting it changed what I think the firm's constraint is.
 | 12 | 07-28 | Mention markets ("will X say WORD") | discarded at idea stage | **executable-price decomposition** — the +5pp crowd bias *is* the spread | **none — and that is the point** |
 | 13 | 07-29 | Post-count ladders (Elon / Trump weekly) | discarded at idea stage | **leg-level depth** — median **$7** at the ask; q⁻ 0.0709 vs q\* 0.1204 at $500 | **Kalshi `KXTRUTHSOCIAL`** — live, and it re-cut the cap Polymarket left stale |
 | 14 | 07-30 | Cumulative "by \<date\>" ladders (hazard term structure) | discarded at idea stage | **two, either sufficient:** matched-rung cross-venue agreement (median \|Δ\| 0.00 / 1.50pp) **and** Wilson upper 0.3455 vs break-even 0.2786 on **n=29 draws** | **Kalshi `KXGPT` / `KXCLAUDE` / `KXALITOANNOUNCERETIRE`** — 0.5–2.2M contracts per series, plus Manifold |
+| 15 | 07-31 | Same-venue nested-board dominance (primary ⊂ general; Σ=N baskets) | discarded at idea stage | **three, in funnel order:** opportunity count (**1 nesting + 4 Σ=N boards in 6,788 events**), then depth (the one real **+23.90c** arb dies between 100 and 250 baskets — **$8.88** total), then **carry: +0.35% annualised against ~4% risk-free** | **none found** — Kalshi's 11 twin series are all 0-volume / 0-OI. The counterparty is the venue's own spread |
 
 ## What the table says that the worry didn't
 
@@ -87,6 +88,22 @@ against **$7** on the post-count wings.
 So the second wall is real but has a shape: it bites where depth concentrates at a mode. That
 is a much more useful finding than "boards are illiquid", and it means the depth walk is a
 screen with a *pass* state, not just a kill.
+
+**2f. A FOURTH wall: carry. A guaranteed profit is not an edge until it beats the risk-free rate.**
+Object 15 was chosen to be immune to wall 3 — a dominance claim is deterministic, so it needs
+**n=1, not 91**, and the draw-count kill cannot touch it. It dodged that wall and died on the
+other three, which is the useful part: the walls are not a sequence you can route around.
+
+It also produced the firm's **first genuinely executable arbitrage**: a 36-leg French board
+selling for **+23.90c on a $33.76 basket, guaranteed**. Then two kills nobody had needed
+before. **Depth**, because a basket is sized by its *thinnest* leg — 1,244 shares against a
+75,760-share headline leg — so it survives 100 baskets, dies by 250, and totals **$8.88**. And
+then **carry**: taking the $8.88 at face value, the capital locks until April 2027 for **+0.35%
+annualised against a ~4% risk-free rate — minus 3.7pp a year.**
+
+Carry is a new question for us because every previous object was a *statistical* claim, where
+the whole argument was whether the edge is real. A dominance arb is real by construction, so
+size and time are all that remain — and we had never had to ask either.
 
 **2e. A third wall: some objects are neither mispriced nor efficient — they are unresolvable.**
 Object 14 then died anyway, and the second of its two kills is new. Its shape test came back
