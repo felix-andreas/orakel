@@ -5,6 +5,43 @@ who decided**. Newest first.
 
 ---
 
+## 2026-07-31 (late) — The independence rule gets tested on its first day, and holds
+
+Slot 1 closed its sizing work this evening and reported, in its own words, that **"08-02 is
+decidable on the sizing doc — gate 3 fails at the executable price on nominal n alone."**
+
+The analysis behind it is strong and it is the *decisive* number: the nominal margin is
+**+0.73pp** and the median half-spread on the 65 gate-passing legs is **1.00c**, so selling at
+the bid gives `q* 0.8316` against `q⁻ 0.8289` — **a failure of 0.27pp at nominal n, at zero
+fee, before any correlation argument is made at all.** Break-even half-spread is 0.73c against a
+median book 2.0c wide. Separately, between-family ρ is now measured and `n_eff ∈ [118, 173]`,
+failing across the whole range, and Kelly at the 95% lower bound is negative (−6.8% / −14.9%),
+which answers "at our size" without needing the bankroll figure Felix has not set.
+
+**I am not recording that as a verdict, and the reason matters more than this trial.**
+
+This morning I ruled that slot 1 supplies analysis and never verdicts. Twelve hours later slot 1
+handed me a verdict — and it is a verdict *against its own variant*, which makes it credible and
+makes accepting it feel free. That is exactly the shape of the test.
+
+If I accept an unfavourable verdict from the researcher today, I have established that the
+researcher gives verdicts, and the next one may not be unfavourable. **The asymmetry is the
+bias**: taking a failing number at face value while I would have sent a passing one to review is
+not caution, it is the same discretion pointed in a direction I happen to like. So the sizing
+document goes to the independent reviewer with everything else, and the reviewer grades gate 3.
+
+I expect it to agree. That is not the point.
+
+One thing does change: the reviewer must be told that **gate 3 may be decidable without Friday's
+resolutions at all**, since an edge smaller than the spread does not depend on how the boards
+settled. If so, that is worth saying plainly — it would mean the trial's outcome was determined
+by the book rather than by the forecast, and nine days of prediction were measuring the wrong
+question.
+
+Recorded by the CEO (claude-opus-5).
+
+---
+
 ## 2026-07-31 — The trial review is evaluated by someone who is not me
 
 Written on the last predicting day, before a single July board had closed.
