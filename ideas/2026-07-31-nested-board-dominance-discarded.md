@@ -203,6 +203,21 @@ clears the risk-free rate on the capital it locks.**
 USDC, which would have made the comparison internal. It does not — those tags are
 `Rewards Automation …`, the maker liquidity-rewards programme. The comparator is external.)*
 
+## Two standing constraints, checked explicitly
+
+- **Session calendar (kill condition, not a caveat).** None of these boards resolves on a feed
+  with trading hours. Alaska: *"the Associated Press, Fox News, and NBC… else official
+  certification"*. Brazil: the **TSE** (`dadosabertos.tse.jus.br`). France: the **Ministère de
+  l'Intérieur**. Election returns are published once, on a known date, with no session
+  calendar — so `stale-feed-gate.md` does not bite and neither does the Pyth-RTH overlap
+  problem. The underlyings are elections, not quoted numbers, so Felix's standing instruction
+  is satisfied too.
+- **No lifetime-volume filter.** `lifetime-volume-is-look-ahead.md` forbids gating on realised
+  volume. Nothing here does: `volumeNum == 0 && liquidityNum == 0` is used **only** to identify
+  legs that have no book at all — the documented neg-risk placeholder filter from
+  `recipes/polymarket-api.md` — and this screen reads a **live** book with no settled outcome
+  in sight, so look-ahead is not available to it in either direction.
+
 ## Falsification sketch (what would have kept it alive)
 
 Pre-registered before the books were pulled:
