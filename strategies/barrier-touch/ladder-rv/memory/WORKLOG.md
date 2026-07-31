@@ -4,6 +4,116 @@ One dated entry per run. Name the model that did the work.
 
 ---
 
+## 2026-07-31 — day 9: I ran the runbook I wrote, and four of its steps were wrong (model: claude-opus-5, effort xhigh)
+
+- **Feed verified open, not assumed.** 01:21Z: WTI/gold/silver **OPEN, 0.1h**; SPY/NVDA **SHUT,
+  5.4h**. **4 rows proposed** (`results/proposed-rows-2026-07-31.csv`, run_id `2026-07-31/daily`,
+  15 cols, header md5 `c9ee0b9f…` **byte-identical** to the ledger, `pricer_version` untouched):
+  WTI ↑90-from-jul-27, WTI ↓80-from-jul-29, gold-weekly ↑4150, silver-weekly ↓56. From 77 legs,
+  **73 suppressed**: 19 stale-feed (all equity), 50 mid∉[3c,97c], 4 rel-spread, **0** tape,
+  **0** epsilon, **0** de-dup. CLU6 **82.83**, gold 4092.73, silver 58.84. Did not write
+  predictions.csv. All four condition_ids identity-checked against the ledger.
+- **Emission policy unchanged on purpose.** Today's rows resolve tonight, so they land in the
+  0–1d bucket (flat, 3/20 fillable) on markets we have predicted many times: they add **rows,
+  not power**, and I said so rather than adjusting what I emit. Changing emission behaviour on
+  the final day of a trial on the basis of what it does to the trial's own numbers is exactly
+  what pre-registration exists to prevent. **Zero new markets**: the one overnight relist,
+  `will-wti-reach-85-in-july-2026-from-july-30`, quotes 0.32/0.40 — **8c wide** — and the
+  rel-spread gate took it. Exhaustion, again, as predicted.
+- **DRY-RAN THE ENTIRE FRIDAY RUNBOOK AGAINST LIVE DATA. Four of its steps were wrong**, and two
+  of the four fail *silently with exit 0*, which is the dangerous kind. All fixed in place and
+  marked `[DRY-RUN FIX]`; the appendix gained traps 15–18.
+- **THE FIFTH SILENT-DATA BUG: `discover` is cached on file existence.** `fetch_all` skips any
+  job whose output already exists and `cmd_discover` has **no `complete_through` guard** — unlike
+  `candles`, `clob` and `tape`, all of which were fixed on earlier days. Run as the runbook wrote
+  it, it printed **`discover: fetched 0, cached 12`** and re-read Thursday's JSON. On Friday at
+  21:30Z that means every July board still reads `closed:false` with no winner, and `legs.csv` is
+  a snapshot of Thursday. **Demonstrated, not argued**: clearing the cache took `legs.csv`
+  **207 → 209** and surfaced two markets listed after yesterday's run (WTI ↑85-from-jul-30, BTC
+  ↑65k-from-jul-30) plus `will-bitcoin-reach-65k-in-july-2026-from-july-28` flipping
+  `closed False → True` with `outcomePrices ["1","0"]`. None of it is ours, which is luck rather
+  than design.
+- **A NEW TRAP THAT IS THE EXACT INVERSE OF THE OLD ONE.** Appendix trap #1 says "one
+  comma-separated argument, **never** space-separated". True for `discover` and `live`
+  (`args[3].split(',')`) — and **backwards for `tape` and `wash`**, which take `args[3..]`, a
+  list of separate arguments. A comma-joined string looks for one board literally named
+  `"a,b,c"`, matches no leg, runs the loop zero times and **exits 0 with no output at all**.
+  **It cost a real row today**: the comma form left the WTI and silver tape at Thursday's
+  vintage, and the stale tape read **0** taker trades within 5c on `will-xagusd-dip-to-56-by-july-27-2026`
+  → a tape-gate suppression. Refetched properly: **4** trades, and the leg is in today's emission.
+  I had generalised my own rule and it was wrong.
+- **Two smaller ones.** The runbook said `selftest` "must print `ok` on every line" — it prints 15
+  lines and **5** contain `ok`; the pass criterion is exit 0, and scanning for "ok" makes a healthy
+  binary look broken under time pressure. And the Saturday 04:00Z BTC pass would have run Friday's
+  completeness block, which **omits BTCUSDT entirely** — it would fire STOP on all seven non-crypto
+  keys (the weekend session calendar) and check the only key that matters **nowhere**.
+- **What I verified working, so nobody re-tests it tomorrow**: the candle refetch rule — **07-30's
+  73-minute stubs were repaired to 1381/1382/392**, which is the single most load-bearing mechanism
+  in the document; `resolve_sweep.py` (60 markets / 128 rows, **0 needing a human**, exit 0);
+  `vol`; `clob 60` (209 legs, 0 cached); `analyze`; **`freeze.sh` (both archives cut, pushed, and
+  READ BACK out of R2** — the live archive returns 77 legs with columns 15–18 = `sigma_rv,sigma_iv,
+  q_iv,q_blend`); and `scoring`, whose `ci_lo`/`ci_hi` — the statistic gate 1 turns on — are in
+  `scores.csv` and **not** in the printed table.
+- **Two steps I could not exercise before the close, marked `[UNTESTABLE TODAY]` with what to
+  check instead**: `resolve_sweep.py --emit` (everything is still open, so the SETTLED path and
+  the emit writer ran against zero rows — the lookup half is proven, the emit half is not), and
+  `fillcheck` (it writes into `predictions/`, which has one writer, so I did not run it).
+- **Measured what a Friday actually looks like in the archive**, because the STOP thresholds
+  depend on it: Friday 07-24 = **1261** WTI/metals, 1246 USOILSPOT, **392** SPY/NVDA, **1440** BTC.
+  A mid-week day is 1381/1382 because the feed runs to 23:59Z; Friday stops at 21:00Z. So "≈1260"
+  is correct **for Friday only** and is not a truncation.
+- **Re-validated my gate reconstruction before using it**: it reproduces 07-30 (19 stale / 47 mid /
+  12 spread → 5) and 07-29 (22 / 44 / 10 → 13, −1 tape = 12) **exactly**. Also pinned down that
+  emitted rows are the **survivors of the book+stale gates**, not the sell signals — today 4
+  survivors, 2 sell signals. And I walked into trap #2 myself: a second `live` call overwrote
+  `predictions_2026-07-31.csv` and I had to re-run all eight boards in one call.
+- **08-02 SIZING: ALL THREE GAPS CLOSED** (`results/sizing-2026-08-02-close-2026-07-31.md`).
+  Reproduced 07-30 exactly first (356 / `q*` 0.8216 / `q` 0.8680 / `q⁻` 0.8289 / ρ 0.326 / 84
+  families / deff 2.05 / n_eff 173) — with one correction to how it was written: **the fundable
+  band is [0.03, 0.50), half-open**; read closed it gives n=365 and every downstream number moves.
+- **The decisive number turns out to need no correlation argument at all: the edge is smaller
+  than the spread.** The nominal margin is **+0.73pp**; the median half-spread on the 65 live legs
+  that pass the full book gate in the 3–50c band is **1.00c**. Selling at the **bid** rather than
+  the scored mid puts `q* = 0.8316` against `q⁻ = 0.8289` → **fails by −0.27pp at nominal n, with
+  a zero fee.** Break-even half-spread is 0.73c; the median gate-passing book is 2.0c wide. The
+  one number that made this look promotable is consumed entirely by one cent of half-spread.
+- **Between-family ρ measured: `n_eff` ∈ [118, 173]**, failing across the whole range (−1.21pp at
+  the family level, **−2.65pp** once families sharing an underlying *and* a direction are pooled).
+  07-30's claim that 173 was an upper bound is **confirmed and quantified**. Two subtleties, both
+  now in the wiki: ρ at the **board** level (0.073) is a quarter of the family level (0.326),
+  because a board mixes up- and down-legs driven by *opposite* tails of one path and pooling
+  averages the correlation against its own opposite — **direction is the clustering unit**; and
+  **ρ = 0.000 at the asset level is 7 clusters failing to identify an ICC, not independence** —
+  it is the only level in the table that "clears", and it must never be quoted.
+- **Capital, answered without a bankroll.** Kelly is scale-free: `f* = (q−c)/(1−c)` is **+26.0%**
+  on the point estimate, **+4.07%** at the nominal lower bound, and **−6.77% / −14.88%** at
+  n_eff 173 / 118. **At any honest accounting of correlation the lower-bound Kelly stake is
+  negative** — not "size small" but "this bound says don't". The firm's unset bankroll is
+  therefore no longer the reason the question is open.
+- **Pre-declared, before any 07-31 resolution exists, the seven things Friday cannot settle**
+  (runbook §5e): the pricer split; anything about equity (feed shut on every emission all week);
+  the 0–1d bucket; a re-estimate of ρ on 12 families; the 35–50c band; regime generality; and —
+  the one Sunday will most want — whether the tail is an unlucky draw. Plus the corollary: an
+  inconclusive Friday is the **expected** outcome for all seven, not a surprise that justifies
+  an extension.
+- **Also found**: the 3 already-settled rows are **already appended** (resolutions.csv 23–24), so
+  that runbook step is done — and they went **against us on P&L while improving the per-market
+  statistic** (+0.0319, +0.0178), moving the variant from −0.0127 at 21 markets to **−0.0094 at
+  23, CI [−0.0280, +0.0092]**. "Lost money" and "beat the market" are different signs on the same
+  row, and gate 1 measures the second.
+- **Wiki**: new `reference/clustering-coarser-is-not-safer.md` — `n_eff` went 173 → 238 → 118 →
+  356 down the nesting ladder, so the instinct "cluster coarser to be conservative" is wrong in
+  both directions: a coarser bucket can average a correlation against its own opposite, and too
+  few clusters makes ρ unidentifiable and it reports as zero. **I did not edit `wiki/index.md`**
+  (single owner: the market researcher) — index line proposed to the CEO instead.
+- Escalation to the CEO: (a) **`discover` must be cache-cleared before Friday's run** or every
+  board reads Thursday; (b) `tape`/`wash` are space-separated — the runbook's general comma rule
+  is wrong for them; (c) 08-02 can be decided on the sizing doc: gate 3 fails at the executable
+  price on nominal n alone, and gate 4 fails across the whole bracketed `n_eff`; (d) the equity/RTH
+  scheduling decision is **still open** and equity has now been suppressed on every run of the trial.
+
+---
+
 ## 2026-07-30 — day 8: the last run before the freeze; two more archive holes, one unrecoverable (model: claude-opus-5, effort xhigh)
 
 - **Feed verified open, not assumed.** 01:13Z: WTI/gold/silver **OPEN, 0.0h**; SPY/NVDA **SHUT,

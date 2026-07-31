@@ -284,3 +284,17 @@ over which the market moved.
   monotone families), and the tail is a **cliff** — the WTI down-ladder is net +0.49 at the realised
   −14% and −5.81 three points lower. Friday procedure: `results/friday-2026-07-31-runbook.md`.
   Wiki: new `nested-ladders-are-one-draw`, extended `existence-is-not-completeness`.
+- 2026-07-31 — day-9, **last predicting day**. **4 prediction rows** from 77 legs (73 suppressed:
+  19 stale-feed equity, 50 mid-band, 4 rel-spread), **0 new markets** — the one overnight relist
+  quotes 8c wide. **Dry-ran the whole Friday runbook against live data and four of its steps were
+  wrong**, two failing silently with exit 0: **`discover` is cached on file existence** (no
+  `complete_through` guard — it re-read Thursday's boards and hid two overnight relists, `legs.csv`
+  207 → 209); **`tape`/`wash` take SPACE-separated args** while `discover`/`live` take one
+  comma-separated arg, so the documented comma rule silently disabled the tape gate and cost a row;
+  `selftest` does not print `ok` on every line; and the Saturday BTC pass checked every key except
+  BTC. All corrected in place, appendix traps 15–18. **08-02 sizing closed**
+  (`results/sizing-2026-08-02-close-2026-07-31.md`): **the edge is smaller than the spread** —
+  nominal margin +0.73pp against a 1.00c median half-spread, so selling at the **bid** fails by
+  −0.27pp at nominal n with a zero fee; between-family ρ measured, `n_eff` ∈ **[118, 173]**, failing
+  across the range; **Kelly at the 95% lower bound is negative**, which answers "at our size"
+  without a bankroll. Wiki: new `clustering-coarser-is-not-safer`.
