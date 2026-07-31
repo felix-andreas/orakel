@@ -65,6 +65,15 @@ trial_review_completeness_gate = "all outstanding rows resolved and appended; el
 # 2/19, so dropping them keeps only the rows nobody would fill. And "we would have no live
 # strategies left" is disqualified as an argument, in advance, on purpose.
 trial_review_rule = "four gates, per market, pre-registered 2026-07-30; see ops/decisions.md"
+# The gates are evaluated by an INDEPENDENT agent, not the CEO and not the slot's researcher
+# (2026-07-31, decided before any July board closed). The CEO has run the trial, wrote the
+# rule, and presides over a firm with one trial and zero live strategies — three reasons to
+# read a marginal number generously, none visible from the inside. The reviewer gets the rule,
+# the data and the sizing work, and no context about what the firm would prefer. The CEO makes
+# the promote/discard/extend call on that evaluation and records any disagreement explicitly.
+# Form: ops/reviews/2026-08-02-ladder-rv.md — thresholds verbatim, values blank, PASS/FAIL/
+# UNEVALUABLE per gate. Slot 1 supplies analysis, never verdicts.
+trial_review_evaluator = "independent agent; CEO decides on its verdicts, disagreements recorded"
 
 # Slot 2 was released and refilled the same day. arena-rank/favourite-shrinkage PARKED. Its mechanism
 # passed the pre-registered band test decisively (+16.8pp, t=+5.94, RoLC +15.2% in the
