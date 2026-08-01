@@ -4,6 +4,119 @@ One dated entry per run. Name the exact model id that did the work.
 
 ---
 
+## 2026-08-01 (run 11) — the first object to clear the depth wall outright, and it still died
+
+Model: **claude-opus-5 (effort max)**.
+
+Object: **deep-tail carry** — buying NO at the ask on Polymarket's **standalone binary**
+markets whose YES leg trades at ≤5c ("Will Jesus Christ return before 2027?", "Hantavirus
+pandemic in 2026?", "Will Trump acquire Greenland before 2027?"), held to redemption. Filed
+`ideas/2026-08-01-deep-tail-carry-discarded.md`, **status `discarded-idea`**.
+
+**Why this object.** Chosen specifically to attack wall 2. Every execution kill so far turned
+on depth concentrating at a board's mode while the mispricing sat in a wing. A standalone
+binary has no mode elsewhere — the tail leg *is* the market — so if the depth wall were ever
+going to be cleared with room to spare, this was the shape that clears it. It did, by the
+largest margin the firm has recorded, and died on the two walls I ran before it.
+
+Classification: neither LEVEL nor SHAPE. A **carry claim** — we assert nothing about whether
+China invades Taiwan, only that the crowd's tail allocation is too fat and the resulting yield
+beats cash. Second such object after #15, first one that is short-dated and deep.
+
+**Scan.** Full date-windowed pull of the open universe: **9,347 events / 96,642 markets**
+(the volume-ranked 1,600-event scan is not enough for a population count — same trap as
+07-31). 1,118 standalone single-market events; **127** with an open book and a YES mid ≤5c,
+holding **\$206,696,574**.
+
+Two other genuinely untouched families found in the same sweep and set aside on W3 alone,
+free: **Titled Tuesday chess placement ladders** (`titled-tuesday`, 66–75 legs, weekly Swiss,
+simulation-tractable from public Elo, state not glanceable — but **1 settled instance ever**,
+2026-07-28, family launched last week) and **GPU rental-price ladders**
+(`h100/h200/b200-rental-price`, monthly, ~\$70–98k/board, no plausible incumbent — but 3
+highly-correlated series × monthly, ~2 months of history).
+
+**Order run, per the brief.**
+
+1. **W3 first, free — and I got it wrong, which is recorded rather than hidden.** The
+   break-even here is not a win rate but an **event rate**: `π* = 1 − a_eff·(1 + r·d/365)`,
+   which makes walls 3 and 4 one calculation. Counting the *live* cohort (127 legs → ≤70
+   themes, 94 legs and 97.1% of volume on 2026-12-31) gave "279 draws needed, ≤70/cohort, 4–22
+   years, dead". **Wrong denominator — the open book is a snapshot, not a rate.** The settled
+   census: 99,493 closed events → 36,969 standalone binaries → **3,280 non-sport/crypto/weather
+   in 12 months (~273/mo)**; a 356-market sample at a T−45d checkpoint found **47.5% already
+   in-band**, with a thematic deflator of only **1.39×** (settled panels have no year-end
+   calendar artifact). **≈1,558 band legs / ≈1,120 quasi-independent themes per year against
+   243 needed → W3 PASSES.** First object to clear it.
+2. **The backtest, therefore run rather than proposed.** Same sample, same checkpoint:
+   **0 of 169 settled ≤5c legs resolved Yes**, mean checkpoint 2.46c — **+12.97pp over the
+   risk-free rate at executable prices** on a 45-day hold. Best point estimate the firm has
+   taken. **It still fails the bound:** Wilson 95% upper **2.22%** on 169 raw legs, **3.05%**
+   on 122 quasi-independent themes, against π\* = **1.57%** at 45d and **0.44%** at 150d. A
+   perfect 0-for-169 on rare events is not enough; one single Yes takes it to 3.28% / 4.50%.
+   And it is one quiet 12-month regime, for events that resolve Yes in clusters.
+3. **W1 — the kill, and independent of every sampling choice I made.** Kalshi catalogue
+   **12,368 series** (+13/day), searched by person/franchise not by our titles. Live twins with
+   real size, unlike 07-31's 0-volume shells: `KXALIENS-27` **26.3M** contracts,
+   `KXTRUMPOUT27-27-DJT` 5.60M / 2.40M OI, `KXPAHLAVIHEAD` 1.80M, `KXNEWOUTBREAKHANTA` 1.63M,
+   `KXGREENLAND-29-27` 1.47M. **8 of 8 matched pairs price the tail ABOVE Polymarket: mean
+   +1.52pp, median +1.57pp, sign test p = 0.0039.** The thesis needs our tail too dear; the
+   bigger venue says it is too cheap. Definitional-noise floor read off Kalshi disagreeing with
+   *itself* (two Greenland series 0.95pp apart) — six of eight gaps exceed it. And Kalshi pays
+   collateral interest while PM USDC does not, so ours should be the *dearer* tail; the carry
+   adjustment widened the gap against the thesis instead of explaining it.
+4. **W2 — PASS, the largest margin recorded.** Walked the NO book before any modelling:
+   **\$19,352,132** at the ask on Hantavirus, \$16.1M Taiwan, \$15.3M Xi, \$5.4M Jesus, and
+   **VWAP flat to \$10,000** on all five — against object 13's median **\$7**. Median spread
+   0.60c = 20.0% of the YES leg but **0.62% of the NO leg**. No mirror-test failure.
+5. **W4 — the second kill, and the venue's own shape closes the escape route.** Since π\*
+   rises as the horizon shortens, the fix is "trade the short end". Splitting the live band:
+   ≤45d holds **0.5%** of volume and is *safer* (1.95c, π\* 0.72%); 46–90d peaks at π\* 1.83%
+   with **1.6%**; **≥150d holds 97.8% of the volume at π\* ≤ 0.75%.** Everywhere the venue has
+   size the hurdle is unmeetable, and at 150 days the trade is investable only on a
+   never-loses-ever assumption (one loss per 200 → unreachable). Separately, `d_max` kills legs
+   on arithmetic alone: the 0.47c and 0.52c legs have **152 days to run against a 44-day
+   d_max**. Net carry on the safest, deepest leg on the whole venue (Second Coming, \$64.9M):
+   **4.42% vs ~4% risk-free, +0.42pp**.
+
+**How close it came — the closest of the sixteen, and by some distance.** It cleared wall 2
+outright (objects 12, 13, 15 died there; object 14 scraped through on \$264 at the bid — this
+had \$19M and zero slippage), it is the **first object ever to clear wall 3**, and its point
+estimate is the best the firm has measured: 0-for-169 at +12.97pp over cash, with no mirror
+failure and no phantom midpoints. It did not die of being small, unreachable or unpriced. It
+died of being **unprovable at the horizon on offer, while the one venue we can check says we
+are on the wrong side.** For the backlog question: this is a real near-miss, not a token one,
+and its binding constraint is the venue's maturity schedule rather than our modelling.
+
+**The process lesson I owe the file.** Running the walls cheapest-first is right, but the
+cheap version of W3 was *wrong* here, and had I stopped at it I would have filed a correct
+verdict on a false basis and put a bad number in the funnel. Arrival rates come off the
+**settled** record; the open book is a snapshot, and on year-end families a badly clustered
+one.
+
+**Graduated to the wiki.**
+
+- **New:** `reference/rare-event-edges-need-rare-event-samples.md` — state the carry hurdle as
+  a break-even *event rate* and walls 3 and 4 become one calculation; then `3/π*` is a floor
+  on draws that no modelling skill can get under. The inversion is the trap: the safer the
+  leg looks, the smaller π*, the **larger** the sample needed.
+- **Amended** `reference/depth-lives-where-the-edge-is-not.md` — the wall needs a **mode**.
+  Bounded now by two clears: object 14 (ladder with no mode, \$264) and object 16 (no board at
+  all, \$19.4M). Ask where the mode is before you walk the book.
+- **Amended** `reference/sharp-line-screen.md` — when the thesis is "this venue is too
+  high/low" rather than "we forecast better", check the gap's **sign**, not its size. Plus two
+  safeguards: size definitional noise from the incumbent's disagreement with **itself**
+  (Kalshi's two Greenland series differ by 0.95pp), and work out which way the venues' carry
+  asymmetry should push before you look (it widened the gap against us).
+- Checked the owed item: `nested-ladders-trade-depth-for-power.md` and
+  `nested-ladders-are-one-draw.md` have **not** drifted; the ownership split is still stated in
+  both. No merge.
+
+**Funnel row for the CEO** (I do not edit `ops/`):
+
+| 16 | 08-01 | Deep-tail carry (fade ≤5c standalone binaries) | discarded at idea stage — **closest miss yet** | **Cleared W2 AND W3**, then died twice: (a) cross-venue **direction** — 8/8 matched pairs above us, mean +1.52pp, sign test p=0.0039; (b) **the bound at the venue's horizon** — backtest run, **0 of 169** settled ≤5c legs resolved Yes (+12.97pp over risk-free at executable prices), yet Wilson upper **2.22%** (169 legs) / **3.05%** (122 themes) vs π\* **1.57%** at 45d and **0.44%** at 150d, where **97.8% of the volume sits**. W2 \$19.4M at the ask, zero slippage to \$10k; W3 ~1,120 themes/yr vs 243 needed | **Kalshi**, live and larger — `KXALIENS` 26.3M contracts, `KXTRUMPOUT27` 5.6M/2.4M OI, `KXPAHLAVIHEAD` 1.8M, `KXNEWOUTBREAKHANTA` 1.63M — pricing the same tails **higher** than we do |
+
+---
+
 ## 2026-07-31 (run 10) — the first real arbitrage the firm has ever found, worth $8.88
 
 Model: **claude-opus-5 (effort max)**.

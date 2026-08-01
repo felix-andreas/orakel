@@ -79,8 +79,46 @@ the surviving construction is the **maker** side, where a 6–11c wing spread is
 than cost. `CONSTITUTION.md` §5 forbids resting orders, so this is a note for whoever revisits
 that constraint — it is now the second family in two days whose only live thread is maker-side.
 
+## The boundary: this needs a mode, and a standalone binary does not have one
+
+Amended 2026-08-01 (`ideas/2026-08-01-deep-tail-carry-discarded.md`), after the second family
+to clear this wall and the first to clear it with room to spare.
+
+The anti-correlation above is a property of **multi-leg boards**. It needs somewhere else for
+the depth to go: a mode that attracts the flow while the mispricing sits in a wing. Two
+measurements now bound it:
+
+- **Object 14 (cumulative "by &lt;date&gt;" ladders):** a ladder with *no mode* — the unquoted
+  legs were the already-decided rungs, not the edge rungs. It cleared, but modestly:
+  $264 at the bid, $2,000 walked for 0.4–2.0c. See
+  [nested-ladders-trade-depth-for-power](nested-ladders-trade-depth-for-power.md).
+- **Object 16 (standalone ≤5c binaries):** no board at all. The tail leg **is** the market, so
+  there is no mode to compete with it, and depth and edge land on the same token:
+
+  | leg | $ resting at the NO ask | VWAP $100 | VWAP $10,000 |
+  |---|---:|---:|---:|
+  | Hantavirus pandemic in 2026? | **$19,352,132** | 0.9650 | 0.9650 |
+  | Will China invade Taiwan by end of 2026? | $16,123,889 | 0.9610 | 0.9610 |
+  | Xi Jinping out before 2027? | $15,321,526 | 0.9550 | 0.9554 |
+  | Will Jesus Christ return before 2027? | $5,445,228 | 0.9810 | 0.9810 |
+
+  **Zero slippage to $10,000** against object 13's median **$7** at the ask. Median spread
+  0.60c — 20.0% of the YES leg but **0.62% of the NO leg**, which is the asymmetry that makes
+  the fade look clean.
+
+So the rule to carry forward is not "books are thin", it is:
+
+> **Ask where the mode is before you walk the book. If the leg you want to trade is the whole
+> market, the depth wall does not apply — and you must then find your kill somewhere else.**
+
+Object 16 did: it cleared this wall by the largest margin the firm has recorded and died on
+power and on the incumbent anyway. Passing the depth gate is not evidence of edge; it only
+means the cheapest execution kill is unavailable, exactly as an empty Kalshi slot means the
+cheapest incumbent kill is unavailable ([sharp-line-screen](sharp-line-screen.md)).
+
 ## See also
 
+- [rare-event-edges-need-rare-event-samples](rare-event-edges-need-rare-event-samples.md) — the wall object 16 died on instead
 - [tape-gate](tape-gate.md) — listed depth that never trades
 - [phantom-midpoints](phantom-midpoints.md) — an unpriced leg does not vote
 - [midpoint-is-not-a-fill](midpoint-is-not-a-fill.md) — price both sides before believing an edge

@@ -144,6 +144,45 @@ settle the same utterance under different rules and different adjudicators, so b
 lose together. Treat a crossing quote across venues as evidence the *settlement definitions
 differ*, until you have read both rulebooks.
 
+## Check the DIRECTION of the gap, not only its size
+
+**Measured 2026-08-01 (deep-tail carry kill, `ideas/2026-08-01-deep-tail-carry-discarded.md`).**
+Every previous use of this screen asked "does the incumbent *agree* with the venue?", because
+every previous thesis was "we estimate the truth better". When the thesis is instead "this
+venue's price is too **high**" (or too low), agreement is the wrong test. The right one is
+whether the incumbent sits on the side your thesis needs.
+
+The idea claimed Polymarket's ≤5c tail was overpriced by lottery demand. Matched to Kalshi by
+person/franchise, same expiry, live books on both sides:
+
+| object | Polymarket | Kalshi ticker | contracts | OI | Kalshi | Δ |
+|---|---:|---|---:|---:|---:|---:|
+| Trump out / resign before 2027 | 3.75c | `KXTRUMPOUT27-27-DJT` | 5,601,517 | 2,398,208 | 6.45c | +2.70 |
+| US recognizes Pahlavi 2026 | 4.50c | `KXRECOGPERSONIRAN-26` | 998,939 | 207,900 | 6.50c | +2.00 |
+| Hantavirus pandemic 2026 | 3.60c | `KXNEWOUTBREAKHANTA-26` | 1,628,340 | 622,715 | 6.00c | +2.40 |
+| Greenland acquisition | 4.20c | `KXGREENTERRITORY-29-27` | 498,682 | 146,548 | 5.55c | +1.35 |
+| Ebola pandemic 2026 | 3.00c | `KXNEWOUTBREAKEBOLA-26` | 58,482 | 27,305 | 4.50c | +1.50 |
+| Aaron Rodgers retires | 1.35c | `KXARODGRETIRE-26` | 152,029 | 37,057 | 3.00c | +1.65 |
+| Greenland purchase | 4.20c | `KXGREENLAND-29-27` | 1,467,146 | 400,446 | 4.60c | +0.40 |
+| Pahlavi leads Iran 2026 | 4.35c | `KXPAHLAVIHEAD-27JAN-RPAH` | 1,796,928 | 515,253 | 4.50c | +0.15 |
+
+**8 of 8 above Polymarket. Mean +1.52pp, median +1.57pp, sign test p = 0.0039.** A venue with
+*more* contracts on the identical objects says our tail is too **cheap** — the opposite of the
+thesis. Nothing about the size of the gap mattered; only its sign.
+
+Two things that make this reading safe, both of which must be checked before quoting it:
+
+- **Size the definitional noise from the incumbent's own disagreement with itself.** Kalshi
+  runs two Greenland series that differ by **0.95pp** (4.60 vs 5.55) purely on rules text.
+  That is the floor on how much of any Δ is English rather than opinion — six of the eight
+  gaps exceed it. Cheaper and more honest than reading two rulebooks; see
+  [cross-venue-gaps-need-a-shared-scalar](cross-venue-gaps-need-a-shared-scalar.md).
+- **Adjust for the venues' carry before concluding.** Kalshi pays interest on posted
+  collateral and Polymarket USDC earns nothing, so a Polymarket safe-side buyer forgoes the
+  risk-free rate and should demand a *higher* tail price. Ours is lower. The adjustment
+  widened the gap against the thesis instead of explaining it — always work out which way it
+  should push before you look.
+
 ## Free, read-only sources (verified working from our environment)
 
 - **Kalshi** — see above; open, unauthenticated, and the single highest-yield check we own.
