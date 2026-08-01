@@ -168,11 +168,11 @@ pub async fn page(env: &Env) -> String {
 fn summary_line(runs: &[(String, toml::Table)], p: &Table) -> String {
     let tokens: i64 = runs
         .iter()
-        .filter_map(|(_, t)| data::int_at(t, &["spend", "total_tokens"]))
+        .map(|(_, t)| run_tokens(t))
         .sum();
     let steps: usize = runs
         .iter()
-        .map(|(_, t)| data::arr_at(t, &["step"]).len())
+        .map(|(_, t)| run_steps(t).len())
         .sum();
     let first = runs
         .last()
@@ -183,13 +183,7 @@ fn summary_line(runs: &[(String, toml::Table)], p: &Table) -> String {
         .map(|(_, t)| data::tstr(t, "date").to_string())
         .unwrap_or_default();
     let days = data::days_between(&first, &last).map(|d| d + 1).unwrap_or(0);
-    let flagged = runs
-        .iter()
-        .filter(|(_, t)| {
-            !(data::bool_at(t, &["health", "all_slots_ran"]).unwrap_or(false)
-                && data::bool_at(t, &["health", "pushed"]).unwrap_or(false))
-        })
-        .count();
+    let flagged = runs.iter().filter(|(_, t)| health_flagged(t)).count();
 
     stat_line(&[
         (fmt_int(runs.len() as i64), format!("runs in {days} days"), ""),
@@ -227,8 +221,8 @@ fn run_block(
     owners: &[(String, String, String)],
 ) -> String {
     let date = data::tstr(t, "date");
-    let tokens = data::int_at(t, &["spend", "total_tokens"]).unwrap_or(0);
-    let steps = data::arr_at(t, &["step"]);
+    let tokens = run_tokens(t);
+    let steps = run_steps(t);
     let all_ran = data::bool_at(t, &["health", "all_slots_ran"]).unwrap_or(false);
     let pushed = data::bool_at(t, &["health", "pushed"]).unwrap_or(false);
     let notes = data::str_at(t, &["health", "notes"]);
@@ -406,10 +400,10 @@ fn run_block(
         if pushed { "yes" } else { "no" },
     ));
 
-    let health = if all_ran && pushed {
-        String::new()
-    } else {
+    let health = if health_flagged(t) {
         format!(" · {}", badge("check health", "warn"))
+    } else {
+        String::new()
     };
 
     format!(
@@ -471,4 +465,49 @@ fn mentions_variant(t: &toml::Table, key: &str) -> bool {
 /// market that settled that day.
 fn next_run_after(date: &str, dates: &[String]) -> Option<String> {
     dates.iter().find(|d| d.as_str() > date).cloned()
+}
+
+/// Token spend for one run, whichever key the manifest used.
+///
+/// The schema drifted: manifests up to 2026-07-25 wrote `spend.total_tokens`,
+/// everything from 07-26 on writes `spend.subagent_tokens`. The page read only
+/// the first, so **every run for a week displayed "0 tokens"** and the headline
+/// total silently summed the four oldest runs alone. A number whose basis is
+/// wrong is worse than one that is missing, and this one looked plausible.
+///
+/// Both keys are read rather than the files rewritten: run manifests are the
+/// firm's record of what happened, and editing history to satisfy a reader is
+/// the wrong direction.
+fn run_tokens(t: &toml::Table) -> i64 {
+    data::int_at(t, &["spend", "total_tokens"])
+        .or_else(|| data::int_at(t, &["spend", "subagent_tokens"]))
+        .unwrap_or(0)
+}
+
+/// Steps for one run — `[[step]]` in the old dialect, `[[steps]]` in the new.
+fn run_steps(t: &toml::Table) -> Vec<&toml::Value> {
+    let a = data::arr_at(t, &["step"]);
+    if a.is_empty() {
+        data::arr_at(t, &["steps"])
+    } else {
+        a
+    }
+}
+
+/// Did this run RECORD a problem? Not "did it prove itself fine".
+///
+/// The old manifest dialect asserted health with two booleans
+/// (`all_slots_ran`, `pushed`); the dialect used since 2026-07-26 records it as
+/// free text (`dashboard_access = "302 without / 200 with — pass"`, and so on).
+/// The original test — *both booleans true, else flag it* — therefore marked
+/// every recent run unhealthy, and the headline read "4 runs healthy" out of
+/// eleven. That is a false accusation, not a missing number: seven runs did
+/// their health checks and said so in prose.
+///
+/// So a run is flagged only when a boolean is present AND false. A run that
+/// recorded health some other way is not evidence of a problem, and a run that
+/// recorded none is silent rather than sick.
+fn health_flagged(t: &toml::Table) -> bool {
+    let says_false = |k: &str| data::bool_at(t, &["health", k]) == Some(false);
+    says_false("all_slots_ran") || says_false("pushed")
 }
