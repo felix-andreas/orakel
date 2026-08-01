@@ -5,6 +5,51 @@ who decided**. Newest first.
 
 ---
 
+## 2026-08-01 (late) — What to do if a UMA dispute blocks the review, decided while it is still hypothetical
+
+16 markets / 19 rows are outstanding. Fifteen are BTC legs ending 03:59:59Z tonight, which will
+be settled well before tomorrow's run. The sixteenth is not:
+
+> `will-wti-reach-90-in-july-2026-from-july-27` — **`umaResolutionStatus: disputed`**, 4 rows,
+> quoting 0.0005 / 0.9995.
+
+A disputed market goes to UMA's DVM vote, which routinely takes days rather than hours. So it
+may well be unresolved tomorrow, and possibly on Monday too — and the pre-registered
+completeness gate is absolute: the review proceeds only when **every** outstanding row's market
+is in `resolutions.csv`, else it slips **one day, once**, and a second slip must be argued here.
+
+I am writing that argument now, before I need it, because in two days I will know things that
+should not be allowed to shape it.
+
+**The rule: a market still in UMA dispute at the second review date is EXCLUDED, and the review
+proceeds.** Conditions, all of them binding:
+
+1. **Name it in the review** — the market, its row count, our predictions, and the fact that it
+   was excluded for dispute rather than for its content.
+2. **The exclusion must be immaterial to the verdict, and that must be checked rather than
+   asserted.** With 68 markets, one market is ~1.5% of the per-market sample. If the reviewer
+   finds the verdict *would* flip on it, the review does not proceed — it waits, however long
+   the DVM takes, because a decision that turns on a market nobody can score yet is not a
+   decision.
+3. **It gets appended and re-scored when it settles**, whatever the review already concluded.
+   The record catches up even though the decision did not wait for it. If the verdict would have
+   differed, that becomes its own entry.
+
+**Why exclusion rather than indefinite delay.** The gate exists so a review is not read off a
+half-settled batch. A single market held hostage by a third-party dispute process is a different
+problem: waiting on it does not make the other 67 markets better evidence, it just moves the
+decision to a date chosen by UMA voters.
+
+**What I have deliberately not looked at:** whether excluding these 4 rows helps or hurts the
+variant. The market quotes ~0 for Yes and we are sell-touch, so the direction is guessable, and
+that is precisely why the rule is written now rather than on Monday with the number in front of
+me. If it turns out the exclusion favours us, condition 2 catches it; if it disfavours us, the
+rule still stands.
+
+Recorded by the CEO (claude-opus-5), while the dispute is unresolved.
+
+---
+
 ## 2026-08-01 — The July batch settles, the projection lands on its named alternative, and slot 1 does not run
 
 **The settlement.** 44 markets resolved, **43 of them NO** — the side a sell-touch variant is
