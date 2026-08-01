@@ -28,6 +28,7 @@ you can count, and counting it changed what I think the firm's constraint is.
 | 13 | 07-29 | Post-count ladders (Elon / Trump weekly) | discarded at idea stage | **leg-level depth** — median **$7** at the ask; q⁻ 0.0709 vs q\* 0.1204 at $500 | **Kalshi `KXTRUTHSOCIAL`** — live, and it re-cut the cap Polymarket left stale |
 | 14 | 07-30 | Cumulative "by \<date\>" ladders (hazard term structure) | discarded at idea stage | **two, either sufficient:** matched-rung cross-venue agreement (median \|Δ\| 0.00 / 1.50pp) **and** Wilson upper 0.3455 vs break-even 0.2786 on **n=29 draws** | **Kalshi `KXGPT` / `KXCLAUDE` / `KXALITOANNOUNCERETIRE`** — 0.5–2.2M contracts per series, plus Manifold |
 | 15 | 07-31 | Same-venue nested-board dominance (primary ⊂ general; Σ=N baskets) | discarded at idea stage | **three, in funnel order:** opportunity count (**1 nesting + 4 Σ=N boards in 6,788 events**), then depth (the one real **+23.90c** arb dies between 100 and 250 baskets — **$8.88** total), then **carry: +0.35% annualised against ~4% risk-free** | **none found** — Kalshi's 11 twin series are all 0-volume / 0-OI. The counterparty is the venue's own spread |
+| 16 | 08-01 | Deep-tail carry (fade ≤5c standalone binaries) | discarded — **closest miss yet** | **cleared W2 and W3**, then died twice: cross-venue **direction** (8/8 matched pairs above us, mean +1.52pp, sign test **p=0.0039**) and **the bound at the venue's real horizon** — backtest **0 of 169** settled legs resolved Yes, +12.97pp over risk-free at executable prices, and Wilson upper **2.22%** still exceeds π\* **0.44%** at 150d where **97.8% of volume sits** | **Kalshi**, live and larger — `KXALIENS` 26.3M contracts, `KXTRUMPOUT27` 5.6M — pricing the same tails **higher** than we do |
 
 ## What the table says that the worry didn't
 
@@ -88,6 +89,33 @@ against **$7** on the post-count wings.
 So the second wall is real but has a shape: it bites where depth concentrates at a mode. That
 is a much more useful finding than "boards are illiquid", and it means the depth walk is a
 screen with a *pass* state, not just a kill.
+
+**2g. Object 16 cleared two walls and is the most useful failure the funnel has recorded.**
+It is the first object ever to clear **W3 (power)** — ~1,120 quasi-independent draws a year
+against the 243 needed — and it cleared **W2 (execution) by the largest margin on record**:
+**$19.4M at the NO ask, VWAP flat to $10,000**, against object 13's median $7. So it did not die
+of being small, illiquid, or unpriced, which is how nearly everything before it died.
+
+Because W3 passed, the researcher ran the backtest instead of proposing one, and the result is
+the cleanest illustration the firm owns of why a track record is not an edge:
+
+> **0 of 169** settled ≤5c legs resolved Yes. **+12.97pp over risk-free at executable prices.**
+> And it still fails — Wilson upper **2.22%** (169 legs) / **3.05%** (122 themes) against
+> π\* **1.57%** at 45 days and **0.44%** at 150 days.
+
+A perfect record, reachable at size, and uninvestable. The same shape as the 16/16 band at
+t=+10.3 in `wiki/reference/break-even-win-rate.md`, arrived at from the opposite direction.
+
+**The escape route was closed by the venue, not by us.** Shortening the horizon raises π\*, but
+≤45 days holds **0.5%** of band volume while **≥150 days holds 97.8% at π\* ≤ 0.75%**. The money
+is exactly where the arithmetic cannot work. That is a *maturity-schedule* failure — a new kind
+for us, and one no amount of better modelling touches.
+
+**And W1 killed it independently, on the gap's SIGN rather than its size.** Our thesis was "this
+tail is too dear"; the larger venue prices the same tails **higher** — 8 of 8 matched pairs, mean
++1.52pp, sign test p=0.0039. Kalshi pays collateral interest and we do not, so *ours* should be
+the dearer tail; the adjustment widens the gap against us. Checking direction rather than
+magnitude is now in `reference/sharp-line-screen.md`.
 
 **2f. A FOURTH wall: carry. A guaranteed profit is not an edge until it beats the risk-free rate.**
 Object 15 was chosen to be immune to wall 3 — a dominance claim is deterministic, so it needs
@@ -155,6 +183,22 @@ research object like any other, and we already hold the book history to build on
 question is not "may we", it is **"is it worth a slot to research a class of strategy the
 firm can never deploy without Felix lifting §5?"** That is his to answer, because it decides
 whether the reachable opportunity set is the one we have been searching.
+
+## Backlog seeds — set aside on W3 for free, worth a revisit
+
+Not ideas, not filed, and deliberately not promoted: two families surfaced in the 08-01 sweep
+and were killed on the **power** wall alone, at zero cost, because they are too young to have a
+record. Both are **supply-constrained rather than refuted**, and neither is blocked on Felix.
+
+- **Titled Tuesday chess placement ladders** — simulable from public Elo, state is not
+  glanceable, no plausible incumbent. **One settled instance ever**; the family launched last
+  week.
+- **GPU rental-price ladders** — monthly, ~$70–98k per board, no incumbent. Three correlated
+  series and about two months of history.
+
+Revisit when the settled count can support a bound. Recorded here so they are not re-discovered
+cold, and so the "is this the right pond" question has the *un-tested* candidates in view
+alongside the dead ones.
 
 ## How to use it
 
