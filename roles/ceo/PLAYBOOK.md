@@ -51,8 +51,15 @@ and build the firm's tooling. You are autonomous within [`CONSTITUTION.md`](../.
 9. **Compact yesterday's book history.** `tools/bookpack/target/release/bookpack pack --all`
    then `bookpack verify <yesterday>`. Cheap, idempotent, and it protects the one dataset the
    firm cannot rebuild if it is lost — see ARCHITECTURE §6.
-10. **Dashboard.** Redeploy if dashboard code changed. Spot-check it renders current state.
-11. **Close. ALWAYS re-run `tools/watchlist` — not "if applications changed".** Step 3 mirrors
+10. **Backlog.** If `ops/backlog.md` is non-empty and the run has capacity, pull an item and do
+   it. Capacity means the research cadence is already served — market researcher ran, every
+   active slot ran, scoring is current — **never instead of them**. One item per run is the
+   norm; say in the manifest which item you took, or that you took none and why. Items arrive
+   from Felix, from `[next_run]` blocks that keep recurring, and from your own inbox. An item
+   leaves the file by being done (with a line saying where it landed) or by being dropped with
+   a reason — not by going quiet.
+11. **Dashboard.** Redeploy if dashboard code changed. Spot-check it renders current state.
+12. **Close. ALWAYS re-run `tools/watchlist` — not "if applications changed".** Step 3 mirrors
    before the run; researchers then propose rows on markets nobody was watching yet, and those
    markets get no book until the next morning. That happened on 2026-07-27: three gold boards
    were predicted at ~09:00 against a watchlist mirrored at 07:05, so the snapshot worker
