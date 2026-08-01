@@ -350,34 +350,79 @@ pub async fn inboxes(env: &Env) -> String {
 
     let total: usize = by_role.iter().map(|(_, f)| f.len()).sum();
     let role_count = by_role.len();
+    let mut open_total = 0usize;
     let mut panels = String::new();
+
+    // One ROW per message, not one inlined document. The question this page
+    // answers is *what is waiting, on whom, and for how long* — a table answers
+    // it in seconds; sixteen stacked accordions answered it never.
     for (role, mut files) in by_role {
         files.sort();
         files.reverse(); // date-prefixed filenames → newest first
         let n = files.len();
-        let mut inner = String::new();
         let docs = data::read_all(env, files.iter().cloned()).await;
+        let mut rows: Vec<Vec<String>> = Vec::new();
         for (path, f) in files.iter().zip(&docs) {
             all_live &= f.live;
             let name = path.rsplit('/').next().unwrap_or(path).to_string();
-            inner.push_str(&message_doc(&name, &f.text));
-        }
-        if inner.is_empty() {
-            inner = "<p class=\"note\">No messages.</p>".to_string();
+            let (fields, body) = render::split_frontmatter(&f.text);
+            let get = |k: &str| {
+                fields
+                    .iter()
+                    .find(|(a, _)| a == k)
+                    .map(|(_, v)| v.clone())
+                    .unwrap_or_default()
+            };
+            let status = get("status");
+            if status == "open" {
+                open_total += 1;
+            }
+            let subject = {
+                let s = get("subject");
+                if s.is_empty() {
+                    render::md_title(body).unwrap_or_else(|| name.clone())
+                } else {
+                    s
+                }
+            };
+            let stem = name.trim_end_matches(".md").to_string();
+            rows.push(vec![
+                format!("<span class=\"mono\">{}</span>", esc(&get("date"))),
+                format!(
+                    "<a href=\"/inboxes/{}/{}\"><span class=\"cell-wrap\">{}</span></a>",
+                    esc(&role),
+                    esc(&stem),
+                    esc(&first_sentence(&subject, 140))
+                ),
+                render::status_badge(&status),
+                esc(&get("from")),
+            ]);
         }
         panels.push_str(&section_foot(
             &role,
             "messages waiting for this role",
             &badge(&format!("{n}"), if n > 0 { "info" } else { "" }),
-            &inner,
-            &format!("<span class=\"mono\">roles/{role}/inbox/</span>")
+            &if rows.is_empty() {
+                "<p class=\"note\">No messages.</p>".to_string()
+            } else {
+                table(
+                    &[("Date", ""), ("Subject", ""), ("Status", ""), ("From", "")],
+                    &rows,
+                )
+            },
+            &format!("<span class=\"mono\">roles/{role}/inbox/</span>"),
         ));
     }
 
     let body = format!(
         "{kpis}{panels}",
         kpis = stat_line(&[
-            (fmt_int(total as i64), "messages waiting".to_string(), ""),
+            (
+                fmt_int(open_total as i64),
+                "open — waiting on someone".to_string(),
+                if open_total > 0 { "warn" } else { "ok" },
+            ),
+            (fmt_int(total as i64), "messages total".to_string(), ""),
             (fmt_int(role_count as i64), "role inboxes".to_string(), ""),
         ]),
         panels = panels,
@@ -393,8 +438,13 @@ pub async fn inboxes(env: &Env) -> String {
     .await
 }
 
-/// A frontmattered markdown file as a collapsible document.
-fn message_doc(filename: &str, src: &str) -> String {
+/// A frontmattered markdown file, expanded — the detail page's whole content.
+///
+/// It used to have a collapsed twin, stacked sixteen deep on `/ideas` and
+/// `/inboxes`. Those pages are tables now and the documents live at their own
+/// addresses, so there is nothing left to collapse.
+fn message_doc_open(filename: &str, src: &str) -> String {
+    let open = true;
     let (fields, body) = render::split_frontmatter(src);
     let get = |k: &str| fields.iter().find(|(f, _)| f == k).map(|(_, v)| v.as_str());
     let title = get("subject").or_else(|| get("slug")).unwrap_or(filename);
@@ -445,7 +495,7 @@ fn message_doc(filename: &str, src: &str) -> String {
             },
             markdown(body)
         ),
-        false,
+        open,
     )
 }
 
@@ -453,6 +503,16 @@ fn message_doc(filename: &str, src: &str) -> String {
 // /ideas
 // ---------------------------------------------------------------------------
 
+/// `/ideas` — one **row** per object worked, not one document.
+///
+/// This page used to inline all sixteen idea files. At 15–35 KB of markdown
+/// each it shipped **350 KB** and answered no question at all: you could not
+/// tell which idea was which without opening every accordion. That is the
+/// wall-of-text failure `PRINCIPLES.md` names, and "tables over cards for
+/// anything with more than three attributes" is the rule it broke.
+///
+/// The fastest question this page answers is *what have we looked at, and what
+/// killed it?* — so that is the table, and the document moves to `/ideas/<slug>`.
 pub async fn ideas(env: &Env) -> String {
     let (paths, tree_live) = data::tree(env).await;
     let mut all_live = tree_live;
@@ -461,43 +521,86 @@ pub async fn ideas(env: &Env) -> String {
     files.retain(|p| !p.ends_with("README.md"));
     files.reverse(); // date-prefixed → newest first
 
-    let mut docs = String::new();
-    let mut statuses: Vec<String> = Vec::new();
     let read = data::read_all(env, files.iter().cloned()).await;
+    let mut rows: Vec<Vec<String>> = Vec::new();
+    let mut statuses: Vec<String> = Vec::new();
+
     for (path, f) in files.iter().zip(&read) {
         all_live &= f.live;
-        let (fields, _) = render::split_frontmatter(&f.text);
-        if let Some((_, v)) = fields.iter().find(|(k, _)| k == "status") {
-            statuses.push(v.clone());
+        let (fields, body) = render::split_frontmatter(&f.text);
+        let get = |k: &str| {
+            fields
+                .iter()
+                .find(|(a, _)| a == k)
+                .map(|(_, v)| v.clone())
+                .unwrap_or_default()
+        };
+        let stem = path.trim_start_matches("ideas/").trim_end_matches(".md");
+        let (date, slug) = stem.split_at_checked(10).unwrap_or((stem, ""));
+        let slug = slug.strip_prefix('-').unwrap_or(slug);
+
+        let status = get("status");
+        if !status.is_empty() {
+            statuses.push(status.clone());
         }
-        let name = path.rsplit('/').next().unwrap_or(path);
-        docs.push_str(&message_doc(name, &f.text));
+        // What decided it, in the author's own words. `killed_by` when the file
+        // has one; otherwise the first sentence of `summary`; otherwise the
+        // document's first heading. Never nothing — a row that says only
+        // "discarded" wastes the reader's click.
+        let decided = {
+            let k = get("killed_by");
+            if !k.is_empty() {
+                k
+            } else {
+                let s = get("summary");
+                if !s.is_empty() {
+                    s
+                } else {
+                    render::md_title(body).unwrap_or_default()
+                }
+            }
+        };
+
+        rows.push(vec![
+            format!("<span class=\"mono\">{}</span>", esc(date)),
+            format!("<a href=\"/ideas/{0}\">{0}</a>", esc(slug)),
+            render::status_badge(&status),
+            format!("<span class=\"cell-wrap\">{}</span>", esc(&first_sentence(&decided, 180))),
+        ]);
     }
 
     let trialing = statuses.iter().filter(|s| s.starts_with("trial")).count();
     let killed = statuses
         .iter()
-        .filter(|s| s.starts_with("kill") || s.as_str() == "rejected")
+        .filter(|s| s.starts_with("kill") || s.starts_with("discard") || *s == "rejected")
         .count();
 
     let body = format!(
         "{kpis}{panel}",
         kpis = stat_line(&[
-            (fmt_int(files.len() as i64), "ideas filed".to_string(), ""),
+            (fmt_int(files.len() as i64), "objects worked".to_string(), ""),
             (fmt_int(trialing as i64), "taken to trial".to_string(), "warn"),
             (fmt_int(killed as i64), "screened out".to_string(), ""),
         ]),
         panel = section_foot(
-            "Backlog",
-            "the market researcher's candidate strategies",
+            "Every object we have looked at",
+            "newest first — open one for the full write-up",
             &badge(&render::count(files.len(), "idea"), ""),
-            &if docs.is_empty() {
+            &if rows.is_empty() {
                 render::empty_state(
                     "No ideas filed yet",
                     "<div>The market researcher writes one per run.</div>",
                 )
             } else {
-                docs
+                table(
+                    &[
+                        ("Date", ""),
+                        ("Object", ""),
+                        ("Verdict", ""),
+                        ("What decided it", ""),
+                    ],
+                    &rows,
+                )
             },
             "<span class=\"mono\">ideas/</span><a href=\"/strategies\">Strategies →</a>"
         ),
@@ -509,6 +612,112 @@ pub async fn ideas(env: &Env) -> String {
         trail(&[("Research", ""), ("Ideas", "")]),
         all_live,
         &body,
+    )
+    .await
+}
+
+/// First sentence of `s`, capped at `max` characters. Summaries in idea files
+/// run to whole paragraphs; a table cell needs the claim, not the argument.
+///
+/// Entities are decoded first because the caller escapes afterwards. Markdown
+/// source may legitimately contain `&lt;` — a heading reading
+/// `Cumulative "by &lt;date&gt;" ladders` is correct in the file, since a bare
+/// `<date>` would be eaten as a tag — but pulling that into a table cell and
+/// escaping it again renders the entity itself. Decode, then let `esc` do its
+/// single job.
+fn first_sentence(s: &str, max: usize) -> String {
+    let s = s
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&#39;", "'")
+        .replace("&amp;", "&");
+    let s = s.trim().trim_matches('"').trim();
+    let cut = s
+        .find(". ")
+        .map(|i| i + 1)
+        .filter(|i| *i <= max)
+        .unwrap_or_else(|| s.len().min(max));
+    let mut out: String = s.chars().take(cut).collect();
+    if out.len() < s.len() {
+        out.push('…');
+    }
+    out
+}
+
+/// One idea, in full. The page it links from is the index.
+pub async fn idea_page(env: &Env, slug: &str) -> String {
+    let (paths, tree_live) = data::tree(env).await;
+    let path = data::files_in(&paths, "ideas", ".md")
+        .into_iter()
+        .find(|p| p.trim_end_matches(".md").ends_with(slug));
+
+    let Some(path) = path else {
+        return shell(
+            env,
+            "/ideas",
+            trail(&[("Research", ""), ("Ideas", "/ideas"), (slug, "")]),
+            tree_live,
+            &render::empty_state(
+                "No such idea",
+                "<div>Nothing in <span class=\"mono\">ideas/</span> matches that name.</div>",
+            ),
+        )
+        .await;
+    };
+
+    let f = data::text(env, &path).await;
+    let name = path.rsplit('/').next().unwrap_or(&path).to_string();
+    let (fields, body) = render::split_frontmatter(&f.text);
+    let get = |k: &str| fields.iter().find(|(a, _)| a == k).map(|(_, v)| v.as_str());
+
+    let mut meta = String::new();
+    if let Some(d) = get("date") {
+        meta.push_str(&esc(d));
+    }
+    if let Some(m) = get("model") {
+        meta.push_str(&format!(" · {}", esc(m)));
+    }
+    meta.push_str(&format!(" · <span class=\"mono\">{}</span>", esc(&name)));
+
+    let mut facts = String::new();
+    for (k, v) in &fields {
+        if matches!(k.as_str(), "date" | "slug" | "model") {
+            continue;
+        }
+        if v.starts_with('[') {
+            let list: Vec<String> = v
+                .trim_matches(['[', ']'])
+                .split(',')
+                .map(|s| s.trim().trim_matches('"').to_string())
+                .filter(|s| !s.is_empty())
+                .collect();
+            facts.push_str(&render::row(k, &chip_row(&list)));
+        } else if k == "status" {
+            facts.push_str(&render::row(k, &render::status_badge(v)));
+        } else {
+            facts.push_str(&render::row(k, &esc(v)));
+        }
+    }
+
+    let inner = format!(
+        "{}<div class=\"prose\">{}</div>",
+        if facts.is_empty() { String::new() } else { render::rows(&facts) },
+        markdown_body(body),
+    );
+
+    shell(
+        env,
+        "/ideas",
+        trail(&[("Research", ""), ("Ideas", "/ideas"), (slug, "")]),
+        f.live && tree_live,
+        &section_foot(
+            slug,
+            &meta,
+            "",
+            &inner,
+            "<span class=\"mono\">ideas/</span><a href=\"/ideas\">← All ideas</a>",
+        ),
     )
     .await
 }
@@ -760,4 +969,53 @@ fn book_table(doc_json: &Value) -> String {
         ],
         &rows,
     )
+}
+
+/// One inbox message, in full. Linked from the `/inboxes` table.
+pub async fn inbox_page(env: &Env, role: &str, stem: &str) -> String {
+    // Rebuild the path rather than trusting the URL: a role is a path segment
+    // and a stem is a filename, and neither may climb out of roles/*/inbox/.
+    if role.contains("..") || stem.contains("..") || stem.contains('/') {
+        return shell(
+            env,
+            "/inboxes",
+            trail(&[("Firm", ""), ("Inboxes", "/inboxes")]),
+            true,
+            &render::empty_state("Bad path", ""),
+        )
+        .await;
+    }
+    let path = format!("roles/{role}/inbox/{stem}.md");
+    let f = data::text(env, &path).await;
+
+    if f.text.trim().is_empty() {
+        return shell(
+            env,
+            "/inboxes",
+            trail(&[("Firm", ""), ("Inboxes", "/inboxes"), (stem, "")]),
+            f.live,
+            &render::empty_state(
+                "No such message",
+                &format!("<div><span class=\"mono\">{}</span></div>", esc(&path)),
+            ),
+        )
+        .await;
+    }
+
+    let name = format!("{stem}.md");
+    shell(
+        env,
+        "/inboxes",
+        trail(&[("Firm", ""), ("Inboxes", "/inboxes"), (stem, "")]),
+        f.live,
+        &format!(
+            "{}{}",
+            message_doc_open(&name, &f.text),
+            render::note(&format!(
+                "<span class=\"mono\">{}</span><a href=\"/inboxes\">← All inboxes</a>",
+                esc(&path)
+            )),
+        ),
+    )
+    .await
 }

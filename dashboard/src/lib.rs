@@ -161,6 +161,10 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .get_async("/ideas", |_, ctx| async move {
             Response::from_html(firm::ideas(&ctx.env).await)
         })
+        .get_async("/ideas/:slug", |_, ctx| async move {
+            let slug = ctx.param("slug").cloned().unwrap_or_default();
+            Response::from_html(firm::idea_page(&ctx.env, &slug).await)
+        })
         .get_async("/predictions", |_, ctx| async move {
             Response::from_html(predictions::page(&ctx.env).await)
         })
@@ -198,6 +202,11 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         })
         .get_async("/inboxes", |_, ctx| async move {
             Response::from_html(firm::inboxes(&ctx.env).await)
+        })
+        .get_async("/inboxes/:role/:stem", |_, ctx| async move {
+            let role = ctx.param("role").cloned().unwrap_or_default();
+            let stem = ctx.param("stem").cloned().unwrap_or_default();
+            Response::from_html(firm::inbox_page(&ctx.env, &role, &stem).await)
         })
         .get_async("/wiki", |req, ctx| async move {
             // Legacy deep links: /wiki?page=<path>

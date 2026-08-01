@@ -452,6 +452,13 @@ CLOUDFLARE_API_TOKEN=... npx wrangler deploy
   tested from the deployed Worker.
 - `wrangler.toml` runs `worker-build` as the build command, so `npx wrangler deploy` is
   the whole pipeline (wrangler is fetched by npx, no `package.json` needed).
+- **A deploy can ship the PREVIOUS build and report success.** Seen 2026-08-02: two
+  consecutive deploys printed `Uploaded` with a fresh Version ID while the build step said
+  `Finished in 0.06s` — cargo considered the wasm artifact fresh and rebuilt nothing, so the
+  live Worker kept serving the old code. It cost an hour of concluding that correct fixes
+  were wrong. **Read the build line, not the upload line**: a real rebuild prints
+  `Compiling orakel-dashboard` and takes ~25s. If it does not, `touch src/*.rs` and deploy
+  again. Deleting `build/` is not enough — the stale artifact lives in `target/`.
 - First deploy prints the `*.workers.dev` URL.
 
 ### Cloudflare Access (do before sharing the URL)

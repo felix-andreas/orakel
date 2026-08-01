@@ -931,15 +931,43 @@ pub fn split_frontmatter(src: &str) -> (Vec<(String, String)>, &str) {
     };
     let head = &rest[..end];
     let body = rest[end + 4..].trim_start_matches(['\r', '\n']);
-    let fields = head
-        .lines()
-        .filter_map(|l| {
-            let (k, v) = l.split_once(':')?;
-            let v = v.trim();
-            let v = v.split(" #").next().unwrap_or(v).trim();
-            Some((k.trim().to_string(), v.to_string()))
-        })
-        .collect();
+
+    // Fold YAML block scalars (`key: >-`, `>`, `|`, `|-`) into their value.
+    //
+    // Without this the parser returned the literal marker: `/ideas` rendered a
+    // row whose "what decided it" column read **`>-`**, which is the worst kind
+    // of cell — it occupies the space where the answer should be. Every idea
+    // file written since 07-25 uses a block scalar for `summary`, so this was
+    // most of them.
+    //
+    // Continuation lines are those indented past the key. Folded style (`>`)
+    // joins with spaces, literal style (`|`) keeps newlines; both are needed
+    // because both appear in `ideas/` and `roles/*/inbox/`.
+    let mut fields: Vec<(String, String)> = Vec::new();
+    let mut lines = head.lines().peekable();
+    while let Some(l) = lines.next() {
+        let Some((k, v)) = l.split_once(':') else { continue };
+        let key = k.trim().to_string();
+        let v = v.trim();
+        let v = v.split(" #").next().unwrap_or(v).trim();
+
+        let literal = v.starts_with('|');
+        if v.starts_with('>') || literal {
+            let mut parts: Vec<String> = Vec::new();
+            while let Some(next) = lines.peek() {
+                let indent = next.len() - next.trim_start().len();
+                if next.trim().is_empty() || indent > 0 {
+                    parts.push(lines.next().unwrap().trim().to_string());
+                } else {
+                    break;
+                }
+            }
+            let joined = if literal { parts.join("\n") } else { parts.join(" ") };
+            fields.push((key, joined.trim().to_string()));
+        } else {
+            fields.push((key, v.to_string()));
+        }
+    }
     (fields, body)
 }
 

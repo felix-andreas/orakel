@@ -1154,6 +1154,21 @@ table.data tbody tr:last-child td {
   border-bottom: none;
 }
 
+/* A cell holding a sentence rather than a value.
+   `table.data td` is `white-space: nowrap` because most cells are numbers,
+   slugs and badges, and wrapping those makes a table ragged and slower to
+   scan. But the tables that replaced the wall-of-text pages carry one
+   explanatory sentence per row — "what decided it", a message subject — and
+   that column has to wrap or it truncates the only thing worth reading.
+   Capped at a reading measure so one long row cannot stretch the table
+   sideways and push the columns after it off screen. */
+.cell-wrap {
+  display: block;
+  white-space: normal;
+  max-width: 52ch;
+  line-height: 1.45;
+}
+
 table.data tbody tr:hover {
   background: var(--hover);
 }
