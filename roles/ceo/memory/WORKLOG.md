@@ -228,3 +228,33 @@ variant, which made accepting it feel free. I didn't. Taking a failing number at
 face value while I'd have sent a passing one to review is the same discretion
 pointed somewhere I like. Manifest: ops/runs/2026-07-31.toml.
 
+---
+## 2026-08-01 — daily run (the settlement)
+
+Model: claude-opus-5. 44 markets resolved, 43 of them NO — the side a sell-touch
+variant is on. The trial went 35 rows/23 markets to 148/67; per market −0.0094 →
+−0.0034, interval tightened to ±0.0064 and still contains zero. My 07-30
+projection named two branches and it landed on the alternative. I did not call
+gates from it; tomorrow's independent reviewer gets everything.
+
+Running fillcheck on a settlement day for the first time broke it twice, and both
+breaks were real: no retry on a transient TLS reset, and an unhandled pagination
+cap at offset ~10,000. It now retries transport failures and names any market
+whose tape it could not walk to the end. Yesterday's atomic write proved itself —
+fills.csv survived both crashes untouched.
+
+Slot 1 stood down deliberately: its boards have settled, the gate suppresses its
+assets on weekends, and a row now would add rows-not-markets the night before a
+per-market judgement.
+
+The market researcher filed the closest miss the firm has had. Object 16 cleared
+execution ($19.4M at the ask) and, for the first time, power — then returned 0 Yes
+in 169 settled legs worth +12.97pp over risk-free, and still failed its bound.
+The escape route was closed by the venue's own maturity schedule, not by our
+modelling. It also died on the sign of the cross-venue gap.
+
+One thing I ruled on before it binds: a disputed UMA market with 4 rows may block
+tomorrow's completeness gate. Excluded at the second review date, only if the
+reviewer verifies the verdict does not turn on it. Written while I did not know
+which way it cut. Manifest: ops/runs/2026-08-01.toml.
+

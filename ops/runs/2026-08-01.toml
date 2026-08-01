@@ -1,0 +1,193 @@
+date = "2026-08-01"
+trigger = "daily (fired 01:09 UTC, inside the weekend window 00:00-06:00 UTC)"
+model = "claude-opus-5"
+outcome = "ok"
+
+summary = """
+The settlement day. 44 markets resolved and 43 of them NO — the side a sell-touch variant is
+on — taking the trial from 35 rows over 23 markets to 148 over 67. The per-market interval
+tightened to +/-0.0064 and still contains zero, which is the branch I named as the alternative
+when I recorded the projection on 07-30. Running fillcheck against a settlement day for the
+first time broke it twice and both breaks were real: no retry on a transient reset, and a
+pagination cap the tool met by failing instead of by saying so. The market researcher filed the
+firm's closest miss — an object that cleared two walls, returned 0 Yes in 169 settled legs, and
+is still uninvestable. Slot 1 did not run, on purpose.
+"""
+
+[[steps]]
+n = 1
+what = "Orient"
+result = "Yesterday's manifest present, tree clean. CEO inbox: 1 open (dashboard hand-off, deliberate). Felix: 5 open, ranked in his inbox README."
+
+[[steps]]
+n = 2
+what = "Resolution sweep — 44 newly resolved, 43 of them NO"
+result = """
+tools/resolve-sweep against the LEDGER: 60 markets / 132 rows outstanding, 44 closed, 16 open,
+0 unaccounted, 0 identity failures. Both Gamma query forms unioned, which mattered — the batch
+was mixed, as UMA settled between 14:21Z and 23:02Z.
+Added `--emit` to the sweep so the rows come out through csv.writer. 44 rows is not something
+anyone should hand-type, and hand-typing is exactly how an unquoted comma silently dropped a
+market from the score for two days. Validated before appending: 44 rows, 5 fields each, no
+duplicates internally or against the file, one Yes and 43 No.
+"""
+
+[[steps]]
+n = 3
+what = "fillcheck broke twice on its first settlement day, and both were real"
+result = """
+1. Died at market 39 of 83 with `Tls Error: Connection reset by peer` and no retry. A settlement
+   day walks tens of thousands of requests; the tape is immutable history, so a retry can only
+   return the same bytes. Four attempts with backoff now, and a non-2xx status is deliberately
+   NOT retried — that is the API answering.
+2. Then died on HTTP 400 at `offset=10500`. Probed the cap directly: offset 9,500 and 10,000
+   return 200, 10,500 returns 400. The Data API caps pagination near 10,000, the same shape of
+   cap Gamma has at a different number. A market busier than that cannot be walked to the end —
+   which is a fact about the data, not an error to swallow. It now stops at the cap and NAMES
+   the affected market, because `fills.csv` is documented as a lower bound and a truncated tape
+   just makes it a weaker one; the unforgivable thing would be not saying which rows.
+   One market hit it today.
+Yesterday's atomic-write fix proved itself through both crashes: `fills.csv` was untouched, so
+scoring never saw a partial file.
+"""
+
+[[steps]]
+n = 4
+what = "Scoring — the trial's real evidence"
+result = """
+35 rows / 23 markets -> 148 rows / 67 markets.
+Per market -0.0094 -> -0.0034, 95% CI [-0.0280, +0.0092] -> [-0.0097, +0.0030]. Still contains
+zero. Tradeability 43% -> 63% (93/148), mean exec_edge +0.2098.
+By horizon: 7-30d +0.0041 (20 markets), 0-1d +0.0012 (23 markets, 4/23 fillable), 3-7d -0.0083
+(41 markets), 1-3d -0.0187 (18 markets). Every level's interval contains zero.
+"""
+
+[[steps]]
+n = 5
+what = "The 07-30 projection resolved on its named alternative"
+result = """
+I wrote on 07-30: 21 -> ~90 markets narrows the interval to about +/-0.010; today's estimate
+sits outside that; so if the mean HOLDS the rule says discard, and if it MOVES TOWARD ZERO —
+what an unlucky-draw tail would look like — it stays inconclusive.
+The interval came in at +/-0.0064, tighter than I guessed. The mean moved toward zero. It landed
+on the branch named as the alternative. Naming both in advance is the only reason that sentence
+is worth anything today.
+I did NOT call gates from it. Gate 2 now looks comfortable and gate 1 still straddles, and both
+would be easy to write down as settled — but a rule applied selectively when the answer looks
+obvious is not a rule. It all goes to tomorrow's independent reviewer.
+"""
+
+[[steps]]
+n = 6
+what = "Slot 1 stood down — a decision, not an omission"
+result = """
+Its trial is reviewed tomorrow, its July boards have settled, the stale-feed gate suppresses
+WTI/gold/silver on weekend runs anyway, and any row emitted now would land on a market already
+predicted many times — adding rows and not markets, on the eve of a per-market judgement. There
+is no version of today where slot 1 emitting changes what tomorrow can conclude, and one where
+it looks like padding the sample the night before the verdict. The predicting phase is over.
+"""
+
+[[steps]]
+n = 7
+what = "Ruled on the disputed market while it was still hypothetical"
+result = """
+16 markets / 19 rows outstanding. Fifteen are BTC legs ending 03:59:59Z tonight. The sixteenth is
+`will-wti-reach-90-in-july-2026-from-july-27`, 4 rows, `umaResolutionStatus: disputed`, quoting
+0.0005/0.9995 — and a UMA dispute goes to a DVM vote that takes days, so it may block the
+completeness gate tomorrow AND Monday.
+Rule written before it binds: a market still disputed at the second review date is EXCLUDED and
+the review proceeds — named in the review, re-scored when it settles, and ONLY if the reviewer
+verifies the verdict does not turn on it. If excluding it would flip a gate, the review waits
+for the DVM however long that takes.
+I did not look at whether excluding those 4 rows helps or hurts us. The market quotes ~0 for Yes
+and we are sell-touch, so the direction is guessable — which is exactly why the rule is written
+now and not on Monday with the number in front of me.
+"""
+
+[[steps]]
+n = 8
+what = "Market researcher (claude-opus-5, max) — object 16, the closest miss yet"
+result = """
+Deep-tail carry: fading Polymarket's <=5c standalone binaries, held to redemption. 9,347 events
+/ 96,642 markets pulled; 127 in-band holding $206.7M.
+FIRST OBJECT EVER TO CLEAR THE POWER WALL (~1,120 quasi-independent draws/year against 243
+needed) and the largest execution margin on record ($19.4M at the NO ask, VWAP flat to $10,000,
+against object 13's median $7). It did not die of being small, illiquid or unpriced.
+Because power passed it ran the backtest rather than proposing one: 0 of 169 settled <=5c legs
+resolved Yes, +12.97pp over risk-free at executable prices — and it STILL fails. Wilson upper
+2.22% (169 legs) / 3.05% (122 themes) against pi* 1.57% at 45d and 0.44% at 150d. A perfect
+record, reachable at size, uninvestable; the same shape as the 16/16 band at t=+10.3, reached
+from the opposite direction.
+The escape route is closed by the VENUE: shortening the horizon raises pi*, but <=45d holds 0.5%
+of band volume while >=150d holds 97.8% at pi* <= 0.75%. The money sits exactly where the
+arithmetic cannot work — a maturity-schedule failure, new to us.
+Killed independently on the gap's SIGN: our thesis was "this tail is too dear", and Kalshi
+prices the same tails HIGHER — 8 of 8 matched pairs, mean +1.52pp, sign test p=0.0039. Kalshi
+pays collateral interest and we do not, so ours should be the dearer tail; the adjustment widens
+the gap against us.
+Self-corrected a wrong denominator mid-run: its first power pass counted the LIVE cohort instead
+of the settled rate and concluded "4-22 years, dead". Right verdict, false basis — it said so.
+"""
+
+[[steps]]
+n = 9
+what = "Health checks + book compaction + watchlist"
+result = """
+Dashboard 302 without Access headers / 200 with. Snapshot worker 200. bookpack packed 07-31
+(4028 rows) and today's partial. Watchlist rebuilt: the two July gold legs that settled were
+dropped automatically. Worklogs current.
+"""
+
+[failures]
+mine = """
+1. I had never run fillcheck on a settlement day, so two bugs that only appear at volume — no
+   retry, and an unhandled pagination cap — waited until the day the evidence actually mattered.
+   The same class as slot 1's runbook: a procedure that has only been exercised on easy days has
+   not been exercised.
+"""
+theirs = """
+The market researcher corrected its own power calculation mid-run, having counted the live
+cohort as if it were an arrival rate: "I'd have filed a right verdict on a false basis." That is
+the second time this week an agent has volunteered a correction that only it could have caught.
+"""
+tooling = """
+Weekend window is 00:00-06:00 UTC and the settlement run is the heaviest of the cycle — fillcheck
+alone walks 83 markets. It fit, but with less margin than a weekday.
+`git pull --rebase` still needs the explicit `origin main` in this checkout.
+"""
+
+[spend]
+subagents = 1
+subagent_tokens = 263_970
+note = "market researcher only. Slot 1 deliberately did not run."
+
+[health]
+dashboard_access = "302 without / 200 with — pass"
+snapshot_worker = "pass"
+parquet = "07-31 packed (4028 rows)"
+worklogs = "current"
+slots_producing = "market researcher yes; slot 1 stood down by decision"
+watchlist = "settled July legs dropped automatically"
+
+[artifacts]
+wiki_added = ["reference/rare-event-edges-need-rare-event-samples.md"]
+wiki_amended = [
+  "reference/depth-lives-where-the-edge-is-not.md (the wall needs a MODE — now bounded by two clears, $264 and $19.4M)",
+  "reference/sharp-line-screen.md (check the gap's SIGN, not its size)",
+]
+decisions = 2
+predictions_appended = 0
+resolutions_appended = 44
+ledger_total = 167
+scored_total = 148
+
+[next_run]
+items = [
+  "08-02 IS THE TRIAL REVIEW. Sweep first; the 15 BTC legs settle 03:59:59Z tonight and should be resolved. Then the completeness gate, then spawn the INDEPENDENT reviewer per ops/reviews/README.md — the brief is already written",
+  "The disputed WTI market may block the gate. The rule is in ops/decisions.md (08-01 late): excluded at the SECOND review date, only if the reviewer verifies the verdict does not turn on it",
+  "Slot 1 supplies analysis, never verdicts. Its sizing close says gate 3 fails at the executable price on nominal n alone — that goes to the reviewer as evidence, not as a finding",
+  "Ask the reviewer explicitly whether gate 3 is decidable WITHOUT Friday's resolutions. If an edge smaller than the spread settles it, the outcome was set by the book rather than the forecast",
+  "If ladder-rv is discarded the firm has zero live strategies and a backlog of one blocked idea. Two backlog seeds are recorded in ops/idea-funnel.md (chess placement ladders, GPU rental ladders) — both supply-constrained, neither blocked on Felix",
+  "Felix: the war ruling is still the one item worth five minutes, and it matters more if the slot empties",
+]

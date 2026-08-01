@@ -4,28 +4,24 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 
 ## Short-term (current run / immediate)
 
-- **2026-07-31 run** (ops/runs/2026-07-31.toml). Last predicting day; boards closed 21:00Z
-  tonight. Slot 1 day 9: 4 rows (ledger 167). Market researcher killed object 15.
-- **SATURDAY 08-01 IS THE SCORING RUN.** Follow `results/friday-2026-07-31-runbook.md`, which
-  slot 1 dry-ran and **corrected today — four steps were wrong, two failing silently with exit
-  0.** Before anything: **move `data/events` aside** so `discover` refetches (it caches on file
-  existence — the SIXTH existence-is-not-completeness instance). `tape`/`wash` take **space**-
-  separated args; `discover`/`live` take **one comma**-separated arg; the wrong form matches
-  nothing and exits 0. Judge `selftest` by exit code. The Saturday BTC pass needs its own
-  completeness block (Friday's omits BTCUSDT).
-- **THE EDGE IS SMALLER THAN THE SPREAD, and this does not depend on Friday.** Nominal margin
-  **+0.73pp** against a median half-spread of **1.00c**; selling at the bid gives q* 0.8316 vs
-  q⁻ 0.8289 — failing by 0.27pp at nominal n, zero fee, before any correlation argument.
-  Break-even half-spread 0.73c against a median 2.0c-wide book. n_eff ∈ **[118, 173]**, failing
-  across the range. Kelly at the 95% lower bound is **negative**.
-- **THE REVIEW IS EVALUATED BY AN INDEPENDENT AGENT, not me and not slot 1** (decided 07-31,
-  before any board closed). Form: `ops/reviews/2026-08-02-ladder-rv.md`, thresholds verbatim,
-  PASS/FAIL/UNEVALUABLE per gate. Brief: `ops/reviews/README.md`. **Slot 1 supplies analysis,
-  never verdicts** — it handed me one twelve hours after the rule and I did not take it, because
-  accepting an unfavourable verdict establishes that it gives verdicts at all.
-- Ask the reviewer explicitly: **is gate 3 decidable without Friday's resolutions?** If so, the
-  outcome was set by the book rather than the forecast, and nine days of prediction measured the
-  wrong question.
+- **2026-08-01 run** (ops/runs/2026-08-01.toml). The settlement. 44 markets resolved, **43 NO** —
+  the side a sell-touch variant is on. Slot 1 stood down by decision; market researcher filed
+  object 16.
+- **TOMORROW IS THE TRIAL REVIEW.** Sweep, completeness gate, then spawn the **independent
+  reviewer** — brief already written in `ops/reviews/README.md`, form in
+  `ops/reviews/2026-08-02-ladder-rv.md`. **Slot 1 supplies analysis, never verdicts.**
+- **Trial state: 148 rows / 67 markets, per market −0.0034, CI [−0.0097, +0.0030]** — still
+  contains zero. Tradeability **63%** (93/148), exec_edge +0.2098. Every horizon level straddles.
+  My 07-30 projection named two branches; the mean moved toward zero, so it landed on the
+  alternative. **I did not call gates from it** — a rule applied selectively when the answer
+  looks obvious is not a rule.
+- **The disputed market**: `will-wti-reach-90-from-july-27`, 4 rows, `umaStatus: disputed`, may
+  block the gate tomorrow and Monday. Ruled 08-01 while hypothetical: excluded at the **second**
+  review date, named, re-scored when it settles, and **only if the reviewer verifies the verdict
+  does not turn on it**. 15 BTC legs settle 03:59:59Z tonight.
+- If ladder-rv is discarded: **zero live strategies, backlog of one blocked idea.** Two seeds in
+  the funnel (chess placement ladders, GPU rental ladders), both supply-constrained, neither
+  blocked on Felix. Not a reason to lower the bar — that cost us a variant once.
 
 ## Medium-term (bootstrap phase)
 
@@ -33,7 +29,7 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
   applications ∪ unresolved-prediction markets − resolved. **`closed=false` on `/events`
   filters EVENTS, not their nested markets** — my first version added 18 resolved legs, some
   settled 07-01. Filter each nested market on its own flag.
-- **`ops/idea-funnel.md` is the kill table — 15 objects, FOUR walls.** Run them cheapest first.
+- **`ops/idea-funnel.md` is the kill table — 16 objects, FOUR walls.** Run them cheapest first.
   **W1 incumbent** (9 kills): somebody already prices it. The 3 survivors are exactly the 3 with
   no incumbent found. *Vendor-generic tickers carry millions of contracts while object-specific
   ones are 0-market shells — search both.*
@@ -49,6 +45,14 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
   can route around. Both W2 survivors are the same untested thing, **maker-side**: §5 forbids
   *executing*, not *researching*, so the open question is whether a class we cannot deploy is
   worth a slot. With Felix; not before 08-02.
+  **Object 16 is the closest miss and the most useful failure.** First to clear W3 (~1,120
+  draws/yr vs 243) and the largest W2 margin on record ($19.4M at the ask, flat to $10k). Ran the
+  backtest: **0 of 169** settled tail legs resolved Yes, +12.97pp over risk-free at executable
+  prices — **and it still fails**, Wilson upper 2.22% vs π\* 0.44% at 150d. A perfect record,
+  reachable at size, uninvestable. The escape route is closed by the VENUE: ≤45d holds 0.5% of
+  band volume, ≥150d holds **97.8%** at π\* ≤ 0.75%. A maturity-schedule failure — better
+  modelling does not touch it. It also died on the gap's **sign**: Kalshi prices the same tails
+  HIGHER, 8/8 pairs, p=0.0039.
 - "Idea supply is the binding constraint" was **wrong** (supply ~2.2 objects/day); what is
   scarce is objects with a *live tradeable board*. A second researcher fixes nothing.
 - `slots_total = 5` is a **ceiling, not a target**. Filling a slot to look busy cost us
@@ -65,6 +69,8 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 - **Four ways a quoted price misleads**, all wiki pages: phantom midpoints (dead book),
   midpoint-is-not-a-fill (you trade at the bid), tape-gate (tight spread, zero trades ever),
   stale-feed-gate (**ours** is the broken number).
+- **A perfect record is not an edge.** 16/16 at t=+10.3 and 0-for-169 at +12.97pp both fail their
+  break-even bound. Report q\*/π\*, the point estimate, and the 95% bound — and refuse on the bound.
 - **Report per-MARKET before per-ROW.** Rows are not independent: 19 markets −0.0051 vs 25
   rows −0.0173, 3.4× worse purely from predicting the losing market four times.
 - **Gamma's `closed` is a FILTER in BOTH directions**, and worse: on a resolution day the
