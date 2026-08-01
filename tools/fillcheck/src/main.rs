@@ -130,9 +130,19 @@ fn main() -> Result<()> {
     );
 
     let mut feed: HashMap<String, Vec<Fill>> = HashMap::new();
+    let mut truncated: Vec<String> = Vec::new();
     for (i, cid) in markets.iter().enumerate() {
-        let fills = fetch_market(cid).with_context(|| format!("fetching trades for {cid}"))?;
-        eprintln!("  [{:>3}/{}] {cid} — {} trades", i + 1, markets.len(), fills.len());
+        let (fills, cut) = fetch_market(cid).with_context(|| format!("fetching trades for {cid}"))?;
+        eprintln!(
+            "  [{:>3}/{}] {cid} — {} trades{}",
+            i + 1,
+            markets.len(),
+            fills.len(),
+            if cut { "  [TRUNCATED at the API's offset cap]" } else { "" }
+        );
+        if cut {
+            truncated.push((*cid).to_string());
+        }
         feed.insert((*cid).to_string(), fills);
     }
 
@@ -239,6 +249,17 @@ fn main() -> Result<()> {
         .with_context(|| format!("promoting {} to {}", tmp.display(), out.display()))?;
 
     println!("wrote {}", out.display());
+    if !truncated.is_empty() {
+        // Named, not counted: a reader has to be able to tell which rows carry a
+        // weaker lower bound than the rest.
+        println!(
+            "\n{} market(s) hit the API's {OFFSET_CAP}-trade offset cap — their tape is INCOMPLETE,\nso reachability on their rows is a weaker lower bound than elsewhere:",
+            truncated.len()
+        );
+        for cid in &truncated {
+            println!("  {cid}");
+        }
+    }
     println!(
         "{reachable}/{known} rows ever saw a bid at or above the midpoint they were scored against"
     );
@@ -296,11 +317,55 @@ fn read_predictions(path: &Path) -> Result<Vec<Row>> {
 
 /// Page the public trade feed for one market, folding every trade into
 /// YES-equivalent units.
-fn fetch_market(condition_id: &str) -> Result<Vec<Fill>> {
+/// One page of the trade tape, retried on transport failure.
+///
+/// A settlement day walks ~83 markets of several thousand trades each, which is
+/// tens of thousands of requests, and a single reset used to kill the whole run:
+/// on 2026-08-01 it died at market 39 of 83 with `Tls Error: Connection reset by
+/// peer` and did no work at all. The tape is immutable history, so a retry can
+/// only return the same bytes — there is no correctness cost, only patience.
+///
+/// A non-2xx status is *not* retried: that is the API answering, and repeating
+/// it is how you turn a bad request into a rate-limit.
+fn get_page(url: &str) -> Result<attohttpc::Response> {
+    let mut last = None;
+    for attempt in 0..4 {
+        match attohttpc::get(url).send() {
+            Ok(r) => return Ok(r),
+            Err(e) => {
+                last = Some(e);
+                std::thread::sleep(std::time::Duration::from_secs(1 << attempt));
+            }
+        }
+    }
+    Err(anyhow::Error::from(last.expect("loop ran at least once")))
+        .with_context(|| format!("4 attempts failed for {url}"))
+}
+
+/// The Data API refuses `offset` past ~10,000 with a **400**, not an empty page.
+/// Probed 2026-08-01 on a live market: offset 9,500 and 10,000 return 200,
+/// 10,500 returns 400. Gamma has the same shape of cap at a different number
+/// (`wiki/recipes/polymarket-api.md`), so treat it as a house style.
+///
+/// A market busier than this cannot be walked to the end, and that is a fact
+/// about the data, not an error to swallow — `fetch_market` reports it and the
+/// caller names the affected markets. `fills.csv` is already documented as a
+/// LOWER bound on reachability; a truncated tape simply makes it a weaker one,
+/// and the one thing we must not do is fail to say which rows it applies to.
+const OFFSET_CAP: usize = 10_000;
+
+/// Trades for one market, and whether the tape was truncated by the cap.
+fn fetch_market(condition_id: &str) -> Result<(Vec<Fill>, bool)> {
     let mut out = Vec::new();
+    let mut truncated = false;
     for page in 0..MAX_PAGES {
-        let url = format!("{DATA_API}?market={condition_id}&limit={PAGE}&offset={}", page * PAGE);
-        let resp = attohttpc::get(&url).send()?;
+        let offset = page * PAGE;
+        if offset > OFFSET_CAP {
+            truncated = true;
+            break;
+        }
+        let url = format!("{DATA_API}?market={condition_id}&limit={PAGE}&offset={offset}");
+        let resp = get_page(&url)?;
         if !resp.is_success() {
             bail!("data-api returned {} for {url}", resp.status());
         }
@@ -320,5 +385,5 @@ fn fetch_market(condition_id: &str) -> Result<Vec<Fill>> {
             break;
         }
     }
-    Ok(out)
+    Ok((out, truncated))
 }

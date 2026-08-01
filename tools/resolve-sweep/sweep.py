@@ -38,9 +38,18 @@ something resolve while we weren't looking?"*
   has nothing to do with the query. So every returned row's `conditionId` is
   asserted to be one we asked for.
 
-Usage: sweep.py [--repo <root>]   — prints findings; never writes.
-The CEO appends to `resolutions.csv` by hand, because that file is the firm's
-evidence and a script should not be able to grow it unattended.
+Usage:
+  sweep.py [--repo <root>]           — human-readable findings
+  sweep.py [--repo <root>] --emit    — the same findings as `resolutions.csv` rows
+
+**Neither mode writes the file.** `resolutions.csv` is the firm's evidence and a
+script should not be able to grow it unattended; the CEO reviews and appends.
+
+`--emit` exists because hand-typing is how we corrupted it. On 2026-07-27 a note
+containing an unquoted comma made a row six fields wide, and since a resolution is
+a join key that silently dropped every prediction on that market from the score for
+two days. `--emit` uses `csv.writer`, so quoting is not a thing anyone has to
+remember — and a 44-row settlement day is not a thing anyone should be typing.
 """
 
 import argparse
@@ -84,18 +93,22 @@ def owed(repo: pathlib.Path):
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", default=".")
+    ap.add_argument("--emit", action="store_true",
+                    help="print resolutions.csv rows on stdout (still writes nothing)")
     args = ap.parse_args()
     repo = pathlib.Path(args.repo)
+    # Progress goes to stderr so `--emit` stdout is pipeable.
+    say = (lambda *a: print(*a, file=sys.stderr)) if args.emit else print
 
     o = owed(repo)
-    print(f"{len(o)} markets carry an unresolved prediction ({sum(v['rows'] for v in o.values())} rows)")
+    say(f"{len(o)} markets carry an unresolved prediction ({sum(v['rows'] for v in o.values())} rows)")
 
     by_cid = {v["condition_id"]: s for s, v in o.items() if v["condition_id"]}
     missing_cid = [s for s, v in o.items() if not v["condition_id"]]
     if missing_cid:
-        print(f"  ! {len(missing_cid)} have no condition_id in the ledger and cannot be swept:")
+        say(f"  ! {len(missing_cid)} have no condition_id in the ledger and cannot be swept:")
         for s in missing_cid:
-            print(f"      {s}")
+            say(f"      {s}")
 
     cids = list(by_cid)
     closed, seen_open, identity_fail = {}, set(), []
@@ -114,19 +127,34 @@ def main() -> int:
                 else:
                     sink[cid] = row
 
-    print(f"  closed: {len(closed)}   open: {len(seen_open)}   "
+    say(f"  closed: {len(closed)}   open: {len(seen_open)}   "
           f"unaccounted: {len(cids) - len(closed) - len(seen_open)}")
     if identity_fail:
-        print(f"  ! IDENTITY FAILURES ({len(identity_fail)}) — Gamma returned rows we did not ask for:")
+        say(f"  ! IDENTITY FAILURES ({len(identity_fail)}) — Gamma returned rows we did not ask for:")
         for slug, cid in identity_fail:
-            print(f"      {slug} ({cid})")
+            say(f"      {slug} ({cid})")
 
     if not closed:
-        print("\nNothing new resolved.")
+        say("\nNothing new resolved.")
         return 0
 
-    print(f"\n{len(closed)} NEWLY RESOLVED — append these to predictions/resolutions.csv:")
-    print("  (quote any note containing a comma; a malformed resolution row is a hard error)")
+    say(f"\n{len(closed)} NEWLY RESOLVED — append these to predictions/resolutions.csv:")
+    say("  (quote any note containing a comma; a malformed resolution row is a hard error)")
+
+    if args.emit:
+        w = csv.writer(sys.stdout, lineterminator="\n")
+        for cid, row in sorted(closed.items(), key=lambda kv: kv[1].get("closedTime") or ""):
+            slug = row.get("slug")
+            outcomes = json.loads(row.get("outcomes") or "[]")
+            prices = json.loads(row.get("outcomePrices") or "[]")
+            winner = next((n for n, p in zip(outcomes, prices) if str(p) in ("1", "1.0")), "")
+            if not winner:
+                say(f"  ! {slug}: winner UNCLEAR from {outcomes}/{prices} — emitting nothing")
+                continue
+            ct = (row.get("closedTime") or "").replace(" ", "T")
+            date = ct[:10]
+            w.writerow([slug, cid, winner, date, f"closedTime {ct}; umaStatus {row.get('umaResolutionStatus')}"])
+        return 0
     for cid, row in sorted(closed.items(), key=lambda kv: kv[1].get("closedTime") or ""):
         slug = row.get("slug")
         outcomes = json.loads(row.get("outcomes") or "[]")
@@ -135,12 +163,12 @@ def main() -> int:
             (name for name, p in zip(outcomes, prices) if str(p) in ("1", "1.0")),
             "UNCLEAR",
         )
-        print(f"\n  {slug}")
-        print(f"    rows owed     {o[slug]['rows']}")
-        print(f"    condition_id  {cid}")
-        print(f"    winner        {winner}   (outcomes {outcomes} prices {prices})")
-        print(f"    closedTime    {row.get('closedTime')}")
-        print(f"    umaStatus     {row.get('umaResolutionStatus')}")
+        say(f"\n  {slug}")
+        say(f"    rows owed     {o[slug]['rows']}")
+        say(f"    condition_id  {cid}")
+        say(f"    winner        {winner}   (outcomes {outcomes} prices {prices})")
+        say(f"    closedTime    {row.get('closedTime')}")
+        say(f"    umaStatus     {row.get('umaResolutionStatus')}")
     return 0
 
 
