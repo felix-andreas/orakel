@@ -200,6 +200,10 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .get_async("/decisions", |_, ctx| async move {
             Response::from_html(firm::decisions(&ctx.env).await)
         })
+        .get_async("/decisions/:slug", |_, ctx| async move {
+            let slug = ctx.param("slug").cloned().unwrap_or_default();
+            Response::from_html(firm::decision_page(&ctx.env, &slug).await)
+        })
         .get_async("/inboxes", |_, ctx| async move {
             Response::from_html(firm::inboxes(&ctx.env).await)
         })

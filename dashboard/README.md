@@ -456,9 +456,18 @@ CLOUDFLARE_API_TOKEN=... npx wrangler deploy
   consecutive deploys printed `Uploaded` with a fresh Version ID while the build step said
   `Finished in 0.06s` — cargo considered the wasm artifact fresh and rebuilt nothing, so the
   live Worker kept serving the old code. It cost an hour of concluding that correct fixes
-  were wrong. **Read the build line, not the upload line**: a real rebuild prints
-  `Compiling orakel-dashboard` and takes ~25s. If it does not, `touch src/*.rs` and deploy
-  again. Deleting `build/` is not enough — the stale artifact lives in `target/`.
+  were wrong.
+
+  **The only reliable invalidation is `rm -rf build target/wasm32-unknown-unknown`.**
+  Everything cheaper was tried and does not work: `touch src/*.rs` prints
+  `Compiling orakel-dashboard` and takes ~25s while still shipping the old wasm (it rebuilds
+  the *host* target); `cargo clean -p orakel-dashboard` removed 505 files and the next build
+  still finished in **0.06s**; deleting `build/` alone regenerates it from the stale artifact.
+
+  **The footer build stamp is the check, and it is the only honest one.** `BUILD_TIMESTAMP`
+  comes from `build.rs`, which re-runs only on a genuine rebuild — during the stale period the
+  live page reported a stamp **seven days old** while wrangler reported a fresh Version ID.
+  After deploying, fetch any page and confirm the stamp is now.
 - First deploy prints the `*.workers.dev` URL.
 
 ### Cloudflare Access (do before sharing the URL)

@@ -229,14 +229,22 @@ pub async fn decisions(env: &Env) -> String {
     let body = if entries.is_empty() {
         render::empty_state("No decisions recorded yet", "")
     } else {
+        // The reasoning lives at `/decisions/<slug>`, not inline.
+        //
+        // Rendering every body here shipped **60 KB of visible text** — three
+        // times the next-largest page and by far the firm's biggest wall. The
+        // `<details>` hid it visually but the reader still had one enormous
+        // scroll and no way to see the shape of the log. `PRINCIPLES.md`:
+        // summary line, then detail.
         let mut list = String::new();
         for (date, what, detail) in &entries {
             list.push_str(&format!(
-                r#"<section class="entry"><div class="entry-line"><b>{date}</b><span class="entry-meta">{weekday}</span></div><p class="entry-what">{what}</p><details class="doc doc-plain"><summary>Why</summary><div class="doc-body"><div class="prose">{detail}</div></div></details></section>"#,
+                r#"<section class="entry"><div class="entry-line"><b>{date}</b><span class="entry-meta">{weekday}</span></div><p class="entry-what"><a href="/decisions/{slug}">{what}</a></p><p class="entry-lede">{lede}</p></section>"#,
                 date = esc(date),
                 weekday = esc(data::weekday(date)),
+                slug = esc(&entry_slug(date, what)),
                 what = esc(what),
-                detail = markdown(detail),
+                lede = esc(&first_sentence(&first_paragraph(detail), 220)),
             ));
         }
         format!(
@@ -283,9 +291,13 @@ fn split_entries(src: &str) -> Vec<(String, String, String)> {
         if let Some(head) = line.strip_prefix("## ") {
             let head = head.trim();
             // "2026-07-25 — Execution layer built" → ("2026-07-25", "Execution…")
-            let (date, what) = match head.split_once(|c| c == '—' || c == '-') {
-                Some((d, w)) if d.trim().len() == 10 => (d.trim().to_string(), w.trim().to_string()),
-                _ => (String::new(), head.to_string()),
+            // `## 2026-08-01 — What changed`, and also
+            // `## 2026-08-01 (late) — What changed`: the qualifier belongs to
+            // the date, not to the title, and leaving it in made list entries
+            // read "(late) — What to do if…".
+            let (date, what) = match head.split_once('—') {
+                Some((d, w)) => (d.trim().to_string(), w.trim().to_string()),
+                None => (String::new(), head.to_string()),
             };
             let (date, what) = if date.is_empty() {
                 // Fall back to the leading 10 chars if they look like a date.
@@ -299,7 +311,11 @@ fn split_entries(src: &str) -> Vec<(String, String, String)> {
                     (String::new(), head.to_string())
                 }
             } else {
-                (date, what)
+                // "2026-08-01 (late)" → "2026-08-01". The qualifier only ever
+                // disambiguated two entries on one day, and the title beneath
+                // already does that; carrying it made every date column ragged.
+                let d = date.chars().take(10).collect::<String>();
+                (d, what)
             };
             out.push((date, what, String::new()));
         } else if let Some(last) = out.last_mut() {
@@ -626,6 +642,10 @@ pub async fn ideas(env: &Env) -> String {
 /// escaping it again renders the entity itself. Decode, then let `esc` do its
 /// single job.
 fn first_sentence(s: &str, max: usize) -> String {
+    // Strip inline markdown. These strings come out of prose files and end up
+    // in a table cell or a summary line, where `**bold**` renders as literal
+    // asterisks — the markdown pipeline never sees them.
+    let s: String = s.replace("**", "").replace("`", "");
     let s = s
         .replace("&lt;", "<")
         .replace("&gt;", ">")
@@ -633,11 +653,21 @@ fn first_sentence(s: &str, max: usize) -> String {
         .replace("&#39;", "'")
         .replace("&amp;", "&");
     let s = s.trim().trim_matches('"').trim();
-    let cut = s
-        .find(". ")
-        .map(|i| i + 1)
-        .filter(|i| *i <= max)
-        .unwrap_or_else(|| s.len().min(max));
+    // Take sentences until there is enough to be useful. One sentence is the
+    // right unit, but an entry opening "The settlement." would otherwise give a
+    // teaser that teases nothing.
+    let mut cut = s.len().min(max);
+    let mut at = 0usize;
+    while let Some(i) = s[at..].find(". ") {
+        at += i + 1;
+        if at > max {
+            break;
+        }
+        cut = at;
+        if at >= 60 {
+            break;
+        }
+    }
     let mut out: String = s.chars().take(cut).collect();
     if out.len() < s.len() {
         out.push('…');
@@ -1015,6 +1045,66 @@ pub async fn inbox_page(env: &Env, role: &str, stem: &str) -> String {
                 "<span class=\"mono\">{}</span><a href=\"/inboxes\">← All inboxes</a>",
                 esc(&path)
             )),
+        ),
+    )
+    .await
+}
+
+/// A stable address for one decision entry: `<date>-<first words of what>`.
+///
+/// Not the index in the file — entries are prepended, so an index-based link
+/// would point at a different decision the moment the next one lands.
+fn entry_slug(date: &str, what: &str) -> String {
+    let words: String = what
+        .chars()
+        .map(|c| if c.is_ascii_alphanumeric() { c.to_ascii_lowercase() } else { '-' })
+        .collect();
+    let tail: Vec<&str> = words.split('-').filter(|w| !w.is_empty()).take(6).collect();
+    format!("{date}-{}", tail.join("-"))
+}
+
+/// The first paragraph of an entry body, for the one-line summary in the list.
+fn first_paragraph(body: &str) -> String {
+    body.split("\n\n")
+        .map(str::trim)
+        .find(|p| !p.is_empty() && !p.starts_with('|') && !p.starts_with('#'))
+        .unwrap_or("")
+        .replace('\n', " ")
+}
+
+/// One decision, in full.
+pub async fn decision_page(env: &Env, slug: &str) -> String {
+    let f = data::text(env, "ops/decisions.md").await;
+    let entries = split_entries(&f.text);
+    let found = entries
+        .iter()
+        .find(|(date, what, _)| entry_slug(date, what) == slug);
+
+    let Some((date, what, detail)) = found else {
+        return shell(
+            env,
+            "/decisions",
+            trail(&[("Firm", ""), ("Decisions", "/decisions")]),
+            f.live,
+            &render::empty_state(
+                "No such decision",
+                "<div>Nothing in <span class=\"mono\">ops/decisions.md</span> matches that address.</div>",
+            ),
+        )
+        .await;
+    };
+
+    shell(
+        env,
+        "/decisions",
+        trail(&[("Firm", ""), ("Decisions", "/decisions"), (what, "")]),
+        f.live,
+        &section_foot(
+            what,
+            &format!("{} · {}", esc(date), esc(data::weekday(date))),
+            "",
+            &format!("<div class=\"prose\">{}</div>", markdown(detail)),
+            "<span class=\"mono\">ops/decisions.md</span><a href=\"/decisions\">← All decisions</a>",
         ),
     )
     .await
