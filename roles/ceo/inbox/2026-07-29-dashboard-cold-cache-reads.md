@@ -1,6 +1,6 @@
 ---
 date: 2026-07-29
-status: open
+status: open  # instrumented 2026-08-02; concurrency refuted by measurement
 from: CEO
 for: the next dashboard cycle
 ---
@@ -62,3 +62,39 @@ i.e. when he is most likely to be looking — and it gets worse on its own as `o
 Two afternoons of my patching produced two reverts and one honest read reduction. What
 actually moved it forward was making failures record *why*; keep doing that and instrument
 before changing anything else.
+
+
+---
+
+## 2026-08-02 — instrumented, and one more hypothesis refuted
+
+The standing instruction here was *instrument a cold request before changing anything else*.
+Done. Every read now counts itself and the numbers ride in an HTML comment in the page footer
+(`reads: attempted=… hit=… net=… failed=… span_ms=…`), in the response rather than a log —
+a cold request creates a new isolate, so a counter queried afterwards belongs to a different one.
+
+**Reproducible on demand:** push a commit, then poll until the HEAD memo rolls over to the new
+SHA. Two independent runs gave the same numbers to the read.
+
+| request | attempted | cache hits | network | failed | span |
+|---|---|---|---|---|---|
+| `/runs` cold | 35 | 0 | 35 | **22** | 369 ms |
+| `/runs` warm | 24 | 21 | 3 | 0 | 130 ms |
+| `/state` cold | 2 | 0 | 2 | 0 | 113 ms |
+
+**Concurrency is refuted, by measurement rather than by argument.** Bounding in-flight reads to
+4 gave `attempted=35 hit=0 net=35 failed=22` — identical — and cost 163 ms. The 07-28 note
+claiming it "made things worse" was an artifact of counting distinct file names in a banner
+rather than counting reads; that note is corrected in `data.rs`. Time is refuted too: 369 ms.
+
+**The surviving hypothesis, with arithmetic.** The per-request subrequest budget, *and the Cache
+API spends it too*. A cold read costs ~3 subrequests (`cache.get` miss → `fetch` → `cache.put`)
+where a warm read costs 1. So `/runs` costs ~24 warm and ~70 cold against a 50 ceiling — which
+predicts it runs out around read 16, i.e. 13 successes and the rest failing. That is what we
+measured. It also explains why pacing cannot help (a count, not a rate), why `/state` never
+fails, and why only a SHA change triggers it.
+
+**Next experiment, decisive and cheap:** disable the Cache API for one deploy. If the theory
+holds, cold `/runs` drops to ~24 subrequests and `failed` goes to 0. If `failed` stays at 22,
+the theory is wrong and the remaining candidate is the read count alone. Written up in
+`dashboard/src/live.rs` next to the code it concerns.

@@ -48,28 +48,31 @@ pub async fn text(env: &Env, path: &str) -> Doc {
 /// existed: the homepage's ~20 reads cost 0.87s warm and 2.9s on a cache miss,
 /// with latency scaling linearly in the number of reads.
 ///
-/// **Do not bound this to fix the cold-cache read failures.** Tried on
-/// 2026-07-28 and it made them worse, which is the useful part of the result:
-/// capping in-flight reads at 6 took `/runs` from 3 lost files to 6 while `/`
-/// stayed at 2. Concurrency is therefore not the variable — a per-request
-/// *subrequest budget* is, and cache hits do not spend it, which is why this
-/// only ever fires on the first request after a push. The fix is fewer reads
-/// per page, not slower ones.
-pub async fn read_all(env: &Env, paths: impl IntoIterator<Item = String>) -> Vec<Doc> {
-    use futures::stream::StreamExt;
-    futures::stream::iter(paths.into_iter().map(|p| async move { text(env, &p).await }))
-        .buffered(MAX_IN_FLIGHT)
-        .collect()
-        .await
-}
-
-/// EXPERIMENT, 2026-08-02 — measured, not guessed.
+/// **Do not bound this to fix the cold-cache read failures — this is now
+/// measured, not inferred.** On 2026-08-02, with per-request read telemetry in
+/// place, a cold `/runs` returned:
 ///
-/// A cold request (new commit SHA ⇒ every pinned URL changes ⇒ no cache hits)
-/// reproducibly returns `attempted=35 hit=0 net=35 failed=22 span_ms=369` on
-/// `/runs`, while a warm one returns `net=3 failed=0` and `/state` — two reads
-/// — never fails cold. Not time: 369ms is nowhere near a timeout.
-const MAX_IN_FLIGHT: usize = 4;
+/// ```text
+/// unbounded    attempted=35 hit=0 net=35 failed=22 span_ms=369
+/// buffered(4)  attempted=35 hit=0 net=35 failed=22 span_ms=532
+/// ```
+///
+/// Byte-identical failure counts; the only thing pacing bought was 163ms of
+/// extra latency. Concurrency is not the variable, and the earlier guess that
+/// bounding "made it worse" was an artifact of counting distinct file names in
+/// a banner rather than reads.
+///
+/// What survives is a per-request budget that only a cold cache spends — see
+/// `live.rs` for the arithmetic and the next experiment.
+pub async fn read_all(env: &Env, paths: impl IntoIterator<Item = String>) -> Vec<Doc> {
+    futures::future::join_all(
+        paths
+            .into_iter()
+            .map(|p| async move { text(env, &p).await })
+            .collect::<Vec<_>>(),
+    )
+    .await
+}
 
 /// Every repo path. An unreadable listing yields no paths and `false`, so the
 /// page shows its error rather than an empty repo.

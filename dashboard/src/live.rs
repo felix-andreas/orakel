@@ -199,6 +199,41 @@ fn token(env: &Env) -> Option<String> {
         .filter(|s| !s.trim().is_empty())
 }
 
+/// ## The cold-cache read loss: what is measured, and the next experiment
+///
+/// Measured 2026-08-02 with per-request telemetry (the footer's `reads:`
+/// comment), reproducible on demand by pushing a commit and polling until the
+/// HEAD memo rolls over to the new SHA:
+///
+/// ```text
+/// /runs cold    attempted=35 hit=0  net=35 failed=22 span_ms=369
+/// /runs warm    attempted=24 hit=21 net=3  failed=0  span_ms=130
+/// /state cold   attempted=2  hit=0  net=2  failed=0  span_ms=113
+/// ```
+///
+/// **Ruled out by measurement, not by argument:**
+/// - *Time.* 369ms, nowhere near any timeout.
+/// - *Concurrency.* Bounding in-flight reads to 4 gave `failed=22`, identical,
+///   and only added 163ms. Pacing changes nothing.
+/// - *A bad pinned ref.* A rejected ref returns a status; these return none.
+///
+/// **What fits every observation: the per-request subrequest budget, and the
+/// Cache API spends it too.** Each read on a cold page costs roughly three
+/// subrequests — `cache.get` (miss), the `fetch`, then `cache.put` — where a
+/// warm read costs one (`cache.get`, hit). So `/runs`' ~24 reads cost ~24 warm
+/// and ~70 cold, against a documented per-request ceiling of 50 on the Free
+/// plan. That predicts the cold page runs out around read 16 and that
+/// everything after fails, which is what 13 successes and 22 failures look
+/// like. It also predicts exactly what we saw: pacing cannot help, because the
+/// budget is a count and not a rate; `/state` at 2 reads is never near it; and
+/// only a SHA change triggers it, because only that invalidates every entry.
+///
+/// **Next experiment, decisive and cheap:** disable the Cache API entirely for
+/// one deploy. If the budget theory holds, a cold `/runs` drops to ~24
+/// subrequests and `failed` goes to 0 — at the cost of every read being a
+/// network round trip. If `failed` stays at 22, the theory is wrong and the
+/// remaining candidate is the read count alone.
+///
 /// GET a GitHub API URL with auth → (upstream status, body). Cached ~60s via
 /// the Cache API keyed on the URL; the upstream status is tucked into a
 /// response header so 404s are cached too and don't re-fetch every request.
