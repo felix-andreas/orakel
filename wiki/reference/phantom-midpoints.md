@@ -44,6 +44,32 @@ Counter-example worth knowing: weekly USGS earthquake-count ladders scored **0 /
 legs (100% live, median total variation 1.79)**, so the gate is discriminating, not
 universal.
 
+## The phantom can live in the METADATA, not only in the book (2026-08-02)
+
+Every instance above is an *honest* API faithfully reporting a dead book. There is a second,
+nastier version: **Gamma's own `bestBid` / `bestAsk` / `spread` / `outcomePrices` fields go
+stale, and the staleness makes a dead book look alive.**
+
+Measured on the live White House full-lid board
+(`ideas/2026-08-02-full-lid-timing-discarded.md`), Gamma and the CLOB queried minutes apart:
+
+| leg | Gamma `bestBid`/`bestAsk` | Gamma implied spread | **live CLOB book** | true spread |
+|---|---|---:|---|---:|
+| Aug 3 | 0.31 / 0.38 | **7c** | **0.15 / 0.94** | **79c** |
+| Aug 6 | 0.06 / 0.94 | 88c | 0.06 / 0.94 | 88c |
+| Aug 7 | mid reported `0.50` | — | 0.06 / 0.94 | 88c |
+
+Two failures at once. The Aug 3 row is Gamma reporting a **7c spread on a book that is 79c
+wide** — a gate written against Gamma would have scored this family as tight and liquid.
+The Aug 7 row is the classic phantom, `(0.06 + 0.94)/2 = 0.50`, reported as a price. Every
+field on the board carried the same `updatedAt` across repeated pulls, so there is no
+freshness signal to gate on either.
+
+**Rule 5: never gate liquidity on Gamma's quote fields. Fetch `clob.polymarket.com/book`
+per token and read the actual levels.** Gamma is a discovery API; its price fields are a
+cache. This is the same class of error as `existence-is-not-completeness.md` — the data
+parsed cleanly and was wrong.
+
 See also [thin-market-price-read](thin-market-price-read.md) — this page is the
 quantified, sharper-edged version of that page's warning — and
 [midpoint-is-not-a-fill](midpoint-is-not-a-fill.md), which is the harder case: a book

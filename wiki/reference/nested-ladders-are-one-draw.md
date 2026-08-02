@@ -122,10 +122,36 @@ That the same fact fell out of both a depth question and a risk question is the 
 trust it. If the two pages ever drift, this one owns ρ and effective n; that one owns the
 depth/power tradeoff.
 
+## The boundary: the kill is about NESTING, not about multi-leg boards (2026-08-02)
+
+Worth stating because the mistake is easy in the other direction too — writing off any board
+with many legs as "one draw". Measured on White House full-lid boards
+(`ideas/2026-08-02-full-lid-timing-discarded.md`): six legs per board, one board per week,
+which *looks* exactly like the shape this page kills.
+
+It is not, because the legs are six **different calendar days** rather than monotone
+thresholds on one underlying. Nothing about Tuesday's lid mechanically determines Monday's.
+
+| | this page (ladder-rv) | full-lid panel |
+|---|---:|---:|
+| legs | 356 | 132 |
+| clusters | 84 families | 22 boards |
+| **ICC ρ** | **+0.325** | **−0.008** |
+| design effect | 2.05 | **0.96** |
+| **effective n** | 173 (of 356) | **132 (of 132)** |
+
+So the test is structural and one sentence long: **are the legs monotone functions of one
+random variable?** If yes, cluster and pay the design effect. If they are separate events
+that merely share a board, the leg count *is* the draw count — measure ρ and let it say so,
+rather than assuming either answer. Per-day binary panels are the cheapest source of genuine
+independent draws the firm has found.
+
 ## See also
 
 - [nested-ladders-trade-depth-for-power](nested-ladders-trade-depth-for-power.md) — the
   selection half of this fact, derived independently
+- [depth-has-a-time-coordinate](depth-has-a-time-coordinate.md) — the panel that supplied the
+  ρ = −0.008 counter-example, and died on execution instead
 - [break-even-win-rate](break-even-win-rate.md) — the bound that this halves the power of
 - [checkpoint-artifact](checkpoint-artifact.md) — nesting makes `Σ leg ≈ 1` unfailable, and
   repeated checkpoints are the time-domain version of this page

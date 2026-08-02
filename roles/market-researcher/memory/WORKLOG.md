@@ -4,6 +4,81 @@ One dated entry per run. Name the exact model id that did the work.
 
 ---
 
+## 2026-08-02 (run 12) — the first object to survive the mirror test, and it still died
+
+Model: **claude-opus-5 (effort max)**.
+
+Object: **White House "full lid by 6:30 PM" per-day binaries** — Polymarket series
+`white-house-call-a-full-lid`, weekly boards of six *independent single-day* binaries
+resolving on Roll Call Factbase's presidential calendar. Filed
+`ideas/2026-08-02-full-lid-timing-discarded.md`, **status `discarded-idea`**.
+
+Classification: **LEVEL** claim, with a schedule/shape component.
+
+**How I found it — a new instrument.** Instead of scanning markets, I built a census of every
+recurring family the venue has ever run: `/series?limit=50&offset=N` pages the complete
+catalogue, **2,152 families** with `recurrence` and (capped at 20) their events;
+`/series?slug=X` returns one family's events uncapped and including closed. Settled count ÷
+family age is exactly the denominator W3 needs. Cross-joined against Kalshi's **12,369**
+series, that runs **W1 and W3 together across the whole venue before choosing an object** —
+44 calls, about a minute. Recipe in `wiki/recipes/polymarket-api.md`.
+
+That census also killed both of the funnel's backlog seeds, at zero cost:
+**Titled Tuesday chess** (`KXTITLEDTUESTOP` 1,000 markets / 171 active / **155,922
+contracts** / 127,770 OI) and **GPU rental prices** (Kalshi runs **38** compute-price series,
+all settling on `dashboard.ornnai.com/compute`). Both were recorded on 08-01 as
+"no plausible incumbent". Both are wrong. They are W1-dead, not young.
+
+**Order run, cheapest first.**
+
+1. **W3 (power) — PASS, and the first family whose legs are genuinely independent.** 23
+   boards / **132 settled legs**, Feb 9 → Aug 1. The nesting trap does not apply: these are
+   six *different calendar days*, not nested thresholds, and the data agrees — **ICC =
+   −0.008**, design effect **0.96**, **n_eff = 132**. Arrival off the settled record ≈**276
+   legs/yr** (≈182 with an executable ask). Required n = **206** ⇒ ~1.1 years. A *marginal*
+   pass: the first object that is neither object 14's 5.9-year fail nor object 16's clear.
+2. **W1 (incumbent) — PASS, "none found", in the sharpest form the firm has seen.** Kalshi's
+   `KXFULLLIDBEFORE630PM` is the **identical contract**: same 6:30 PM threshold, and it
+   declares *both* of our resolution URLs, in our order. **0 markets, ever.** Same for
+   `KXFULLLID8PM`, `KXFULLLIDBEFORE8PM`. Not inattention — `KXWHPRESSBRIEFING` (50,609
+   contracts) and `KXPRESSBRIEFINGCOUNT` (21,368) are live in the same subject. A peer venue
+   wrote the rules down to the settlement page and declined to list it.
+3. **W2 (execution) — THE KILL, on an axis we did not have.** Walked before any modelling.
+   **85.5% of the family's entire tape — $922,456 of $1,079,036 — printed *after* the 6:30 PM
+   resolution instant**, at a median price of **0.994**. The $1.79M headline is a
+   settlement-carry tape, not a forecasting market. At T−24h the median leg holds **$76**,
+   **38 of 132 legs have zero tape**, only 26 reach $500, and the total ask-side notional over
+   the whole six-month record is **$25,606**. The live board: five of six legs carry
+   **$63–$146** of *total* ask-side notional at 79–89c spreads; the sixth costs a **55.3c VWAP
+   for $2,000 against an 11c best ask**.
+   The price-mode caveat did not save it — this board has no price mode. **The mode is in
+   time.** New wiki page: `reference/depth-has-a-time-coordinate.md`.
+4. **The bound — fails independently.** The mid bias is real and large (**+16.2pp, t=+4.23**
+   at T−24h) and, uniquely so far, it **survives the mirror test at executable prices**:
+   buying YES at the ask returns **+8.43c/share**, the mirror **−23.02c**, across a 14.1c
+   spread. It still fails: **52/87 = 0.598** against q\* **0.5309**, Wilson 95% lower
+   **0.4926**. Point estimate +6.90c/sh, **t=+1.44**. And it is one weekday — Sat +19.26c
+   (t=+2.31, 16/20), **Fri −10.00c** — with the edge entirely in H2 (+11.78c vs +1.91c) while
+   reachable size fell **$19,712 → $5,894**.
+5. **W4 — not binding**, but the escape route is real and had to be closed. The post-deadline
+   carry looks superb at fill level (+0.133% net over a 6.75h lock = **+172% annualised**) and
+   dies clustered to legs, the object-16 way: favourite won **120/121** at a **0.9883** mean
+   entry, Wilson lower **0.9547** — **fails by −3.37pp**.
+
+**Graduated to the wiki:** new `reference/depth-has-a-time-coordinate.md`; the Gamma
+stale-quote instance appended to `reference/phantom-midpoints.md` (Gamma said 7c, the book was
+79c); the ICC counter-example bounding the nesting kill appended to
+`reference/nested-ladders-are-one-draw.md`; the identical-contract/0-markets form appended to
+`reference/sharp-line-screen.md`; the `/series` census recipe added to
+`recipes/polymarket-api.md`. Index updated (two lines).
+
+**Honest verdict.** Closest miss after object 16, for a different reason: the first object to
+clear W1 outright *and* prove its edge is not the spread. It dies on **size**. The market
+exists, nobody else prices it, the crowd really is ~16pp low at the mid and ~8pp low at the
+ask — and there is **$76** there.
+
+---
+
 ## 2026-08-01 (run 11) — the first object to clear the depth wall outright, and it still died
 
 Model: **claude-opus-5 (effort max)**.

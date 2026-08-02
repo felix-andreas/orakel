@@ -58,6 +58,29 @@ Two halves of the same rule, both measured:
   venue, person or franchise — not only by the specific event — and sort candidates by
   `volume_fp` before concluding anything.**
 
+### The inverse of the shell: an IDENTICAL contract with zero markets, ever (2026-08-02)
+
+The `KXELONTWEETS` rule above says a listed series is not a live one. The full-lid screen
+found the strongest possible version and it is worth naming, because it reads like a kill and
+is the opposite:
+
+`KXFULLLIDBEFORE630PM` — *"Will the White House Press Office call a full lid before 6:30PM"* —
+declares `settlement_sources` of **`rollcall.com/factbase/trump/calendar/`** and
+**`forth.news/whpool`**: Polymarket's two resolution URLs, same threshold, same contract,
+in the same order. `/markets?series_ticker=` returns **0 markets — none, ever.** Same for
+`KXFULLLIDBEFORE8PM` and `KXFULLLID8PM`.
+
+Meanwhile Kalshi is demonstrably *present* in the same subject area with real size —
+`KXWHPRESSBRIEFING` 50,609 contracts, `KXPRESSBRIEFINGCOUNT` 21,368. So this is not
+inattention. A peer venue wrote the rules for the exact object, down to the settlement page,
+and chose not to list it.
+
+**Read it as the strongest form of "none found", and therefore as a warning, not a green
+light** — per corollary 2 below, a hole means the cheapest kill is unavailable and the
+remaining gates must carry more weight. The full-lid family then died on execution
+(`depth-has-a-time-coordinate.md`). Someone who priced the contract and declined to run it
+may well have been looking at the same order book we were.
+
 **Also compare their BUCKET CUTS and their RULES, not just their line.** A rival that has
 re-cut a ladder cap our venue left stale has already priced away the mispricing you are about
 to "find" (2026-07-29, `KXTRUTHSOCIAL` `>220`→`>240`). And on news-resolved objects a matching

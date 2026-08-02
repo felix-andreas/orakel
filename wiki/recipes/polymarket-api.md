@@ -34,6 +34,28 @@ let markets: serde_json::Value = reqwest::blocking::Client::new()
   `/public-search?q=<text>&limit_per_type=20` → `{events: [...], ...}` with `closed`
   flags. Much better than paging `/events` when you know the family's title words
   (e.g. `q=temperature+increase` returns 20+ monthly instances back to 2024).
+- **THE FAMILY CENSUS — run this before any W3 draw-count (2026-08-02).** `/events` tells you
+  what is open; **`/series` enumerates every recurring family the venue has ever run**, which
+  is what a power calculation actually needs.
+
+  ```
+  GET /series?limit=50&offset=N          # 50/page hard cap; 2,152 families as of 08-02
+  GET /series?slug=<slug>                # ONE family, with its FULL event list incl. closed
+  ```
+
+  - The list form carries `recurrence` (`daily` 796 / `monthly` 925 / `weekly` 220 /
+    `annual` 186 / `hourly` 7 / `15m` / `5m`), `volume24hr`, `active`, `closed`, and an
+    `events` array **capped at 20** — so a family showing exactly 20 is truncated, and any
+    count below 20 is complete.
+  - `/series?slug=` returns the family's events uncapped, each with its own `closed` flag.
+    **Settled count ÷ family age = the arrival rate**, which is the denominator W3 needs and
+    the one the open book cannot give you (08-01's wrong-denominator error).
+  - `/events?series=<slug>` does **not** filter — it silently ignores the parameter and
+    returns unrelated markets. `series_slug=` returns `[]`. Use `/series?slug=` only.
+  - Paging all 2,152 families takes ~44 calls and about a minute. Cross-joining the result
+    against Kalshi's 12,369-series catalogue (one call, `sharp-line-screen.md`) runs W1 and W3
+    **together, over the whole venue, before choosing an object.**
+
 - **Deep history: offset paging hard-caps at `offset=2000`** (`{"error":"offset too large,
   use /events/keyset for deeper pagination"}` — and it returns that as a *200 with a JSON
   object*, so a `list`-assuming parser silently drops pages). `/events/keyset` ignores a

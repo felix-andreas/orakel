@@ -8,70 +8,77 @@ what is live, unfinished, or not yet generalisable.
 
 ## Short-term
 
-- 2026-08-01 (run 11). Killed **deep-tail carry** — buying NO at the ask on standalone binaries
-  with a YES mid ≤5c — `ideas/2026-08-01-deep-tail-carry-discarded.md`. **The closest object
-  yet: cleared W2 AND W3 outright, and the best point estimate the firm has taken.** Died on
-  W1's *direction* and on W4 at the horizon the venue actually offers.
-- **The reframe worth keeping (now a wiki page).** For any "collect a premium unless a rare
-  thing happens" object, walls 3 and 4 are **one** calculation:
-  `π* = 1 − a_eff·(1 + r·d/365)` is the carry hurdle *and* the statistical null; `3/π*` is a
-  floor on draws **assuming you never lose once**; and `d_max = 365(1−a_eff)/(a_eff·r)` kills
-  some legs on arithmetic alone (0.47c/0.52c legs with **152 days to run vs a 44-day d_max**).
-  *The safer the leg looks, the smaller π\*, the BIGGER the sample* — that inversion is the trap.
-- **THE BACKTEST, run not proposed:** sampled 356 settled standalone binaries at a T−45d
-  checkpoint; **169 (47.5%) were ≤5c and 0 resolved YES**, mean checkpoint 2.46c →
-  **+12.97pp over risk-free at executable prices**. And it still fails: Wilson upper **2.22%**
-  (169 raw legs) / **3.05%** (122 themes) vs π\* **1.57%** at 45d and **0.44%** at 150d.
-  A perfect 0-for-169 on rare events is not enough. One YES → 3.28%/4.50%.
-- **I GOT W3 WRONG FIRST AND MUST NOT REPEAT IT.** Counting the *live* cohort (127 legs → ≤70
-  themes, 94 on 2026-12-31) gave "4–22 years, dead". Wrong denominator — the open book is a
-  snapshot, not a rate. The **settled** census: 99,493 closed events → 36,969 standalone
-  binaries → **3,280 non-sport/crypto/weather in 12 months (~273/mo)**, 47.5% in-band at T−45d,
-  deflator only **1.39×** (settled panels lack the year-end calendar artifact) →
-  **~1,558 band legs / ~1,120 quasi-independent themes per year** vs 243 needed. **Take arrival
-  rates off the settlement record, always.**
-- **The escape route that closed it:** π\* rises as horizon shortens, so "trade the short end" —
-  except ≤45d holds **0.5%** of band volume and is *safer* (1.95c, π\* 0.72%); 46–90d peaks at
-  π\* 1.83% with **1.6%** of volume; **≥150d holds 97.8% at π\* ≤0.75%**. Weight π\* buckets by
-  **volume**, not by leg count.
-- **W1, and the direction is the lesson:** Kalshi **12,368 series** (+13/day). Live twins with
-  real size this time — `KXALIENS-27` **26.3M** contracts, `KXTRUMPOUT27-27-DJT` 5.60M/2.40M OI,
-  `KXPAHLAVIHEAD` 1.80M, `KXNEWOUTBREAKHANTA` 1.63M, `KXGREENLAND-29-27` 1.47M. **8/8 matched
-  pairs ABOVE us, mean +1.52pp, median +1.57pp, sign test p=0.0039.** When the thesis is "this
-  venue is too high/low", the incumbent screen tests the **sign**, not the size.
-  Definitional-noise floor read off Kalshi disagreeing with *itself*: two Greenland series 0.95pp
-  apart. And Kalshi pays interest on collateral while PM USDC does not, so PM's tail should be
-  the *dearer* one — the carry adjustment widened the gap against the thesis.
-- **W2 PASS, the number to remember:** \$19,352,132 at the NO ask (Hantavirus), \$16.1M Taiwan,
-  \$15.3M Xi, \$5.4M Jesus, **VWAP flat to \$10,000** on all five, vs object 13's median **\$7**.
-  Median spread 0.60c = 20.0% of the YES leg but **0.62% of the NO leg**.
-- **W4 marginal:** the safest, deepest leg on the whole venue (Second Coming, \$64.9M) pays
-  **4.42% net annualised vs ~4% risk-free = +0.42pp**; moon landing −2.92pp, 10.0 quake −2.80pp.
-  Everything paying more is paying for real event risk — the tail yield curve is a **risk curve**.
-- **Scanned + set aside on W3 alone, free, do not re-derive:** `titled-tuesday` chess placement
-  ladders (66–75 legs, weekly Swiss, sim-tractable from Elo, state NOT glanceable — but **1
-  settled instance ever**, 07-28; revisit ~2027 if it survives); `h100/h200/b200-rental-price`
-  monthly GPU ladders (~\$70–98k/board, no plausible incumbent — 3 correlated series, ~2 months
-  of history); `monthly-listeners` (Spotify, 3 artists); `movie-delay`; 435 US House race boards
-  (Kalshi + free forecasters); Setka Cup table tennis and the obscure-soccer/cricket series
-  (Pinnacle). Polymarket `series` slugs are the cheap way to enumerate recurring families.
-- Runs 9–10 (07-30 cumulative by-date ladders, 07-31 nested-board dominance): outcomes and
-  numbers now live in `ops/idea-funnel.md` rows 14–15 and the wiki. Only the reusable residue
-  is kept below.
-- **CENSUS TRAPS, all three cost me a wrong number — check every time.** (a) Dormant boards rank
-  LAST by `volume24hr`, so the volume-ranked scan found **4 of 85** races; offset paging caps at
-  2,000 → **date-windowed paging is mandatory** (1,600-event scan vs **9,347 events / 96,642
-  markets** on 08-01). (b) Party boards carry `Will A win…`, single capital letters a
-  `Person [A-Z]` filter misses — gate on `volumeNum==0 && liquidityNum==0`, never on the name
-  pattern (first pass said 0 party boards; truth 81). (c) **08-01: the open book is a snapshot,
-  not a rate — arrival rates come off the SETTLED record** (live cohort said ≤70 themes/cohort,
-  settled census said ~1,120/yr).
+- 2026-08-02 (run 12). Killed **White House "full lid by 6:30 PM" per-day binaries** —
+  `ideas/2026-08-02-full-lid-timing-discarded.md`. **Cleared W1 outright and W3 marginally,
+  and is the first object ever to PASS the mirror test at executable prices** (+8.43c/share
+  buying YES at the ask at T−24h, mirror −23.02c) — then died on **size** and on **the bound**.
+- **THE FAMILY CENSUS, and it is the tool to reuse.** `/series?limit=50&offset=N` pages the
+  **complete** catalogue of recurring families — **2,152**, with `recurrence` (925 monthly /
+  796 daily / 220 weekly / 186 annual) — and its `events` array is capped at **20** (so exactly
+  20 = truncated, <20 = complete). `/series?slug=X` returns one family's events **uncapped,
+  incl. closed**. Settled count ÷ family age = the arrival rate W3 needs. `/events?series=`
+  silently ignores the param and returns junk; `series_slug=` returns `[]`. Cross-joined
+  against Kalshi's 12,369 series this runs **W1 and W3 together over the whole venue before
+  picking an object** — recipe in `wiki/recipes/polymarket-api.md`.
+- **W1 inverse-shell form:** `KXFULLLIDBEFORE630PM` declares **our exact two resolution URLs**
+  and the identical 6:30PM threshold — **0 markets, ever** — while `KXWHPRESSBRIEFING` (50,609)
+  and `KXPRESSBRIEFINGCOUNT` (21,368) are live. A peer venue priced the contract and declined
+  to list it: a warning, not a green light.
+- **W2 KILL, new axis — depth has a TIME coordinate** (now `wiki/reference/depth-has-a-time-coordinate.md`).
+  **85.5%** of the family's whole tape ($922,456 of $1,079,036) printed **after** the 6:30PM
+  resolution instant at a median **0.994** — settlement carry, not a market. At T−24h the median
+  leg held **$76**, **38/132 legs had zero tape**, total ask-side notional over the entire
+  6-month record **$25,606**. Live book: 5 of 6 legs carry **$63–$146** total at 79–89c spreads.
+  The price-mode caveat did **not** save it — this board has no price mode; the mode is in time.
+- **Gamma's quote fields are a stale CACHE — never gate on them.** Gamma: 0.31/0.38 (**7c**);
+  live CLOB book: **0.15/0.94 (79c)**; plus `0.50` mids that were really (0.06+0.94)/2, all
+  with an identical `updatedAt`. **Fetch `clob.polymarket.com/book` per token.**
+- **ICC = −0.008: a per-day binary panel is NOT a nested ladder** (132 legs/22 boards, design
+  effect 0.96, n_eff = 132). Test: *are the legs monotone functions of one random variable?*
+  If not, leg count IS draw count. Bounds the 07-30 nesting kill the other way.
+- **The bound, which decided it:** 52/87 = 0.598 vs q\* **0.5309** (mean executable ask 0.5209
+  + politics fee 0.0100); Wilson lower **0.4926 → FAILS**; point estimate +6.90c/sh, t=+1.44.
+  Mid bias was real and large (+16.2pp, t=+4.23 at T−24h) and *survived a 14c spread* — the
+  first time that has happened. It is still **one weekday**: Sat +19.26c (t=+2.31, 16/20),
+  **Fri −10.00c** (6/17). Edge is all in H2 (+11.78c vs +1.91c) while reachable size fell
+  $19,712 → **$5,894**. Escape route closed the object-16 way: post-deadline favourite
+  **120/121 legs** at 0.9883 entry, Wilson lower 0.9547, **fails −3.37pp**.
+- **BOTH BACKLOG SEEDS ARE NOW W1-DEAD, not merely power-constrained — do not revisit.**
+  (a) Titled Tuesday chess: `KXTITLEDTUESTOP` **1,000 markets / 171 active / 155,922 contracts
+  / 127,770 OI**, `KXTITLEDTUESDAY` 533 / 57 / 118,832. (b) GPU rental prices: Kalshi runs
+  **38 compute-price series** (H100/H200/B200/A100/RTX5090/RTX PRO 6000 × weekly/monthly/
+  quarterly/yearly), all settling on **`dashboard.ornnai.com/compute`** — `KXA100MAX` alone
+  18 markets / 16,734 contracts. The 08-01 note "no plausible incumbent" was wrong on both.
+- **W1 and W3 look ANTI-CORRELATED — the finding to test next.** Of 2,152 families the ones
+  with no Kalshi twin are almost all *monthly or rarer* (chatgpt-outage, bank-failure,
+  NY/Seattle precipitation, scorigami) → W3-dead by arrival; everything daily/weekly (TSA —
+  Kalshi declares our exact URL — tornadoes, eggs, FDA, MrBeast, weather, mentions, macro) has
+  a live incumbent. Kalshi lists what recurs *because* it recurs. Unproven; one run to
+  quantify, and it bears directly on Felix's "is this the right pond" question.
+- 2026-08-01 (run 11). Killed **deep-tail carry** (NO at the ask on ≤5c standalone binaries) —
+  `ideas/2026-08-01-deep-tail-carry-discarded.md`. Cleared W2 and W3; died on W1's *direction*
+  and on W4 at the venue's real horizon. Numbers live in `ops/idea-funnel.md` row 16 and
+  `wiki/reference/rare-event-edges-need-rare-event-samples.md`. Reusable residue only:
+  - For any premium-collecting object walls 3 and 4 are **one** calculation:
+    `π* = 1 − a_eff·(1 + r·d/365)`; `3/π*` floors the draw count *assuming you never lose*;
+    `d_max = 365(1−a_eff)/(a_eff·r)` kills some legs on arithmetic alone. **The safer the leg
+    looks, the smaller π\*, the BIGGER the sample** — that inversion is the trap.
+  - **Weight π\* buckets by VOLUME, not leg count** (≤45d held 0.5% of the money, ≥150d 97.8%).
+  - **When the thesis is "this venue is too high/low", test the gap's SIGN, not its size**
+    (8/8 pairs the wrong way, p=0.0039). Kalshi pays collateral interest, PM USDC does not —
+    the carry adjustment moves the comparison, usually against a fade.
+  - **Take arrival rates off the SETTLED record; the open book is a snapshot, not a rate.**
+    Counting the live cohort gave "4–22 years" where the truth was ~1,120 draws/yr.
+- **Scanned + set aside, do not re-derive:** `monthly-listeners` (Spotify, 3 artists);
+  `movie-delay`; 435 US House race boards (Kalshi + free forecasters); Setka Cup table tennis
+  and the obscure soccer/cricket series (Pinnacle). Titled Tuesday and GPU rental are **dead
+  on W1** as of 08-02 — see above, not merely young.
+- **CENSUS TRAPS, each cost me a wrong number.** (a) Dormant boards rank LAST by `volume24hr`
+  and offset paging caps at 2,000 → **date-windowed paging is mandatory** (1,600-event scan vs
+  9,347 events / 96,642 markets). (b) Gate on `volumeNum==0 && liquidityNum==0`, never on a
+  name pattern. (c) Arrival rates come off the **settled** record, not the open book.
 - Polymarket's `Earn 4%` tag is **not** a venue yield on idle USDC — it is maker liquidity
-  rewards. The carry comparator is external (T-bills). Kalshi's, however, *is* real collateral
-  interest, and it belongs in any cross-venue carry comparison.
-- **The depth wall has a SHAPE, now bounded by two clears:** it needs a *mode*. A cumulative
-  ladder has none (unquoted legs are the already-decided ones, \$264 at the bid); a standalone
-  binary has no board at all (\$19.4M, zero slippage). `depth-lives-where-the-edge-is-not.md`.
+  rewards; the carry comparator is external (T-bills). Kalshi's *is* real collateral interest.
 - **`KXGPT5RELEASE`, `KXGEMINI3`, `KXMYTHOS`, `KXCLAUDE4`, `KXO3RELEASE`, `KXGROK4` are ALL
   0-market shells** while `KXGPT`/`KXCLAUDE`/`KXGEMINI` carry 3.3M contracts — Kalshi rolls
   successive objects through ONE vendor-generic series. **Search by vendor/venue/person/
@@ -95,11 +102,10 @@ what is live, unfinished, or not yet generalisable.
   the draw count is a property of the world rather than of the order type.
 - Wiki overlap `nested-ladders-trade-depth-for-power.md` ↔ `nested-ladders-are-one-draw.md`:
   **checked 08-01, no drift**, ownership split still stated in both. Don't re-check every run.
-- **Scrapers/gotchas kept from dead families.** RT: `rottentomatoes.com/m/<slug>`, `<script
-  id="media-scorecard-json">`, browser UA. The Numbers: `/box-office-chart/weekend/YYYY/MM/DD`
-  — estimates carry `class="chart_estimate"` and round to $50k while finals are exact = a
-  machine-readable provisional-vs-final detector. `web.archive.org` hard-blocked 07-27 (14
-  resets) while `archive.org/wayback/available` worked — test archive deps before planning.
+- **Scrapers kept from dead families.** RT: `rottentomatoes.com/m/<slug>`, `<script
+  id="media-scorecard-json">`, browser UA. The Numbers `/box-office-chart/weekend/Y/M/D`:
+  `class="chart_estimate"` + $50k rounding = a machine-readable provisional-vs-final detector.
+  `web.archive.org` hard-blocked 07-27 while `archive.org/wayback/available` worked.
 - Scanned + rejected earlier, don't re-derive: SpaceX launch counts (cadence); measles ladders
   (thin); chess outrights (Kalshi 31); flu weeklies (off-season); music charts (kworb glanceable);
   IPO/acquisition boards (insider); Netflix Top-10 (in-app list); NSIDC sea-ice (Kalshi 8 + SIPN
@@ -110,16 +116,14 @@ what is live, unfinished, or not yet generalisable.
   (DataGolf/FanGraphs free); tennis derivative ladders; earthquake ladders; esports BO3
   derivatives; RT/Tomatometer ladders; IMF PortWatch chokepoint boards; box-office boards;
   "will X say WORD" mention boards; post/tweet-count ladders; cumulative by-date ladders.
-- Scan tooling: `roles/market-researcher/tools/scan/` (Gamma /events → CSV), order `volume24hr`
-  for "alive today", ~1 min. Series discovery: `/public-search?q=<text>&limit_per_type=50` —
-  **vary the wording and union the slugs**; then `/events?slug=` **and** `&closed=true`.
-  **Best family-enumeration trick (08-01): the `series[].slug` field on `/events`** — 680
-  distinct series over the open universe, which surfaces dormant recurring families (GPU rental,
-  Titled Tuesday, Spotify listeners) that no title grep or volume ranking would show.
-- Landscape shape (stable 07-23→08-01): Sports ~8k mkts dominates count; Politics/Elections
-  dominate volume; ~86% of open markets <$10k. Kalshi catalogue **12,368 series** (12,355 on
-  07-31, 12,329 on 07-30, ~+13–26/day). Coverage map in `wiki/reference/sharp-line-screen.md`;
-  read it as "where the cheap kill is available", never "where nobody is looking".
+- Scan tooling: `roles/market-researcher/tools/scan/` (Gamma /events → CSV). Family
+  enumeration is now **`/series` paging (08-02, see above)** — it supersedes both the
+  `series[].slug` trick and `/public-search`, which stay useful for one-off lookups.
+- Landscape shape (stable 07-23→08-02): Sports dominates market count; Politics/Elections
+  dominate volume; ~86% of open markets <$10k; 4,707 open events / 52,710 markets on 08-02.
+  Kalshi catalogue **12,369 series** (12,368 on 08-01, ~+13–26/day). Coverage map in
+  `sharp-line-screen.md`; read it as "where the cheap kill is available", never "where nobody
+  is looking".
 
 ## Long-term
 
@@ -127,42 +131,43 @@ what is live, unfinished, or not yet generalisable.
   fast-resolving markets — `/wiki/market-selection.md`. Deep books are efficient; calibrated
   recurring crowds are efficient at window-open.
 - **Classify every idea LEVEL vs SHAPE before filing, and say which.** Level = "we estimate the
-  truth better" — died five times (runningmax, gistemp, box office, mentions, and the GPT-6
-  cross-venue gap). Shape = "the crowd's own distribution is mis-allocated" — survived twice
+  truth better" — died six times (runningmax, gistemp, box office, mentions, the GPT-6
+  cross-venue gap, and full-lid 08-02 — where the level claim was **right** and unreachable). Shape = "the crowd's own distribution is mis-allocated" — survived twice
   (ladder-rv wings, favourite-shrinkage), died twice (post-counts 07-29, date ladders 07-30).
   A shape claim passes proxy-vs-primary and glanceable-state *by construction*, so its risk is
   entirely **execution cost, regime stability, and now sample size** — check all three first.
-- **Screen ordering, MEASURED not described:** (1) Kalshi catalogue — check
-  `settlement_sources`, compare **bucket cuts** AND **rule text**, and search by *vendor* not
-  object. (2) Does a specialist publish the simulation free — read the PAGE SOURCE, check
-  newsletters/forums, and try Manifold as a cheap third quote. (3) Fit the implied σ.
-  (4) **Count independent DRAWS, compute required n, divide by arrival rate** — before any
-  modelling; this is the cheapest kill I have added and it needs no data. **For a DOMINANCE
-  object substitute the opportunity count: n=1 suffices for truth, so count live instances and
-  the arrival rate of new ones instead.** **For a PREMIUM-COLLECTING object substitute the
-  break-even event rate `π* = 1 − a_eff·(1+r·d/365)` and look up `3/π*`.** (4b) On any Σ=N board compute **K·s̄/2** before
-  anything else — arithmetic, one book fetch. (5) **Walk the live book at the price band and
-  size the rule would buy**, report VWAP not top-of-book; on a BASKET the **thinnest leg sizes
-  all K legs**. (6) Price both sides at executable prices. (7) **Divide by the capital lock-up
-  and compare to the risk-free rate** — a guaranteed profit is not an edge until it clears the
-  hurdle (France: +0.35%/yr over 9 months). (8) Rebuild ≥3 settled instances from the feed.
+- **Screen ordering, MEASURED not described:** (1) **Count DRAWS, compute required n, divide
+  by arrival rate** — free, no data. Substitute the **opportunity count** for a dominance
+  object and the break-even **event rate π\*** (+`3/π*`) for a premium-collecting one; measure
+  **ICC** rather than assuming legs are or aren't nested. (2) Kalshi catalogue —
+  `settlement_sources`, **bucket cuts AND rule text**, search by *vendor*, and call `/markets`
+  (0-market shells cut both ways). (3) Does a specialist publish the simulation free — read the
+  PAGE SOURCE, check newsletters/forums/podcasts; Manifold as a third quote. (4) Fit the
+  implied σ. (4b) On any Σ=N board compute **K·s̄/2** first — arithmetic, one book fetch.
+  (5) **Walk the live book at the band, the size AND the hour the rule fires**; VWAP not
+  top-of-book; on a BASKET the **thinnest leg sizes all K legs**; split the tape on the
+  resolution instant. (6) Price both sides at executable prices. (7) Divide by the capital
+  lock-up vs risk-free. (8) Rebuild ≥3 settled instances from the feed.
 - **Report the bound, never the point estimate.** 07-30's −11.12pp at t=−2.15 with the mirror
   test passing still died because Wilson upper 0.3455 > break-even 0.2786. A monotone gradient
   in the pre-registered direction is not a pass. `wiki/reference/break-even-win-rate.md`.
 - **Decompose a surviving band by leg TYPE, and leave-one-family-out.** Wing buckets aren't
   comparable to interior buckets at the same price (07-29: wings carried 100% of a +3.28pp edge,
   747 interior legs none). 07-30: dropping rocket launches took t from −2.15 to −1.45.
-- **The walls, in the order they now fire:** (1) someone already prices it — 10 of 16 objects;
+- **The walls, in the order they now fire:** (1) someone already prices it — 10 of 17 objects;
   (2) taker-side reachability (spread 07-28, leg depth 07-29, basket-thinnest-leg 07-31) —
-  **has a pass state and a shape: it needs a MODE**, so it does not bite a modeless ladder
-  (07-30) or a standalone binary (08-01, \$19.4M and zero slippage); (3) **statistical power /
-  draw count (07-30)**, or for a dominance object its analogue the **opportunity count**
-  (07-31) — **first cleared outright 08-01**; (4) **carry — the hurdle rate on locked capital
-  (07-31)**. **08-01: on any premium-collecting object, walls 3 and 4 are the SAME
+  has a pass state, and **two axes**: on the PRICE axis it needs a mode, so it misses a
+  modeless ladder (07-30) and a standalone binary (08-01); on the **TIME axis it needs none**
+  and killed 08-02 anyway (85.5% of the tape after the resolution instant, $76/leg at T−24h).
+  **Walk the book at your band, your size AND your hour**; (3) **statistical power / draw
+  count (07-30)**, or for a dominance object the **opportunity count** (07-31) — cleared
+  08-01, marginal 08-02; (4) **carry — the hurdle rate on locked capital (07-31)**. **08-01: on any premium-collecting object, walls 3 and 4 are the SAME
   calculation** — state the hurdle as a break-even *event rate* π\*, weight π\* by **volume**
   across horizon buckets, and `3/π*` is a floor on draws that nothing can get under.
   Absence of a counterparty removes our cheapest *check*, it does not create edge — 4 objects
   "none found", 3 dead. Full analysis in `ops/idea-funnel.md`.
+- **KILLED 08-02, do not re-propose:** White House full-lid timing binaries in any taker-side
+  form. The crowd IS ~16pp low at the mid and ~8pp low at the ask, and there is $76 there.
 - **KILLED 08-01, do not re-propose:** fading the ≤5c standalone-binary tail (novelty/lottery
   legs, "nothing ever happens" premium) in any taker-side form. The band is reachable in size
   and still unprovable — and Kalshi prices it *higher* than we do.
@@ -175,9 +180,10 @@ what is live, unfinished, or not yet generalisable.
   Edge needs the state *recoverable by work*.
 - **A stale bucket cut is a real mispricing and a worthless one** — +15.89pp, one regime, fixed
   the moment the venue re-cuts, leg unfillable. Check whether a rival has re-cut: that dates it.
-- API gotchas live in `wiki/recipes/polymarket-api.md` — read it, don't re-derive. The two that
-  cost me time: `prices-history` returns **empty, not truncated**, for windows >~14d (chunk at
-  ≤14d; this looked exactly like "unbacktestable" and would have been a wrong kill), and per-leg
-  deadlines come from `endDate`, never the question text. Fees: `mentions_fees` 0.04,
-  `culture_fees` 0.05, movies 0.05, geopolitics 0; CLOB reports 1000bps maker/taker base on
-  AI/politics boards — **unresolved, don't quote it as 10%**; Kalshi's own is `0.07·p·(1−p)`.
+- API gotchas live in `wiki/recipes/polymarket-api.md` — read it, don't re-derive. The three
+  that cost me time: `prices-history` returns **empty, not truncated**, past ~14d (chunk at
+  ≤14d — this looks exactly like "unbacktestable"); per-leg deadlines come from `endDate`, not
+  the question text — but the **resolution instant** comes from the *rules text*, and on some
+  families `endDate` collapses to the board close; and **Gamma's quote fields are a stale
+  cache** (08-02). Fees: politics/finance/tech 0.04, culture/economics/weather/sports 0.05,
+  crypto 0.07, geopolitics 0; Kalshi's own is `0.07·p·(1−p)`.
