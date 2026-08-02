@@ -287,3 +287,20 @@ rotated onto the time axis: 85.5% of its tape prints after the resolution
 instant. It also corrected both backlog seeds I had recorded as young; both are
 incumbent-dead. Manifest: ops/runs/2026-08-02.toml.
 
+---
+## 2026-08-02 (late) — daily trigger paused by Felix
+
+Disabled `trig_017vXv9HCCiTZXVUd3brFuD9`, not deleted: the cron, prompt and
+self-bind session survive, so resuming is one call and this session keeps its
+context. The snapshot worker stays on deliberately — book history cannot be
+reconstructed after the fact, and leaving it running costs nothing.
+
+Left mid-flight and recorded so resuming is not guesswork: the trial review is
+unrun and due 08-03, having slipped once by the completeness gate; ladder-rv
+stays `trial`, neither promoted nor discarded, frozen at 163 rows over 82
+markets. Everything the review needs is already written.
+
+Noted in the decision entry, for whenever this restarts: the pre-registrations
+do not expire. A pause is not a reason to revisit a rule that was written
+before the numbers existed — it is the reason those rules are worth having.
+

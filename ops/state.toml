@@ -11,7 +11,11 @@ updated = "2026-07-25"
 # times in Europe/Berlin: weekdays 02:00-15:00, weekends 02:00-08:00.
 # The CEO is a persistent session; the daily trigger fires INTO it (self-bind,
 # keeps all MCP connectors). Cron is UTC: 01:07 = 03:07 German summer / 02:07 winter.
-ceo_trigger = "self-bind daily 01:07 UTC (cron 7 1 * * *), armed 2026-07-22 by the CEO"
+# PAUSED 2026-08-02 by Felix ("stop your routine trigger for now"). Disabled, not deleted —
+# the schedule, prompt and self-bind session survive, so re-enabling is one call and the CEO
+# keeps its context. The firm does not run itself while this is off: no market researcher, no
+# slot work, no scoring, no watchlist mirror at run start. See ops/decisions.md 2026-08-02.
+ceo_trigger = "self-bind daily 01:07 UTC (cron 7 1 * * *), armed 2026-07-22 — DISABLED 2026-08-02"
 additional_triggers = ["snapshot worker (Cloudflare cron, 7 * * * *, no LLM)"]
 # STALE-FEED GATE (2026-07-27, wiki/reference/stale-feed-gate.md): variants resolving on a
 # feed with session hours must not emit a disagreement row while that feed is shut. WTI,

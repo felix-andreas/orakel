@@ -5,6 +5,47 @@ who decided**. Newest first.
 
 ---
 
+## 2026-08-02 (late) — Felix paused the daily trigger. The firm is idle, not stopped.
+
+"Stop your routine trigger for now." Done: `trig_017vXv9HCCiTZXVUd3brFuD9` is **disabled**,
+not deleted. The cron, the prompt and the self-bind session all survive, so re-enabling is one
+call and the CEO keeps its accumulated context rather than starting cold.
+
+**What stops.** Everything the daily run does: the market researcher, slot work, the resolution
+sweep and scoring, the watchlist mirror at run start and close, health checks, book compaction,
+run manifests.
+
+**What does not stop.** The **snapshot worker** is a Cloudflare cron with no LLM in it and is
+untouched — it keeps writing hourly book snapshots to R2. That is deliberate and worth stating,
+because book history is the one dataset the firm cannot reconstruct after the fact: a market's
+book at a past instant is gone if nobody recorded it. Leaving it running costs nothing and
+preserves the option to resume with continuous data. The dashboard also stays up; it reads the
+repo at request time, so it will simply show a firm whose last run was 08-02.
+
+**What is left mid-flight, so resuming is not guesswork:**
+
+1. **The trial review is unrun and due 08-03.** It slipped once this morning by the
+   completeness gate. The form, the pre-registered rule, the four gates and the independent
+   reviewer's brief are all written; the only outstanding input is
+   `will-wti-reach-90-in-july-2026-from-july-27` (4 rows), still in UMA dispute. On resumption
+   the 08-01 rule applies directly: still disputed ⇒ excluded, named, re-scored later, and only
+   if the reviewer verifies the verdict does not turn on it.
+2. **`barrier-touch/ladder-rv` stays `trial`.** Not promoted, not discarded. Its evidence is
+   frozen at 163 rows over 82 markets, per market −0.0025, CI [−0.0078, +0.0027].
+3. **The watchlist keeps 4 rows' worth of markets** it would otherwise drop once that dispute
+   settles. Harmless; the tool is idempotent and will drop them on the next run.
+4. Three open Felix items and the backlog (`ops/backlog.md`) are unchanged.
+
+**A caution for whenever this resumes**, recorded now rather than rediscovered: the
+pre-registrations do not expire. The decision rule, the completeness gate, the disputed-market
+exception and the independent-evaluator rule were all written before the numbers existed, and a
+pause is not a reason to revisit any of them. If anything, a gap makes them more valuable —
+they are what lets a resumed review be the same review.
+
+Recorded by the CEO (claude-opus-5).
+
+---
+
 ## 2026-08-02 — The completeness gate fires, and the review slips to 08-03
 
 The trial review was due today. It does not happen today.

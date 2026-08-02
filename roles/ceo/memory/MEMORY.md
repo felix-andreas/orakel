@@ -2,27 +2,33 @@
 
 _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests / wiki._
 
-## Short-term (current run / immediate)
+## Short-term (PAUSED — read this first on resumption)
 
-- **2026-08-02 run** (ops/runs/2026-08-02.toml). 15 BTC legs settled. Market researcher filed
-  object 17. Slot 1 stood down — trial under review.
-- **THE REVIEW IS TOMORROW, 08-03** — slipped once by the completeness gate because
-  `will-wti-reach-90-from-july-27` (4 rows) is still `umaStatus: disputed`. Tomorrow the 08-01
-  rule applies: excluded, named, re-scored later, **only if the reviewer verifies the verdict
-  does not turn on it**. Spawn the **independent reviewer** per `ops/reviews/README.md` — brief
-  and form already written. **Slot 1 supplies analysis, never verdicts.**
-- **Trial: 163 rows / 82 markets, per market −0.0025, CI [−0.0078, +0.0027]** — contains zero.
-  Tradeability 63%. Every horizon straddles. Gate 3 may be decidable *without* the resolutions
-  at all (edge +0.73pp vs 1.00c median half-spread) — ask the reviewer explicitly.
-- **Dashboard cold-cache loss: MEASURED, and concurrency is refuted.** Cold `/runs` is
-  reproducibly `attempted=35 hit=0 net=35 failed=22 span_ms=369`; warm is `net=3 failed=0`;
-  cold `/state` at 2 reads never fails. Bounding to 4 gave an **identical** 22 and cost 163ms,
-  so my 07-28 "bounding made it worse" was an artifact of counting file names, not reads.
-  Surviving hypothesis with arithmetic: the subrequest budget, **Cache API ops spend it too**
-  (~3 per cold read vs 1 warm; ~70 vs a 50 ceiling). Next experiment is named: disable the
-  cache for one deploy, read `failed` off the footer.
+- **The daily trigger is DISABLED** (2026-08-02, Felix: "stop your routine trigger for now").
+  `trig_017vXv9HCCiTZXVUd3brFuD9`, disabled not deleted — re-enable with one `update_trigger`
+  call and this session keeps its context. The **snapshot worker keeps running** (Cloudflare
+  cron, no LLM), deliberately: book history is the one dataset that cannot be reconstructed
+  after the fact.
+- **THE TRIAL REVIEW IS UNRUN.** Due 08-03, already slipped once by the completeness gate.
+  Everything needed is written: the four-gate rule (`ops/decisions.md` 07-30), the form
+  (`ops/reviews/2026-08-02-ladder-rv.md`), the independent reviewer's brief
+  (`ops/reviews/README.md`). Only input still missing:
+  `will-wti-reach-90-from-july-27` (4 rows), in UMA dispute. The 08-01 rule applies directly —
+  still disputed ⇒ excluded, named, re-scored later, **only if the reviewer verifies the
+  verdict does not turn on it**.
+- **PRE-REGISTRATIONS DO NOT EXPIRE.** The decision rule, the completeness gate, the
+  disputed-market exception and the independent-evaluator rule were all written before the
+  numbers existed. A pause is not grounds to revisit any of them — a gap makes them *more*
+  valuable, because they are what lets a resumed review be the same review.
+- **Trial frozen at 163 rows / 82 markets, per market −0.0025, CI [−0.0078, +0.0027]** —
+  contains zero. Tradeability 63%. Gate 3 may be decidable *without* the resolutions at all
+  (edge +0.73pp vs 1.00c median half-spread); ask the reviewer explicitly.
 - If ladder-rv is discarded: **zero live strategies and an empty backlog** — both former seeds
-  are now known W1-dead. A fact to state, not an argument for promoting something.
+  are known W1-dead. A fact to state, not an argument for promoting something.
+- **Dashboard cold-cache loss: measured, concurrency refuted.** Cold `/runs` is reproducibly
+  `attempted=35 hit=0 net=35 failed=22 span_ms=369`; bounding to 4 gave an identical 22.
+  Surviving hypothesis: subrequest budget, **Cache API ops spend it too**. Next experiment is
+  named and cheap — disable the cache for one deploy, read `failed` off the footer.
 
 ## Medium-term (bootstrap phase)
 
