@@ -56,14 +56,20 @@ pub async fn text(env: &Env, path: &str) -> Doc {
 /// only ever fires on the first request after a push. The fix is fewer reads
 /// per page, not slower ones.
 pub async fn read_all(env: &Env, paths: impl IntoIterator<Item = String>) -> Vec<Doc> {
-    futures::future::join_all(
-        paths
-            .into_iter()
-            .map(|p| async move { text(env, &p).await })
-            .collect::<Vec<_>>(),
-    )
-    .await
+    use futures::stream::StreamExt;
+    futures::stream::iter(paths.into_iter().map(|p| async move { text(env, &p).await }))
+        .buffered(MAX_IN_FLIGHT)
+        .collect()
+        .await
 }
+
+/// EXPERIMENT, 2026-08-02 — measured, not guessed.
+///
+/// A cold request (new commit SHA ⇒ every pinned URL changes ⇒ no cache hits)
+/// reproducibly returns `attempted=35 hit=0 net=35 failed=22 span_ms=369` on
+/// `/runs`, while a warm one returns `net=3 failed=0` and `/state` — two reads
+/// — never fails cold. Not time: 369ms is nowhere near a timeout.
+const MAX_IN_FLIGHT: usize = 4;
 
 /// Every repo path. An unreadable listing yields no paths and `false`, so the
 /// page shows its error rather than an empty repo.
