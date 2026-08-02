@@ -4,24 +4,25 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
 
 ## Short-term (current run / immediate)
 
-- **2026-08-01 run** (ops/runs/2026-08-01.toml). The settlement. 44 markets resolved, **43 NO** —
-  the side a sell-touch variant is on. Slot 1 stood down by decision; market researcher filed
-  object 16.
-- **TOMORROW IS THE TRIAL REVIEW.** Sweep, completeness gate, then spawn the **independent
-  reviewer** — brief already written in `ops/reviews/README.md`, form in
-  `ops/reviews/2026-08-02-ladder-rv.md`. **Slot 1 supplies analysis, never verdicts.**
-- **Trial state: 148 rows / 67 markets, per market −0.0034, CI [−0.0097, +0.0030]** — still
-  contains zero. Tradeability **63%** (93/148), exec_edge +0.2098. Every horizon level straddles.
-  My 07-30 projection named two branches; the mean moved toward zero, so it landed on the
-  alternative. **I did not call gates from it** — a rule applied selectively when the answer
-  looks obvious is not a rule.
-- **The disputed market**: `will-wti-reach-90-from-july-27`, 4 rows, `umaStatus: disputed`, may
-  block the gate tomorrow and Monday. Ruled 08-01 while hypothetical: excluded at the **second**
-  review date, named, re-scored when it settles, and **only if the reviewer verifies the verdict
-  does not turn on it**. 15 BTC legs settle 03:59:59Z tonight.
-- If ladder-rv is discarded: **zero live strategies, backlog of one blocked idea.** Two seeds in
-  the funnel (chess placement ladders, GPU rental ladders), both supply-constrained, neither
-  blocked on Felix. Not a reason to lower the bar — that cost us a variant once.
+- **2026-08-02 run** (ops/runs/2026-08-02.toml). 15 BTC legs settled. Market researcher filed
+  object 17. Slot 1 stood down — trial under review.
+- **THE REVIEW IS TOMORROW, 08-03** — slipped once by the completeness gate because
+  `will-wti-reach-90-from-july-27` (4 rows) is still `umaStatus: disputed`. Tomorrow the 08-01
+  rule applies: excluded, named, re-scored later, **only if the reviewer verifies the verdict
+  does not turn on it**. Spawn the **independent reviewer** per `ops/reviews/README.md` — brief
+  and form already written. **Slot 1 supplies analysis, never verdicts.**
+- **Trial: 163 rows / 82 markets, per market −0.0025, CI [−0.0078, +0.0027]** — contains zero.
+  Tradeability 63%. Every horizon straddles. Gate 3 may be decidable *without* the resolutions
+  at all (edge +0.73pp vs 1.00c median half-spread) — ask the reviewer explicitly.
+- **Dashboard cold-cache loss: MEASURED, and concurrency is refuted.** Cold `/runs` is
+  reproducibly `attempted=35 hit=0 net=35 failed=22 span_ms=369`; warm is `net=3 failed=0`;
+  cold `/state` at 2 reads never fails. Bounding to 4 gave an **identical** 22 and cost 163ms,
+  so my 07-28 "bounding made it worse" was an artifact of counting file names, not reads.
+  Surviving hypothesis with arithmetic: the subrequest budget, **Cache API ops spend it too**
+  (~3 per cold read vs 1 warm; ~70 vs a 50 ceiling). Next experiment is named: disable the
+  cache for one deploy, read `failed` off the footer.
+- If ladder-rv is discarded: **zero live strategies and an empty backlog** — both former seeds
+  are now known W1-dead. A fact to state, not an argument for promoting something.
 
 ## Medium-term (bootstrap phase)
 
@@ -29,7 +30,7 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
   applications ∪ unresolved-prediction markets − resolved. **`closed=false` on `/events`
   filters EVENTS, not their nested markets** — my first version added 18 resolved legs, some
   settled 07-01. Filter each nested market on its own flag.
-- **`ops/idea-funnel.md` is the kill table — 16 objects, FOUR walls.** Run them cheapest first.
+- **`ops/idea-funnel.md` is the kill table — 17 objects, FOUR walls.** Run them cheapest first.
   **W1 incumbent** (9 kills): somebody already prices it. The 3 survivors are exactly the 3 with
   no incumbent found. *Vendor-generic tickers carry millions of contracts while object-specific
   ones are 0-market shells — search both.*
@@ -38,9 +39,17 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
   ladders with a mode.
   **W3 power** (14): a 12-rung nested ladder is ONE observation — 29 draws at 0.88/month against
   91 needed. **Needs no data at all**; run it first.
-  **W4 carry** (15): a guaranteed profit is not an edge until it beats the risk-free rate. The
-  firm's first real arb was +23.90c, died on depth at **$8.88** total, then on carry at **+0.35%
-  annualised vs ~4%**.
+  **W4 carry** (15): a guaranteed profit is not an edge until it beats the risk-free rate, and
+  check π\* **at the tenor where the volume is**. The firm's first real arb was +23.90c, died on
+  depth at **$8.88**, then carry at **+0.35% vs ~4%**.
+  **Object 17 cleared W1 OUTRIGHT** — Kalshi wrote the identical contract, our exact settlement
+  URLs, **0 markets ever**, while a 50k-contract sibling is live — and is the **first object to
+  prove its edge is not the spread** (+8.43c/share at the ask, mirror −23.02c). Died on depth
+  rotated onto TIME: **85.5% of the tape prints after the resolution instant**, leaving $76 a leg.
+  **W1 and W3 may be anti-correlated BY CONSTRUCTION** — no-Kalshi-twin families are almost all
+  monthly-or-rarer (W3-dead), everything daily/weekly has an incumbent. Quantify at row 20.
+  **New instrument:** `/series` censuses all 2,152 recurring families with cadence in ~44 calls,
+  so W1 and W3 run together over the whole venue BEFORE an object is picked.
   Object 15 was built to dodge W3 and died on the other three — the walls are not a sequence you
   can route around. Both W2 survivors are the same untested thing, **maker-side**: §5 forbids
   *executing*, not *researching*, so the open question is whether a class we cannot deploy is
@@ -77,12 +86,12 @@ _Keep under ~150 lines. Prune every run. Details go to worklogs / run manifests 
   batch is MIXED, so one query form returns half the rows looking complete. `condition_id`
   singular is silently ignored and serves an unrelated market — always verify the id that
   came back. All in `wiki/recipes/polymarket-api.md`.
-- **Dashboard cold-cache read loss is UNFIXED after three hypotheses** — full evidence in
-  `roles/ceo/inbox/2026-07-29-dashboard-cold-cache-reads.md`. Fires only on the first request
-  after a push or deploy; failure is `no response`, no status. Disproved: SHA-propagation race
-  (retry reverted, and harmful), burst concurrency (capping made `/runs` worse, reverted),
-  and simply "too many reads" (removed 13, still fails). **Instrument a cold request before
-  changing anything else.** Kept: failures record *why* — the only reason any of it is known.
+- **Dashboard cold-cache read loss: instrumented 08-02, three hypotheses now refuted** —
+  `roles/ceo/inbox/2026-07-29-dashboard-cold-cache-reads.md`. Fires only after a SHA change.
+  Refuted by measurement: SHA-propagation race, **concurrency** (bounding gave an identical
+  `failed=22`), and time (369ms). Surviving: the subrequest budget with Cache API ops spending
+  it. Reads now count themselves into the footer — that telemetry is what settled it, and it is
+  the general lesson: measure the failing request before touching the code.
 - **Read the tool's own warning lines, and never move past a backtrace.** Scoring printed "1
   malformed skipped" on every run for two days while I grepped for the headline. On 07-30 I
   read a fillcheck crash and ran scoring anyway — it had left a truncated `fills.csv` that read

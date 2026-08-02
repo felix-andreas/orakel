@@ -258,3 +258,32 @@ tomorrow's completeness gate. Excluded at the second review date, only if the
 reviewer verifies the verdict does not turn on it. Written while I did not know
 which way it cut. Manifest: ops/runs/2026-08-01.toml.
 
+---
+## 2026-08-02 — daily run (the review that didn't happen)
+
+Model: claude-opus-5. All 15 BTC legs settled; trial now 163 rows / 82 markets,
+per market −0.0025, CI [−0.0078, +0.0027], still containing zero.
+
+The review was due and did not run. One market is still in UMA dispute with 4
+rows on it, and the completeness gate slips the review one day. Four rows out of
+82 markets will almost certainly not move any gate — I can see that and could
+argue it. That is exactly what the gate is for: a rule that only binds when it
+costs nothing is not a rule.
+
+With the review slipped I had capacity and took the dashboard backlog item,
+whose standing instruction was to measure before changing anything. Reads now
+count themselves into the page footer. A cold /runs is reproducibly 35 net
+fetches with 22 failures; warm is 3 with none; a cold /state at two reads never
+fails. Then the test that mattered: bounding concurrency to 4 returned an
+identical 22 and cost 163ms. Concurrency is refuted — and my 07-28 claim that
+bounding "made it worse" was an artifact of counting file names in a banner
+rather than reads. What survives has arithmetic: the subrequest budget, with
+Cache API operations spending it too.
+
+Object 17 cleared the incumbent wall outright for the first time — Kalshi wrote
+the identical contract with our exact settlement URLs and never listed a market —
+and is the first object to prove its edge is not the spread. It died on depth
+rotated onto the time axis: 85.5% of its tape prints after the resolution
+instant. It also corrected both backlog seeds I had recorded as young; both are
+incumbent-dead. Manifest: ops/runs/2026-08-02.toml.
+

@@ -1,0 +1,203 @@
+date = "2026-08-02"
+trigger = "daily (fired 01:09 UTC, inside the weekend window 00:00-06:00 UTC)"
+model = "claude-opus-5"
+outcome = "ok"
+
+summary = """
+The trial review was due today and did not happen: one market is still in UMA dispute, and the
+completeness gate I pre-registered on 07-30 slips the review one day rather than letting me
+decide that 4 rows out of 82 markets obviously do not matter. Everything else settled — 163
+rows over 82 markets, and the interval still contains zero. With the review slipped I had
+capacity for the backlog, and took the dashboard item whose standing instruction was to measure
+before changing anything: a cold request is now reproducibly 35 reads with 22 failures, and
+bounding concurrency changed it by exactly nothing, which refutes a hypothesis I had been
+carrying since 07-28. The market researcher cleared the incumbent wall outright for the first
+time and still lost.
+"""
+
+[[steps]]
+n = 1
+what = "Orient"
+result = "Yesterday's manifest present, tree clean. CEO inbox: 1 open (the dashboard item, taken today). Felix: 5 open, ranked in his inbox README."
+
+[[steps]]
+n = 2
+what = "Resolution sweep — 15 settled, 1 still disputed"
+result = """
+All 15 BTC legs resolved NO. Appended via `--emit` (csv.writer, so quoting is not something
+anyone has to remember). Scored evidence 148 -> 163 rows, 67 -> 82 markets.
+Per market -0.0034 -> -0.0025, CI [-0.0097, +0.0030] -> [-0.0078, +0.0027] — still contains
+zero. Tradeability holds at 63% (103/163). Every horizon level straddles.
+"""
+
+[[steps]]
+n = 3
+what = "THE COMPLETENESS GATE FIRES — review slips to 08-03"
+result = """
+`will-wti-reach-90-in-july-2026-from-july-27` is still `umaResolutionStatus: disputed`, 4 rows.
+The gate pre-registered on 07-30 says the review proceeds only when every outstanding row's
+market is resolved, else it slips one day, once. Today is the first review date, so: 08-03,
+and tomorrow the 08-01 rule applies — still disputed means excluded and the review proceeds,
+provided the reviewer verifies the verdict does not turn on it.
+Recorded plainly in the decision entry: 4 rows on 1 market out of 82 will almost certainly not
+move any gate, I can see that, and I could argue it convincingly. That is what the gate is for.
+A rule that only binds when it costs nothing is not a rule, and "it obviously does not matter"
+is the argument I would also make if it did. One day, against every future pre-registration in
+this firm becoming advisory.
+I still have not checked whether excluding those 4 rows helps or hurts us, and the reviewer
+will not be told to.
+"""
+
+[[steps]]
+n = 4
+what = "BACKLOG (new playbook step 10) — instrument the dashboard cold-cache loss"
+result = """
+Taken because the review slipped and the research cadence was already served. The item's
+standing instruction was to measure a cold request BEFORE changing anything else.
+Every read now counts itself — attempted, cache hits, network fetches, failures, first-to-last
+span — and the numbers ride in an HTML comment in the page footer. In the response rather than
+a log, deliberately: a cold request creates a new isolate, so a counter queried afterwards
+belongs to a different one. The Err branch of the fetch is counted before it propagates, which
+is the "no response" case and precisely the event no counter would otherwise see.
+Reproducible on demand — push a commit, poll until the HEAD memo rolls to the new SHA:
+  /runs cold   attempted=35 hit=0  net=35 failed=22 span_ms=369
+  /runs warm   attempted=24 hit=21 net=3  failed=0  span_ms=130
+  /state cold  attempted=2  hit=0  net=2  failed=0  span_ms=113
+Two independent cold runs agreed to the read.
+"""
+
+[[steps]]
+n = 5
+what = "Concurrency refuted by measurement, and my 07-28 note corrected"
+result = """
+Bounding in-flight reads to 4 gave attempted=35 hit=0 net=35 failed=22 — IDENTICAL — and cost
+163ms. Pacing changes nothing. Reverted.
+The 07-28 note claiming that bounding "made it worse" (3 lost files -> 6) was an artifact of
+counting distinct file NAMES in a banner rather than counting reads. That correction is
+recorded in data.rs where the wrong claim lived, not just in a manifest.
+Time is refuted too at 369ms, and a bad pinned ref was already refuted (a rejected ref returns
+a status; these return none).
+What survives has arithmetic: the per-request subrequest budget, with Cache API operations
+spending it too. A cold read costs ~3 subrequests (cache.get miss, fetch, cache.put) where a
+warm read costs 1, so /runs costs ~24 warm and ~70 cold against a 50 ceiling — predicting it
+runs out around read 16, which is what 13 successes and 22 failures look like. It also explains
+why pacing cannot help (a count, not a rate), why /state at 2 reads never fails, and why only a
+SHA change triggers it.
+Next experiment named and cheap: disable the Cache API for one deploy. failed -> 0 confirms it,
+failed = 22 kills it.
+"""
+
+[[steps]]
+n = 6
+what = "Market researcher (claude-opus-5, max) — object 17 clears the incumbent wall and still loses"
+result = """
+White House "full lid by 6:30 PM" per-day binaries. **Cleared W1 outright, in the sharpest form
+yet**: Kalshi's KXFULLLIDBEFORE630PM is the IDENTICAL contract, declaring both our settlement
+URLs, with 0 markets ever — while KXWHPRESSBRIEFING (50,609 contracts) is live, so it is not
+inattention. Cleared W3 marginally (132 settled legs, ICC -0.008, n_eff 132, ~276 legs/yr
+against 206 required).
+FIRST OBJECT EVER TO SURVIVE THE MIRROR TEST AT EXECUTABLE PRICES: the +16.2pp mid bias
+(t=+4.23) is not the spread — buying YES at the ask returns +8.43c/share across a 14.1c spread
+while the mirror loses 23.02c. It dies on SIZE, not on being priced.
+Killed by execution rotated onto a new axis: 85.5% of the entire tape ($922,456 of $1,079,036)
+prints AFTER the resolution instant at median 0.994 — settlement carry, not a forecasting
+market — leaving a median $76 per leg at T-24h, 38 of 132 legs with no tape at all, and $25,606
+across the whole six-month record. Independently killed by the bound: 52/87 = 0.598 against
+q* 0.5309, Wilson lower 0.4926.
+"""
+
+[[steps]]
+n = 7
+what = "A new instrument, and it changes the ORDER of work"
+result = """
+`/series?limit=50&offset=N` pages the venue's complete catalogue of recurring families — 2,152
+of them, with `recurrence` — and `/series?slug=X` returns one family's full event list
+including closed, so settled-count / family-age IS the W3 denominator directly. That is the
+number the open book cannot give, and whose absence caused 08-01's wrong-denominator error.
+~44 calls, about a minute. Cross-joined with Kalshi's one-call catalogue it runs W1 and W3
+TOGETHER, over the whole venue, BEFORE an object is chosen. Both were per-object until now.
+"""
+
+[[steps]]
+n = 8
+what = "Two corrections to me, and the sharpest pond question yet"
+result = """
+Both backlog seeds I recorded on 08-01 as "supply-constrained rather than refuted" are W1-DEAD:
+Kalshi runs Titled Tuesday chess (KXTITLEDTUESTOP, 155,922 contracts / 127,770 OI) and 38
+compute-price series for GPU rental. They had been killed on the power wall alone, and because
+it fired first nobody ran the incumbent screen — a wall that ends the search also ends the
+evidence, so a seed parked on one wall is an untested claim about all the others.
+And: W1 and W3 may be ANTI-CORRELATED BY CONSTRUCTION. Of 2,152 families, the ones with no
+Kalshi twin are almost all monthly-or-rarer (chatgpt-outage, bank-failure, precipitation,
+scorigami) and therefore W3-dead on arrival, while everything with daily/weekly arrival (TSA —
+where Kalshi declares our exact URL — tornadoes, eggs, FDA, MrBeast, weather, mentions, macro)
+has a live incumbent. Kalshi lists what recurs BECAUSE it recurs.
+If it holds, the two cheapest walls are two faces of one constraint and the space where an
+object clears both is structurally thin. Unproven, quantifiable in one run from census data
+already in hand, scheduled for row 20 alongside the pond question.
+"""
+
+[[steps]]
+n = 9
+what = "Health checks + book compaction + watchlist"
+result = """
+Dashboard 302 without Access headers / 200 with. Snapshot worker 200. bookpack packed 08-01 and
+today's partial. Watchlist rebuilt — the settled BTC legs dropped automatically. Worklogs
+current. Slot 1 did not run: its trial is under review and its boards have settled.
+"""
+
+[failures]
+mine = """
+1. I carried "bounding concurrency made it worse" from 07-28 for five days. It was an artifact
+   of counting file names in a banner rather than reads, and one measurement refuted it.
+2. I recorded two backlog seeds as young-but-promising without running the incumbent screen on
+   them, because the power wall had already fired. Both were dead for a different reason.
+"""
+theirs = """
+The market researcher built a venue-wide census instrument rather than working the object it
+was handed, and then used it to correct two of my entries unprompted. It also flagged the
+W1/W3 anti-correlation as unproven rather than filing it as a finding.
+"""
+tooling = """
+`worker-build` can ship a STALE wasm while wrangler reports a fresh Version ID. Only
+`rm -rf build target/wasm32-unknown-unknown` invalidates it — `touch src/*.rs` and
+`cargo clean -p` both fail to. The footer build stamp is the honest check. Documented in
+dashboard/README.md after it cost an hour of thinking correct fixes were wrong.
+"""
+
+[spend]
+subagents = 1
+subagent_tokens = 252_485
+note = "market researcher only. Slot 1 did not run — trial under review."
+
+[health]
+dashboard_access = "302 without / 200 with — pass"
+snapshot_worker = "pass"
+parquet = "08-01 packed"
+worklogs = "current"
+slots_producing = "market researcher yes; slot 1 stood down, trial under review"
+watchlist = "settled BTC legs dropped automatically"
+
+[artifacts]
+wiki_added = ["reference/depth-has-a-time-coordinate.md"]
+wiki_amended = [
+  "reference/phantom-midpoints.md (Gamma reported 7c where the book was 79c)",
+  "reference/nested-ladders-are-one-draw.md (an ICC counter-example bounding the nesting kill)",
+  "reference/sharp-line-screen.md (identical contract, 0 markets ever)",
+  "recipes/polymarket-api.md (the /series family census)",
+]
+decisions = 1
+predictions_appended = 0
+resolutions_appended = 15
+ledger_total = 167
+scored_total = 163
+
+[next_run]
+items = [
+  "08-03: THE TRIAL REVIEW, slipped once by the completeness gate. Sweep first; if the WTI market is still disputed the 08-01 rule applies — excluded, named, re-scored later, and ONLY if the reviewer verifies the verdict does not turn on it",
+  "Spawn the INDEPENDENT reviewer per ops/reviews/README.md — the brief is written. Slot 1 supplies analysis, never verdicts",
+  "Ask the reviewer explicitly whether gate 3 is decidable WITHOUT the resolutions at all: an edge smaller than the spread does not depend on how the boards settled",
+  "Dashboard backlog item: the Cache-API subrequest experiment is specified and cheap — disable the cache for one deploy and read `failed` off the footer",
+  "If ladder-rv is discarded the firm has zero live strategies and an empty backlog — both former seeds are now known W1-dead. That is a fact to state, not an argument for promoting something",
+  "Row 20: quantify the W1/W3 anti-correlation from the census already in hand, alongside the pond question",
+]
