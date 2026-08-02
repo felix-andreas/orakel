@@ -52,6 +52,56 @@ thread_local! {
     /// Paths whose read failed during THIS request, so the banner can name them.
     /// "Part of this page could not be read" is not a diagnosis.
     static FAILED: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
+    /// Per-request read telemetry: (attempted, cache hits, upstream fetches,
+    /// failures, ms at first read, ms at last read).
+    ///
+    /// The cold-cache read loss has survived three hypotheses, and every one of
+    /// them was a guess about a mechanism nobody had measured. The standing
+    /// instruction in `roles/ceo/inbox/2026-07-29-dashboard-cold-cache-reads.md`
+    /// is to instrument a cold request BEFORE changing anything else, so this
+    /// counts what actually happens and the page carries its own numbers.
+    static STATS: RefCell<ReadStats> = const { RefCell::new(ReadStats::new()) };
+}
+
+#[derive(Clone, Copy)]
+pub struct ReadStats {
+    pub attempted: u32,
+    pub cache_hits: u32,
+    pub upstream: u32,
+    pub failed: u32,
+    pub first_ms: f64,
+    pub last_ms: f64,
+}
+
+impl ReadStats {
+    const fn new() -> Self {
+        Self { attempted: 0, cache_hits: 0, upstream: 0, failed: 0, first_ms: 0.0, last_ms: 0.0 }
+    }
+}
+
+fn stat_read(cache_hit: bool, failed: bool) {
+    let now = Date::now().as_millis() as f64;
+    STATS.with(|s| {
+        let mut s = s.borrow_mut();
+        s.attempted += 1;
+        if cache_hit {
+            s.cache_hits += 1;
+        } else {
+            s.upstream += 1;
+        }
+        if failed {
+            s.failed += 1;
+        }
+        if s.first_ms == 0.0 {
+            s.first_ms = now;
+        }
+        s.last_ms = now;
+    });
+}
+
+/// This request's read telemetry, for the diagnostic line in the page footer.
+pub fn read_stats() -> ReadStats {
+    STATS.with(|s| *s.borrow())
 }
 
 /// Resolve HEAD once, at the start of the request.
@@ -69,6 +119,7 @@ thread_local! {
 /// well under a second, the TTL is 60, so the whole page sees one SHA.
 pub async fn begin_request(env: &Env) {
     FAILED.with(|f| f.borrow_mut().clear());
+    STATS.with(|s| *s.borrow_mut() = ReadStats::new());
     let _ = head(env).await;
 }
 
@@ -174,6 +225,7 @@ async fn gh_get_once(url: &str, tok: &str, ttl: u32) -> Result<(u16, String)> {
             .flatten()
             .and_then(|s| s.parse().ok())
             .unwrap_or(200);
+        stat_read(true, false);
         return Ok((status, hit.text().await?));
     }
 
@@ -185,9 +237,25 @@ async fn gh_get_once(url: &str, tok: &str, ttl: u32) -> Result<(u16, String)> {
     let mut init = RequestInit::new();
     init.with_method(Method::Get).with_headers(headers);
     let req = Request::new_with_init(url, &init)?;
-    let mut resp = Fetch::Request(req).send().await?;
+    // The `?` here is the branch that produces "no response" — the subrequest
+    // never completing at all, which is the failure the cold-cache loss shows
+    // and the one no counter saw. Count it before propagating, or the very
+    // event being investigated is the one the telemetry misses.
+    let mut resp = match Fetch::Request(req).send().await {
+        Ok(r) => r,
+        Err(e) => {
+            stat_read(false, true);
+            return Err(e);
+        }
+    };
     let status = resp.status_code();
-    let body = resp.text().await?;
+    let body = match resp.text().await {
+        Ok(b) => b,
+        Err(e) => {
+            stat_read(false, true);
+            return Err(e);
+        }
+    };
 
     // Cache definitive answers only (success + not-found); transient errors
     // (403 rate limit, 5xx) must not stick for a minute.
@@ -199,6 +267,7 @@ async fn gh_get_once(url: &str, tok: &str, ttl: u32) -> Result<(u16, String)> {
             let _ = cache.put(url, cacheable).await; // cache failure ≠ error
         }
     }
+    stat_read(false, !(status == 200 || status == 404));
     Ok((status, body))
 }
 
@@ -310,5 +379,26 @@ pub async fn repo_tree(env: &Env) -> Option<Vec<String>> {
             .filter(|e| e["type"] == "blob")
             .filter_map(|e| e["path"].as_str().map(str::to_string))
             .collect(),
+    )
+}
+
+/// This request's read telemetry as one line, for the page's HTML comment.
+///
+/// `attempted` counts every read that reached the cache layer; `hit` and `net`
+/// split them by whether GitHub was actually asked; `failed` counts the ones
+/// that returned neither 200 nor 404 — including the "no response" case, where
+/// the subrequest never completed. `span_ms` is first read to last, which is
+/// the number that separates a count budget from a time budget: if failures
+/// cluster at a fixed elapsed time the limit is temporal, and if they cluster
+/// at a fixed *ordinal* it is a count.
+pub fn read_stats_line() -> String {
+    let s = read_stats();
+    format!(
+        "attempted={} hit={} net={} failed={} span_ms={}",
+        s.attempted,
+        s.cache_hits,
+        s.upstream,
+        s.failed,
+        (s.last_ms - s.first_ms).max(0.0) as i64
     )
 }

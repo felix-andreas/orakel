@@ -441,6 +441,7 @@ pub fn layout(
     <footer class="footer">
       <span>orakel — agentic prediction-market research firm</span>
       <span class="num">worker built {build}</span>
+      <!-- reads: {reads} -->
     </footer>
   </div>
 </div>
@@ -541,6 +542,14 @@ pub fn layout(
             .map(crate::fetch_error_banner)
             .unwrap_or_default(),
         build = esc(&fresh.build),
+        // Read telemetry as an HTML comment, not visible chrome — it is a
+        // diagnostic for whoever is chasing the cold-cache read loss, and
+        // PRINCIPLES.md is explicit that nothing visible may exist without a
+        // UX purpose. Putting it in the RESPONSE rather than in a log is what
+        // makes it usable: a cold request creates a new isolate, so any
+        // counter I query afterwards belongs to a different one. The page has
+        // to carry its own numbers.
+        reads = esc(&crate::live::read_stats_line()),
         body = body,
     )
 }
