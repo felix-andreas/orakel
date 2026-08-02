@@ -43,7 +43,7 @@ slots_active = 1
 id = 1
 variant = "barrier-touch/ladder-rv"
 trial_started = "2026-07-23"
-trial_review_due = "2026-08-02"
+trial_review_due = "2026-08-03"  # slipped once by the completeness gate on 08-02: one market still in UMA dispute
 # COMPLETENESS GATE, pre-registered 2026-07-29 — BEFORE Friday's rows exist, and written
 # down precisely so that invoking it later cannot be a reaction to the numbers.
 # 114 rows over 57 markets are outstanding; ~104 resolve Fri 21:00Z and 16 BTC Sat 04:00Z,
