@@ -29,6 +29,7 @@ you can count, and counting it changed what I think the firm's constraint is.
 | 14 | 07-30 | Cumulative "by \<date\>" ladders (hazard term structure) | discarded at idea stage | **two, either sufficient:** matched-rung cross-venue agreement (median \|Δ\| 0.00 / 1.50pp) **and** Wilson upper 0.3455 vs break-even 0.2786 on **n=29 draws** | **Kalshi `KXGPT` / `KXCLAUDE` / `KXALITOANNOUNCERETIRE`** — 0.5–2.2M contracts per series, plus Manifold |
 | 15 | 07-31 | Same-venue nested-board dominance (primary ⊂ general; Σ=N baskets) | discarded at idea stage | **three, in funnel order:** opportunity count (**1 nesting + 4 Σ=N boards in 6,788 events**), then depth (the one real **+23.90c** arb dies between 100 and 250 baskets — **$8.88** total), then **carry: +0.35% annualised against ~4% risk-free** | **none found** — Kalshi's 11 twin series are all 0-volume / 0-OI. The counterparty is the venue's own spread |
 | 16 | 08-01 | Deep-tail carry (fade ≤5c standalone binaries) | discarded — **closest miss yet** | **cleared W2 and W3**, then died twice: cross-venue **direction** (8/8 matched pairs above us, mean +1.52pp, sign test **p=0.0039**) and **the bound at the venue's real horizon** — backtest **0 of 169** settled legs resolved Yes, +12.97pp over risk-free at executable prices, and Wilson upper **2.22%** still exceeds π\* **0.44%** at 150d where **97.8% of volume sits** | **Kalshi**, live and larger — `KXALIENS` 26.3M contracts, `KXTRUMPOUT27` 5.6M — pricing the same tails **higher** than we do |
+| 17 | 08-02 | White House "full lid by 6:30 PM" per-day binaries | discarded — **first object to survive the mirror test** | **cleared W1 outright and W3 marginally**, then died twice: **execution on a new axis** — **85.5%** of the tape ($922,456 of $1,079,036) prints *after* the resolution instant at median 0.994, leaving a median **$76** per leg at T−24h and $25,606 across the whole six-month record — and **the bound**, 52/87 = 0.598 against q\* **0.5309**, Wilson lower **0.4926** | **none found**, in the sharpest form yet: Kalshi's `KXFULLLIDBEFORE630PM` is the *identical contract*, declaring both our settlement URLs, with **0 markets ever** — while `KXWHPRESSBRIEFING` (50,609 contracts) is live, so it is not inattention |
 
 ## What the table says that the worry didn't
 
@@ -184,21 +185,52 @@ question is not "may we", it is **"is it worth a slot to research a class of str
 firm can never deploy without Felix lifting §5?"** That is his to answer, because it decides
 whether the reachable opportunity set is the one we have been searching.
 
+**2h. The two cheapest walls may be anti-correlated BY CONSTRUCTION — the sharpest question
+the funnel has produced.** Object 17's census (see below) enumerated all **2,152** recurring
+families the venue has ever run, with their arrival cadence, and cross-joined them against
+Kalshi's 12,369-series catalogue. The pattern the researcher noticed, and flagged as unproven:
+
+> The families with **no Kalshi twin** are almost all monthly-or-rarer — ChatGPT outages, bank
+> failures, precipitation, scorigami — and are therefore **W3-dead on arrival**. Everything with
+> daily or weekly arrival — TSA throughput (where Kalshi declares our exact settlement URL),
+> tornadoes, eggs, FDA, MrBeast, weather, mentions, macro — **has a live incumbent.**
+>
+> Kalshi lists what recurs *because* it recurs.
+
+If that holds, W1 and W3 are not independent filters we happen to be failing; they are two
+faces of one constraint, and the space where an object can clear both is structurally thin.
+That is a much sharper form of the "is this the right pond" question than seventeen individual
+kills, and unlike them it is **quantifiable in a single run** — the census data is already in
+hand. Do it at row 20, alongside the pond question, rather than as a side note now.
+
+**2i. A new instrument, and it changes the order of work.** `/series?limit=50&offset=N` pages
+the venue's complete catalogue of recurring families with their `recurrence`; `/series?slug=X`
+returns one family's full event list including closed, so **settled-count ÷ family-age is the
+W3 denominator directly** — the number the open book cannot give you, and the one whose absence
+caused 08-01's wrong-denominator error. Paging all 2,152 takes ~44 calls and about a minute.
+
+Cross-joined with Kalshi's one-call catalogue, that runs **W1 and W3 together, across the whole
+venue, before an object is chosen.** Until now both were run per-object, after picking one.
+Recipe in `wiki/recipes/polymarket-api.md`.
+
 ## Backlog seeds — set aside on W3 for free, worth a revisit
 
 Not ideas, not filed, and deliberately not promoted: two families surfaced in the 08-01 sweep
 and were killed on the **power** wall alone, at zero cost, because they are too young to have a
 record. Both are **supply-constrained rather than refuted**, and neither is blocked on Felix.
 
-- **Titled Tuesday chess placement ladders** — simulable from public Elo, state is not
-  glanceable, no plausible incumbent. **One settled instance ever**; the family launched last
-  week.
-- **GPU rental-price ladders** — monthly, ~$70–98k per board, no incumbent. Three correlated
-  series and about two months of history.
+- ~~**Titled Tuesday chess placement ladders**~~ — **DEAD, corrected 2026-08-02.** Not young:
+  Kalshi runs `KXTITLEDTUESTOP` (1,000 markets, 171 active, 155,922 contracts, 127,770 OI) and
+  `KXTITLEDTUESDAY` (533/57/118,832). W1, not W3.
+- ~~**GPU rental-price ladders**~~ — **DEAD, corrected 2026-08-02.** Kalshi runs **38
+  compute-price series** (H100/H200/B200/A100/RTX5090/RTX PRO 6000, weekly through yearly), all
+  settling on `dashboard.ornnai.com/compute`.
 
-Revisit when the settled count can support a bound. Recorded here so they are not re-discovered
-cold, and so the "is this the right pond" question has the *un-tested* candidates in view
-alongside the dead ones.
+**Both were recorded here on 08-01 as "supply-constrained rather than refuted", and both were
+wrong.** They had been killed on the power wall alone, which is cheap and runs first — and
+because it fired, nobody ran the incumbent screen. A wall that ends the search also ends the
+evidence, so a "seed" parked on one wall is an untested claim about all the others. The seeds
+list keeps that lesson rather than being deleted.
 
 ## How to use it
 
